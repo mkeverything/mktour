@@ -1,5 +1,3 @@
-import { describe, expect, test } from 'bun:test';
-
 import { RoundProps } from '@/lib/client-actions/common-generator';
 import {
   INITIAL_ONGOING_ROUND,
@@ -9,11 +7,12 @@ import {
   generatePlayerModel,
   generateRandomDatabaseTournament,
 } from '@/lib/client-actions/common-generator.test';
-import { generateRoundRobinRound } from '@/lib/client-actions/round-robin-generator';
+import { generateSwissRound } from '@/lib/client-actions/swiss-generator';
 import { GameModel, PlayerModel } from '@/types/tournaments';
 import { faker } from '@faker-js/faker';
+import { describe } from 'bun:test';
 
-describe('pure matching generation test', () => {
+describe('pure swiss test', () => {
   for (
     let tournamentNumber = 0;
     tournamentNumber < RANDOM_TOURNAMENTS_COUNT;
@@ -51,7 +50,7 @@ describe('pure matching generation test', () => {
         tournamentId: randomTournament.id,
       };
 
-      const gamesToInsert = generateRoundRobinRound(nextRoundRobinProps);
+      const gamesToInsert = generateSwissRound(nextRoundRobinProps);
 
       // simulating round results
       gamesToInsert.forEach(fillRandomResult);
@@ -59,12 +58,5 @@ describe('pure matching generation test', () => {
       previousGames.push(...gamesToInsert);
       currentRound++;
     }
-
-    test(`${tournamentNumber} - game count equality to theoretical`, () => {
-      // checking that the game count is equal to theoretical one
-      const theoreticalGameCount =
-        (randomPlayerNumber / 2) * (randomPlayerNumber - 1);
-      expect(previousGames.length).toBe(theoreticalGameCount);
-    });
   }
 });

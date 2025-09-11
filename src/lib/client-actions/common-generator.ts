@@ -2,6 +2,9 @@ import { newid } from '@/lib/utils';
 import { PlayerTournamentModel } from '@/server/db/zod/players';
 import { GameModel } from '@/server/db/zod/tournaments';
 
+const DEFAULT_ENTITY_SCORE = 0;
+const DEFAULT_PREVIOUS_GAMES: GameModel[] = [];
+
 // default set of round properties, may be changed internally
 export interface RoundProps {
   /**
@@ -38,6 +41,17 @@ type PairsGenerator = (
 ) => NumberPair[];
 
 /**
+ * Type of function which assigns colours to entity pairs based on tournament rules
+ * @param uncolouredPair - The pair of entities to assign colours to
+ * @param roundNumber - Current round number (optional, some colouring functions don't need it)
+ * @returns Coloured pair with white/black assignment
+ */
+export type ColouringFunction = (
+  uncolouredPair: EntitiesPair,
+  roundNumber?: number,
+) => ColouredEntitiesPair;
+
+/**
  * The type representing entities we are matching inside our algorithms
  * */
 interface ChessTournamentEntity {
@@ -47,12 +61,27 @@ interface ChessTournamentEntity {
   gamesPlayed: number;
   entityNickname: string;
   pairingNumber: number;
+  entityTitle: ChessTitle;
+  entityScore: number;
+  previousGames: GameModel[];
+}
+
+enum ChessTitle {
+  CM,
+  FM,
+  IM,
+  GM,
+}
+
+export enum ChessColour {
+  White = 'white',
+  Black = 'black',
 }
 
 /**
  * This interface is representing an entiies pair, which is already has colour in it
  */
-interface ColouredEntitiesPair {
+export interface ColouredEntitiesPair {
   whiteEntity: ChessTournamentEntity;
   blackEntity: ChessTournamentEntity;
 }
@@ -79,6 +108,7 @@ export function convertPlayerToEntity(playerModel: PlayerTournamentModel) {
   if (playerModel.pairingNumber === null)
     throw new TypeError('PAIRING_NUMBER_IS_NULL');
 
+  // #TODO: ADDD THE TITLE LOGIC HERE
   const tournamentEntity: ChessTournamentEntity = {
     entityId: playerModel.id,
     entityNickname: playerModel.nickname,
@@ -86,6 +116,9 @@ export function convertPlayerToEntity(playerModel: PlayerTournamentModel) {
     entityRating: playerModel.rating,
     gamesPlayed: playerModel.draws + playerModel.wins + playerModel.losses,
     pairingNumber: playerModel.pairingNumber,
+    entityTitle: ChessTitle.GM,
+    entityScore: DEFAULT_ENTITY_SCORE,
+    previousGames: DEFAULT_PREVIOUS_GAMES,
   };
   return tournamentEntity;
 }
