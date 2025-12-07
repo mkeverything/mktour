@@ -70,6 +70,8 @@
     "drizzle-zod": "^0.8.3",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.25.0",
+    "graphology": "^0.26.0",
+    "loglayer": "^8.1.0",
     "lucia": "^3.2.2",
     "lucide-react": "^0.562.0",
     "nanoid": "^5.1.6",

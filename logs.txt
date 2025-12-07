@@ -1,0 +1,1976 @@
+[0m[1mbun test [0m[2mv1.2.21 (7c45ed97)[0m
+{
+  [0mvertexCount[2m:[0m [0m[33m0[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m4[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m5[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m5[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m6[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m5[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m6[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m5[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m4[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m4[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m6[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m20[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m19[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m20[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m19[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m18[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m17[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m16[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m15[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"f"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m14[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m13[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"h"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"g"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m4[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m5[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m12[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m11[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"j"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"i"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m5[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m6[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m10[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m9[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"l"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"k"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m6[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m7[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m8[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m7[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"n"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"m"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m7[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m8[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m6[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m5[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"p"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"o"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m8[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m9[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"r"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"q"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m9[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m10[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"t"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"s"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m10[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m11[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m11[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m11[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m20[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Same tree - creating blossom
+Blossom created, continuing BFS
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m5[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m5[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m5[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+} Same tree - creating blossom
+Blossom created, continuing BFS
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m4[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Same tree - creating blossom
+Blossom created, continuing BFS
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[33mnull[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Same tree - creating blossom
+Blossom created, continuing BFS
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m4[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m6[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Same tree - creating blossom
+Blossom created, continuing BFS
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[33mnull[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m0[0m[0m[2m,[0m
+} Processing vertex from queue
+Queue empty - no augmenting path found
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mfalse[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+  [0mmatchedVertexCount[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Maximum matching algorithm completed
+{
+  [0mvertexCount[2m:[0m [0m[33m5[0m[0m[2m,[0m
+  [0medgeCount[2m:[0m [0m[33m10[0m[0m[2m,[0m
+} Starting maximum matching algorithm
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m5[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m4[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m1[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"b"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Same tree - creating blossom
+Blossom created, continuing BFS
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseV[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+} Different trees - found augmenting path
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment matching
+Endpoints matched, augmenting from first vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"d"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+First vertex augmented, augmenting from second vertex
+{
+  [0mstartVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+} Starting augment from vertex
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"a"[0m[0m[0m[2m,[0m
+  [0mbaseVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0misRoot[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+  [0mlabel[2m:[0m [0m[32m[0m[32m"S"[0m[0m[0m[2m,[0m
+  [0mlabelEnd[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mmate[2m:[0m [0m[33mnull[0m[0m[2m,[0m
+} Augment from vertex - processing step
+Augment from vertex completed
+Second vertex augmented, augment matching complete
+Matching augmented
+{
+  [0miterationNumber[2m:[0m [0m[33m2[0m[0m[2m,[0m
+  [0mfoundAugmentingPath[2m:[0m [0m[33mtrue[0m[0m[2m,[0m
+} Main loop iteration completed
+{
+  [0miterationNumber[2m:[0m [0m[33m3[0m[0m[2m,[0m
+} Starting main loop iteration
+{
+  [0mqueueSize[2m:[0m [0m[33m2[0m[0m[2m,[0m
+} Starting BFS search for augmenting path
+{
+  [0mcurrentVertex[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mremainingQueueSize[2m:[0m [0m[33m1[0m[0m[2m,[0m
+} Processing vertex from queue
+{
+  [0mvertexU[2m:[0m [0m[32m[0m[32m"c"[0m[0m[0m[2m,[0m
+  [0mvertexV[2m:[0m [0m[32m[0m[32m"e"[0m[0m[0m[2m,[0m
+} Found edge between S-labelled vertices

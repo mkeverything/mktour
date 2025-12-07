@@ -137,3 +137,104 @@ export const PLAYER_NUMBER_FAKEOPTS = {
 };
 
 export const RANDOM_TOURNAMENTS_COUNT = 5;
+
+/**
+ * Interface for player score results
+ */
+interface PlayerScoreResults {
+  wins: number;
+  draws: number;
+  losses: number;
+}
+
+/**
+ * Checks if a game involves a specific player (as white or black)
+ * @param game - Game to check
+ * @param playerId - Player ID to match
+ * @returns true if player participated in the game
+ */
+function isPlayerInGame(game: GameModel, playerId: string): boolean {
+  return game.white_id === playerId || game.black_id === playerId;
+}
+
+/**
+ * Counts wins/draws/losses for a player from their game history
+ * @param playerId - Player ID to count for
+ * @param playerGames - Games the player participated in
+ * @returns Object with wins, draws, losses counts
+ */
+function countPlayerResults(
+  playerId: string,
+  playerGames: GameModel[],
+): PlayerScoreResults {
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
+
+  for (const game of playerGames) {
+    // Skip games without results
+    if (!game.result) {
+      continue;
+    }
+
+    const isWhite = game.white_id === playerId;
+
+    // Count based on result and player colour
+    switch (game.result) {
+      case '1-0':
+        isWhite ? wins++ : losses++;
+        break;
+
+      case '0-1':
+        isWhite ? losses++ : wins++;
+        break;
+
+      case '1/2-1/2':
+        draws++;
+        break;
+
+      default:
+        throw new Error(`Invalid game result: ${game.result}`);
+    }
+  }
+
+  return { wins, draws, losses };
+}
+
+/**
+ * Updates a single player's score based on game history
+ * @param player - Player to update
+ * @param games - All games played so far
+ * @returns Updated player with recalculated wins/draws/losses
+ */
+function updateSinglePlayerScore(
+  player: PlayerModel,
+  games: GameModel[],
+): PlayerModel {
+  // Filter games involving this player
+  const playerGames = games.filter((game) => isPlayerInGame(game, player.id));
+
+  // Count results from player's games
+  const results = countPlayerResults(player.id, playerGames);
+
+  // Return updated player with new scores
+  return {
+    ...player,
+    wins: results.wins,
+    draws: results.draws,
+    losses: results.losses,
+  };
+}
+
+/**
+ * Updates all players' win/draw/loss counts based on game results
+ * Essential for Swiss testing where scores must be updated between rounds
+ * @param players - Array of players to update
+ * @param games - All games played so far
+ * @returns Updated players with recalculated wins/draws/losses
+ */
+export const updatePlayerScores = mock(
+  (players: PlayerModel[], games: GameModel[]): PlayerModel[] => {
+    return players.map((player) => updateSinglePlayerScore(player, games));
+  },
+);

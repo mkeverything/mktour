@@ -1,6 +1,17 @@
-# CLAUDE.md
+# GEMINI.md (formerly CLAUDE.md)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Gemini (and other AI agents) when working with code in this repository.
+
+## User Preferences & Strict Requirements
+
+1.  **Proactive Requirement Identification**: Always look for and identify requirements mentioned in user prompts. Add them here if they are recurring or strict.
+2.  **Granularity**: Work in small, incremental steps. Avoid large, complex updates in a single turn. Break down tasks into manageable chunks.
+3.  **Code Quality**:
+    - Write clear, well-commented code.
+    - Focus on functional decomposition (avoid large, monolithic functions).
+    - Comments should explain _WHY_, not just _WHAT_.
+4.  **Testing Protocol**: **NO** test scripts or automated verification until the implementation is explicitly approved by the user.
+5.  **Priorities**: Correctness (especially FIDE compliance) takes precedence over premature optimization.
 
 NB!: THIS IS ONLY FOR SMALL SUBSET, CLIENT ACTIONS. IF YOU WILL WORK WITH SOMETHING OUTSIDE THE client-actions folder, PROMPT THE USER ABOUT IT AND SUGGEST TO MAKE ADDITIONS HERE
 
@@ -34,6 +45,7 @@ interface ChessTournamentEntity {
   pairingNumber: number; // Pairing system number
   entityTitle: ChessTitle; // Chess title (CM, FM, IM, GM)
   entityScore: number; // Current tournament score
+  previousGames: GameModel[]; // Player's game history for FIDE color assignment
 }
 ```
 
@@ -50,42 +62,19 @@ interface RoundProps {
 
 ### Swiss System Implementation
 
-The Swiss system follows FIDE Dutch system rules with these phases:
-
-1. **Initial Ordering** - Players sorted by FIDE rating → title → name
-2. **Scoregroup Formation** - Players grouped by current score
-3. **For each scoregroup:**
-   - Parameters estimation (MDP count, max pairs)
-   - Inner ordering by score and pairing numbers
-   - S1/S2 bracket formation with optional Limbo
-   - Provisional pairing
-   - Quality evaluation (criteria C1-C13)
-   - Alterations if quality unsuccessful
-4. **Bracket finalization**
-
-**Key Swiss System Concepts:**
-
-- **MDP (Moved Down Players)** - Players who couldn't be paired in higher scoregroups
-- **S1/S2 Brackets** - Upper and lower halves of each scoregroup
-- **Limbo** - Excess MDPs that flow to next scoregroup
-- **Quality Criteria** - Absolute criteria (C1-C7) and quality criteria (C8-C13)
+Implements FIDE Dutch system following official handbook guidelines. System handles scoregroup formation, bracket pairing, and quality evaluation according to FIDE criteria.
 
 ### Round Robin Implementation
 
-Uses cycle-based pairing where:
-
-- One player remains fixed
-- Others rotate positions each round
-- Ensures every player plays every other player once
+Cycle-based pairing system ensuring every player plays every other player exactly once.
 
 ### Code Organization
 
 **Common Utilities:**
 
-- `convertPlayerToEntity()` - Converts PlayerModel to ChessTournamentEntity
-- `getColouredPair()` - Assigns colors based on color index and rating
-- `getNumberedPair()` - Assigns game numbers to pairs
-- `getGameToInsert()` - Converts pairs to database GameModel format
+- Shared conversion functions between PlayerModel and ChessTournamentEntity
+- FIDE-compliant color assignment system
+- Game numbering and database conversion utilities
 
 **Testing:**
 
@@ -96,15 +85,9 @@ Uses cycle-based pairing where:
 
 **Swiss System Status:**
 
-- Currently incomplete - missing quality evaluation and alteration logic
-- Provisional pairing implemented
-- Need to implement criteria checking and bracket improvements
-
-**Color Assignment:**
-
-- Based on `colourIndex` (tracks color balance)
-- Lower-rated player gets white if color indices equal
-- System prevents excessive color imbalance (quite normal for pairing systems)
+- FIDE-compliant implementation in progress
+- Quality evaluation system implemented
+- Color assignment follows FIDE Dutch system rules
 
 **Error Handling:**
 
@@ -112,10 +95,9 @@ Uses cycle-based pairing where:
 
 ### Testing Tournament Generators
 
-Run tests (WIP, now they don't really work) to verify pairing logic:
+Run tests (WIP) to verify pairing logic:
 
 ```bash
-# Test specific generator
 bun test swiss-generator.test.ts
 bun test round-robin-generator.test.ts
 bun test common-generator.test.ts
@@ -141,5 +123,36 @@ Please, use _only_ Oxford English spelling!
 - Comments should NEVER repeat what's already obvious from the code
 - Only add comments that provide additional context, business logic, or non-obvious information
 - Focus on WHY something is done, not WHAT is being done
+
+## Code Quality Rules
+
+**Function Size & Decomposition**
+
+- Max ~40 lines. Extract logical units if longer
+- Name all callbacks: `const checkFoo = (x) => ...` NOT `func((x) => ...)`
+- One responsibility per function
+
+**Constants & Control Flow**
+
+- Name all sentinel values: `const NO_EDGE_FOUND = null`
+- Meaningful loop conditions: `while (!done)` NOT `while (true) { if (x) break; }`
+- No magic numbers or strings
+
+**Type Safety**
+
+- Avoid `as` assertions. Use type guards (`typeof x === 'string'`) or redesign
+- Document type design choices (e.g., "BlossomId=number, VertexKey=string enables `typeof` discrimination")
+
+**Avoid Redundancy**
+
+- Extract common patterns after 3rd occurrence
+- Simplify discriminated unions unless truly needed
+- Remove redundant checks (if loop handles it, don't also `break`)
+
+**Comments**
+
+- Explain WHY, not WHAT
+- Document non-obvious invariants and data structure relationships
+- Include complexity for algorithms
 
 Good coding!
