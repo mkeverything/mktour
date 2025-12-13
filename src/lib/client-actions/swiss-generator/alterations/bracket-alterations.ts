@@ -11,6 +11,7 @@
  */
 
 import { ChessTournamentEntity } from '@/lib/client-actions/common-generator';
+import { splitRemainder } from '@/lib/client-actions/swiss-generator/bracket-formation';
 import type {
   BSNMaps,
   BracketParameters,
@@ -103,17 +104,21 @@ export function* generateEntityExchanges(
 
 /**
  * Generator for S1↔S2 exchanges in homogeneous brackets
+ * Yields original bracket first (no exchange), then all exchanges
  * Uses the generic entity exchange generator and wraps results in HomoBracketGroups
  *
  * @param bracketGroups - Original bracket groups (S1, S2)
  * @param bsnMaps - Bidirectional BSN mapping for entity↔BSN conversion
- * @yields HomoBracketGroups with S1↔S2 exchanges applied
+ * @yields HomoBracketGroups - first original, then with S1↔S2 exchanges applied
  */
 export function* generateS1S2Exchanges(
   bracketGroups: HomoBracketGroups,
   bsnMaps: BSNMaps,
 ): Generator<HomoBracketGroups, void, unknown> {
-  // Use generic exchange generator for S1↔S2
+  // Yield original bracket first (no exchange)
+  yield bracketGroups;
+
+  // Then yield all actual exchanges
   for (const [newS1, newS2] of generateEntityExchanges(
     bracketGroups.S1,
     bracketGroups.S2,
@@ -159,7 +164,7 @@ export function* generateS2Transpositions(
 
 /**
  * Generator for homogeneous bracket alterations
- * Applies S2 transpositions followed by S1↔S2 exchanges
+ * Per FIDE rules: for each exchange level (including no exchange), apply all S2 transpositions
  * @param homoBracket - Original homogeneous bracket groups
  * @param bsnMaps - Bidirectional BSN mapping for the bracket
  * @yields HomoBracketGroups with alterations applied
@@ -168,11 +173,15 @@ export function* generateHomogeneousAlterations(
   homoBracket: HomoBracketGroups,
   bsnMaps: BSNMaps,
 ): Generator<HomoBracketGroups, void, unknown> {
-  // 1. Yield all S2 transpositions first
-  yield* generateS2Transpositions(homoBracket, bsnMaps);
+  // For each exchange level (original first, then actual exchanges)
+  // apply all S2 transpositions
+  for (const exchangedBracket of generateS1S2Exchanges(homoBracket, bsnMaps)) {
+    // Recalculate BSNs for the current bracket configuration
+    const bracketPlayers = exchangedBracket.S1.concat(exchangedBracket.S2);
+    const bracketBSNMaps = generateBSNMaps(bracketPlayers);
 
-  // 2. Then yield all S1↔S2 exchanges
-  yield* generateS1S2Exchanges(homoBracket, bsnMaps);
+    yield* generateS2Transpositions(exchangedBracket, bracketBSNMaps);
+  }
 }
 
 /**
@@ -221,8 +230,13 @@ export function* generateRemainderAlterations(
 
 /**
  * Phase 2: Main S2 transpositions for heterogeneous brackets
- * Permutes the full S2 group (MDP portion + remainder), affecting both S2 and S2R
- * Keeps S1, S1R, and Limbo unchanged
+ *
+ * Per FIDE Article 3.2.3, S2 initially contains ALL remaining resident players.
+ * This function permutes all residents (S2 + S1R + S2R), then re-splits:
+ * - First mdpPairingsCount residents become new S2 (for MDP-Pairing)
+ * - Remaining residents form the new remainder, split into S1R/S2R
+ *
+ * This allows any resident to potentially pair with MDPs through transposition.
  *
  * @param heteroBracket - Original heterogeneous bracket groups
  * @param bracketParameters - Bracket parameters (contains mdpPairingsCount)
@@ -234,51 +248,59 @@ export function* generateMainS2Transpositions(
   bracketParameters: BracketParameters,
   bsnMaps: BSNMaps,
 ): Generator<HeteroBracketGroups, void, unknown> {
-  // Combine S2 (MDP portion) with S2R (remainder) to get full S2
-  const fullS2 = heteroBracket.S2.concat(heteroBracket.S2R);
+  // Per FIDE Article 3.2.3: S2 contains ALL residents (S2 + S1R + S2R)
+  const allResidents = heteroBracket.S2.concat(heteroBracket.S1R).concat(
+    heteroBracket.S2R,
+  );
 
-  // Convert full S2 to BSNs using the bracket-wide BSN maps
-  const fullS2BSNs = fullS2.map((entity) =>
+  // Convert all residents to BSNs using the bracket-wide BSN maps
+  const allResidentBSNs = allResidents.map((entity) =>
     convertEntityToBSN(entity, bsnMaps.bsnByEntity),
   );
 
-  // Generate all permutations of full S2
-  for (const permutedS2BSNs of generatePermutations(fullS2BSNs)) {
+  // Generate all permutations of all residents
+  for (const permutedBSNs of generatePermutations(allResidentBSNs)) {
     // Convert BSNs back to entities
-    const permutedS2Entities = permutedS2BSNs.map((bsn) =>
+    const permutedResidents = permutedBSNs.map((bsn) =>
       convertBSNToEntity(bsn, bsnMaps.entityByBSN),
     );
 
-    // Split permuted S2 back into MDP portion and remainder
-    const mdpCount = bracketParameters.mdpPairingsCount;
-    const newS2MDP = permutedS2Entities.slice(0, mdpCount);
-    const newS2R = permutedS2Entities.slice(mdpCount);
+    // Split permuted residents: first mdpPairingsCount become S2 (for MDP-Pairing)
+    const mdpPairingsCount = bracketParameters.mdpPairingsCount;
+    const newS2 = permutedResidents.slice(0, mdpPairingsCount);
 
-    // Yield with S1 unchanged, permuted S2, Limbo unchanged, S1R unchanged, new S2R
+    // Remaining residents form the remainder, split into S1R/S2R
+    const remainder = permutedResidents.slice(mdpPairingsCount);
+    const { S1R: newS1R, S2R: newS2R } = splitRemainder(remainder);
+
     yield {
-      S1: heteroBracket.S1, // MDP portion, unchanged
-      S2: newS2MDP, // Permuted MDP portion of S2
+      S1: heteroBracket.S1, // MDPs unchanged
+      S2: newS2, // Permuted resident portion for MDP-Pairing
       Limbo: heteroBracket.Limbo,
-      S1R: heteroBracket.S1R, // S1 remainder, unchanged
-      S2R: newS2R, // Permuted remainder of S2
+      S1R: newS1R, // Permuted upper half of remainder
+      S2R: newS2R, // Permuted lower half of remainder
     };
   }
 }
 
 /**
  * Phase 3: S1↔Limbo exchanges for heterogeneous brackets
+ * Yields original bracket first (no exchange), then all exchanges
  * Uses the generic entity exchange generator for S1↔Limbo
  * Changes which MDPs are pairable while keeping residents (S1R, S2, S2R) unchanged
  *
  * @param heteroBracket - Original heterogeneous bracket groups
  * @param bsnMaps - BSN maps for the full bracket
- * @yields HeteroBracketGroups with S1↔Limbo exchanges applied
+ * @yields HeteroBracketGroups - first original, then with S1↔Limbo exchanges applied
  */
 export function* generateS1LimboExchanges(
   heteroBracket: HeteroBracketGroups,
   bsnMaps: BSNMaps,
 ): Generator<HeteroBracketGroups, void, unknown> {
-  // Skip if no Limbo players to exchange with
+  // Yield original bracket first (no exchange)
+  yield heteroBracket;
+
+  // Skip actual exchanges if no Limbo players to exchange with
   if (heteroBracket.Limbo.length === 0) {
     return;
   }
@@ -301,10 +323,8 @@ export function* generateS1LimboExchanges(
 
 /**
  * Generator for heterogeneous bracket alterations
- * Orchestrates all phases of heterogeneous bracket alterations according to FIDE rules
- * Phase 1: Remainder alterations
- * Phase 2: Main S2 transpositions
- * Phase 3: S1↔Limbo exchanges
+ * Per FIDE rules: for each S1↔Limbo exchange level (including no exchange),
+ * apply remainder alterations and Main S2 transpositions
  *
  * @param heteroBracket - Original heterogeneous bracket groups
  * @param bracketParameters - Bracket parameters (contains mdpPairingsCount)
@@ -316,16 +336,26 @@ export function* generateHeterogeneousAlterations(
   bracketParameters: BracketParameters,
   bsnMaps: BSNMaps,
 ): Generator<HeteroBracketGroups, void, unknown> {
-  // Phase 1: Remainder alterations
-  yield* generateRemainderAlterations(heteroBracket);
-
-  // Phase 2: Main S2 transpositions
-  yield* generateMainS2Transpositions(
+  // For each S1↔Limbo exchange level (original first, then actual exchanges)
+  for (const exchangedBracket of generateS1LimboExchanges(
     heteroBracket,
-    bracketParameters,
     bsnMaps,
-  );
+  )) {
+    // Recalculate BSNs for the current bracket configuration
+    const allBracketPlayers = exchangedBracket.S1.concat(exchangedBracket.S2)
+      .concat(exchangedBracket.Limbo)
+      .concat(exchangedBracket.S1R)
+      .concat(exchangedBracket.S2R);
+    const exchangedBSNMaps = generateBSNMaps(allBracketPlayers);
 
-  // Phase 3: S1↔Limbo exchanges
-  yield* generateS1LimboExchanges(heteroBracket, bsnMaps);
+    // Phase 1: Remainder alterations
+    yield* generateRemainderAlterations(exchangedBracket);
+
+    // Phase 2: Main S2 transpositions
+    yield* generateMainS2Transpositions(
+      exchangedBracket,
+      bracketParameters,
+      exchangedBSNMaps,
+    );
+  }
 }

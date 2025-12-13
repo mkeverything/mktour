@@ -8,8 +8,27 @@ import type {
   BracketParameters,
   EntitiesByScore,
   PairingCandidate,
+  RemainderSplit,
 } from '@/lib/client-actions/swiss-generator/types';
 import { isHeteroBracket } from '@/lib/client-actions/swiss-generator/types';
+
+/**
+ * Splits remainder players into S1R (upper half) and S2R (lower half)
+ *
+ * Per FIDE rules, the remainder is split using homogeneous bracket rules:
+ * S1R contains the first half (by pairing number), S2R contains the rest.
+ *
+ * @param remainder - Array of remainder players to split
+ * @returns Object with S1R and S2R arrays
+ */
+export function splitRemainder(
+  remainder: ChessTournamentEntity[],
+): RemainderSplit {
+  const halfSize = Math.floor(remainder.length / 2);
+  const S1R = remainder.slice(0, halfSize);
+  const S2R = remainder.slice(halfSize);
+  return { S1R, S2R };
+}
 
 /**
  * This function estimates the needed for bracket forming parameters, and return them in a formatted way
@@ -51,9 +70,10 @@ function getOrderedBracket(bracketPlayers: ChessTournamentEntity[]) {
       leftEntity.pairingNumber - rightEntity.pairingNumber,
   );
 
+  // Sort by score descending: MDPs (higher scores) must be in S1 for heterogeneous brackets
   const orderedByScore = orderedByPairingNumbers.toSorted(
     (leftEntity, rightEntity) =>
-      leftEntity.entityScore - rightEntity.entityScore,
+      rightEntity.entityScore - leftEntity.entityScore,
   );
 
   return orderedByScore;
@@ -98,18 +118,23 @@ function formBracketGroups(
   const isHeterogeneous = bracketParams.mdpCount > 0;
 
   if (isHeterogeneous) {
-    // Heterogeneous bracket: split S1Full and S2Full into MDP portion and remainder
+    // Heterogeneous bracket per FIDE Article 3.3:
+    // S1 = M1 MDPs (for MDP-pairing)
+    // S2 = M1 residents (for MDP-pairing)
+    // Remainder = remaining residents, split into S1R/S2R using homogeneous rules
     const mdpPairingsCount = bracketParams.mdpPairingsCount;
 
-    // S1: MDP portion only (first mdpPairingsCount from S1Full)
+    // S1: MDPs for MDP-pairing (from S1Full which contains MDPs)
     const S1 = S1Full.slice(0, mdpPairingsCount);
-    // S1R: Remainder portion (everything after MDP portion in S1Full)
-    const S1R = S1Full.slice(mdpPairingsCount);
 
-    // S2: MDP portion only (first mdpPairingsCount from S2Full)
+    // S2: First M1 residents for MDP-pairing
     const S2 = S2Full.slice(0, mdpPairingsCount);
-    // S2R: Remainder portion (everything after MDP portion in S2Full)
-    const S2R = S2Full.slice(mdpPairingsCount);
+
+    // Remainder: remaining residents after M1 taken for MDP-pairing
+    const remainder = S2Full.slice(mdpPairingsCount);
+
+    // Split remainder using homogeneous rules
+    const { S1R, S2R } = splitRemainder(remainder);
 
     bracketGroups = {
       S1,
@@ -150,39 +175,38 @@ export function constructBracketGroups(
 }
 
 /**
- * Re-orders bracket groups after alterations
- * Orders S1, S2, and Limbo separately to preserve the alteration effects
- * (which players are in which group) while ensuring proper internal ordering
- * For heterogeneous brackets, also preserves and orders S1R and S2R
+ * Re-orders bracket groups after alterations (exchanges only)
+ *
+ * Re-orders S1, S1R, and Limbo to place exchanged players in correct BSN positions.
+ * IMPORTANT: S2 and S2R are NOT re-ordered because transpositions intentionally
+ * set their order - re-ordering would destroy the transposition effect.
  *
  * @param bracketGroups - Bracket groups to re-order
- * @returns Re-ordered BracketGroups with same group membership but ordered entities
+ * @returns Re-ordered BracketGroups with S1/Limbo/S1R ordered, S2/S2R preserved
  */
 export function reorderBracketGroups(
   bracketGroups: BracketGroups,
 ): BracketGroups {
-  // Order each group separately to preserve the alteration
+  // Only re-order S1 - S2 order is set by transpositions and must be preserved
   const orderedS1 = getOrderedBracket(bracketGroups.S1);
-  const orderedS2 = getOrderedBracket(bracketGroups.S2);
 
   // Check if this is a heterogeneous bracket using type guard
   if (isHeteroBracket(bracketGroups)) {
     const orderedLimbo = getOrderedBracket(bracketGroups.Limbo);
     const orderedS1R = getOrderedBracket(bracketGroups.S1R);
-    const orderedS2R = getOrderedBracket(bracketGroups.S2R);
 
     return {
       S1: orderedS1,
-      S2: orderedS2,
+      S2: bracketGroups.S2, // Preserve transposition order
       Limbo: orderedLimbo,
       S1R: orderedS1R,
-      S2R: orderedS2R,
+      S2R: bracketGroups.S2R, // Preserve transposition order
     };
   }
 
   return {
     S1: orderedS1,
-    S2: orderedS2,
+    S2: bracketGroups.S2, // Preserve transposition order
   };
 }
 

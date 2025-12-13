@@ -172,23 +172,91 @@ export function initialiseState(graph: Graph): MatchingState {
 }
 
 /**
- * Resets vertex labels and processing queue
- *
- * Must be called at the start of each augmenting path search stage
- * to clear labels from the previous iteration.
- *
- * This allows the algorithm to restart the BFS from all free vertices
- * without interference from previous search state.
+ * Clears vertex labels and label endpoints
  *
  * @param state - Matching state (modified in place)
  */
-export function resetLabels(state: MatchingState): void {
-  // Clear all vertex labels and label endpoints
+function clearVertexLabels(state: MatchingState): void {
   for (const [, vertexState] of state.vertices) {
     vertexState.label = Label.NONE;
     vertexState.labelEnd = NO_LABEL_ENDPOINT;
   }
+}
 
-  // Clear processing queue
+/**
+ * Resets each vertex to point to its trivial blossom
+ *
+ * Finds the trivial blossom for each vertex by matching the vertex key
+ * to the blossom's base vertex. This ensures vertices are assigned to
+ * their CORRECT trivial blossoms regardless of Map iteration order.
+ *
+ * @param state - Matching state (modified in place)
+ */
+function resetVerticesToTrivialBlossoms(state: MatchingState): void {
+  // Build a map from base vertex to trivial blossom ID
+  const baseToBlossomId = new Map<VertexKey, BlossomId>();
+  for (const [blossomId, blossom] of state.blossoms) {
+    const isTrivial = blossom.children.length === 1;
+    if (isTrivial) {
+      baseToBlossomId.set(blossom.base, blossomId);
+    }
+  }
+
+  // Reset each vertex to its trivial blossom (where base === vertexKey)
+  for (const [vertexKey, vertexState] of state.vertices) {
+    const trivialBlossomId = baseToBlossomId.get(vertexKey);
+    if (trivialBlossomId === undefined) {
+      throw new Error(`Trivial blossom not found for vertex ${vertexKey}`);
+    }
+    vertexState.inBlossom = trivialBlossomId;
+  }
+}
+
+/**
+ * Removes non-trivial blossoms and resets trivial blossom parent pointers
+ *
+ * @param state - Matching state (modified in place)
+ */
+function removeNonTrivialBlossoms(state: MatchingState): void {
+  const blossomIdsToRemove: BlossomId[] = [];
+
+  for (const [blossomId, blossom] of state.blossoms) {
+    const isTrivial = blossom.children.length === 1;
+    if (isTrivial) {
+      // Reset trivial blossom parent pointer
+      blossom.parent = NO_PARENT_BLOSSOM;
+    } else {
+      // Mark non-trivial blossom for removal
+      blossomIdsToRemove.push(blossomId);
+    }
+  }
+
+  // Remove non-trivial blossoms
+  for (const blossomId of blossomIdsToRemove) {
+    state.blossoms.delete(blossomId);
+  }
+
+  // Reset nextBlossomId to start after trivial blossoms
+  state.nextBlossomId = state.nodeCount;
+}
+
+/**
+ * Resets vertex labels, processing queue, and blossom structure
+ *
+ * Must be called at the start of each augmenting path search stage.
+ * Clears all state from the previous iteration including:
+ * - Vertex labels and label endpoints
+ * - Processing queue
+ * - Non-trivial blossom structure
+ *
+ * Resetting blossoms to trivial state prevents blossom structure from
+ * previous iterations causing incorrect augmenting path detection.
+ *
+ * @param state - Matching state (modified in place)
+ */
+export function resetLabels(state: MatchingState): void {
+  clearVertexLabels(state);
+  resetVerticesToTrivialBlossoms(state);
+  removeNonTrivialBlossoms(state);
   state.queue = [];
 }

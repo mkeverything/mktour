@@ -1060,5 +1060,62 @@ describe('maximumMatching', () => {
       const expectedMatchedCount = PETERSEN_VERTEX_COUNT;
       expect(matchedCount).toBe(expectedMatchedCount);
     });
+
+    test('Seed 54 problematic graph (6 nodes, 12 edges) returns perfect matching', () => {
+      // Graph structure from Swiss tournament seed 54 that caused infinite loop
+      // This is NOT a complete graph K6 (which would have 15 edges)
+      // Structure: 6 nodes with specific missing edges (A-E, B-F, C-F)
+      const graph = createGraph();
+
+      // Add vertices (using simplified names for clarity)
+      const VERTEX_P_A: VertexKey = 'pA';
+      const VERTEX_P_B: VertexKey = 'pB';
+      const VERTEX_P_C: VertexKey = 'pC';
+      const VERTEX_P_D: VertexKey = 'pD';
+      const VERTEX_P_E: VertexKey = 'pE';
+      const VERTEX_P_F: VertexKey = 'pF';
+
+      graph.addNode(VERTEX_P_A);
+      graph.addNode(VERTEX_P_B);
+      graph.addNode(VERTEX_P_C);
+      graph.addNode(VERTEX_P_D);
+      graph.addNode(VERTEX_P_E);
+      graph.addNode(VERTEX_P_F);
+
+      // Add edges (12 edges - missing A-E, B-F, C-F from K6)
+      // A's edges: A-B, A-C, A-D, A-F
+      graph.addEdge(VERTEX_P_A, VERTEX_P_B);
+      graph.addEdge(VERTEX_P_A, VERTEX_P_C);
+      graph.addEdge(VERTEX_P_A, VERTEX_P_D);
+      graph.addEdge(VERTEX_P_A, VERTEX_P_F);
+
+      // B's remaining edges: B-C, B-D, B-E
+      graph.addEdge(VERTEX_P_B, VERTEX_P_C);
+      graph.addEdge(VERTEX_P_B, VERTEX_P_D);
+      graph.addEdge(VERTEX_P_B, VERTEX_P_E);
+
+      // C's remaining edges: C-D, C-E
+      graph.addEdge(VERTEX_P_C, VERTEX_P_D);
+      graph.addEdge(VERTEX_P_C, VERTEX_P_E);
+
+      // D's remaining edges: D-E, D-F
+      graph.addEdge(VERTEX_P_D, VERTEX_P_E);
+      graph.addEdge(VERTEX_P_D, VERTEX_P_F);
+
+      // E's remaining edges: E-F
+      graph.addEdge(VERTEX_P_E, VERTEX_P_F);
+
+      // Run matching algorithm
+      const matching = maximumMatching(graph);
+
+      // Verify matching is valid
+      const isValid = isMatchingValid(matching);
+      expect(isValid).toBe(MATCHING_IS_VALID);
+
+      // Verify perfect matching (6 nodes → 3 edges → 6 matched vertices)
+      const matchedCount = countMatchedVertices(matching);
+      const expectedMatchedCount = 6;
+      expect(matchedCount).toBe(expectedMatchedCount);
+    });
   });
 });

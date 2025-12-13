@@ -42,6 +42,21 @@ export type BlossomChildren = NodeId[];
 /** Result of scanning and labelling a vertex's neighbours */
 export type ScanAndLabelResult = [VertexKey, VertexKey] | null;
 
+/**
+ * Function type for scanning a vertex's neighbours during BFS
+ *
+ * Used to abstract the difference between cardinality matching (all edges)
+ * and weighted matching (only tight edges with slack = 0).
+ *
+ * @param state - Matching state (MatchingState or WeightedMatchingState)
+ * @param vertex - S-labelled vertex to scan from
+ * @returns S-S edge pair if found, null otherwise
+ */
+export type ScanFunction<State extends MatchingState> = (
+  state: State,
+  vertex: VertexKey,
+) => ScanAndLabelResult;
+
 // ============================================================================
 // Enums
 // ============================================================================
@@ -210,3 +225,107 @@ export const STEP_BACKWARD = -1;
 
 /** Minimum number of children for a non-trivial blossom */
 export const MIN_CHILDREN_FOR_NONTRIVIAL_BLOSSOM = 2;
+
+// ============================================================================
+// Weighted Matching Types (BigInt for precision)
+// ============================================================================
+
+/**
+ * Edge weight using BigInt for exact precision in mixed radix encoding
+ *
+ * BigInt prevents overflow when combining multiple criteria with large bases.
+ * All weights should be positive; higher weight = more preferred pairing.
+ */
+export type EdgeWeight = bigint;
+
+/**
+ * Dual variable for vertices and blossoms
+ * Initialised to maxWeight; edges are tight when u.dual + v.dual = 2 * weight
+ */
+export type DualVariable = bigint;
+
+/**
+ * Edge identifier using graphology's edge key
+ * This is the string key returned by graph.addEdge() or graph.forEachEdge()
+ */
+export type GraphEdgeKey = string;
+
+/**
+ * Extended state for weighted maximum matching
+ *
+ * Adds dual variable tracking required by weighted Blossom algorithm.
+ * The algorithm only considers "tight" edges where slack = 0.
+ * When stuck, it adjusts duals to make new edges tight.
+ */
+export interface WeightedMatchingState extends MatchingState {
+  /**
+   * Dual variable for each node (vertex or non-trivial blossom)
+   *
+   * Vertices are keyed by VertexKey (string), blossoms by BlossomId (number).
+   * Discrimination via typeof: string = vertex, number = blossom.
+   */
+  duals: Map<NodeId, DualVariable>;
+
+  /**
+   * Best edge from each S-vertex/blossom to outside vertices
+   * Used for delta2/delta3 computation
+   */
+  bestEdgeByNode: Map<NodeId, GraphEdgeKey>;
+
+  /**
+   * Best edges leading into each blossom's vertices
+   * Used for delta3 computation when blossom is not S-labelled
+   */
+  blossomBestEdges: Map<BlossomId, GraphEdgeKey[]>;
+
+  /** Maximum edge weight in the graph (used for dual initialisation) */
+  maxEdgeWeight: EdgeWeight;
+}
+
+/**
+ * Base interface for all delta results
+ *
+ * Used when only the delta value matters (e.g., comparisons).
+ */
+export interface BaseDelta {
+  readonly delta: DualVariable;
+}
+
+/**
+ * Delta result for edge-tightening updates
+ *
+ * Represents an edge that will become tight after applying the delta.
+ */
+export interface EdgeDelta extends BaseDelta {
+  readonly edgeKey: GraphEdgeKey;
+}
+
+/**
+ * Delta result for blossom expansion
+ *
+ * When a blossom's dual variable reaches zero, it must be expanded.
+ */
+export interface BlossomDelta extends BaseDelta {
+  readonly blossomId: BlossomId;
+}
+
+/**
+ * Type guard for EdgeDelta
+ */
+export function isEdgeDelta(delta: BaseDelta): delta is EdgeDelta {
+  return 'edgeKey' in delta;
+}
+
+/**
+ * Type guard for BlossomDelta
+ */
+export function isBlossomDelta(delta: BaseDelta): delta is BlossomDelta {
+  return 'blossomId' in delta;
+}
+
+// ============================================================================
+// Weighted Matching Constants
+// ============================================================================
+
+/** Zero dual variable for comparisons and initialisations */
+export const ZERO_DUAL: DualVariable = 0n;

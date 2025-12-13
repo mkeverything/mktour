@@ -241,3 +241,28 @@ export interface AugmentFromVertexStepInfo {
   /** Mate of base vertex */
   readonly mate: string | null;
 }
+
+/**
+ * Free vertex labeling information for logging
+ */
+export interface FreeVertexLabelingInfo {
+  /** Matched bases (bases that contain at least one matched vertex) */
+  readonly matchedBases: string[];
+
+  /** Vertices labeled as S-roots */
+  readonly labeledRoots: string[];
+
+  /** Final queue after labeling */
+  readonly queueAfterLabeling: string[];
+}
+
+/**
+ * Matching state snapshot for logging
+ */
+export interface MatchingStateInfo {
+  /** Map of vertex to mate */
+  readonly mates: Record<string, string | null>;
+
+  /** Number of matched vertices */
+  readonly matchedCount: number;
+}

@@ -319,6 +319,10 @@ export function updateMates(
 /**
  * Processes one step of augmenting path traversal
  *
+ * Handles blossom expansion when the current vertex is inside a non-trivial
+ * blossom. After expansion, recomputes the base vertex state since the vertex
+ * may now be at top-level with different properties.
+ *
  * @param state - Current matching state
  * @param step - Traversal step information
  * @returns Result indicating whether to continue and next vertex
@@ -327,7 +331,7 @@ export function processAugmentStep(
   state: MatchingState,
   step: TraversalStepResult,
 ): AugmentStepResult {
-  const { currentVertex, baseVertex, baseState, isRoot } = step;
+  const { currentVertex } = step;
 
   // Expand blossom if current vertex is inside one
   const currentVertexState = state.vertices.get(currentVertex);
@@ -350,8 +354,16 @@ export function processAugmentStep(
     expandBlossom(state, parentBlossomId, currentVertex);
   }
 
-  // Check if we've reached a root AFTER expanding blossoms
-  if (isRoot) {
+  // CRITICAL: Recompute base vertex state AFTER blossom expansion
+  // The vertex may now be at top-level with different base/label properties
+  const [actualBaseVertex, actualBaseState] = getBaseVertexState(
+    state,
+    currentVertex,
+  );
+  const actualIsRoot = isAlternatingTreeRoot(actualBaseState);
+
+  // Check if we've reached a root AFTER expanding blossoms and recomputing
+  if (actualIsRoot) {
     const stopResult: AugmentStepResult = {
       shouldContinue: false,
       nextVertex: NO_NEXT_VERTEX,
@@ -360,10 +372,10 @@ export function processAugmentStep(
   }
 
   // Get the vertex that gave this base its label
-  const labelEnd = baseState.labelEnd;
+  const labelEnd = actualBaseState.labelEnd;
   if (labelEnd === null) {
     throw new Error(
-      `Vertex ${baseVertex} has label ${baseState.label} but no labelEnd`,
+      `Vertex ${actualBaseVertex} has label ${actualBaseState.label} but no labelEnd`,
     );
   }
 
@@ -380,7 +392,7 @@ export function processAugmentStep(
   }
 
   // Match labelEnd with current's base
-  updateMates(state, labelEndBase, baseVertex);
+  updateMates(state, labelEndBase, actualBaseVertex);
 
   // Continue from labelEnd's previous mate
   const continueResult: AugmentStepResult = {

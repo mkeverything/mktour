@@ -15,11 +15,26 @@ import {
 } from '@/lib/client-actions/swiss-generator/bracket-formation';
 import { getInitialOrdering } from '@/lib/client-actions/swiss-generator/ordering';
 import {
+  IS_PAIRING_DEBUG_ENABLED,
+  pairingLogger,
+} from '@/lib/client-actions/swiss-generator/pairing-logger';
+import type {
+  AlterationBracketInfo,
+  AlterationGeneratorInfo,
+  BracketGroupsInfo,
+  PerfectQualityCheckInfo,
+} from '@/lib/client-actions/swiss-generator/pairing-logger';
+import {
   compareQualityReports,
+  computeAllBracketIdeals,
   evaluateAbsoluteCriteria,
   evaluateQualityCriteria,
+  isPerfectQuality,
 } from '@/lib/client-actions/swiss-generator/quality-evaluation';
-import { EvaluatedPairingCandidate } from '@/lib/client-actions/swiss-generator/types';
+import {
+  EvaluatedPairingCandidate,
+  isHeteroBracket,
+} from '@/lib/client-actions/swiss-generator/types';
 import { GameModel } from '@/types/tournaments';
 
 /*
@@ -58,7 +73,31 @@ export function generateSwissRound({
     ([scoreA], [scoreB]) => scoreB - scoreA,
   );
 
-  const currentMovedDownPlayers: ChessTournamentEntity[] = [];
+  // Log round start
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    const formatScoregroupSummary = ([score, sg]: [
+      number,
+      ChessTournamentEntity[],
+    ]) => ({
+      score,
+      count: sg.length,
+    });
+    const scoregroupSummaries = sortedScoregroupPairs.map(
+      formatScoregroupSummary,
+    );
+
+    const roundStartInfo = {
+      playerCount: sortedEntities.length,
+      scoregroupCount: sortedScoregroupPairs.length,
+      scoregroups: scoregroupSummaries,
+    };
+
+    pairingLogger
+      .withMetadata(roundStartInfo)
+      .debug(`Round ${roundNumber} start`);
+  }
+
+  let currentMovedDownPlayers: ChessTournamentEntity[] = [];
   const roundOffset = games.length + 1;
 
   const gamesToInsert: GameModel[] = [];
@@ -68,98 +107,279 @@ export function generateSwissRound({
     if (!shifted) break;
     const [score, scoregroup] = shifted;
 
-    // Calculate bracket parameters
-    const bracketParameters = getParameters(
-      scoregroup,
-      currentMovedDownPlayers,
-    );
+    // Calculate base bracket parameters (theoretical maximum)
+    const baseParameters = getParameters(scoregroup, currentMovedDownPlayers);
+    const calculatedMaxPairs = baseParameters.maxPairs;
 
-    // Construct original bracket groups
-    const originalBracketGroups = constructBracketGroups(
-      scoregroup,
-      currentMovedDownPlayers,
-      bracketParameters,
-    );
+    // Log bracket processing start
+    if (IS_PAIRING_DEBUG_ENABLED) {
+      const isLowestBracket = sortedScoregroupPairs.length === 0;
 
-    // Try different alterations, keeping track of the best valid pairing found
-    const alterationsGenerator = generateAlterations(
-      originalBracketGroups,
-      bracketParameters,
-    );
+      const bracketProcessingInfo = {
+        score,
+        residentCount: scoregroup.length,
+        mdpCount: currentMovedDownPlayers.length,
+        maxPairs: calculatedMaxPairs,
+        isLowestBracket,
+      };
+
+      pairingLogger
+        .withMetadata(bracketProcessingInfo)
+        .debug('Processing bracket');
+    }
 
     // Track the best candidate that passes absolute criteria (C1-C4)
     let bestCandidate: EvaluatedPairingCandidate | null = null;
 
-    let alterationResult = alterationsGenerator.next();
-    while (!alterationResult.done) {
-      const alteredBracketGroups = alterationResult.value;
+    // FIDE Article 3.1.2: MaxPairs can be reduced when no valid pairing exists
+    // In lowest bracket: no reduction allowed (only 1 PAB permitted)
+    // In other brackets: reduce until valid pairing found or 0 pairs
+    const isLowestBracket = sortedScoregroupPairs.length === 0;
+    const minTargetPairs = isLowestBracket ? calculatedMaxPairs : 0;
 
-      // Re-order bracket groups after alterations (preserves group membership)
-      const orderedBracketGroups = reorderBracketGroups(alteredBracketGroups);
+    let targetPairs = calculatedMaxPairs;
+    let foundValidPairing = false;
 
-      // Convert BracketGroups to PairingCandidate using common entry point
-      const candidatePairing = getPairing(
-        orderedBracketGroups,
+    // Try progressively fewer pairs until valid pairing found
+    while (!foundValidPairing && targetPairs >= minTargetPairs) {
+      // Adjust parameters for current targetPairs
+      const bracketParameters = {
+        ...baseParameters,
+        maxPairs: targetPairs,
+        mdpPairingsCount: Math.min(baseParameters.mdpCount, targetPairs),
+      };
+
+      // Construct bracket groups with adjusted parameters
+      const originalBracketGroups = constructBracketGroups(
+        scoregroup,
+        currentMovedDownPlayers,
         bracketParameters,
       );
 
-      // Create evaluation context
-      const evaluationContext = {
+      // Log bracket groups
+      if (IS_PAIRING_DEBUG_ENABLED) {
+        const getPairingNumbers = (entities: ChessTournamentEntity[]) =>
+          entities.map((entity) => entity.pairingNumber);
+
+        const bracketGroupsInfo: BracketGroupsInfo = {
+          targetPairs,
+          S1: getPairingNumbers(originalBracketGroups.S1),
+          S2: getPairingNumbers(originalBracketGroups.S2),
+        };
+
+        if (isHeteroBracket(originalBracketGroups)) {
+          bracketGroupsInfo.S1R = getPairingNumbers(originalBracketGroups.S1R);
+          bracketGroupsInfo.S2R = getPairingNumbers(originalBracketGroups.S2R);
+          bracketGroupsInfo.Limbo = getPairingNumbers(
+            originalBracketGroups.Limbo,
+          );
+        }
+
+        pairingLogger
+          .withMetadata(bracketGroupsInfo)
+          .debug('Bracket groups formed');
+      }
+
+      // Try different alterations at current targetPairs level
+      const alterationsGenerator = generateAlterations(
+        originalBracketGroups,
+        bracketParameters,
+      );
+
+      // Compute ideal values cache for this bracket (for isPerfectQuality check)
+      const bracketPlayers = scoregroup.concat(currentMovedDownPlayers);
+      const bracketContext = {
         currentBracketScore: score,
         roundNumber,
         scoregroupsByScore: sortedScoregroupPairs,
       };
-
-      // Evaluate absolute criteria (C1-C5) for this pairing candidate
-      const absoluteEvaluation = evaluateAbsoluteCriteria(
-        candidatePairing,
-        evaluationContext,
+      const idealsCache = computeAllBracketIdeals(
+        bracketPlayers,
+        bracketContext,
       );
 
-      // Check if all absolute criteria are satisfied
-      if (
-        absoluteEvaluation.c1UniqueOpponents &&
-        absoluteEvaluation.c2UniquePAB &&
-        absoluteEvaluation.c3ColourPreferenceSeparation &&
-        absoluteEvaluation.c4PairingCompatibility
-      ) {
-        // Evaluate quality criteria (C6-C21)
-        const qualityReport = evaluateQualityCriteria(
+      // Debug: track alteration count
+      let alterationCount = 0;
+
+      // Flag to stop searching when perfect pairing found
+      let foundPerfectPairing = false;
+
+      let alterationResult = alterationsGenerator.next();
+      while (!alterationResult.done && !foundPerfectPairing) {
+        alterationCount++;
+
+        const alteredBracketGroups = alterationResult.value;
+
+        // Re-order bracket groups after alterations (preserves group membership)
+        const orderedBracketGroups = reorderBracketGroups(alteredBracketGroups);
+
+        // Log all bracket groups for this alteration
+        if (IS_PAIRING_DEBUG_ENABLED) {
+          const extractPairingNumber = (
+            entity: ChessTournamentEntity,
+          ): number => entity.pairingNumber;
+
+          const alterationBracketInfo: AlterationBracketInfo = {
+            s1PairingNumbers: orderedBracketGroups.S1.map(extractPairingNumber),
+            s2PairingNumbers: orderedBracketGroups.S2.map(extractPairingNumber),
+            alterationNumber: alterationCount,
+          };
+
+          if (isHeteroBracket(orderedBracketGroups)) {
+            alterationBracketInfo.s1rPairingNumbers =
+              orderedBracketGroups.S1R.map(extractPairingNumber);
+            alterationBracketInfo.s2rPairingNumbers =
+              orderedBracketGroups.S2R.map(extractPairingNumber);
+          }
+
+          pairingLogger
+            .withMetadata(alterationBracketInfo)
+            .debug('Alteration bracket');
+        }
+
+        // Convert BracketGroups to PairingCandidate using common entry point
+        const candidatePairing = getPairing(
+          orderedBracketGroups,
+          bracketParameters,
+        );
+
+        // Create evaluation context
+        const evaluationContext = {
+          currentBracketScore: score,
+          roundNumber,
+          scoregroupsByScore: sortedScoregroupPairs,
+        };
+
+        // Evaluate absolute criteria (C1-C4) for this pairing candidate
+        const absoluteEvaluation = evaluateAbsoluteCriteria(
           candidatePairing,
           evaluationContext,
         );
 
-        const currentCandidate: EvaluatedPairingCandidate = {
-          candidate: candidatePairing,
-          report: qualityReport,
-        };
+        // Check if all absolute criteria are satisfied
+        const satisfiesAbsoluteCriteria =
+          absoluteEvaluation.c1UniqueOpponents &&
+          absoluteEvaluation.c2UniquePAB &&
+          absoluteEvaluation.c3ColourPreferenceSeparation &&
+          absoluteEvaluation.c4PairingCompatibility;
 
-        // Keep this candidate if it's the first valid one or better than current best
-        if (
-          bestCandidate === null ||
-          compareQualityReports(currentCandidate.report, bestCandidate.report) <
-            0
-        ) {
-          bestCandidate = currentCandidate;
+        // Log criteria evaluation result
+        if (IS_PAIRING_DEBUG_ENABLED) {
+          const criteriaResultInfo = {
+            alterationNumber: alterationCount,
+            c1Passed: absoluteEvaluation.c1UniqueOpponents,
+            c2Passed: absoluteEvaluation.c2UniquePAB,
+            c3Passed: absoluteEvaluation.c3ColourPreferenceSeparation,
+            c4Passed: absoluteEvaluation.c4PairingCompatibility,
+            allPassed: satisfiesAbsoluteCriteria,
+          };
+
+          pairingLogger
+            .withMetadata(criteriaResultInfo)
+            .debug('Alteration evaluated');
+        }
+
+        if (satisfiesAbsoluteCriteria) {
+          foundValidPairing = true;
+
+          if (IS_PAIRING_DEBUG_ENABLED) {
+            pairingLogger.debug('Evaluating quality criteria');
+          }
+
+          // Evaluate quality criteria (C5-C21)
+          const qualityReport = evaluateQualityCriteria(
+            candidatePairing,
+            evaluationContext,
+          );
+
+          if (IS_PAIRING_DEBUG_ENABLED) {
+            pairingLogger.debug('Quality criteria evaluated');
+          }
+
+          const currentCandidate: EvaluatedPairingCandidate = {
+            candidate: candidatePairing,
+            report: qualityReport,
+          };
+
+          // Keep this candidate if it's the first valid one or better than current best
+          const isFirstValidCandidate = bestCandidate === null;
+          const isBetterThanCurrent =
+            bestCandidate !== null &&
+            compareQualityReports(
+              currentCandidate.report,
+              bestCandidate.report,
+            ) < 0;
+
+          if (isFirstValidCandidate || isBetterThanCurrent) {
+            bestCandidate = currentCandidate;
+
+            if (IS_PAIRING_DEBUG_ENABLED) {
+              pairingLogger.debug('Checking perfect quality');
+            }
+
+            // Early termination: if this pairing has perfect quality, stop searching
+            if (isPerfectQuality(qualityReport, idealsCache)) {
+              foundPerfectPairing = true;
+            }
+
+            if (IS_PAIRING_DEBUG_ENABLED) {
+              const perfectQualityCheckInfo: PerfectQualityCheckInfo = {
+                foundPerfectPairing,
+              };
+              pairingLogger
+                .withMetadata(perfectQualityCheckInfo)
+                .debug('Perfect quality check complete');
+            }
+          }
+        }
+
+        if (IS_PAIRING_DEBUG_ENABLED) {
+          pairingLogger.debug('Getting next alteration');
+        }
+
+        alterationResult = alterationsGenerator.next();
+
+        if (IS_PAIRING_DEBUG_ENABLED) {
+          const alterationGeneratorInfo: AlterationGeneratorInfo = {
+            alterationDone: alterationResult.done ?? false,
+          };
+          pairingLogger
+            .withMetadata(alterationGeneratorInfo)
+            .debug('Next alteration retrieved');
         }
       }
 
-      alterationResult = alterationsGenerator.next();
+      // No valid pairing at current targetPairs, try with fewer pairs
+      if (!foundValidPairing) {
+        if (IS_PAIRING_DEBUG_ENABLED) {
+          pairingLogger
+            .withMetadata({ targetPairs, nextTargetPairs: targetPairs - 1 })
+            .debug('Reducing targetPairs');
+        }
+        targetPairs--;
+      }
     }
 
     if (bestCandidate === null) {
-      // No valid pairing found that satisfies absolute criteria (C1-C4)
+      // No valid pairing found after trying all alterations
       const totalPlayers = scoregroup.length + currentMovedDownPlayers.length;
       const remainingBrackets = sortedScoregroupPairs.length;
 
+      // Log failure before throwing
+      if (IS_PAIRING_DEBUG_ENABLED) {
+        const failureInfo = {
+          score,
+          totalPlayers,
+          remainingBrackets,
+        };
+
+        pairingLogger.withMetadata(failureInfo).debug('Pairing failed');
+      }
+
       throw new Error(
         `Swiss pairing failed at round ${roundNumber} for scoregroup ${score}: ` +
-          `No bracket alteration satisfies absolute criteria (C1-C4). ` +
-          `Possible causes: (1) Tournament completion - all valid pairings exhausted, ` +
-          `(2) Configuration issue - incompatible player pool, ` +
-          `(3) Algorithm limitation. ` +
-          `Diagnostic info: Total players in bracket: ${totalPlayers}, ` +
-          `Downfloaters: ${currentMovedDownPlayers.length}, ` +
+          `No valid pairing found after trying all alterations. ` +
+          `Diagnostic info: Total players: ${totalPlayers}, ` +
           `Remaining brackets: ${remainingBrackets}.`,
       );
     }
@@ -167,8 +387,25 @@ export function generateSwissRound({
     // Use the best candidate found (best quality among those passing absolute criteria)
     const selectedPairing = bestCandidate.candidate;
 
-    // Add downfloaters to moved down players for next bracket
-    currentMovedDownPlayers.push(...selectedPairing.downfloaters);
+    // Log selected pairing
+    if (IS_PAIRING_DEBUG_ENABLED) {
+      const getPairingNumber = (entity: ChessTournamentEntity) =>
+        entity.pairingNumber;
+      const downfloaterPairingNumbers =
+        selectedPairing.downfloaters.map(getPairingNumber);
+
+      const selectedPairingInfo = {
+        score,
+        pairCount: selectedPairing.colouredPairs.length,
+        downfloaterCount: selectedPairing.downfloaters.length,
+        downfloaterPairingNumbers,
+      };
+
+      pairingLogger.withMetadata(selectedPairingInfo).debug('Pairing selected');
+    }
+
+    // Set downfloaters as MDPs for next bracket
+    currentMovedDownPlayers = selectedPairing.downfloaters;
 
     // Collect games from the best candidate
     const allPairs = [...selectedPairing.colouredPairs];
@@ -179,6 +416,18 @@ export function generateSwissRound({
       const game = getGameToInsert(numberedPair, tournamentId, roundNumber);
       gamesToInsert.push(game);
     }
+  }
+
+  // Log round completion
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    const roundCompletionInfo = {
+      roundNumber,
+      gamesGenerated: gamesToInsert.length,
+    };
+
+    pairingLogger
+      .withMetadata(roundCompletionInfo)
+      .debug('Round generation complete');
   }
 
   return gamesToInsert;

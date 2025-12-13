@@ -133,6 +133,25 @@ function assignColourByInitialRule(
   rankedEntities: RankedEntities,
 ): ColouredEntitiesPair {
   const { higherRankedEntity, lowerRankedEntity } = rankedEntities;
+
+  // Round 1 fallback: if higher ranked player has no games, use pairing number rule
+  const isFirstRound = higherRankedEntity.previousGames.length === 0;
+  if (isFirstRound) {
+    // Odd pairing number gets white, even gets black (FIDE default for Round 1)
+    const hasOddPairingNumber = higherRankedEntity.pairingNumber % 2 === 1;
+    if (hasOddPairingNumber) {
+      return {
+        whiteEntity: higherRankedEntity,
+        blackEntity: lowerRankedEntity,
+      };
+    } else {
+      return {
+        whiteEntity: lowerRankedEntity,
+        blackEntity: higherRankedEntity,
+      };
+    }
+  }
+
   const higherInitialColour = getEntityInitialColour(higherRankedEntity);
   const hasOddPairingNumber = higherRankedEntity.pairingNumber % 2 === 1;
 

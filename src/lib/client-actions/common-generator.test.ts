@@ -202,7 +202,38 @@ function countPlayerResults(
 }
 
 /**
+ * Calculates the number of byes (PAB) a player has received
+ *
+ * A player receives a bye when they don't play in a round that others did.
+ * Per FIDE rules, bye recipients receive 1 full point (counted as a win).
+ *
+ * @param playerGamesCount - Number of games this player participated in
+ * @param allGames - All games played so far in the tournament
+ * @returns Number of byes the player received
+ */
+function calculateByeCount(
+  playerGamesCount: number,
+  allGames: GameModel[],
+): number {
+  // If no games exist yet, no byes possible
+  if (allGames.length === 0) {
+    return 0;
+  }
+
+  // Find the maximum round number to determine how many rounds have been played
+  const maxRoundNumber = Math.max(...allGames.map((game) => game.round_number));
+
+  // Byes = rounds played by others minus games this player participated in
+  const byeCount = maxRoundNumber - playerGamesCount;
+
+  return byeCount;
+}
+
+/**
  * Updates a single player's score based on game history
+ *
+ * Includes PAB (bye) points: per FIDE rules, bye recipients receive 1 full point.
+ *
  * @param player - Player to update
  * @param games - All games played so far
  * @returns Updated player with recalculated wins/draws/losses
@@ -217,10 +248,13 @@ function updateSinglePlayerScore(
   // Count results from player's games
   const results = countPlayerResults(player.id, playerGames);
 
-  // Return updated player with new scores
+  // Calculate byes: per FIDE rules, each bye counts as 1 full point (win)
+  const byeCount = calculateByeCount(playerGames.length, games);
+
+  // Return updated player with new scores (including bye points)
   return {
     ...player,
-    wins: results.wins,
+    wins: results.wins + byeCount,
     draws: results.draws,
     losses: results.losses,
   };

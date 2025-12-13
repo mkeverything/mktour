@@ -361,6 +361,25 @@ export function assignLabel(
 }
 
 /**
+ * Checks if a vertex is truly free (unmatched)
+ *
+ * A vertex is free if the vertex itself has no mate. We check the actual
+ * vertex's mate, not its blossom base's mate, to correctly handle cases
+ * where a vertex inside a blossom is matched but its base is not.
+ *
+ * @param state - Current matching state
+ * @param vertexKey - Vertex to check
+ * @returns true if the vertex has no mate
+ */
+function isVertexFree(state: MatchingState, vertexKey: VertexKey): boolean {
+  const vertexState = state.vertices.get(vertexKey);
+  if (vertexState === undefined) {
+    throw new Error(`Vertex ${vertexKey} not found in state`);
+  }
+  return vertexState.mate === null;
+}
+
+/**
  * Scans and labels neighbours of an S-labelled vertex
  *
  * Examines each neighbour edge and takes action:
@@ -398,14 +417,25 @@ export function scanAndLabelNeighbours(
 
       // Case 1: Neighbour is unlabelled
       if (neighbourLabel === Label.NONE) {
-        const neighbourMate = neighbourBaseState.mate;
+        // Check if the ACTUAL VERTEX is free, not its base
+        // This prevents incorrectly treating matched vertices as free
+        // when their blossom base happens to have no mate
+        const neighbourIsFree = isVertexFree(state, neighbour);
 
-        if (neighbourMate === null) {
-          // Neighbour is free - found augmenting path
+        if (neighbourIsFree) {
+          // Neighbour is truly free - found augmenting path
           const edge: ScanAndLabelResult = [vertex, neighbour];
           return edge;
         } else {
           // Neighbour is matched - extend alternating tree by labeling
+          const neighbourState = state.vertices.get(neighbour);
+          if (neighbourState === undefined) {
+            throw new Error(`Neighbour ${neighbour} not found in state`);
+          }
+          const neighbourMate = neighbourState.mate;
+          if (neighbourMate === null) {
+            throw new Error(`Neighbour ${neighbour} should be matched`);
+          }
           assignLabel(state, neighbour, Label.T, vertex);
           assignLabel(state, neighbourMate, Label.S, neighbourBase);
           // Continue scanning (return null at end if nothing else found)

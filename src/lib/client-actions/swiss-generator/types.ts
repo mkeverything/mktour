@@ -48,6 +48,16 @@ export interface HeteroBracketGroups extends HomoBracketGroups {
 export type BracketGroups = HomoBracketGroups | HeteroBracketGroups;
 
 /**
+ * Result of splitting remainder players into S1R and S2R
+ */
+export interface RemainderSplit {
+  /** Upper half of remainder (by pairing number) */
+  readonly S1R: ChessTournamentEntity[];
+  /** Lower half of remainder (by pairing number) */
+  readonly S2R: ChessTournamentEntity[];
+}
+
+/**
  * This interface represents a pairing candidate for Swiss pairing
  * Unified structure for both homogeneous and heterogeneous brackets
  * @interface PairingCandidate

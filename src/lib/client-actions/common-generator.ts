@@ -61,6 +61,7 @@ interface ChessTournamentEntity {
   entityScore: number;
   previousGames: GameModel[];
   floatHistory: FloatHistoryItem[];
+  byeCount: number;
 }
 
 enum ChessTitle {
@@ -98,28 +99,61 @@ type OnlyChild<Child, Parent> = Omit<Child, keyof Parent>;
 type EntitiesPair = [ChessTournamentEntity, ChessTournamentEntity];
 
 /**
+ * Calculates the maximum round number from a list of games
+ * @param games - Array of games to analyse
+ * @returns The highest round number, or 0 if no games
+ */
+function getMaxRoundNumber(games: GameModel[]): number {
+  if (games.length === 0) {
+    return 0;
+  } else {
+    const roundNumbers = games.map((game) => game.round_number);
+    return Math.max(...roundNumbers);
+  }
+}
+
+/**
+ * Calculates the number of byes a player has received
+ * TODO: Verify this bye calculation logic is correct per FIDE rules
+ * @param roundsPlayed - Total rounds played in tournament
+ * @param playerGameCount - Number of games this player has played
+ * @returns Number of byes received (minimum 0)
+ */
+function calculateByeCount(
+  roundsPlayed: number,
+  playerGameCount: number,
+): number {
+  return Math.max(0, roundsPlayed - playerGameCount);
+}
+
+/**
  * This simple converter is taking a joined player info and transforms it to a matched entity
  * @param playerModel a joined representation of player
  */
-<<<<<<< HEAD
-export function convertPlayerToEntity(playerModel: PlayerModel) {
-=======
 export function convertPlayerToEntity(
   playerModel: PlayerModel,
   allGames: GameModel[],
 ) {
->>>>>>> b756e9f6 (added the NNs workflow, and revamped several generator files)
-  if (playerModel.pairingNumber === null)
+  if (playerModel.pairingNumber === null) {
     throw new TypeError('PAIRING_NUMBER_IS_NULL');
-
-  // Calculate tournament score from wins and draws (standard chess scoring: 1 point per win, 0.5 per draw)
-  const entityScore = playerModel.wins + playerModel.draws * 0.5;
+  }
 
   // Filter games involving this player (either as white or black)
   const previousGames = allGames.filter(
     (game) =>
       game.white_id === playerModel.id || game.black_id === playerModel.id,
   );
+
+  // Calculate bye count (rounds where player didn't play = received PAB)
+  const roundsPlayed = getMaxRoundNumber(allGames);
+  const byeCount = calculateByeCount(roundsPlayed, previousGames.length);
+
+  // Calculate tournament score:
+  // - 1 point per win
+  // - 0.5 points per draw
+  // - 1 point per bye (FIDE rules: PAB recipients get full point)
+  const scoreFromGames = playerModel.wins + playerModel.draws * 0.5;
+  const entityScore = scoreFromGames + byeCount;
 
   // #TODO: ADDD THE TITLE LOGIC HERE
   const tournamentEntity: ChessTournamentEntity = {
@@ -133,6 +167,7 @@ export function convertPlayerToEntity(
     entityScore,
     previousGames,
     floatHistory: playerModel.floatHistory || [],
+    byeCount,
   };
   return tournamentEntity;
 }

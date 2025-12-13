@@ -25,52 +25,154 @@ import type {
   BFSSearchStartInfo,
   BlossomCreationInfo,
   EdgeFoundInfo,
+  FreeVertexLabelingInfo,
   GraphStatistics,
   IterationCompletionInfo,
   IterationInfo,
   MatchingResultInfo,
+  MatchingStateInfo,
   QueueProcessingInfo,
 } from './matching-logger';
 import { IS_MATCHING_DEBUG_ENABLED, matchingLogger } from './matching-logger';
 import {
   assignLabel,
   findAlternatingTreeRoot,
+  getBaseVertexState,
   scanAndLabelNeighbours,
 } from './tree-operations';
-import type { MatchingResult, MatchingState } from './types';
+import type {
+  Mate,
+  MatchingResult,
+  MatchingState,
+  ScanFunction,
+  VertexKey,
+} from './types';
 import { Label, NO_MATE } from './types';
 
 // Re-export public API
 export type { VertexKey, Mate, MatchingResult } from './types';
 
 /**
- * Labels all free (unmatched) vertices as S-roots
+ * Builds a snapshot of the current matching state for debug logging
  *
- * Free vertices become roots of alternating trees in the BFS search.
- * Each root's labelEnd points to itself.
+ * Creates a serialisable representation of the matching state including:
+ * - Map of each vertex to its current mate (or null if unmatched)
+ * - Count of matched vertices (vertices with non-null mates)
+ *
+ * This function is used for tracing algorithm behaviour during debugging
+ * sessions, helping identify where the matching state diverges from expected.
+ *
+ * @param state - Current matching state to snapshot
+ * @returns MatchingStateInfo object suitable for structured logging
+ */
+function buildMatchingStateInfo(state: MatchingState): MatchingStateInfo {
+  // Build record mapping vertex keys to their mates
+  // Using Record<VertexKey, Mate> for JSON serialisation compatibility
+  const mates: Record<VertexKey, Mate> = {};
+  let matchedCount = 0;
+
+  for (const [vertexKey, vertexState] of state.vertices) {
+    mates[vertexKey] = vertexState.mate;
+
+    // Count vertices that have a mate assigned
+    const isMatched = vertexState.mate !== null;
+    if (isMatched) {
+      matchedCount++;
+    }
+  }
+
+  const stateInfo: MatchingStateInfo = { mates, matchedCount };
+  return stateInfo;
+}
+
+/**
+ * Finds bases of blossoms that contain at least one matched vertex
+ *
+ * A blossom is considered "matched" if any vertex inside it has a mate.
+ * This is used to exclude such blossoms from being labelled as free roots.
+ *
+ * @param state - Current matching state
+ * @returns Set of base vertex keys for matched blossoms
+ */
+function findMatchedBases(state: MatchingState): Set<VertexKey> {
+  const matchedBases = new Set<VertexKey>();
+
+  for (const [, vertexState] of state.vertices) {
+    const hasMatch = vertexState.mate !== NO_MATE;
+    if (hasMatch) {
+      // Mark this vertex's blossom base as having a matched vertex
+      const [baseKey] = getBaseVertexState(state, vertexState.key);
+      matchedBases.add(baseKey);
+    }
+  }
+
+  return matchedBases;
+}
+
+/**
+ * Labels all free (unmatched) blossoms as S-roots
+ *
+ * A blossom is free if NO vertex inside it is matched. This follows the
+ * NetworkX approach where "if v not in mate" checks the vertex directly,
+ * not its blossom base. This prevents incorrectly labelling base vertices
+ * of blossoms that contain matched non-base vertices.
  *
  * @param state - Current matching state (modified in place)
  */
 function labelFreeVerticesAsRoots(state: MatchingState): void {
+  // Identify blossoms that contain matched vertices (should not be labelled)
+  const matchedBases = findMatchedBases(state);
+  // Track which bases we've already processed to avoid duplicate labelling
+  const labelledBases = new Set<VertexKey>();
+
   for (const [, vertexState] of state.vertices) {
-    const isFreeVertex = vertexState.mate === NO_MATE;
-    if (isFreeVertex) {
-      assignLabel(state, vertexState.key, Label.S, vertexState.key);
+    // Get the top-level blossom base for this vertex
+    const [baseKey] = getBaseVertexState(state, vertexState.key);
+
+    // Determine if this base should be labelled as a free S-root
+    const alreadyProcessed = labelledBases.has(baseKey);
+    const hasMatchedVertex = matchedBases.has(baseKey);
+    const shouldLabel = !alreadyProcessed && !hasMatchedVertex;
+
+    if (shouldLabel) {
+      // Label this free blossom's base as S-root for BFS exploration
+      assignLabel(state, baseKey, Label.S, baseKey);
+      labelledBases.add(baseKey);
     }
+  }
+
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    const labelingInfo: FreeVertexLabelingInfo = {
+      matchedBases: [...matchedBases],
+      labeledRoots: [...labelledBases],
+      queueAfterLabeling: [...state.queue],
+    };
+    matchingLogger
+      .withMetadata(labelingInfo)
+      .debug('Free vertices labeled as S-roots');
   }
 }
 
 /**
- * Performs BFS search for an augmenting path
+ * Generic BFS search for an augmenting path
  *
- * Processes S-labelled vertices from the queue, scanning and labelling
- * their neighbours. Returns true if an augmenting path was found and
- * the matching was augmented.
+ * Processes S-labelled vertices from the queue using the provided scan function.
+ * The scan function determines which edges to consider:
+ * - Cardinality matching: all edges (scanAndLabelNeighbours)
+ * - Weighted matching: only tight edges with slack = 0
  *
- * @param state - Current matching state (modified in place)
+ * When an S-S edge is found:
+ * - Same tree: create blossom and continue scanning
+ * - Different trees: augment matching and return success
+ *
+ * @param state - Matching state (modified in place)
+ * @param scanFn - Function to scan vertex neighbours
  * @returns true if augmenting path found and matching augmented, false otherwise
  */
-function searchForAugmentingPath(state: MatchingState): boolean {
+export function bfsSearchForAugmentingPath<State extends MatchingState>(
+  state: State,
+  scanFn: ScanFunction<State>,
+): boolean {
   if (IS_MATCHING_DEBUG_ENABLED) {
     const searchStartInfo: BFSSearchStartInfo = {
       queueSize: state.queue.length,
@@ -96,7 +198,8 @@ function searchForAugmentingPath(state: MatchingState): boolean {
         .debug('Processing vertex from queue');
     }
 
-    const edge = scanAndLabelNeighbours(state, currentVertex);
+    // Use provided scan function (cardinality vs weighted)
+    const edge = scanFn(state, currentVertex);
 
     if (edge !== null) {
       const [vertexU, vertexV] = edge;
@@ -115,7 +218,8 @@ function searchForAugmentingPath(state: MatchingState): boolean {
       const sameTree = rootU === rootV;
 
       if (sameTree) {
-        // Same tree - create blossom and continue BFS
+        // Same tree - create blossom and continue scanning from same vertex
+        // The blossom contracts the cycle, potentially revealing new edges
         if (IS_MATCHING_DEBUG_ENABLED) {
           const blossomInfo: BlossomCreationInfo = {
             vertexU,
@@ -130,8 +234,13 @@ function searchForAugmentingPath(state: MatchingState): boolean {
 
         addBlossom(state, vertexU, vertexV);
 
+        // Re-add the current vertex to continue scanning its remaining neighbors
+        // After blossom creation, the vertex's base may have changed, and we may
+        // find augmenting paths to other trees through neighbors we haven't checked
+        state.queue.unshift(currentVertex);
+
         if (IS_MATCHING_DEBUG_ENABLED) {
-          matchingLogger.debug('Blossom created, continuing BFS');
+          matchingLogger.debug('Blossom created, re-scanning vertex');
         }
       } else {
         // Different trees - found augmenting path
@@ -220,12 +329,19 @@ export function maximumMatching(graph: Graph): MatchingResult {
 
   // Main loop: keep searching for augmenting paths until none exist
   while (foundAugmentingPath) {
+    iterationNumber++;
+
     if (IS_MATCHING_DEBUG_ENABLED) {
-      iterationNumber++;
       const iterationInfo: IterationInfo = { iterationNumber };
       matchingLogger
         .withMetadata(iterationInfo)
         .debug('Starting main loop iteration');
+
+      // Log current matching state at start of each iteration
+      const stateInfo = buildMatchingStateInfo(state);
+      matchingLogger
+        .withMetadata(stateInfo)
+        .debug('Matching state at iteration start');
     }
 
     // Reset labels and queue for new search stage
@@ -235,7 +351,10 @@ export function maximumMatching(graph: Graph): MatchingResult {
     labelFreeVerticesAsRoots(state);
 
     // BFS search for augmenting path
-    foundAugmentingPath = searchForAugmentingPath(state);
+    foundAugmentingPath = bfsSearchForAugmentingPath(
+      state,
+      scanAndLabelNeighbours,
+    );
 
     if (IS_MATCHING_DEBUG_ENABLED) {
       const completionInfo: IterationCompletionInfo = {

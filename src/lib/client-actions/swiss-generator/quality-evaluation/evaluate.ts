@@ -16,6 +16,15 @@ import {
 import { generateCombinations } from '@/lib/client-actions/swiss-generator/alterations';
 import { maximumMatching } from '@/lib/client-actions/swiss-generator/matching';
 import { compareByScore } from '@/lib/client-actions/swiss-generator/ordering';
+import {
+  IS_PAIRING_DEBUG_ENABLED,
+  pairingLogger,
+} from '@/lib/client-actions/swiss-generator/pairing-logger';
+import type {
+  C8ContextInfo,
+  C8MinDownfloatersInfo,
+  CompatibilityGraphInfo,
+} from '@/lib/client-actions/swiss-generator/pairing-logger';
 import type {
   AbsoluteEvaluationReport,
   BasicAbsoluteEvaluationReport,
@@ -171,13 +180,12 @@ function checkUniquePAB(
   pairingCandidate: PairingCandidate,
   context: EvaluationContext,
 ): boolean {
-  const { currentBracketScore, roundNumber, scoregroupsByScore } = context;
-  const [lowestScore] = scoregroupsByScore[scoregroupsByScore.length - 1];
+  const { roundNumber, scoregroupsByScore } = context;
 
-  if (
-    currentBracketScore !== lowestScore ||
-    pairingCandidate.downfloaters.length === 0
-  ) {
+  // If no remaining scoregroups, current bracket is the lowest
+  const isLowestBracket = scoregroupsByScore.length === 0;
+
+  if (!isLowestBracket || pairingCandidate.downfloaters.length === 0) {
     // C2 is satisfied if: not lowest bracket OR no downfloaters
     return true;
   } else if (pairingCandidate.downfloaters.length === 1) {
@@ -351,10 +359,33 @@ export function calculateMinDownfloaters(
 
   // Build compatibility graph, including PAB if allowed and odd number of players
   const includePab = allowPab && players.length % 2 === 1;
+
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    pairingLogger.debug('Building compatibility graph');
+  }
+
   const graph = buildCompatibilityGraph(players, roundNumber, includePab);
+
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    const serializedGraph = graph.export();
+    const compatibilityGraphInfo: CompatibilityGraphInfo = {
+      graph: serializedGraph,
+    };
+    pairingLogger
+      .withMetadata(compatibilityGraphInfo)
+      .debug('Compatibility graph built');
+  }
+
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    pairingLogger.debug('Running maximum matching');
+  }
 
   // Find maximum matching using our Edmonds' Blossom implementation
   const matching = maximumMatching(graph);
+
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    pairingLogger.debug('Maximum matching complete');
+  }
 
   // Calculate matched nodes
   // Count how many nodes have a non-null mate
@@ -413,7 +444,30 @@ function checkC4Completion(
 
     // Step 4: Check if completion is possible
     // If minDownfloaters is 0, it means all players (except potentially one PAB) can be paired.
-    return minDownfloaters === 0;
+    const c4Passed = minDownfloaters === 0;
+
+    // Debug: Log C4 failure details to understand why future pairing is impossible
+    // Shows which players remain unpaired and what the matching algorithm computed
+    if (IS_PAIRING_DEBUG_ENABLED && !c4Passed) {
+      const extractPairingNumber = (entity: ChessTournamentEntity) =>
+        entity.pairingNumber;
+      const remainingPairingNumbers =
+        remainingPlayers.map(extractPairingNumber);
+      const downfloaterPairingNumbers =
+        pairingCandidate.downfloaters.map(extractPairingNumber);
+
+      const c4FailureInfo = {
+        criterion: 'C4',
+        remainingPlayers: remainingPairingNumbers,
+        downfloaters: downfloaterPairingNumbers,
+        minDownfloaters,
+      };
+      pairingLogger
+        .withMetadata(c4FailureInfo)
+        .debug('C4 failed: completion impossible');
+    }
+
+    return c4Passed;
   }
 }
 
@@ -440,8 +494,43 @@ export function evaluateBasicAbsoluteCriteria(
     (pair) => !havePlayedBefore(pair.whiteEntity, pair.blackEntity),
   );
 
+  // Log C1 details
+  if (IS_PAIRING_DEBUG_ENABLED && !c1UniqueOpponents) {
+    const formatPairConflict = (pair: ColouredEntitiesPair) => [
+      pair.whiteEntity.pairingNumber,
+      pair.blackEntity.pairingNumber,
+    ];
+    const filterPlayedBefore = (pair: ColouredEntitiesPair) =>
+      havePlayedBefore(pair.whiteEntity, pair.blackEntity);
+    const conflictingPairs = allPairs.filter(filterPlayedBefore);
+    const conflicts = conflictingPairs.map(formatPairConflict);
+
+    const c1FailureInfo = { criterion: 'C1', conflicts };
+    pairingLogger
+      .withMetadata(c1FailureInfo)
+      .debug('C1 failed: pairs played before');
+  }
+
   // C2: Check that no player receives PAB twice or multiple point-scoring rounds without playing
   const c2UniquePAB = checkUniquePAB(pairingCandidate, context);
+
+  // Log C2 details
+  if (IS_PAIRING_DEBUG_ENABLED && !c2UniquePAB) {
+    const isLowestBracket = context.scoregroupsByScore.length === 0;
+    const pabRecipient = pairingCandidate.downfloaters[0];
+    const expectedGameCount = roundNumber - 1;
+
+    const c2FailureInfo = {
+      criterion: 'C2',
+      isLowestBracket,
+      pabRecipientPairingNumber: pabRecipient?.pairingNumber,
+      pabRecipientGames: pabRecipient?.previousGames.length,
+      expectedGameCount,
+    };
+    pairingLogger
+      .withMetadata(c2FailureInfo)
+      .debug('C2 failed: PAB recipient ineligible');
+  }
 
   // C3: Check that non-topscorers with same absolute colour preference shall not meet
   const c3ColourPreferenceSeparation = evaluateC3ColourPreferenceSeparation(
@@ -470,12 +559,27 @@ export function evaluateAbsoluteCriteria(
   context: EvaluationContext,
 ): AbsoluteEvaluationReport {
   const { roundNumber, scoregroupsByScore } = context;
-  // Get basic criteria (C1-C3)
+
+  // Get basic criteria (C1-C3) first - these are cheap
   const basicCriteria = evaluateBasicAbsoluteCriteria(
     pairingCandidate,
     context,
   );
 
+  // Short-circuit: if any basic criterion fails, skip expensive C4 check
+  const satisfiesBasicCriteria =
+    basicCriteria.c1UniqueOpponents &&
+    basicCriteria.c2UniquePAB &&
+    basicCriteria.c3ColourPreferenceSeparation;
+
+  if (!satisfiesBasicCriteria) {
+    return {
+      ...basicCriteria,
+      c4PairingCompatibility: false,
+    };
+  }
+
+  // Only run expensive C4 check if basic criteria pass
   return {
     ...basicCriteria,
     c4PairingCompatibility: checkC4Completion(
@@ -502,13 +606,12 @@ function evaluateC5MinimisePabScore(
   pairingCandidate: PairingCandidate,
   context: EvaluationContext,
 ): number {
-  const { currentBracketScore, scoregroupsByScore } = context;
-  const [lowestScore] = scoregroupsByScore[scoregroupsByScore.length - 1];
+  const { scoregroupsByScore } = context;
 
-  if (
-    currentBracketScore !== lowestScore ||
-    pairingCandidate.downfloaters.length === 0
-  ) {
+  // If no remaining scoregroups, current bracket is the lowest
+  const isLowestBracket = scoregroupsByScore.length === 0;
+
+  if (!isLowestBracket || pairingCandidate.downfloaters.length === 0) {
     // C5 is satisfied if: not lowest bracket OR no downfloaters in lowest bracket
     // Return 0 as "no PAB cost"
     return 0;
@@ -630,6 +733,17 @@ function evaluateC8FutureCriteriaCompliance(
   const currentDownfloaters = pairingCandidate.downfloaters;
   const nextBracketPlayers = [...nextScoreGroup, ...currentDownfloaters];
 
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    const c8ContextInfo: C8ContextInfo = {
+      nextBracketPlayerCount: nextBracketPlayers.length,
+      currentDownfloaterCount: currentDownfloaters.length,
+      remainingScoregroups: scoregroupsByScore.length,
+    };
+    pairingLogger
+      .withMetadata(c8ContextInfo)
+      .debug('C8: calculating min downfloaters');
+  }
+
   // PAB is only allowed if this is the last bracket
   const isLastBracket = scoregroupsByScore.length === 1;
   const minDownfloaterCount = calculateMinDownfloaters(
@@ -638,8 +752,21 @@ function evaluateC8FutureCriteriaCompliance(
     isLastBracket,
   );
 
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    const c8MinDownfloatersInfo: C8MinDownfloatersInfo = {
+      minDownfloaterCount,
+    };
+    pairingLogger
+      .withMetadata(c8MinDownfloatersInfo)
+      .debug('C8: min downfloaters calculated');
+  }
+
   if (minDownfloaterCount === 0) {
     return { pabScore: 0, downfloaterCount: 0, downfloaterScores: [] };
+  }
+
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    pairingLogger.debug('C8: finding optimal downfloater scores');
   }
 
   // Find optimal downfloater set
@@ -649,6 +776,10 @@ function evaluateC8FutureCriteriaCompliance(
     roundNumber,
     isLastBracket,
   );
+
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    pairingLogger.debug('C8: optimal downfloater scores found');
+  }
 
   if (optimalScores === null) {
     throw new Error(
@@ -1154,20 +1285,35 @@ export function evaluateQualityCriteria(
   pairingCandidate: PairingCandidate,
   context: EvaluationContext,
 ): QualityEvaluationReport {
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    pairingLogger.debug('C5-C7 evaluation starting');
+  }
+
+  const c5Result = evaluateC5MinimisePabScore(pairingCandidate, context);
+  const c6Result = evaluateC6MinimiseDownfloaters(pairingCandidate, context);
+  const c7Result = evaluateC7MinimiseDownfloaterScores(
+    pairingCandidate,
+    context,
+  );
+
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    pairingLogger.debug('C8 evaluation starting');
+  }
+
+  const c8Result = evaluateC8FutureCriteriaCompliance(
+    pairingCandidate,
+    context,
+  );
+
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    pairingLogger.debug('C9-C21 evaluation starting');
+  }
+
   const qualityReport: QualityEvaluationReport = {
-    c5MinimisePabScore: evaluateC5MinimisePabScore(pairingCandidate, context),
-    c6MinimiseDownfloaters: evaluateC6MinimiseDownfloaters(
-      pairingCandidate,
-      context,
-    ),
-    c7MinimiseDownfloaterScores: evaluateC7MinimiseDownfloaterScores(
-      pairingCandidate,
-      context,
-    ),
-    c8FutureCriteriaCompliance: evaluateC8FutureCriteriaCompliance(
-      pairingCandidate,
-      context,
-    ),
+    c5MinimisePabScore: c5Result,
+    c6MinimiseDownfloaters: c6Result,
+    c7MinimiseDownfloaterScores: c7Result,
+    c8FutureCriteriaCompliance: c8Result,
     c9MinimisePabUnplayed: evaluateC9MinimisePabUnplayed(
       pairingCandidate,
       context,
