@@ -29,9 +29,13 @@ import type {
   GraphEdgeKey,
   NodeId,
   VertexKey,
+  VertexState,
   WeightedMatchingState,
 } from './types';
 import { Label, ZERO_DUAL } from './types';
+
+/** Tuple of vertex key and its state, from Map.entries() */
+type VertexEntry = [VertexKey, VertexState];
 
 /** Divisor for S→S edges and blossom duals (both sides change) */
 const DUAL_CHANGE_DIVISOR = 2n;
@@ -173,8 +177,8 @@ export function computeBlossomDelta(
 /** Source identifier for delta computation */
 type DeltaSourceId = GraphEdgeKey | BlossomId;
 
-/** Union of all concrete delta types */
-type AnyDelta = EdgeDelta | BlossomDelta;
+/** Union of all concrete delta types (edge tightening or blossom expansion) */
+export type AnyDelta = EdgeDelta | BlossomDelta;
 
 /**
  * Collects applicable deltas by computing for each source ID
@@ -396,4 +400,124 @@ export function applyDualUpdates(
 
     state.duals.set(nodeInfo.nodeId, newDual);
   }
+}
+
+/**
+ * Computes the minimum delta across all edge and blossom deltas
+ *
+ * This determines the next dual update step:
+ * - EdgeDelta: edge becomes tight, retry BFS
+ * - BlossomDelta: blossom dual reaches zero, expand blossom
+ * - null: no more updates possible (matching complete)
+ *
+ * @param state - Weighted matching state
+ * @param graph - Graphology graph
+ * @returns The minimum delta (edge or blossom), or null if none applicable
+ */
+export function computeMinimumDelta(
+  state: WeightedMatchingState,
+  graph: Graph,
+): AnyDelta | null {
+  // Collect all deltas from both sources
+  const edgeDeltas = collectEdgeDeltas(state, graph);
+  const blossomDeltas = collectBlossomDeltas(state, graph);
+
+  // Combine into single array and find minimum
+  const allDeltas: AnyDelta[] = [...edgeDeltas, ...blossomDeltas];
+
+  return findMinimumDelta(allDeltas);
+}
+
+/**
+ * Checks if a vertex entry has S-label
+ */
+function isSLabelledVertex(entry: VertexEntry): boolean {
+  const [, vertexState] = entry;
+  return vertexState.label === Label.S;
+}
+
+/**
+ * Filters vertices to only S-labelled ones
+ *
+ * @param state - Weighted matching state
+ * @returns Array of vertex entries for S-labelled vertices
+ */
+function filterSLabelledVertices(state: WeightedMatchingState): VertexEntry[] {
+  const allVertices = Array.from(state.vertices.entries());
+  return allVertices.filter(isSLabelledVertex);
+}
+
+/**
+ * Extracts dual values for a list of vertices
+ *
+ * @param state - Weighted matching state
+ * @param vertexEntries - Vertex entries to extract duals for
+ * @returns Array of dual values
+ * @throws If any vertex is missing its dual
+ */
+function extractDualsForVertices(
+  state: WeightedMatchingState,
+  vertexEntries: VertexEntry[],
+): DualVariable[] {
+  const duals: DualVariable[] = [];
+
+  for (const [vertexKey] of vertexEntries) {
+    const dual = state.duals.get(vertexKey);
+
+    if (dual === undefined) {
+      throw new Error(`Dual not found for S-vertex ${vertexKey}`);
+    }
+
+    duals.push(dual);
+  }
+
+  return duals;
+}
+
+/**
+ * Finds minimum value in a list of duals
+ *
+ * @param duals - Non-empty array of dual values
+ * @returns The minimum dual value
+ */
+function findMinimumDual(duals: DualVariable[]): DualVariable {
+  const selectSmaller = (
+    currentMin: DualVariable,
+    dual: DualVariable,
+  ): DualVariable => {
+    if (dual < currentMin) {
+      return dual;
+    } else {
+      return currentMin;
+    }
+  };
+
+  return duals.reduce(selectSmaller);
+}
+
+/**
+ * Computes the termination bound (delta1) - minimum S-vertex dual
+ *
+ * This is the smallest dual value among S-labelled vertices.
+ * When this reaches zero, no more augmenting paths are possible
+ * and the algorithm should terminate.
+ *
+ * Unlike delta2/delta3/delta4, this doesn't produce an actionable event
+ * (no edge to tighten or blossom to expand), it's purely a termination check.
+ *
+ * @param state - Weighted matching state
+ * @returns Minimum S-vertex dual, or null if no S-vertices exist
+ */
+export function computeTerminationBound(
+  state: WeightedMatchingState,
+): DualVariable | null {
+  const sVertices = filterSLabelledVertices(state);
+
+  if (sVertices.length === 0) {
+    return null;
+  }
+
+  const sVertexDuals = extractDualsForVertices(state, sVertices);
+
+  return findMinimumDual(sVertexDuals);
 }

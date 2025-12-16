@@ -9,6 +9,8 @@
 
 import { ConsoleTransport, LogLayer } from 'loglayer';
 
+import type { DualVariable } from './types';
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -265,4 +267,32 @@ export interface MatchingStateInfo {
 
   /** Number of matched vertices */
   readonly matchedCount: number;
+}
+
+// ============================================================================
+// Weighted Matching Debug Interfaces
+// ============================================================================
+
+/**
+ * Weighted BFS iteration information for logging
+ */
+export interface WeightedBFSIterationInfo {
+  /** Current queue size */
+  readonly queueSize: number;
+}
+
+/**
+ * Delta computation result for logging
+ */
+export interface DeltaComputationInfo {
+  /** Delta value */
+  readonly deltaValue: DualVariable | null;
+}
+
+/**
+ * Queue state after requeue for logging
+ */
+export interface RequeueInfo {
+  /** Queue size after requeuing S-labelled vertices */
+  readonly queueSizeAfterRequeue: number;
 }

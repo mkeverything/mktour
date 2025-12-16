@@ -13,17 +13,33 @@
 import Graph from 'graphology';
 
 import { clearBestEdges, scanVertexForBestEdges } from './best-edge';
+import { expandBlossom } from './blossom';
+import {
+  applyDualUpdates,
+  computeMinimumDelta,
+  computeTerminationBound,
+} from './dual-updates';
 import { bfsSearchForAugmentingPath } from './index';
 import { resetLabels } from './initialization';
+import {
+  IS_MATCHING_DEBUG_ENABLED,
+  matchingLogger,
+  type DeltaComputationInfo,
+  type RequeueInfo,
+  type WeightedBFSIterationInfo,
+} from './matching-logger';
 import { assignLabel, getBaseVertexState } from './tree-operations';
 import { initialiseWeightedState, isEdgeTight } from './weighted-operations';
 import type {
+  DualVariable,
   MatchingResult,
   ScanAndLabelResult,
   VertexKey,
   WeightedMatchingState,
+  WeightedScanFunction,
 } from './types';
-import { Label, NO_MATE } from './types';
+import { isBlossomDelta, Label, NO_MATE, ZERO_DUAL } from './types';
+import type { AnyDelta } from './dual-updates';
 
 /**
  * Finds bases of blossoms that contain at least one matched vertex
@@ -87,31 +103,65 @@ function resetLabelsForStage(state: WeightedMatchingState): void {
 /**
  * Processes a single neighbour on a tight edge
  *
- * Labels unlabelled neighbours as T. Returns the neighbour key
- * if it's S-labelled (indicating potential blossom or augmenting path).
+ * Mirrors scanAndLabelNeighbours logic from tree-operations.ts but for single neighbor.
+ * Handles four cases:
+ * - Same blossom: skip (internal blossom edge)
+ * - S-labelled: return for caller to check blossom vs augmenting path
+ * - Unlabelled free: found augmenting path endpoint
+ * - Unlabelled matched: extend tree (label T, label mate S)
+ * - T-labelled: skip
  *
  * @param state - Weighted matching state (modified in place)
  * @param currentVertex - S-labelled vertex scanning from
  * @param neighbourKey - Neighbour to process
- * @returns Neighbour key if S-labelled, null otherwise
+ * @returns Neighbour key if S-labelled or free, null otherwise
  */
 function processTightNeighbour(
   state: WeightedMatchingState,
   currentVertex: VertexKey,
   neighbourKey: VertexKey,
 ): VertexKey | null {
+  const [currentBase] = getBaseVertexState(state, currentVertex);
   const [neighbourBase, neighbourBaseState] = getBaseVertexState(
     state,
     neighbourKey,
   );
+
+  const isSameBlossom = currentBase === neighbourBase;
   const neighbourLabel = neighbourBaseState.label;
 
   let result: VertexKey | null = null;
 
-  if (neighbourLabel === Label.S) {
+  if (isSameBlossom) {
+    // Skip edges within the same blossom (internal edges)
+    result = null;
+  } else if (neighbourLabel === Label.S) {
     result = neighbourKey;
   } else if (neighbourLabel === Label.NONE) {
-    assignLabel(state, neighbourBase, Label.T, currentVertex);
+    // Get actual vertex state to check mate (not base state)
+    const neighbourState = state.vertices.get(neighbourKey);
+
+    if (neighbourState === undefined) {
+      throw new Error(`Neighbour ${neighbourKey} not found in state`);
+    }
+
+    const neighbourIsFree = neighbourState.mate === NO_MATE;
+
+    if (neighbourIsFree) {
+      // Free vertex: found augmenting path endpoint
+      result = neighbourKey;
+    } else {
+      // Matched vertex: extend alternating tree
+      // Label neighbour as T, its mate as S (adds mate to queue)
+      const neighbourMate = neighbourState.mate;
+
+      if (neighbourMate === null) {
+        throw new Error(`Neighbour ${neighbourKey} should be matched`);
+      }
+
+      assignLabel(state, neighbourKey, Label.T, currentVertex);
+      assignLabel(state, neighbourMate, Label.S, neighbourBase);
+    }
   }
   // T-labelled: already in tree, result stays null
 
@@ -184,14 +234,187 @@ function scanTightNeighbours(
         currentVertex,
         neighbourKey,
       );
-      foundSEdge = sNeighbour !== null;
-
-      if (foundSEdge) {
+      if (sNeighbour !== null) {
         // S-S edge: potential blossom or augmenting path
+        foundSEdge = true;
         result = [currentVertex, sNeighbour];
       }
 
       index++;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Result of a single search stage
+ */
+enum StageResult {
+  /** Augmenting path found and matching updated */
+  PATH_FOUND = 'PATH_FOUND',
+  /** No path found and no more deltas possible */
+  NO_MORE_DELTAS = 'NO_MORE_DELTAS',
+}
+
+/**
+ * Applies delta update and handles blossom expansion if needed
+ *
+ * @param state - Weighted matching state (modified in place)
+ * @param delta - The delta to apply
+ */
+function applyDeltaAndExpand(
+  state: WeightedMatchingState,
+  delta: AnyDelta,
+): void {
+  // Update all dual variables
+  applyDualUpdates(state, delta.delta);
+
+  // If delta was from a T-blossom reaching zero, expand it
+  if (isBlossomDelta(delta)) {
+    const blossom = state.blossoms.get(delta.blossomId);
+    if (blossom === undefined) {
+      throw new Error(`Blossom ${delta.blossomId} not found for expansion`);
+    }
+    expandBlossom(state, delta.blossomId, blossom.base);
+  }
+}
+
+/**
+ * Creates a scan function for tight edges with graph bound
+ *
+ * Factory pattern to avoid creating closures on each BFS call.
+ * The returned function scans only tight edges (slack = 0).
+ *
+ * @param graph - Graphology graph to bind
+ * @returns WeightedScanFunction with graph captured
+ */
+function createTightEdgeScan(graph: Graph): WeightedScanFunction {
+  return (state, vertex) => scanTightNeighbours(state, graph, vertex);
+}
+
+/**
+ * Re-adds all S-labelled vertices to the queue for continued BFS
+ *
+ * Called after delta update to ensure BFS can explore newly tight edges.
+ *
+ * @param state - Weighted matching state (queue modified in place)
+ */
+function requeueSLabelledVertices(state: WeightedMatchingState): void {
+  state.queue = [];
+
+  for (const [vertexKey, vertexState] of state.vertices) {
+    if (vertexState.label === Label.S) {
+      state.queue.push(vertexKey);
+    }
+  }
+}
+
+/**
+ * Determines if the search should terminate
+ *
+ * Termination occurs when:
+ * - No delta exists (minDelta is null)
+ * - No S-vertices exist (terminationBound is null)
+ * - Delta is zero (edge already tight but unusable - internal to blossom)
+ * - Termination bound is smaller or equal to minDelta (S-vertex dual would go negative)
+ *
+ * @param minDelta - Minimum delta from edges/blossoms, or null
+ * @param terminationBound - Minimum S-vertex dual, or null
+ * @returns true if search should terminate
+ */
+function shouldTerminateSearch(
+  minDelta: AnyDelta | null,
+  terminationBound: DualVariable | null,
+): boolean {
+  let shouldTerminate: boolean;
+
+  if (minDelta === null) {
+    // No delta means no more updates possible
+    shouldTerminate = true;
+  } else if (terminationBound === null) {
+    // No S-vertices means nothing to update
+    shouldTerminate = true;
+  } else if (minDelta.delta === ZERO_DUAL) {
+    // Delta zero means edge is already tight but unusable (internal to blossom)
+    // Applying delta 0 won't make progress, so terminate
+    shouldTerminate = true;
+  } else {
+    // If termination bound is smaller or equal, applying minDelta would make duals negative
+    shouldTerminate = terminationBound <= minDelta.delta;
+  }
+
+  return shouldTerminate;
+}
+
+/**
+ * Performs one search stage: BFS on tight edges with delta updates when stuck
+ *
+ * Keeps applying delta updates until either:
+ * - An augmenting path is found (returns PATH_FOUND)
+ * - No more delta updates possible (returns NO_MORE_DELTAS)
+ *
+ * @param state - Weighted matching state (modified in place)
+ * @param graph - Graphology graph
+ * @param scanFn - Scan function for tight edges
+ * @returns Stage result indicating what happened
+ */
+function performSearchStage(
+  state: WeightedMatchingState,
+  graph: Graph,
+  scanFn: WeightedScanFunction,
+): StageResult {
+  let result: StageResult | null = null;
+
+  while (result === null) {
+    if (IS_MATCHING_DEBUG_ENABLED) {
+      const iterationInfo: WeightedBFSIterationInfo = {
+        queueSize: state.queue.length,
+      };
+      matchingLogger
+        .withMetadata(iterationInfo)
+        .debug('Weighted BFS iteration starting');
+    }
+
+    const foundPath = bfsSearchForAugmentingPath(state, scanFn);
+
+    if (foundPath) {
+      if (IS_MATCHING_DEBUG_ENABLED) {
+        matchingLogger.debug('Augmenting path found');
+      }
+      result = StageResult.PATH_FOUND;
+    } else {
+      // Stuck: try to make new edges tight via delta update
+      const minDelta = computeMinimumDelta(state, graph);
+      const terminationBound = computeTerminationBound(state);
+
+      if (IS_MATCHING_DEBUG_ENABLED) {
+        const deltaValue = minDelta !== null ? minDelta.delta : null;
+        const deltaInfo: DeltaComputationInfo = { deltaValue };
+        matchingLogger
+          .withMetadata(deltaInfo)
+          .debug('Delta computation result');
+      }
+
+      // Check termination: if termination bound is smallest, no more paths exist
+      const shouldTerminate = shouldTerminateSearch(minDelta, terminationBound);
+
+      if (shouldTerminate) {
+        result = StageResult.NO_MORE_DELTAS;
+      } else if (minDelta !== null) {
+        applyDeltaAndExpand(state, minDelta);
+        // Re-add S-labelled vertices to queue to explore newly tight edges
+        requeueSLabelledVertices(state);
+
+        if (IS_MATCHING_DEBUG_ENABLED) {
+          const requeueInfo: RequeueInfo = {
+            queueSizeAfterRequeue: state.queue.length,
+          };
+          matchingLogger
+            .withMetadata(requeueInfo)
+            .debug('Requeued S-labelled vertices');
+        }
+      }
     }
   }
 
@@ -227,28 +450,23 @@ function extractMatchingResult(state: WeightedMatchingState): MatchingResult {
  * @param graph - Graphology graph with BigInt 'weight' edge attributes
  * @returns Map from vertex key to matched partner (or null if unmatched)
  */
-export function maximumWeightMatching(graph: Graph): MatchingResult {
+export function maximumWeightMatching(inputGraph: Graph): MatchingResult {
+  // Copy graph to avoid mutating caller's data (algorithm doubles weights internally)
+  const graph = inputGraph.copy();
   const state = initialiseWeightedState(graph);
+  const scanTightEdges = createTightEdgeScan(graph);
 
-  // Wrapper to capture graph in closure for scanTightNeighbours
-  const scanTightEdges = (
-    s: WeightedMatchingState,
-    v: VertexKey,
-  ): ScanAndLabelResult => scanTightNeighbours(s, graph, v);
+  // Main loop: find augmenting paths until no more exist
+  let hasMoreWork = true;
 
-  let foundAugmentingPath = true;
-
-  while (foundAugmentingPath) {
-    // Reset for new search stage
+  while (hasMoreWork) {
+    // Prepare for new search stage
     resetLabelsForStage(state);
-
-    // Label free vertices as S-roots
     labelFreeVerticesAsRoots(state);
 
-    // Search for augmenting path on tight edges only
-    foundAugmentingPath = bfsSearchForAugmentingPath(state, scanTightEdges);
-
-    // TODO: If stuck (no augmenting path on tight edges), compute delta and update duals
+    // Perform search with delta updates
+    const stageResult = performSearchStage(state, graph, scanTightEdges);
+    hasMoreWork = stageResult === StageResult.PATH_FOUND;
   }
 
   return extractMatchingResult(state);

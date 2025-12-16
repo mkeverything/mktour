@@ -283,6 +283,13 @@ export interface WeightedMatchingState extends MatchingState {
 }
 
 /**
+ * Scan function specialised for weighted matching
+ *
+ * Scans only tight edges (slack = 0) from S-labelled vertices.
+ */
+export type WeightedScanFunction = ScanFunction<WeightedMatchingState>;
+
+/**
  * Base interface for all delta results
  *
  * Used when only the delta value matters (e.g., comparisons).
