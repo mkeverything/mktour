@@ -27,7 +27,7 @@ import type {
 import { ZERO_DUAL } from './types';
 
 /** Attribute name for edge weight in graphology */
-const EDGE_WEIGHT_ATTRIBUTE = 'weight';
+export const EDGE_WEIGHT_ATTRIBUTE = 'weight';
 
 /** Factor for doubling weights to avoid division in dual updates */
 const WEIGHT_DOUBLING_FACTOR = 2n;

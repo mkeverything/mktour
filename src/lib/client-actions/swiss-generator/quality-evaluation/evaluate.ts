@@ -41,17 +41,15 @@ import {
   willHaveSameColourThreeTimes,
 } from './ideal-computation';
 import type { MdpPairingFilterCriterion, ViolationChecker } from './types';
+import {
+  WHITE_COLOUR_CHANGE,
+  BLACK_COLOUR_CHANGE,
+  PAB_NODE_ID,
+  TOPSCORER_THRESHOLD,
+} from '@/lib/client-actions/swiss-generator/constants';
 
-// ============================================================================
-// Constants
-// ============================================================================
-
-/** Constant for colour changes */
-const WHITE_COLOUR_CHANGE = 1;
-const BLACK_COLOUR_CHANGE = -1;
-
-/** Constant for PAB (Pairing Allocated Bye) node identifier in compatibility graphs */
-const PAB_NODE_ID = 'PAB';
+// Re-export PAB_NODE_ID for backwards compatibility
+export { PAB_NODE_ID };
 
 // ============================================================================
 // Helper Functions for Absolute Criteria
@@ -63,7 +61,7 @@ const PAB_NODE_ID = 'PAB';
  * @param secondEntity - Second chess tournament entity
  * @returns true if they have played before, false otherwise
  */
-function havePlayedBefore(
+export function havePlayedBefore(
   firstEntity: ChessTournamentEntity,
   secondEntity: ChessTournamentEntity,
 ): boolean {
@@ -81,7 +79,7 @@ function havePlayedBefore(
  * @param roundNumber - Current round number for threshold calculation
  * @returns Array of entities that are not topscorers
  */
-function getNonTopscorers(
+export function getNonTopscorers(
   entities: ChessTournamentEntity[],
   roundNumber: number,
 ): ChessTournamentEntity[] {
@@ -97,13 +95,30 @@ function getNonTopscorers(
  * @param roundNumber - Current round number for threshold calculation
  * @returns Array of entities that are topscorers
  */
-function getTopscorers(
+export function getTopscorers(
   entities: ChessTournamentEntity[],
   roundNumber: number,
 ): ChessTournamentEntity[] {
   const maxPossibleScore = roundNumber - 1;
-  const threshold = maxPossibleScore * 0.5;
+  const threshold = maxPossibleScore * TOPSCORER_THRESHOLD;
   return entities.filter((entity) => entity.entityScore > threshold);
+}
+
+/**
+ * Checks if a single entity is a topscorer.
+ *
+ * A topscorer has score > maxPossibleScore × TOPSCORER_THRESHOLD (50%).
+ *
+ * @param entity - The entity to check
+ * @param maxPossibleScore - Maximum possible score (roundNumber - 1)
+ * @returns True if entity is a topscorer
+ */
+export function isTopscorer(
+  entity: ChessTournamentEntity,
+  maxPossibleScore: number,
+): boolean {
+  const threshold = maxPossibleScore * TOPSCORER_THRESHOLD;
+  return entity.entityScore > threshold;
 }
 
 /**
@@ -113,7 +128,7 @@ function getTopscorers(
  * @param secondEntity - Second chess tournament entity
  * @returns true if both have same absolute colour preference sign
  */
-function haveSameAbsoluteColourPreference(
+export function haveSameAbsoluteColourPreference(
   firstEntity: ChessTournamentEntity,
   secondEntity: ChessTournamentEntity,
 ): boolean {
@@ -238,7 +253,7 @@ function collectRemainingPlayers(
  * @param nonTopscorers - Array of non-topscorer entities
  * @returns true if players can be paired (don't violate C3)
  */
-function areEntitiesCompatibleByC3(
+export function areEntitiesCompatibleByC3(
   firstEntity: ChessTournamentEntity,
   secondEntity: ChessTournamentEntity,
   nonTopscorers: ChessTournamentEntity[],
@@ -264,7 +279,7 @@ function areEntitiesCompatibleByC3(
  * @param roundNumber - Current round number
  * @returns true if entity can receive PAB
  */
-function canEntityReceivePAB(
+export function canEntityReceivePAB(
   entity: ChessTournamentEntity,
   roundNumber: number,
 ): boolean {
@@ -855,7 +870,7 @@ function countPairingViolations(
  * @param colourChange - +1 for White, -1 for Black
  * @returns true if the new colour difference is invalid (>2 or <-2)
  */
-function isColourDiffViolated(
+export function isColourDiffViolated(
   entity: ChessTournamentEntity,
   colourChange: number,
 ): boolean {
@@ -869,7 +884,7 @@ function isColourDiffViolated(
  * @param topscorers - List of topscorers
  * @returns Number of violations (0, 1, or 2)
  */
-function countC10ViolationsInPair(
+export function countC10ViolationsInPair(
   pair: ColouredEntitiesPair,
   topscorers: ChessTournamentEntity[],
 ): number {
@@ -925,7 +940,7 @@ function evaluateC10MinimiseColourDiffViolation(
  * @param topscorers - List of topscorers
  * @returns Number of violations (0, 1, or 2)
  */
-function countC11ViolationsInPair(
+export function countC11ViolationsInPair(
   pair: ColouredEntitiesPair,
   topscorers: ChessTournamentEntity[],
 ): number {
@@ -979,7 +994,7 @@ function evaluateC11MinimiseSameColourThreeTimes(
  * @param pair - The pair to check
  * @returns Number of violations (0, 1, or 2)
  */
-function countC12ViolationsInPair(pair: ColouredEntitiesPair): number {
+export function countC12ViolationsInPair(pair: ColouredEntitiesPair): number {
   let violations = 0;
   // White player: Wants White if colourIndex < 0. Gets White.
   // Violation if colourIndex > 0 (wanted Black).
@@ -1011,7 +1026,7 @@ function evaluateC12MinimiseColourPrefViolation(
  * @param pair - The pair to check
  * @returns Number of violations (0, 1, or 2)
  */
-function countC13ViolationsInPair(pair: ColouredEntitiesPair): number {
+export function countC13ViolationsInPair(pair: ColouredEntitiesPair): number {
   let violations = 0;
   // White player: Gets White. Violation if colourIndex >= 1 (Strongly wants Black).
   if (pair.whiteEntity.colourIndex >= 1) violations++;
