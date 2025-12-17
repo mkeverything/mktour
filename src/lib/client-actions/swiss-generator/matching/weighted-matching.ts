@@ -13,13 +13,16 @@
 import Graph from 'graphology';
 
 import { clearBestEdges, scanVertexForBestEdges } from './best-edge';
+import {
+  bfsSearchForAugmentingPath,
+  labelFreeVerticesAsRoots,
+} from './bfs-search';
 import { expandBlossom } from './blossom';
 import {
   applyDualUpdates,
   computeMinimumDelta,
   computeTerminationBound,
 } from './dual-updates';
-import { bfsSearchForAugmentingPath } from './index';
 import { resetLabels } from './initialization';
 import {
   IS_MATCHING_DEBUG_ENABLED,
@@ -29,7 +32,11 @@ import {
   type WeightedBFSIterationInfo,
 } from './matching-logger';
 import { assignLabel, getBaseVertexState } from './tree-operations';
-import { initialiseWeightedState, isEdgeTight } from './weighted-operations';
+import {
+  addWeightedBlossom,
+  initialiseWeightedState,
+  isEdgeTight,
+} from './weighted-operations';
 import type {
   DualVariable,
   MatchingResult,
@@ -40,52 +47,6 @@ import type {
 } from './types';
 import { isBlossomDelta, Label, NO_MATE, ZERO_DUAL } from './types';
 import type { AnyDelta } from './dual-updates';
-
-/**
- * Finds bases of blossoms that contain at least one matched vertex
- *
- * @param state - Current matching state
- * @returns Set of base vertex keys for matched blossoms
- */
-function findMatchedBases(state: WeightedMatchingState): Set<VertexKey> {
-  const matchedBases = new Set<VertexKey>();
-
-  for (const [, vertexState] of state.vertices) {
-    const hasMatch = vertexState.mate !== NO_MATE;
-
-    if (hasMatch) {
-      const [baseKey] = getBaseVertexState(state, vertexState.key);
-      matchedBases.add(baseKey);
-    }
-  }
-
-  return matchedBases;
-}
-
-/**
- * Labels all free (unmatched) blossoms as S-roots
- *
- * A blossom is free if NO vertex inside it is matched.
- *
- * @param state - Current matching state (modified in place)
- */
-function labelFreeVerticesAsRoots(state: WeightedMatchingState): void {
-  const matchedBases = findMatchedBases(state);
-  const labelledBases = new Set<VertexKey>();
-
-  for (const [, vertexState] of state.vertices) {
-    const [baseKey] = getBaseVertexState(state, vertexState.key);
-
-    const alreadyProcessed = labelledBases.has(baseKey);
-    const hasMatchedVertex = matchedBases.has(baseKey);
-    const shouldLabel = !alreadyProcessed && !hasMatchedVertex;
-
-    if (shouldLabel) {
-      assignLabel(state, baseKey, Label.S, baseKey);
-      labelledBases.add(baseKey);
-    }
-  }
-}
 
 /**
  * Resets labels and best edges for a new search stage
@@ -376,7 +337,11 @@ function performSearchStage(
         .debug('Weighted BFS iteration starting');
     }
 
-    const foundPath = bfsSearchForAugmentingPath(state, scanFn);
+    const foundPath = bfsSearchForAugmentingPath(
+      state,
+      scanFn,
+      addWeightedBlossom,
+    );
 
     if (foundPath) {
       if (IS_MATCHING_DEBUG_ENABLED) {

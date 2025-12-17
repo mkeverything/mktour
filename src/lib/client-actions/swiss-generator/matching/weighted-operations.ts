@@ -14,6 +14,7 @@
 
 import Graph from 'graphology';
 
+import { addBlossom } from './blossom';
 import { initialiseState } from './initialization';
 import type {
   BlossomId,
@@ -199,4 +200,29 @@ export function initialiseWeightedState(graph: Graph): WeightedMatchingState {
   };
 
   return weightedState;
+}
+
+/**
+ * Creates a blossom and initializes its dual variable for weighted matching.
+ *
+ * Wrapper around addBlossom that handles dual initialization.
+ * Non-trivial blossoms start with dual = 0.
+ *
+ * @param state - Weighted matching state (modified in place)
+ * @param vertexU - First endpoint of the edge creating the blossom
+ * @param vertexV - Second endpoint of the edge creating the blossom
+ */
+export function addWeightedBlossom(
+  state: WeightedMatchingState,
+  vertexU: VertexKey,
+  vertexV: VertexKey,
+): void {
+  // Get the blossom ID that will be assigned
+  const newBlossomId = state.nextBlossomId;
+
+  // Create the blossom (increments nextBlossomId)
+  addBlossom(state, vertexU, vertexV);
+
+  // Initialize dual for the new blossom
+  state.duals.set(newBlossomId, ZERO_DUAL);
 }
