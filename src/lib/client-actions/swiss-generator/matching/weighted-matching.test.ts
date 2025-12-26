@@ -85,6 +85,30 @@ const EXPECTED_PENTAGON_MATCHED = 4;
 /** Expected matched count for heptagon (7 vertices, 3 matched pairs) */
 const EXPECTED_HEPTAGON_MATCHED = 6;
 
+/** Expected minimum matched count for 12-vertex sparse tournament graph */
+const EXPECTED_TOURNAMENT_MIN_MATCHED = 10;
+
+/** Expected matched count for 8-vertex perfect matching */
+const EXPECTED_EIGHT_MATCHED = 8;
+
+/** Weight for sparse graph tests */
+const WEIGHT_SPARSE = 100n;
+
+// --- Numeric vertex IDs for larger tournament-like graphs ---
+
+const VERTEX_0 = '0';
+const VERTEX_1 = '1';
+const VERTEX_2 = '2';
+const VERTEX_3 = '3';
+const VERTEX_4 = '4';
+const VERTEX_5 = '5';
+const VERTEX_6 = '6';
+const VERTEX_7 = '7';
+const VERTEX_8 = '8';
+const VERTEX_9 = '9';
+const VERTEX_10 = '10';
+const VERTEX_11 = '11';
+
 /** Expected total for three uniform edges (3 × 5) */
 const EXPECTED_THREE_UNIFORM_HEPTAGON_TOTAL = 15n;
 
@@ -461,10 +485,10 @@ describe('maximumWeightMatching', () => {
   });
 
   describe('Path Graphs', () => {
-    test('4-vertex path prefers heavy middle over two outer edges', () => {
+    test('4-vertex path prefers heavy middle over two outer edges (max weight mode)', () => {
       // Path: a—b—c—d with weights a-b=3, b-c=10, c-d=3
       // Options: {a-b, c-d} = 6 vs {b-c} = 10
-      // Should choose {b-c} since 10 > 6
+      // Should choose {b-c} since 10 > 6 in max weight mode
       const vertices = [VERTEX_A, VERTEX_B, VERTEX_C, VERTEX_D];
       const edges = [
         EDGE_AB_PATH_OUTER,
@@ -472,14 +496,36 @@ describe('maximumWeightMatching', () => {
         EDGE_CD_PATH_OUTER,
       ];
       const graph = buildWeightedGraph(vertices, edges);
+      const maxCardinality = false;
 
-      const matching = maximumWeightMatching(graph);
+      const matching = maximumWeightMatching(graph, maxCardinality);
 
       expect(isMatchingValid(matching)).toBe(true);
       expect(matching.get(VERTEX_B)).toBe(VERTEX_C);
       expect(matching.get(VERTEX_C)).toBe(VERTEX_B);
       const totalWeight = computeMatchingWeight(graph, matching);
       expect(totalWeight).toBe(WEIGHT_PATH_MIDDLE);
+    });
+
+    test('4-vertex path prefers more pairs in max cardinality mode', () => {
+      // Path: a—b—c—d with weights a-b=3, b-c=10, c-d=3
+      // Options: {a-b, c-d} = 6 (2 pairs) vs {b-c} = 10 (1 pair)
+      // Should choose {a-b, c-d} in max cardinality mode
+      const vertices = [VERTEX_A, VERTEX_B, VERTEX_C, VERTEX_D];
+      const edges = [
+        EDGE_AB_PATH_OUTER,
+        EDGE_BC_PATH_MIDDLE,
+        EDGE_CD_PATH_OUTER,
+      ];
+      const graph = buildWeightedGraph(vertices, edges);
+      const maxCardinality = true;
+
+      const matching = maximumWeightMatching(graph, maxCardinality);
+
+      expect(isMatchingValid(matching)).toBe(true);
+      expect(countMatchedVertices(matching)).toBe(4);
+      expect(matching.get(VERTEX_A)).toBe(VERTEX_B);
+      expect(matching.get(VERTEX_C)).toBe(VERTEX_D);
     });
   });
 
@@ -507,11 +553,11 @@ describe('maximumWeightMatching', () => {
       expect(totalWeight).toBe(EXPECTED_THREE_MEDIUM_TOTAL);
     });
 
-    test('6-vertex graph prefers one very high edge over two medium', () => {
+    test('6-vertex graph prefers one very high edge over two medium (max weight mode)', () => {
       // Edges: a-b (100), a-c (5), b-d (5), e-f (5)
-      // If we take a-b, we can also take e-f = 105
-      // If we skip a-b, we could take a-c, b-d, e-f = 15
-      // Should choose a-b + e-f = 105
+      // If we take a-b, we can also take e-f = 105 (2 pairs)
+      // If we skip a-b, we could take a-c, b-d, e-f = 15 (3 pairs)
+      // Should choose a-b + e-f = 105 in max weight mode
       const vertices = [
         VERTEX_A,
         VERTEX_B,
@@ -527,8 +573,9 @@ describe('maximumWeightMatching', () => {
         EDGE_EF_MEDIUM,
       ];
       const graph = buildWeightedGraph(vertices, edges);
+      const maxCardinality = false;
 
-      const matching = maximumWeightMatching(graph);
+      const matching = maximumWeightMatching(graph, maxCardinality);
 
       expect(isMatchingValid(matching)).toBe(true);
       expect(matching.get(VERTEX_A)).toBe(VERTEX_B);
@@ -536,6 +583,32 @@ describe('maximumWeightMatching', () => {
       const expectedTotal = WEIGHT_VERY_HIGH + WEIGHT_MEDIUM;
       const totalWeight = computeMatchingWeight(graph, matching);
       expect(totalWeight).toBe(expectedTotal);
+    });
+
+    test('6-vertex graph prefers more pairs in max cardinality mode', () => {
+      // Edges: a-b (100), a-c (5), b-d (5), e-f (5)
+      // Should choose a-c, b-d, e-f = 15 (3 pairs, 6 vertices matched) in max cardinality mode
+      const vertices = [
+        VERTEX_A,
+        VERTEX_B,
+        VERTEX_C,
+        VERTEX_D,
+        VERTEX_E,
+        VERTEX_F,
+      ];
+      const edges = [
+        EDGE_AB_VERY_HIGH,
+        EDGE_AC_MEDIUM,
+        EDGE_BD_MEDIUM,
+        EDGE_EF_MEDIUM,
+      ];
+      const graph = buildWeightedGraph(vertices, edges);
+      const maxCardinality = true;
+
+      const matching = maximumWeightMatching(graph, maxCardinality);
+
+      expect(isMatchingValid(matching)).toBe(true);
+      expect(countMatchedVertices(matching)).toBe(6);
     });
   });
 
@@ -801,6 +874,154 @@ describe('maximumWeightMatching', () => {
     });
   });
 
+  describe('Blossom Formation', () => {
+    test('triangle with two external vertices triggers blossom and dual updates', () => {
+      // Triangle A-B-C with external D connected to A, E connected to C
+      // Forces blossom formation around triangle during search
+      //     D
+      //     |
+      // A---B---C---E
+      //  \     /
+      //   \   /
+      //    (triangle edge A-C)
+      const vertices = [VERTEX_A, VERTEX_B, VERTEX_C, VERTEX_D, VERTEX_E];
+      const edges: WeightedEdgeConfig[] = [
+        { source: VERTEX_A, target: VERTEX_B, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_B, target: VERTEX_C, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_A, target: VERTEX_C, weight: WEIGHT_UNIFORM }, // Triangle edge
+        { source: VERTEX_D, target: VERTEX_A, weight: WEIGHT_UNIFORM }, // External D
+        { source: VERTEX_E, target: VERTEX_C, weight: WEIGHT_UNIFORM }, // External E
+      ];
+      const graph = buildWeightedGraph(vertices, edges);
+
+      const matching = maximumWeightMatching(graph);
+
+      // Should match D-A and E-C, leaving B unmatched (odd vertex in triangle)
+      expect(isMatchingValid(matching)).toBe(true);
+      expect(countMatchedVertices(matching)).toBe(EXPECTED_PENTAGON_MATCHED); // 4 matched
+      const totalWeight = computeMatchingWeight(graph, matching);
+      expect(totalWeight).toBe(EXPECTED_TWO_UNIFORM_TOTAL); // 2 × 5 = 10
+    });
+
+    test('bowtie graph (two triangles sharing vertex) requires blossom handling', () => {
+      // Two triangles sharing vertex C:
+      // Triangle 1: A-B-C
+      // Triangle 2: C-D-E
+      //     A       E
+      //    / \     / \
+      //   B---C---D
+      const vertices = [VERTEX_A, VERTEX_B, VERTEX_C, VERTEX_D, VERTEX_E];
+      const edges: WeightedEdgeConfig[] = [
+        // Triangle 1
+        { source: VERTEX_A, target: VERTEX_B, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_B, target: VERTEX_C, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_C, target: VERTEX_A, weight: WEIGHT_UNIFORM },
+        // Triangle 2
+        { source: VERTEX_C, target: VERTEX_D, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_D, target: VERTEX_E, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_E, target: VERTEX_C, weight: WEIGHT_UNIFORM },
+      ];
+      const graph = buildWeightedGraph(vertices, edges);
+
+      const matching = maximumWeightMatching(graph);
+
+      // Should match 2 pairs (4 vertices), C can be in one pair
+      expect(isMatchingValid(matching)).toBe(true);
+      expect(countMatchedVertices(matching)).toBe(EXPECTED_PENTAGON_MATCHED); // 4 matched
+      const totalWeight = computeMatchingWeight(graph, matching);
+      expect(totalWeight).toBe(EXPECTED_TWO_UNIFORM_TOTAL); // 2 × 5 = 10
+    });
+
+    test('sparse tournament-like graph with constraints triggers blossom dual updates', () => {
+      // 12 vertices simulating tournament round 2+ where some edges are forbidden
+      // This structure requires blossom formation and subsequent dual updates
+      const vertices = [
+        VERTEX_0,
+        VERTEX_1,
+        VERTEX_2,
+        VERTEX_3,
+        VERTEX_4,
+        VERTEX_5,
+        VERTEX_6,
+        VERTEX_7,
+        VERTEX_8,
+        VERTEX_9,
+        VERTEX_10,
+        VERTEX_11,
+      ];
+
+      // Create sparse graph - not all pairs connected (simulating prior games)
+      // Structure designed to force blossom formation with odd cycles
+      const edges: WeightedEdgeConfig[] = [
+        // Chain forming odd cycle (5-cycle)
+        { source: VERTEX_0, target: VERTEX_1, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_1, target: VERTEX_2, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_2, target: VERTEX_3, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_3, target: VERTEX_4, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_4, target: VERTEX_0, weight: WEIGHT_UNIFORM },
+        // Additional connections
+        { source: VERTEX_5, target: VERTEX_0, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_5, target: VERTEX_6, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_6, target: VERTEX_7, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_7, target: VERTEX_8, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_8, target: VERTEX_9, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_9, target: VERTEX_10, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_10, target: VERTEX_11, weight: WEIGHT_UNIFORM },
+        // Cross connections to increase complexity
+        { source: VERTEX_2, target: VERTEX_7, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_3, target: VERTEX_8, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_4, target: VERTEX_9, weight: WEIGHT_UNIFORM },
+      ];
+      const graph = buildWeightedGraph(vertices, edges);
+
+      const matching = maximumWeightMatching(graph);
+
+      expect(isMatchingValid(matching)).toBe(true);
+      // 12 vertices, should get at least 5 pairs (10 matched)
+      expect(countMatchedVertices(matching)).toBeGreaterThanOrEqual(
+        EXPECTED_TOURNAMENT_MIN_MATCHED,
+      );
+    });
+
+    test('12-vertex graph with multiple triangles finds optimal matching', () => {
+      // 4 disjoint triangles - each can contribute 1 edge to matching
+      // Maximum cardinality = 4 edges (8 vertices), not 6 (12 vertices)
+      // because triangles are odd cycles
+      const vertices = [
+        VERTEX_0, VERTEX_1, VERTEX_2, VERTEX_3, VERTEX_4, VERTEX_5,
+        VERTEX_6, VERTEX_7, VERTEX_8, VERTEX_9, VERTEX_10, VERTEX_11,
+      ];
+
+      // Uniform weights for simplicity
+      const edges: WeightedEdgeConfig[] = [
+        // Triangle 1: 0-1-2
+        { source: VERTEX_0, target: VERTEX_1, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_1, target: VERTEX_2, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_2, target: VERTEX_0, weight: WEIGHT_UNIFORM },
+        // Triangle 2: 3-4-5
+        { source: VERTEX_3, target: VERTEX_4, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_4, target: VERTEX_5, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_5, target: VERTEX_3, weight: WEIGHT_UNIFORM },
+        // Triangle 3: 6-7-8
+        { source: VERTEX_6, target: VERTEX_7, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_7, target: VERTEX_8, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_8, target: VERTEX_6, weight: WEIGHT_UNIFORM },
+        // Triangle 4: 9-10-11
+        { source: VERTEX_9, target: VERTEX_10, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_10, target: VERTEX_11, weight: WEIGHT_UNIFORM },
+        { source: VERTEX_11, target: VERTEX_9, weight: WEIGHT_UNIFORM },
+      ];
+      const graph = buildWeightedGraph(vertices, edges);
+
+      const matching = maximumWeightMatching(graph);
+
+      expect(isMatchingValid(matching)).toBe(true);
+      // 4 disjoint triangles = 4 edges max (8 vertices)
+      const EXPECTED_TRIANGLES_MATCHED = 8;
+      expect(countMatchedVertices(matching)).toBe(EXPECTED_TRIANGLES_MATCHED);
+    });
+  });
+
   describe('Competing Alternatives', () => {
     test('4-path prefers two outer edges when sum exceeds middle', () => {
       // Path: a—b—c—d with weights a-b=4, b-c=7, c-d=4
@@ -824,6 +1045,54 @@ describe('maximumWeightMatching', () => {
       expect(matching.get(VERTEX_C)).toBe(VERTEX_D);
       const totalWeight = computeMatchingWeight(graph, matching);
       expect(totalWeight).toBe(EXPECTED_COMPETING_OUTER_TOTAL);
+    });
+  });
+
+  describe('Sparse Graphs (late-round Swiss)', () => {
+    test('finds perfect matching on two disjoint 4-cycles', () => {
+      const vertices = [
+        VERTEX_0, VERTEX_1, VERTEX_2, VERTEX_3,
+        VERTEX_4, VERTEX_5, VERTEX_6, VERTEX_7,
+      ];
+      const edges: WeightedEdgeConfig[] = [
+        { source: VERTEX_0, target: VERTEX_1, weight: WEIGHT_SPARSE },
+        { source: VERTEX_1, target: VERTEX_2, weight: WEIGHT_SPARSE },
+        { source: VERTEX_2, target: VERTEX_3, weight: WEIGHT_SPARSE },
+        { source: VERTEX_3, target: VERTEX_0, weight: WEIGHT_SPARSE },
+        { source: VERTEX_4, target: VERTEX_5, weight: WEIGHT_SPARSE },
+        { source: VERTEX_5, target: VERTEX_6, weight: WEIGHT_SPARSE },
+        { source: VERTEX_6, target: VERTEX_7, weight: WEIGHT_SPARSE },
+        { source: VERTEX_7, target: VERTEX_4, weight: WEIGHT_SPARSE },
+      ];
+      const graph = buildWeightedGraph(vertices, edges);
+
+      const matching = maximumWeightMatching(graph, true);
+
+      expect(isMatchingValid(matching)).toBe(true);
+      expect(countMatchedVertices(matching)).toBe(EXPECTED_EIGHT_MATCHED);
+    });
+
+    test('finds perfect matching on single 8-cycle', () => {
+      const vertices = [
+        VERTEX_0, VERTEX_1, VERTEX_2, VERTEX_3,
+        VERTEX_4, VERTEX_5, VERTEX_6, VERTEX_7,
+      ];
+      const edges: WeightedEdgeConfig[] = [
+        { source: VERTEX_0, target: VERTEX_1, weight: WEIGHT_SPARSE },
+        { source: VERTEX_1, target: VERTEX_2, weight: WEIGHT_SPARSE },
+        { source: VERTEX_2, target: VERTEX_3, weight: WEIGHT_SPARSE },
+        { source: VERTEX_3, target: VERTEX_4, weight: WEIGHT_SPARSE },
+        { source: VERTEX_4, target: VERTEX_5, weight: WEIGHT_SPARSE },
+        { source: VERTEX_5, target: VERTEX_6, weight: WEIGHT_SPARSE },
+        { source: VERTEX_6, target: VERTEX_7, weight: WEIGHT_SPARSE },
+        { source: VERTEX_7, target: VERTEX_0, weight: WEIGHT_SPARSE },
+      ];
+      const graph = buildWeightedGraph(vertices, edges);
+
+      const matching = maximumWeightMatching(graph, true);
+
+      expect(isMatchingValid(matching)).toBe(true);
+      expect(countMatchedVertices(matching)).toBe(EXPECTED_EIGHT_MATCHED);
     });
   });
 });

@@ -10,6 +10,8 @@
  */
 
 import type {
+  BaseVertexInfo,
+  BlossomChainStepResult,
   BlossomId,
   LowestCommonAncestorResult,
   MatchingState,
@@ -19,6 +21,82 @@ import type {
   VertexState,
 } from './types';
 import { Label, NO_EDGE_FOUND } from './types';
+
+/**
+ * Traverses the blossom chain from a vertex upward to the top-level blossom.
+ *
+ * Walks from the vertex's immediate blossom up through parent blossoms,
+ * calling the processor for each blossom visited.
+ *
+ * @param state - Current matching state
+ * @param vertexKey - Vertex to start traversal from
+ * @param processStep - Callback invoked for each blossom; return true to stop early
+ */
+export function traverseBlossomChain(
+  state: MatchingState,
+  vertexKey: VertexKey,
+  processStep: (step: BlossomChainStepResult) => boolean,
+): void {
+  const vertexState = state.vertices.get(vertexKey);
+  if (vertexState === undefined) {
+    throw new Error(`Vertex ${vertexKey} not found in state`);
+  }
+
+  let currentBlossomId = vertexState.inBlossom;
+  let currentBlossom = state.blossoms.get(currentBlossomId);
+  let shouldStop = false;
+
+  while (currentBlossom !== undefined && !shouldStop) {
+    const isNonTrivial = currentBlossom.children.length > 1;
+
+    const stepResult: BlossomChainStepResult = {
+      blossomId: currentBlossomId,
+      blossom: currentBlossom,
+      isNonTrivial,
+    };
+
+    shouldStop = processStep(stepResult);
+
+    // Move to parent blossom
+    if (currentBlossom.parent === null) {
+      currentBlossom = undefined;
+    } else {
+      currentBlossomId = currentBlossom.parent;
+      currentBlossom = state.blossoms.get(currentBlossomId);
+    }
+  }
+}
+
+/**
+ * Finds the base vertex and top-level blossom ID for a vertex
+ *
+ * Uses traverseBlossomChain to walk the parent chain and capture
+ * the final (top-level) blossom's base and ID.
+ *
+ * @param state - Current matching state
+ * @param vertexKey - Vertex to find base and blossom for
+ * @returns Tuple of [baseVertex, topLevelBlossomId]
+ */
+export function findBaseWithBlossomId(
+  state: MatchingState,
+  vertexKey: VertexKey,
+): [VertexKey, BlossomId] {
+  let result: [VertexKey, BlossomId] | null = null;
+
+  const captureTopLevel = (step: BlossomChainStepResult): boolean => {
+    result = [step.blossom.base, step.blossomId];
+    const shouldStopEarly = false;
+    return shouldStopEarly;
+  };
+
+  traverseBlossomChain(state, vertexKey, captureTopLevel);
+
+  if (result === null) {
+    throw new Error(`No blossom found for vertex ${vertexKey}`);
+  }
+
+  return result;
+}
 
 /**
  * Finds the base vertex of the top-level blossom containing a vertex
@@ -35,35 +113,52 @@ export function findBase(
   state: MatchingState,
   vertexKey: VertexKey,
 ): VertexKey {
-  // Get the vertex state
-  const vertexState = state.vertices.get(vertexKey);
-  if (vertexState === undefined) {
-    throw new Error(`Vertex ${vertexKey} not found in state`);
-  }
+  const [baseVertex] = findBaseWithBlossomId(state, vertexKey);
+  return baseVertex;
+}
 
-  // Start with the blossom containing this vertex
-  let currentBlossomId = vertexState.inBlossom;
-  let currentBlossom = state.blossoms.get(currentBlossomId);
+/**
+ * Finds the direct child of an outer blossom that contains a vertex.
+ *
+ * When expanding a blossom, we need to find which child of the outer blossom
+ * contains a given vertex. Since inBlossom points to the innermost blossom,
+ * we traverse upward until we find the blossom whose parent is the outer blossom.
+ *
+ * @param state - Current matching state
+ * @param outerBlossomId - The outer blossom whose direct child we seek
+ * @param vertexKey - Vertex to find containing child for
+ * @returns Blossom ID of the direct child containing the vertex
+ * @throws Error if vertex is not inside the outer blossom
+ */
+export function findDirectChildOf(
+  state: MatchingState,
+  outerBlossomId: BlossomId,
+  vertexKey: VertexKey,
+): BlossomId {
+  let result: BlossomId | null = null;
 
-  if (currentBlossom === undefined) {
-    throw new Error(`Blossom ${currentBlossomId} not found in state`);
-  }
+  const findChildWithParent = (step: BlossomChainStepResult): boolean => {
+    const isDirectChild = step.blossom.parent === outerBlossomId;
 
-  // Follow parent chain to find top-level blossom
-  let parentBlossomId = currentBlossom.parent;
-  while (parentBlossomId !== null) {
-    currentBlossomId = parentBlossomId;
-    currentBlossom = state.blossoms.get(currentBlossomId);
-
-    if (currentBlossom === undefined) {
-      throw new Error(`Blossom ${currentBlossomId} not found in state`);
+    if (isDirectChild) {
+      result = step.blossomId;
+      const shouldStop = true;
+      return shouldStop;
     }
 
-    parentBlossomId = currentBlossom.parent;
+    const shouldContinue = false;
+    return shouldContinue;
+  };
+
+  traverseBlossomChain(state, vertexKey, findChildWithParent);
+
+  if (result === null) {
+    throw new Error(
+      `Vertex ${vertexKey} is not inside blossom ${outerBlossomId}`,
+    );
   }
 
-  // Return base of top-level blossom
-  return currentBlossom.base;
+  return result;
 }
 
 /**
@@ -81,27 +176,33 @@ export function isAlternatingTreeRoot(vertexState: VertexState): boolean {
 }
 
 /**
- * Gets the base vertex state for a given vertex
+ * Finds the base vertex information for a given vertex
  *
- * Combines finding the base vertex and retrieving its state with guard checks.
- * This is a common pattern used throughout the algorithm.
+ * Combines finding the base vertex, retrieving its state, and getting the
+ * top-level blossom ID. This is the unified function for all base vertex lookups.
  *
  * @param state - Current matching state
- * @param vertex - Vertex to find base state for
- * @returns Tuple of [base vertex key, base vertex state]
+ * @param vertex - Vertex to find base info for
+ * @returns BaseVertexInfo containing base vertex, state, and blossom ID
  */
-export function getBaseVertexState(
+export function findBaseVertexInfo(
   state: MatchingState,
   vertex: VertexKey,
-): [VertexKey, VertexState] {
-  const baseVertex = findBase(state, vertex);
+): BaseVertexInfo {
+  const [baseVertex, topLevelBlossomId] = findBaseWithBlossomId(state, vertex);
   const baseState = state.vertices.get(baseVertex);
 
   if (baseState === undefined) {
     throw new Error(`Base vertex ${baseVertex} not found in state`);
   }
 
-  return [baseVertex, baseState];
+  const baseInfo: BaseVertexInfo = {
+    baseVertex,
+    baseState,
+    topLevelBlossomId,
+  };
+
+  return baseInfo;
 }
 
 /**
@@ -123,13 +224,23 @@ export function traverseTowardRoot(
   let reachedRoot = false;
 
   while (!reachedRoot) {
-    const [baseVertex, baseState] = getBaseVertexState(state, currentVertex);
+    const [baseVertex, topLevelBlossomId] = findBaseWithBlossomId(
+      state,
+      currentVertex,
+    );
+    const baseState = state.vertices.get(baseVertex);
+
+    if (baseState === undefined) {
+      throw new Error(`Base vertex ${baseVertex} not found in state`);
+    }
+
     const isRoot = isAlternatingTreeRoot(baseState);
 
     const stepResult: TraversalStepResult = {
       currentVertex,
       baseVertex,
       baseState,
+      topLevelBlossomId,
       isRoot,
     };
     const shouldStopEarly = processStep(stepResult);
@@ -168,8 +279,7 @@ export function buildPathToRoot(
   const path: BlossomId[] = [];
 
   const addBlossomToPath = (step: TraversalStepResult): boolean => {
-    const blossomId = step.baseState.inBlossom;
-    path.push(blossomId);
+    path.push(step.topLevelBlossomId);
     const shouldStopEarly = false;
     return shouldStopEarly;
   };
@@ -265,7 +375,7 @@ function findPathIntersection(
   let intersectionBlossomId: BlossomId | null = null;
 
   const checkForIntersection = (step: TraversalStepResult): boolean => {
-    const blossomId = step.baseState.inBlossom;
+    const blossomId = step.topLevelBlossomId;
 
     // Check for intersection BEFORE adding to path
     const foundIntersection = firstPathSet.has(blossomId);
@@ -348,7 +458,7 @@ export function assignLabel(
   labelEnd: VertexKey,
 ): void {
   // Find the base vertex of the top-level blossom containing this vertex
-  const [baseVertex, baseState] = getBaseVertexState(state, vertex);
+  const { baseVertex, baseState } = findBaseVertexInfo(state, vertex);
 
   // Assign label and label endpoint to the base vertex
   baseState.label = label;
@@ -401,13 +511,11 @@ export function scanAndLabelNeighbours(
     throw new Error(`Vertex ${vertex} not found in adjacency list`);
   }
 
-  const [vertexBase] = getBaseVertexState(state, vertex);
+  const { baseVertex: vertexBase } = findBaseVertexInfo(state, vertex);
 
   for (const neighbour of neighbours) {
-    const [neighbourBase, neighbourBaseState] = getBaseVertexState(
-      state,
-      neighbour,
-    );
+    const { baseVertex: neighbourBase, baseState: neighbourBaseState } =
+      findBaseVertexInfo(state, neighbour);
 
     // Skip internal edges within same top-level blossom
     const isInternalEdge = vertexBase === neighbourBase;

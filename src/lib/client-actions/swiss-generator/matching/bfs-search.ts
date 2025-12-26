@@ -21,7 +21,7 @@ import { IS_MATCHING_DEBUG_ENABLED, matchingLogger } from './matching-logger';
 import {
   assignLabel,
   findAlternatingTreeRoot,
-  getBaseVertexState,
+  findBaseVertexInfo,
 } from './tree-operations';
 import type {
   MatchingResult,
@@ -59,7 +59,7 @@ export function findMatchedBases(state: MatchingState): Set<VertexKey> {
     const hasMatch = vertexState.mate !== NO_MATE;
     if (hasMatch) {
       // Mark this vertex's blossom base as having a matched vertex
-      const [baseKey] = getBaseVertexState(state, vertexState.key);
+      const { baseVertex: baseKey } = findBaseVertexInfo(state, vertexState.key);
       matchedBases.add(baseKey);
     }
   }
@@ -85,7 +85,7 @@ export function labelFreeVerticesAsRoots(state: MatchingState): void {
 
   for (const [, vertexState] of state.vertices) {
     // Get the top-level blossom base for this vertex
-    const [baseKey] = getBaseVertexState(state, vertexState.key);
+    const { baseVertex: baseKey } = findBaseVertexInfo(state, vertexState.key);
 
     // Determine if this base should be labelled as a free S-root
     const alreadyProcessed = labelledBases.has(baseKey);

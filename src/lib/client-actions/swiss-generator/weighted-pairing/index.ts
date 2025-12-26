@@ -9,8 +9,41 @@ import { buildWeightedGraph, createWeightContext } from './graph-builder';
 import { extractPairingFromMatching } from './pairing-extractor';
 import { ALL_CRITERIA, computeMultipliers } from './weight-calculator';
 
-/** Error message for cardinality validation failure */
-const CARDINALITY_ERROR_MESSAGE = 'Maximum cardinality not achieved';
+// ============================================================================
+// Custom Error Classes
+// ============================================================================
+
+/**
+ * Error thrown when maximum cardinality matching cannot be achieved.
+ *
+ * This occurs when the compatibility graph is disconnected or has
+ * structural issues preventing a perfect matching.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#custom_error_types
+ */
+export class CardinalityValidationError extends Error {
+  /** Expected number of matched vertices */
+  readonly expectedMatched: number;
+
+  /** Actual number of matched vertices */
+  readonly actualMatched: number;
+
+  constructor(expectedMatched: number, actualMatched: number) {
+    const message = `Maximum cardinality not achieved: expected ${expectedMatched} matched vertices, got ${actualMatched}`;
+    super(message);
+
+    this.name = 'CardinalityValidationError';
+    this.expectedMatched = expectedMatched;
+    this.actualMatched = actualMatched;
+
+    // Required for instanceof to work correctly when targeting ES5
+    Object.setPrototypeOf(this, CardinalityValidationError.prototype);
+  }
+}
+
+// ============================================================================
+// Validation
+// ============================================================================
 
 /**
  * Validates that the matching achieved maximum cardinality.
@@ -22,7 +55,7 @@ const CARDINALITY_ERROR_MESSAGE = 'Maximum cardinality not achieved';
  * @param actualMatched - Actual number of matched vertices
  * @param playerCount - Number of players in the tournament
  * @param hasOddPlayers - Whether there is an odd number of players
- * @throws Error if cardinality is not maximum
+ * @throws CardinalityValidationError if cardinality is not maximum
  */
 function validateMaximumCardinality(
   actualMatched: number,
@@ -36,9 +69,7 @@ function validateMaximumCardinality(
   const isMaximumCardinality = actualMatched === expectedMatched;
 
   if (!isMaximumCardinality) {
-    throw new Error(
-      `${CARDINALITY_ERROR_MESSAGE}: expected ${expectedMatched} matched vertices, got ${actualMatched}`,
-    );
+    throw new CardinalityValidationError(expectedMatched, actualMatched);
   }
 }
 

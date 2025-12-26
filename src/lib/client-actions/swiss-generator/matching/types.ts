@@ -157,6 +157,23 @@ export interface LowestCommonAncestorResult {
 }
 
 /**
+ * Result of looking up the base vertex information for a vertex
+ *
+ * Contains the base vertex of the top-level blossom containing a vertex,
+ * along with the base's state and the blossom ID.
+ */
+export interface BaseVertexInfo {
+  /** Base vertex key of the top-level blossom */
+  baseVertex: VertexKey;
+
+  /** State of the base vertex */
+  baseState: VertexState;
+
+  /** ID of the top-level blossom containing the vertex */
+  topLevelBlossomId: BlossomId;
+}
+
+/**
  * Result of processing a single step in alternating tree traversal
  */
 export interface TraversalStepResult {
@@ -169,8 +186,25 @@ export interface TraversalStepResult {
   /** Base vertex state */
   baseState: VertexState;
 
+  /** Top-level blossom ID containing the current vertex */
+  topLevelBlossomId: BlossomId;
+
   /** Whether this step reached the root */
   isRoot: boolean;
+}
+
+/**
+ * Result of processing a single step in blossom chain traversal
+ */
+export interface BlossomChainStepResult {
+  /** Current blossom ID being visited */
+  blossomId: BlossomId;
+
+  /** Blossom state */
+  blossom: BlossomState;
+
+  /** Whether this is a non-trivial blossom (has children > 1) */
+  isNonTrivial: boolean;
 }
 
 /**

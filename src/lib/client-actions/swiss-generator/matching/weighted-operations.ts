@@ -16,7 +16,9 @@ import Graph from 'graphology';
 
 import { addBlossom } from './blossom';
 import { initialiseState } from './initialization';
+import { traverseBlossomChain } from './tree-operations';
 import type {
+  BlossomChainStepResult,
   BlossomId,
   DualVariable,
   EdgeWeight,
@@ -86,9 +88,93 @@ export function doubleEdgeWeights(graph: Graph): void {
 }
 
 /**
- * Computes slack for an edge (vertex-only duals, no blossom accounting yet)
+ * Collects IDs of all non-trivial blossoms containing a vertex.
  *
- * Slack formula: dual[u] + dual[v] - weight (weight already doubled)
+ * @param state - Weighted matching state
+ * @param vertexKey - Vertex to collect blossom IDs for
+ * @returns Set of non-trivial blossom IDs containing the vertex
+ */
+function collectContainingBlossomIds(
+  state: WeightedMatchingState,
+  vertexKey: VertexKey,
+): Set<BlossomId> {
+  const blossomIds = new Set<BlossomId>();
+
+  const addBlossomId = (step: BlossomChainStepResult): boolean => {
+    if (step.isNonTrivial) {
+      blossomIds.add(step.blossomId);
+    }
+    const shouldContinue = false;
+    return shouldContinue;
+  };
+
+  traverseBlossomChain(state, vertexKey, addBlossomId);
+
+  return blossomIds;
+}
+
+/**
+ * Sums duals for blossoms that are in the given set.
+ *
+ * @param state - Weighted matching state
+ * @param vertexKey - Vertex whose blossom chain to traverse
+ * @param targetBlossomIds - Set of blossom IDs to include in sum
+ * @returns Sum of duals for matching blossoms
+ */
+function sumBlossomDualsInSet(
+  state: WeightedMatchingState,
+  vertexKey: VertexKey,
+  targetBlossomIds: Set<BlossomId>,
+): DualVariable {
+  let dualSum = ZERO_DUAL;
+
+  const addMatchingDual = (step: BlossomChainStepResult): boolean => {
+    const isTarget = step.isNonTrivial && targetBlossomIds.has(step.blossomId);
+
+    if (isTarget) {
+      const blossomDual = state.duals.get(step.blossomId);
+      if (blossomDual === undefined) {
+        throw new Error(`Dual not found for blossom ${step.blossomId}`);
+      }
+      dualSum = dualSum + blossomDual;
+    }
+
+    const shouldContinue = false;
+    return shouldContinue;
+  };
+
+  traverseBlossomChain(state, vertexKey, addMatchingDual);
+
+  return dualSum;
+}
+
+/**
+ * Computes sum of duals for blossoms containing BOTH edge endpoints.
+ *
+ * Only blossoms containing both vertices contribute to edge slack.
+ * External edges (different top-level blossoms) have no shared blossoms.
+ *
+ * @param state - Weighted matching state
+ * @param vertexU - First edge endpoint
+ * @param vertexV - Second edge endpoint
+ * @returns Sum of duals for shared blossoms
+ */
+function computeSharedBlossomDualSum(
+  state: WeightedMatchingState,
+  vertexU: VertexKey,
+  vertexV: VertexKey,
+): DualVariable {
+  const blossomIdsContainingU = collectContainingBlossomIds(state, vertexU);
+  const sharedDualSum = sumBlossomDualsInSet(state, vertexV, blossomIdsContainingU);
+
+  return sharedDualSum;
+}
+
+/**
+ * Computes slack for an edge.
+ *
+ * Slack formula: dual(u) + dual(v) + sharedBlossomDuals - weight
+ * Only blossoms containing BOTH endpoints contribute to slack.
  * Edge is tight when slack = 0.
  *
  * @param state - Weighted matching state
@@ -113,19 +199,24 @@ export function computeSlack(
     throw new Error(`Dual not found for vertex ${vertexV}`);
   }
 
+  const sharedBlossomDuals = computeSharedBlossomDualSum(state, vertexU, vertexV);
   const weight = getEdgeWeight(graph, edgeKey);
-  const slack = dualU + dualV - weight;
+  const slack = dualU + dualV + sharedBlossomDuals - weight;
 
   return slack;
 }
 
 /**
- * Checks if an edge is tight (slack = 0)
+ * Checks if an edge is tight (slack <= 0)
+ *
+ * An edge is tight when its slack is zero or negative. Negative slack
+ * (over-tight) can occur after delta updates and these edges should
+ * still be traversable in BFS.
  *
  * @param state - Weighted matching state
  * @param graph - Graphology graph instance
  * @param edgeKey - Edge to check
- * @returns true if edge is tight
+ * @returns true if edge is tight or over-tight
  */
 export function isEdgeTight(
   state: WeightedMatchingState,
@@ -133,7 +224,7 @@ export function isEdgeTight(
   edgeKey: GraphEdgeKey,
 ): boolean {
   const slack = computeSlack(state, graph, edgeKey);
-  return slack === ZERO_DUAL;
+  return slack <= ZERO_DUAL;
 }
 
 /**

@@ -9,23 +9,23 @@ import {
   generateRandomDatabaseTournament,
   updatePlayerScores,
 } from '@/lib/client-actions/common-generator.test';
-import { generateSwissRound } from '@/lib/client-actions/swiss-generator';
+import { generateWeightedSwissRound } from '@/lib/client-actions/swiss-generator';
 import { GameModel, PlayerModel } from '@/types/tournaments';
 
 /** Starting seed for testing */
 const BASE_SEED = 14;
 
 /** Number of different seeds to test */
-const SEEDS_TO_TEST = 10;
+const SEEDS_TO_TEST = 50;
 
 /**
  * Swiss system player range for testing
- * - Minimum 16 players for realistic tournament sizes
- * - Maximum 64 players for stress testing larger brackets
+ * - Minimum 32 players for moderate tournament testing
+ * - Maximum 64 players for larger tournament testing
  */
 const SWISS_PLAYER_NUMBER_FAKEOPTS = {
-  min: 8,
-  max: 16,
+  min: 32,
+  max: 64,
 };
 
 /**
@@ -60,8 +60,8 @@ function generateTournamentWithSeed(seed: number): {
   const previousGames: GameModel[] = [];
   let currentRound = INITIAL_ONGOING_ROUND;
 
-  // Swiss optimal rounds = ceil(log2(n)) for n players
-  const SWISS_OPTIMAL_ROUNDS = randomPlayerNumber - 2;
+  // Swiss rounds = n/2 for n players (standard tournament length)
+  const SWISS_OPTIMAL_ROUNDS = Math.floor(randomPlayerNumber / 2);
 
   console.log(
     `[Seed ${seed}] Starting: ${randomPlayerNumber} players, ${SWISS_OPTIMAL_ROUNDS} optimal rounds`,
@@ -81,8 +81,8 @@ function generateTournamentWithSeed(seed: number): {
       tournamentId: randomTournament.id,
     };
 
-    // Generate next round
-    const gamesToInsert = generateSwissRound(nextSwissRoundProps);
+    // Generate next round using weighted Blossom algorithm
+    const gamesToInsert = generateWeightedSwissRound(nextSwissRoundProps);
 
     // No games generated = completion
     if (gamesToInsert.length === 0) {
@@ -124,5 +124,12 @@ describe('Swiss Generator Black-Box Tests', () => {
         expect(result.roundsCompleted).toBeGreaterThan(0);
       });
     }
+  });
+
+  describe('Specific Seed Regression', () => {
+    test('Seed 19: completes all optimal rounds', () => {
+      const result = generateTournamentWithSeed(19);
+      expect(result.roundsCompleted).toBe(result.optimalRounds);
+    });
   });
 });

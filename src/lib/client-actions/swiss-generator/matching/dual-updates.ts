@@ -18,7 +18,12 @@
 
 import Graph from 'graphology';
 
-import { findBase, getBaseVertexState } from './tree-operations';
+import {
+  IS_MATCHING_DEBUG_ENABLED,
+  matchingLogger,
+  type EdgeDeltaInfo,
+} from './matching-logger';
+import { findBase, findBaseVertexInfo } from './tree-operations';
 import { computeSlack, getEdgeEndpoints } from './weighted-operations';
 import type {
   BaseDelta,
@@ -56,7 +61,7 @@ function getVertexLabel(
   state: WeightedMatchingState,
   vertexKey: VertexKey,
 ): Label {
-  const [, baseState] = getBaseVertexState(state, vertexKey);
+  const { baseState } = findBaseVertexInfo(state, vertexKey);
   return baseState.label;
 }
 
@@ -102,20 +107,36 @@ export function computeEdgeDelta(
     }
     // else: internal edge, result stays null
   } else if (isExactlyOneSLabelled) {
-    // Exactly one S-labelled: check if other is free or T
+    // Exactly one S-labelled: check if other is unlabelled (free or matched but not in tree)
+    // T-labelled vertices are already in the tree and can't help make progress
     const otherLabel = isUSLabelled ? labelV : labelU;
-    const isOtherFreeOrT = otherLabel === Label.NONE || otherLabel === Label.T;
+    const isOtherUnlabelled = otherLabel === Label.NONE;
 
-    if (isOtherFreeOrT) {
-      // S→free or S→T: use full slack
+    if (isOtherUnlabelled) {
+      // S→unlabelled: use full slack (delta2 in NetworkX terminology)
       const slack = computeSlack(state, graph, edgeKey);
       result = { delta: slack, edgeKey };
     }
-    // else: other is S (shouldn't happen due to XOR), result stays null
+    // T-labelled or S-labelled: doesn't contribute to delta
   }
   // else: neither S-labelled, result stays null
 
-  return result;
+  // Skip edges with non-positive delta (tight or over-tight)
+  // NetworkX only considers edges with positive slack for delta computation
+  const hasNonPositiveDelta = result !== null && result.delta <= ZERO_DUAL;
+
+  if (IS_MATCHING_DEBUG_ENABLED && result !== null && !hasNonPositiveDelta) {
+    const info: EdgeDeltaInfo = {
+      type: isBothSLabelled ? 'S-S' : 'S-NONE',
+      vertexU,
+      vertexV,
+      slack: result.delta.toString(),
+      delta: result.delta.toString(),
+    };
+    matchingLogger.withMetadata(info).debug('Edge delta computed');
+  }
+
+  return hasNonPositiveDelta ? null : result;
 }
 
 /**
@@ -303,7 +324,8 @@ interface NodeDualInfo {
  * Iterates over all nodes (vertices and non-trivial blossoms) with their labels
  *
  * Yields vertices first (all of them), then non-trivial blossoms.
- * Labels come from vertex state directly, or from base vertex for blossoms.
+ * Labels come from the BASE vertex to match delta computation.
+ * This ensures vertices inside blossoms inherit the blossom's label.
  *
  * @param state - Weighted matching state
  * @yields NodeDualInfo for each vertex and non-trivial blossom
@@ -311,11 +333,12 @@ interface NodeDualInfo {
 function* iterateNodesWithLabels(
   state: WeightedMatchingState,
 ): Generator<NodeDualInfo> {
-  // Yield all vertices
-  for (const [vertexKey, vertexState] of state.vertices) {
+  // Yield all vertices with their BASE vertex's label for consistency
+  for (const [vertexKey] of state.vertices) {
+    const { baseState } = findBaseVertexInfo(state, vertexKey);
     const nodeInfo: NodeDualInfo = {
       nodeId: vertexKey,
-      label: vertexState.label,
+      label: baseState.label,
       isBlossom: false,
     };
     yield nodeInfo;
@@ -399,6 +422,10 @@ export function applyDualUpdates(
     const newDual = currentDual + change;
 
     state.duals.set(nodeInfo.nodeId, newDual);
+  }
+
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    matchingLogger.withMetadata({ delta }).debug('Dual updates applied');
   }
 }
 

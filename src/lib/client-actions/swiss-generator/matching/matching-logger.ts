@@ -287,6 +287,10 @@ export interface WeightedBFSIterationInfo {
 export interface DeltaComputationInfo {
   /** Delta value */
   readonly deltaValue: DualVariable | null;
+  /** Whether delta is from a blossom (vs edge) */
+  readonly isBlossomDelta: boolean;
+  /** Edge key if delta is from an edge */
+  readonly edgeKey?: string;
 }
 
 /**
@@ -295,4 +299,42 @@ export interface DeltaComputationInfo {
 export interface RequeueInfo {
   /** Queue size after requeuing S-labelled vertices */
   readonly queueSizeAfterRequeue: number;
+}
+
+/**
+ * Graph structure information for logging at algorithm start
+ */
+export interface WeightedMatchingStartInfo {
+  /** Number of vertices in graph */
+  readonly vertices: number;
+  /** Number of edges in graph */
+  readonly edges: number;
+  /** Number of isolated vertices (degree 0) */
+  readonly isolatedCount: number;
+}
+
+/**
+ * Edge delta computation information for logging
+ */
+export interface EdgeDeltaInfo {
+  /** Type of edge: 'S-S' or 'S-NONE' */
+  readonly type: string;
+  /** First vertex */
+  readonly vertexU: string;
+  /** Second vertex */
+  readonly vertexV: string;
+  /** Computed slack value */
+  readonly slack: string;
+  /** Computed delta value */
+  readonly delta: string;
+}
+
+/**
+ * Blossom expansion information for logging
+ */
+export interface BlossomExpansionInfo {
+  /** ID of the blossom being expanded */
+  readonly blossomId: number;
+  /** Delta value that triggered expansion */
+  readonly delta: string;
 }

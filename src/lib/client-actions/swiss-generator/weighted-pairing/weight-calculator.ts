@@ -1019,7 +1019,9 @@ export function penaltyToWeight(
   multiplier: bigint,
 ): bigint {
   const invertedPenalty = maxPenalty - penalty;
-  return BigInt(invertedPenalty) * multiplier;
+  // Floor to handle half-point scores (draws give 0.5 points)
+  const flooredPenalty = Math.floor(invertedPenalty);
+  return BigInt(flooredPenalty) * multiplier;
 }
 
 /**

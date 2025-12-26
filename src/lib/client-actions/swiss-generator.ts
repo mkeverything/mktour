@@ -14,6 +14,7 @@ import {
   reorderBracketGroups,
 } from '@/lib/client-actions/swiss-generator/bracket-formation';
 import { getInitialOrdering } from '@/lib/client-actions/swiss-generator/ordering';
+import { generateWeightedPairing } from '@/lib/client-actions/swiss-generator/weighted-pairing';
 import {
   IS_PAIRING_DEBUG_ENABLED,
   pairingLogger,
@@ -35,7 +36,7 @@ import {
   EvaluatedPairingCandidate,
   isHeteroBracket,
 } from '@/lib/client-actions/swiss-generator/types';
-import { GameModel } from '@/types/tournaments';
+import { GameModel, PlayerModel } from '@/types/tournaments';
 
 /*
  * This function generates the bracket round for the Swiss tournament. It gets the
@@ -428,6 +429,93 @@ export function generateSwissRound({
     pairingLogger
       .withMetadata(roundCompletionInfo)
       .debug('Round generation complete');
+  }
+
+  return gamesToInsert;
+}
+
+/**
+ * Generates Swiss round using weighted maximum matching (Blossom algorithm).
+ *
+ * This alternative implementation finds globally optimal pairings by encoding
+ * all FIDE criteria as edge weights and solving maximum weight matching.
+ * Unlike the bracket-by-bracket approach, this considers all players simultaneously.
+ *
+ * @param props - Round generation properties
+ * @returns Array of games for the round
+ */
+export function generateWeightedSwissRound({
+  players,
+  games,
+  roundNumber,
+  tournamentId,
+}: RoundProps): GameModel[] {
+  // Filter out any games from the current round (in case of re-generation)
+  const filteredGames = games?.filter((game) => game.round_number !== roundNumber) ?? [];
+
+  // Convert player models to chess tournament entities with history
+  const convertPlayer = (player: PlayerModel): ChessTournamentEntity =>
+    convertPlayerToEntity(player, filteredGames);
+  const matchedEntities = players.map(convertPlayer);
+
+  // Sort entities by initial ordering rules (score, then tiebreakers)
+  const sortedEntities = getInitialOrdering(matchedEntities);
+
+  // Assign pairing numbers according to initial order
+  const assignPairingNumber = (entity: ChessTournamentEntity, index: number): void => {
+    entity.pairingNumber = index;
+  };
+  sortedEntities.forEach(assignPairingNumber);
+
+  // Log round start for weighted pairing
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    const weightedRoundStartInfo = {
+      algorithm: 'weighted-blossom',
+      playerCount: sortedEntities.length,
+      roundNumber,
+    };
+
+    pairingLogger
+      .withMetadata(weightedRoundStartInfo)
+      .debug(`Weighted round ${roundNumber} start`);
+  }
+
+  // Generate pairings using weighted maximum matching
+  const colouredPairs = generateWeightedPairing(sortedEntities, roundNumber);
+
+  // Log pairing result
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    const pairingResultInfo = {
+      pairCount: colouredPairs.length,
+    };
+
+    pairingLogger
+      .withMetadata(pairingResultInfo)
+      .debug('Weighted pairing complete');
+  }
+
+  // Convert coloured pairs to game models
+  const roundOffset = filteredGames.length + 1;
+  const gamesToInsert: GameModel[] = [];
+
+  for (const pair of colouredPairs) {
+    const pairIndex = gamesToInsert.length;
+    const numberedPair = getNumberedPair(pair, pairIndex, roundOffset);
+    const game = getGameToInsert(numberedPair, tournamentId, roundNumber);
+    gamesToInsert.push(game);
+  }
+
+  // Log round completion
+  if (IS_PAIRING_DEBUG_ENABLED) {
+    const roundCompletionInfo = {
+      roundNumber,
+      gamesGenerated: gamesToInsert.length,
+      algorithm: 'weighted-blossom',
+    };
+
+    pairingLogger
+      .withMetadata(roundCompletionInfo)
+      .debug('Weighted round generation complete');
   }
 
   return gamesToInsert;

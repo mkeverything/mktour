@@ -27,11 +27,14 @@ import { resetLabels } from './initialization';
 import {
   IS_MATCHING_DEBUG_ENABLED,
   matchingLogger,
+  type BlossomExpansionInfo,
   type DeltaComputationInfo,
+  type IterationInfo,
   type RequeueInfo,
   type WeightedBFSIterationInfo,
+  type WeightedMatchingStartInfo,
 } from './matching-logger';
-import { assignLabel, getBaseVertexState } from './tree-operations';
+import { assignLabel, findBaseVertexInfo } from './tree-operations';
 import {
   addWeightedBlossom,
   initialiseWeightedState,
@@ -45,7 +48,7 @@ import type {
   WeightedMatchingState,
   WeightedScanFunction,
 } from './types';
-import { isBlossomDelta, Label, NO_MATE, ZERO_DUAL } from './types';
+import { isBlossomDelta, isEdgeDelta, Label, NO_MATE } from './types';
 import type { AnyDelta } from './dual-updates';
 
 /**
@@ -82,14 +85,20 @@ function processTightNeighbour(
   currentVertex: VertexKey,
   neighbourKey: VertexKey,
 ): VertexKey | null {
-  const [currentBase] = getBaseVertexState(state, currentVertex);
-  const [neighbourBase, neighbourBaseState] = getBaseVertexState(
-    state,
-    neighbourKey,
-  );
+  const { baseVertex: currentBase } = findBaseVertexInfo(state, currentVertex);
+  const { baseVertex: neighbourBase, baseState: neighbourBaseState } =
+    findBaseVertexInfo(state, neighbourKey);
 
   const isSameBlossom = currentBase === neighbourBase;
   const neighbourLabel = neighbourBaseState.label;
+
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    matchingLogger.debug(
+      `processTightNeighbour: ${currentVertex}→${neighbourKey}, ` +
+        `currentBase=${currentBase}, neighbourBase=${neighbourBase}, ` +
+        `isSameBlossom=${isSameBlossom}, neighbourLabel=${neighbourLabel}`,
+    );
+  }
 
   let result: VertexKey | null = null;
 
@@ -233,6 +242,14 @@ function applyDeltaAndExpand(
 
   // If delta was from a T-blossom reaching zero, expand it
   if (isBlossomDelta(delta)) {
+    if (IS_MATCHING_DEBUG_ENABLED) {
+      const expansionInfo: BlossomExpansionInfo = {
+        blossomId: delta.blossomId,
+        delta: delta.delta.toString(),
+      };
+      matchingLogger.withMetadata(expansionInfo).debug('Expanding T-blossom');
+    }
+
     const blossom = state.blossoms.get(delta.blossomId);
     if (blossom === undefined) {
       throw new Error(`Blossom ${delta.blossomId} not found for expansion`);
@@ -274,35 +291,45 @@ function requeueSLabelledVertices(state: WeightedMatchingState): void {
 /**
  * Determines if the search should terminate
  *
- * Termination occurs when:
- * - No delta exists (minDelta is null)
- * - No S-vertices exist (terminationBound is null)
- * - Delta is zero (edge already tight but unusable - internal to blossom)
- * - Termination bound is smaller or equal to minDelta (S-vertex dual would go negative)
+ * Termination depends on the matching mode:
+ * - Max cardinality (maxCardinality=true): terminate only when no delta exists
+ * - Max weight only (maxCardinality=false): also use delta1 (terminationBound) check
+ *
+ * Reference: NetworkX max_weight_matching
+ * "if not maxcardinality: deltatype = 1; delta = min(dualvar.values())"
  *
  * @param minDelta - Minimum delta from edges/blossoms, or null
- * @param terminationBound - Minimum S-vertex dual, or null
+ * @param terminationBound - Minimum S-vertex dual (delta1), or null
+ * @param maxCardinality - If true, skip delta1 termination check
  * @returns true if search should terminate
  */
 function shouldTerminateSearch(
   minDelta: AnyDelta | null,
   terminationBound: DualVariable | null,
+  maxCardinality: boolean,
 ): boolean {
+  const hasNoDelta = minDelta === null;
+
   let shouldTerminate: boolean;
 
-  if (minDelta === null) {
-    // No delta means no more updates possible
+  if (hasNoDelta) {
+    // No delta means no more updates possible (applies to both modes)
     shouldTerminate = true;
-  } else if (terminationBound === null) {
-    // No S-vertices means nothing to update
-    shouldTerminate = true;
-  } else if (minDelta.delta === ZERO_DUAL) {
-    // Delta zero means edge is already tight but unusable (internal to blossom)
-    // Applying delta 0 won't make progress, so terminate
-    shouldTerminate = true;
+  } else if (maxCardinality) {
+    // For max cardinality, only terminate when no delta exists
+    // (we must find all augmenting paths even if duals go negative)
+    shouldTerminate = false;
   } else {
-    // If termination bound is smaller or equal, applying minDelta would make duals negative
-    shouldTerminate = terminationBound <= minDelta.delta;
+    // For max weight only: check delta1 (terminationBound)
+    const hasNoSVertices = terminationBound === null;
+
+    if (hasNoSVertices) {
+      shouldTerminate = true;
+    } else {
+      const deltaValue = minDelta.delta;
+      const isDeltaBoundedByTermination = terminationBound <= deltaValue;
+      shouldTerminate = isDeltaBoundedByTermination;
+    }
   }
 
   return shouldTerminate;
@@ -318,12 +345,14 @@ function shouldTerminateSearch(
  * @param state - Weighted matching state (modified in place)
  * @param graph - Graphology graph
  * @param scanFn - Scan function for tight edges
+ * @param maxCardinality - If true, prioritize cardinality over weight optimality
  * @returns Stage result indicating what happened
  */
 function performSearchStage(
   state: WeightedMatchingState,
   graph: Graph,
   scanFn: WeightedScanFunction,
+  maxCardinality: boolean,
 ): StageResult {
   let result: StageResult | null = null;
 
@@ -354,15 +383,29 @@ function performSearchStage(
       const terminationBound = computeTerminationBound(state);
 
       if (IS_MATCHING_DEBUG_ENABLED) {
-        const deltaValue = minDelta !== null ? minDelta.delta : null;
-        const deltaInfo: DeltaComputationInfo = { deltaValue };
-        matchingLogger
-          .withMetadata(deltaInfo)
-          .debug('Delta computation result');
+        let deltaInfo: DeltaComputationInfo;
+
+        if (minDelta === null) {
+          deltaInfo = { deltaValue: null, isBlossomDelta: false };
+        } else if (isEdgeDelta(minDelta)) {
+          deltaInfo = {
+            deltaValue: minDelta.delta,
+            isBlossomDelta: false,
+            edgeKey: minDelta.edgeKey,
+          };
+        } else {
+          deltaInfo = { deltaValue: minDelta.delta, isBlossomDelta: true };
+        }
+
+        matchingLogger.withMetadata(deltaInfo).debug('Delta computation result');
       }
 
       // Check termination: if termination bound is smallest, no more paths exist
-      const shouldTerminate = shouldTerminateSearch(minDelta, terminationBound);
+      const shouldTerminate = shouldTerminateSearch(
+        minDelta,
+        terminationBound,
+        maxCardinality,
+      );
 
       if (shouldTerminate) {
         result = StageResult.NO_MORE_DELTAS;
@@ -402,6 +445,9 @@ function extractMatchingResult(state: WeightedMatchingState): MatchingResult {
   return matching;
 }
 
+/** Default: prioritize maximum cardinality over weight optimality */
+const DEFAULT_MAX_CARDINALITY = true;
+
 /**
  * Computes maximum weight matching in an undirected weighted graph
  *
@@ -412,12 +458,38 @@ function extractMatchingResult(state: WeightedMatchingState): MatchingResult {
  * 4. If stuck (no augmenting path), compute delta and update duals
  * 5. Repeat until no more augmenting paths exist
  *
- * @param graph - Graphology graph with BigInt 'weight' edge attributes
+ * @param inputGraph - Graphology graph with BigInt 'weight' edge attributes
+ * @param maxCardinality - If true (default), find maximum cardinality matching
+ *   with maximum weight among all max-cardinality matchings. If false, find
+ *   maximum weight matching (may leave vertices unmatched for higher weight).
  * @returns Map from vertex key to matched partner (or null if unmatched)
  */
-export function maximumWeightMatching(inputGraph: Graph): MatchingResult {
+export function maximumWeightMatching(
+  inputGraph: Graph,
+  maxCardinality: boolean = DEFAULT_MAX_CARDINALITY,
+): MatchingResult {
   // Copy graph to avoid mutating caller's data (algorithm doubles weights internally)
   const graph = inputGraph.copy();
+
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    let isolatedCount = 0;
+    const degrees: number[] = [];
+    graph.forEachNode((node) => {
+      const degree = graph.degree(node);
+      degrees.push(degree);
+      if (degree === 0) {
+        isolatedCount++;
+      }
+    });
+    const startInfo: WeightedMatchingStartInfo = {
+      vertices: graph.order,
+      edges: graph.size,
+      isolatedCount,
+    };
+    matchingLogger.withMetadata(startInfo).debug('Starting weighted matching');
+    matchingLogger.debug(`Degree distribution: ${degrees.join(', ')}`);
+  }
+
   const state = initialiseWeightedState(graph);
   const scanTightEdges = createTightEdgeScan(graph);
 
@@ -430,7 +502,12 @@ export function maximumWeightMatching(inputGraph: Graph): MatchingResult {
     labelFreeVerticesAsRoots(state);
 
     // Perform search with delta updates
-    const stageResult = performSearchStage(state, graph, scanTightEdges);
+    const stageResult = performSearchStage(
+      state,
+      graph,
+      scanTightEdges,
+      maxCardinality,
+    );
     hasMoreWork = stageResult === StageResult.PATH_FOUND;
   }
 

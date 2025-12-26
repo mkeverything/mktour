@@ -15,8 +15,9 @@ import type {
 } from './matching-logger';
 import { IS_MATCHING_DEBUG_ENABLED, matchingLogger } from './matching-logger';
 import {
+  findBaseVertexInfo,
+  findDirectChildOf,
   findLowestCommonAncestor,
-  getBaseVertexState,
   isAlternatingTreeRoot,
 } from './tree-operations';
 import type {
@@ -87,17 +88,24 @@ function determineWalkDirection(
 }
 
 /**
- * Restores blossom children to top-level (removes parent pointers)
+ * Promotes blossom children after expansion.
  *
- * When expanding a blossom, its children become top-level blossoms again.
+ * When expanding a blossom B:
+ * - If B has a parent P: children inherit P as their new parent, keeping chain intact
+ * - If B is top-level: children become top-level (parent = null)
+ *
+ * This ensures the parent chain traversal from any vertex remains valid
+ * after intermediate blossoms are expanded.
  *
  * @param state - Current matching state
- * @param blossom - Blossom whose children to restore
+ * @param blossom - Blossom whose children to promote
  */
-function restoreChildrenToTopLevel(
+function promoteBlossomChildren(
   state: MatchingState,
   blossom: BlossomState,
 ): void {
+  const newParent = blossom.parent;
+
   for (const childBlossomId of blossom.children) {
     // Type guard: ensure we only have blossom IDs
     if (typeof childBlossomId === 'string') {
@@ -111,7 +119,8 @@ function restoreChildrenToTopLevel(
       throw new Error(`Child blossom ${childBlossomId} not found in state`);
     }
 
-    childBlossom.parent = NO_PARENT_BLOSSOM;
+    // Children inherit expanded blossom's parent
+    childBlossom.parent = newParent;
   }
 }
 
@@ -201,22 +210,14 @@ export function expandBlossom(
   }
 
   // Find which sub-blossom contains the entry vertex
-  const entryVertexState = state.vertices.get(entryVertex);
-  if (entryVertexState === undefined) {
-    throw new Error(`Entry vertex ${entryVertex} not found in state`);
-  }
-
-  const entryBlossomId = entryVertexState.inBlossom;
+  // Use findDirectChildOf because inBlossom points to innermost blossom,
+  // but we need the direct child of this outer blossom
+  const entryBlossomId = findDirectChildOf(state, blossomId, entryVertex);
   const entryIndex = findChildIndex(entryBlossomId, blossom.children);
 
   // Find the base sub-blossom
   const baseVertex = blossom.base;
-  const baseVertexState = state.vertices.get(baseVertex);
-  if (baseVertexState === undefined) {
-    throw new Error(`Base vertex ${baseVertex} not found in state`);
-  }
-
-  const baseBlossomId = baseVertexState.inBlossom;
+  const baseBlossomId = findDirectChildOf(state, blossomId, baseVertex);
   const baseIndex = findChildIndex(baseBlossomId, blossom.children);
 
   // Determine direction to walk around the cycle
@@ -226,6 +227,11 @@ export function expandBlossom(
     baseIndex,
     cycleLength,
   );
+
+  // Promote children BEFORE expansion to ensure correct parent chain
+  // This must happen first because recursive expansion deletes child blossoms,
+  // and their grandchildren need to inherit from this blossom's parent
+  promoteBlossomChildren(state, blossom);
 
   // Walk from entry toward base, recursively expanding sub-blossoms
   let currentIndex = entryIndex;
@@ -264,8 +270,8 @@ export function expandBlossom(
     currentIndex = wrappedIndex;
   }
 
-  // Restore parent pointers - make children top-level again
-  restoreChildrenToTopLevel(state, blossom);
+  // Remove the expanded blossom from state to prevent re-expansion
+  state.blossoms.delete(blossomId);
 }
 
 /**
@@ -293,20 +299,25 @@ export function updateMates(
     throw new Error(`Vertex ${vertexV} not found in state`);
   }
 
-  // Clear old mate pointers to maintain symmetry
+  // Clear old mate pointers ONLY if they still point back to us (symmetric check)
+  // This prevents clearing mates that were already re-matched earlier in the same augmentation
   const oldMateU = stateU.mate;
   const oldMateV = stateV.mate;
 
   if (oldMateU !== null && oldMateU !== vertexV) {
     const oldMateUState = state.vertices.get(oldMateU);
-    if (oldMateUState !== undefined) {
+    const oldMateStillPointsToU =
+      oldMateUState !== undefined && oldMateUState.mate === vertexU;
+    if (oldMateStillPointsToU) {
       oldMateUState.mate = null;
     }
   }
 
   if (oldMateV !== null && oldMateV !== vertexU) {
     const oldMateVState = state.vertices.get(oldMateV);
-    if (oldMateVState !== undefined) {
+    const oldMateStillPointsToV =
+      oldMateVState !== undefined && oldMateVState.mate === vertexV;
+    if (oldMateStillPointsToV) {
       oldMateVState.mate = null;
     }
   }
@@ -346,24 +357,50 @@ export function processAugmentStep(
   }
 
   const isInsideBlossom = currentBlossom.parent !== NO_PARENT_BLOSSOM;
+
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    matchingLogger.debug(
+      `processAugmentStep: vertex=${currentVertex}, blossomId=${currentBlossomId}, ` +
+        `parent=${currentBlossom.parent}, isInsideBlossom=${isInsideBlossom}`,
+    );
+  }
+
   if (isInsideBlossom) {
     const parentBlossomId = currentBlossom.parent;
     if (parentBlossomId === null) {
       throw new Error('Expected non-null parent for nested blossom');
     }
+
+    if (IS_MATCHING_DEBUG_ENABLED) {
+      matchingLogger.debug(`Expanding parent blossom ${parentBlossomId}`);
+    }
+
     expandBlossom(state, parentBlossomId, currentVertex);
+
+    // Check if still inside a blossom after expansion
+    const blossomAfterExpansion = state.blossoms.get(currentBlossomId);
+    if (IS_MATCHING_DEBUG_ENABLED && blossomAfterExpansion) {
+      matchingLogger.debug(
+        `After expansion: blossom ${currentBlossomId} parent=${blossomAfterExpansion.parent}`,
+      );
+    }
   }
 
-  // CRITICAL: Recompute base vertex state AFTER blossom expansion
-  // The vertex may now be at top-level with different base/label properties
-  const [actualBaseVertex, actualBaseState] = getBaseVertexState(
-    state,
-    currentVertex,
-  );
-  const actualIsRoot = isAlternatingTreeRoot(actualBaseState);
+  // Use original base state for path traversal, not recomputed state
+  // After blossom expansion, the newly exposed vertex may have stale labels
+  // because only the outer blossom's base was labelled during BFS.
+  // The original base (from step) has the correct labelEnd for the tree structure.
+  const { baseState: originalBaseState } = step;
 
-  // Check if we've reached a root AFTER expanding blossoms and recomputing
-  if (actualIsRoot) {
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    matchingLogger.debug(
+      `Using original base for traversal: labelEnd=${originalBaseState.labelEnd}, ` +
+        `mate=${originalBaseState.mate}, isRoot=${step.isRoot}`,
+    );
+  }
+
+  // Check if we've reached a root using the original base state
+  if (step.isRoot) {
     const stopResult: AugmentStepResult = {
       shouldContinue: false,
       nextVertex: NO_NEXT_VERTEX,
@@ -371,18 +408,24 @@ export function processAugmentStep(
     return stopResult;
   }
 
-  // Get the vertex that gave this base its label
-  const labelEnd = actualBaseState.labelEnd;
+  // Get the vertex that gave the original base its label
+  const labelEnd = originalBaseState.labelEnd;
+
   if (labelEnd === null) {
     throw new Error(
-      `Vertex ${actualBaseVertex} has label ${actualBaseState.label} but no labelEnd`,
+      `Vertex ${step.baseVertex} has label ${originalBaseState.label} but no labelEnd`,
     );
   }
 
-  // Find who labelEnd was matched to before
-  const [labelEndBase, labelEndBaseState] = getBaseVertexState(state, labelEnd);
+  // Find the T-vertex (labelEnd) and get its base
+  const { baseVertex: labelEndBase, baseState: labelEndBaseState } =
+    findBaseVertexInfo(state, labelEnd);
+
+  // Get T-vertex's matched partner (the next S-vertex in the path toward root)
+  // Save this BEFORE updateMates clears it
   const previousMate = labelEndBaseState.mate;
 
+  // If T has no mate, we've reached the end of the path
   if (previousMate === null) {
     const stopResult: AugmentStepResult = {
       shouldContinue: false,
@@ -391,10 +434,14 @@ export function processAugmentStep(
     return stopResult;
   }
 
-  // Match labelEnd with current's base
-  updateMates(state, labelEndBase, actualBaseVertex);
+  // Recompute current vertex's base AFTER blossom expansion for matching
+  const { baseVertex: currentBase } = findBaseVertexInfo(state, currentVertex);
 
-  // Continue from labelEnd's previous mate
+  // Match T-vertex with current vertex's base
+  // This flips the edge: T was matched with previousMate, now T is matched with currentBase
+  updateMates(state, labelEndBase, currentBase);
+
+  // Continue from T's old mate (the next S-vertex toward the root)
   const continueResult: AugmentStepResult = {
     shouldContinue: true,
     nextVertex: previousMate,
@@ -426,7 +473,10 @@ export function augmentFromVertex(
   let shouldContinue = true;
 
   while (shouldContinue) {
-    const [baseVertex, baseState] = getBaseVertexState(state, currentVertex);
+    const { baseVertex, baseState, topLevelBlossomId } = findBaseVertexInfo(
+      state,
+      currentVertex,
+    );
     const isRoot = isAlternatingTreeRoot(baseState);
 
     if (IS_MATCHING_DEBUG_ENABLED) {
@@ -447,6 +497,7 @@ export function augmentFromVertex(
       currentVertex,
       baseVertex,
       baseState,
+      topLevelBlossomId,
       isRoot,
     };
     const augmentResult = processAugmentStep(state, stepResult);
