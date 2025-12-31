@@ -39,6 +39,10 @@ export type NeighbourSet = Set<VertexKey>;
 /** Children of a blossom (can be vertices or sub-blossoms) */
 export type BlossomChildren = NodeId[];
 
+/** Type guard: BlossomId (number) vs VertexKey (string) */
+export const isBlossomId = (node: NodeId): node is BlossomId =>
+  typeof node === 'number';
+
 /** Result of scanning and labelling a vertex's neighbours */
 export type ScanAndLabelResult = [VertexKey, VertexKey] | null;
 

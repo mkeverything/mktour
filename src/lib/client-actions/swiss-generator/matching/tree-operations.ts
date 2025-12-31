@@ -20,7 +20,7 @@ import type {
   VertexKey,
   VertexState,
 } from './types';
-import { Label, NO_EDGE_FOUND } from './types';
+import { isBlossomId, Label, NO_EDGE_FOUND } from './types';
 
 /**
  * Traverses the blossom chain from a vertex upward to the top-level blossom.
@@ -65,6 +65,43 @@ export function traverseBlossomChain(
       currentBlossom = state.blossoms.get(currentBlossomId);
     }
   }
+}
+
+/**
+ * Collects all leaf vertices contained within a blossom.
+ *
+ * Traverses DOWN the blossom hierarchy to find all graph vertices.
+ * Per NetworkX: b.leaves() yields all vertex keys inside blossom b.
+ */
+export function collectBlossomLeaves(
+  state: MatchingState,
+  blossomId: BlossomId,
+): VertexKey[] {
+  const blossom = state.blossoms.get(blossomId);
+  if (blossom === undefined) {
+    throw new Error(`Blossom ${blossomId} not found in state`);
+  }
+
+  const leaves: VertexKey[] = [];
+  const stack = blossom.children.filter(isBlossomId);
+
+  while (stack.length > 0) {
+    const childId = stack.pop()!;
+    const childBlossom = state.blossoms.get(childId);
+
+    if (childBlossom === undefined) {
+      throw new Error(`Sub-blossom ${childId} not found in state`);
+    }
+
+    if (childBlossom.children.length === 1) {
+      leaves.push(childBlossom.base);
+    } else {
+      const childBlossomIds = childBlossom.children.filter(isBlossomId);
+      stack.push(...childBlossomIds);
+    }
+  }
+
+  return leaves;
 }
 
 /**

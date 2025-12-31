@@ -15,6 +15,7 @@ import type {
 } from './matching-logger';
 import { IS_MATCHING_DEBUG_ENABLED, matchingLogger } from './matching-logger';
 import {
+  collectBlossomLeaves,
   findBaseVertexInfo,
   findDirectChildOf,
   findLowestCommonAncestor,
@@ -88,24 +89,22 @@ function determineWalkDirection(
 }
 
 /**
- * Promotes blossom children after expansion.
+ * Restores blossom children to top-level (removes parent pointers).
  *
- * When expanding a blossom B:
- * - If B has a parent P: children inherit P as their new parent, keeping chain intact
- * - If B is top-level: children become top-level (parent = null)
+ * Per NetworkX: `for s in b.childs: blossomparent[s] = None`
  *
- * This ensures the parent chain traversal from any vertex remains valid
- * after intermediate blossoms are expanded.
+ * Children become independent top-level blossoms because:
+ * 1. The expanded blossom is being deleted
+ * 2. Setting parent to grandparent would violate the invariant that
+ *    B.parent === P implies B is in P.children
  *
  * @param state - Current matching state
- * @param blossom - Blossom whose children to promote
+ * @param blossom - Blossom whose children to restore
  */
-function promoteBlossomChildren(
+function restoreChildrenToTopLevel(
   state: MatchingState,
   blossom: BlossomState,
 ): void {
-  const newParent = blossom.parent;
-
   for (const childBlossomId of blossom.children) {
     // Type guard: ensure we only have blossom IDs
     if (typeof childBlossomId === 'string') {
@@ -119,8 +118,8 @@ function promoteBlossomChildren(
       throw new Error(`Child blossom ${childBlossomId} not found in state`);
     }
 
-    // Children inherit expanded blossom's parent
-    childBlossom.parent = newParent;
+    // Children become top-level (no parent)
+    childBlossom.parent = NO_PARENT_BLOSSOM;
   }
 }
 
@@ -183,6 +182,17 @@ export function addBlossom(
     }
     childBlossom.parent = newBlossomId;
   }
+
+  // Update inBlossom for all vertices inside the new blossom
+  // Per NetworkX: for v in b.leaves(): inblossom[v] = b
+  const leafVertices = collectBlossomLeaves(state, newBlossomId);
+  for (const vertexKey of leafVertices) {
+    const vertexState = state.vertices.get(vertexKey);
+    if (vertexState === undefined) {
+      throw new Error(`Vertex ${vertexKey} not found in state`);
+    }
+    vertexState.inBlossom = newBlossomId;
+  }
 }
 
 /**
@@ -228,10 +238,25 @@ export function expandBlossom(
     cycleLength,
   );
 
-  // Promote children BEFORE expansion to ensure correct parent chain
-  // This must happen first because recursive expansion deletes child blossoms,
-  // and their grandchildren need to inherit from this blossom's parent
-  promoteBlossomChildren(state, blossom);
+  // Restore children to top-level BEFORE expansion
+  // Per NetworkX: children become independent blossoms (parent = None)
+  restoreChildrenToTopLevel(state, blossom);
+
+  // Update inBlossom for vertices inside each child blossom
+  // Per NetworkX: for s in b.childs: for v in s.leaves(): inblossom[v] = s
+  for (const childBlossomId of blossom.children) {
+    if (typeof childBlossomId === 'string') {
+      throw new Error(`Children should only contain blossom IDs`);
+    }
+    const leafVertices = collectBlossomLeaves(state, childBlossomId);
+    for (const vertexKey of leafVertices) {
+      const vertexState = state.vertices.get(vertexKey);
+      if (vertexState === undefined) {
+        throw new Error(`Vertex ${vertexKey} not found`);
+      }
+      vertexState.inBlossom = childBlossomId;
+    }
+  }
 
   // Walk from entry toward base, recursively expanding sub-blossoms
   let currentIndex = entryIndex;
@@ -421,12 +446,12 @@ export function processAugmentStep(
   const { baseVertex: labelEndBase, baseState: labelEndBaseState } =
     findBaseVertexInfo(state, labelEnd);
 
-  // Get T-vertex's matched partner (the next S-vertex in the path toward root)
-  // Save this BEFORE updateMates clears it
-  const previousMate = labelEndBaseState.mate;
+  // Get the S-vertex that labelled T (the next S-vertex in the path toward root)
+  // Per NetworkX: s, j = labeledge[bt] - we follow labelEnd, not mate
+  const nextSVertex = labelEndBaseState.labelEnd;
 
-  // If T has no mate, we've reached the end of the path
-  if (previousMate === null) {
+  // If T has no labelEnd, we've reached the end of the path
+  if (nextSVertex === null) {
     const stopResult: AugmentStepResult = {
       shouldContinue: false,
       nextVertex: NO_NEXT_VERTEX,
@@ -434,17 +459,18 @@ export function processAugmentStep(
     return stopResult;
   }
 
-  // Recompute current vertex's base AFTER blossom expansion for matching
-  const { baseVertex: currentBase } = findBaseVertexInfo(state, currentVertex);
+  // Get the actual S-vertex base that labelled T
+  const { baseVertex: nextSBase } = findBaseVertexInfo(state, nextSVertex);
 
-  // Match T-vertex with current vertex's base
-  // This flips the edge: T was matched with previousMate, now T is matched with currentBase
-  updateMates(state, labelEndBase, currentBase);
+  // Match T-vertex with the S-vertex that labelled it
+  // Per NetworkX pattern: mate[j] = s where (s, j) = labeledge[bt]
+  // This flips the matching edge: T was matched with current S, now T matches with previous S
+  updateMates(state, labelEndBase, nextSBase);
 
-  // Continue from T's old mate (the next S-vertex toward the root)
+  // Continue from the S-vertex that labelled T (toward the root)
   const continueResult: AugmentStepResult = {
     shouldContinue: true,
-    nextVertex: previousMate,
+    nextVertex: nextSVertex,
   };
   return continueResult;
 }
@@ -471,8 +497,16 @@ export function augmentFromVertex(
 
   let currentVertex = startVertex;
   let shouldContinue = true;
+  const visitedVertices = new Set<VertexKey>();
 
   while (shouldContinue) {
+    if (visitedVertices.has(currentVertex)) {
+      throw new Error(
+        `Cycle detected in path traversal at vertex ${currentVertex}`,
+      );
+    }
+    visitedVertices.add(currentVertex);
+
     const { baseVertex, baseState, topLevelBlossomId } = findBaseVertexInfo(
       state,
       currentVertex,
