@@ -182,11 +182,11 @@ function countPlayerResults(
     // Count based on result and player colour
     switch (game.result) {
       case '1-0':
-        isWhite ? wins++ : losses++;
+        if (isWhite) { wins++; } else { losses++; }
         break;
 
       case '0-1':
-        isWhite ? losses++ : wins++;
+        if (isWhite) { losses++; } else { wins++; }
         break;
 
       case '1/2-1/2':

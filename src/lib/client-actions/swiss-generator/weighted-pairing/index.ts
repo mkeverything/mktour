@@ -3,6 +3,10 @@ import type {
   ColouredEntitiesPair,
 } from '@/lib/client-actions/common-generator';
 import { countMatchedVertices } from '@/lib/client-actions/swiss-generator/matching';
+import {
+  IS_MATCHING_DEBUG_ENABLED,
+  matchingLogger,
+} from '@/lib/client-actions/swiss-generator/matching/matching-logger';
 import { maximumWeightMatching } from '@/lib/client-actions/swiss-generator/matching/weighted-matching';
 
 import { buildWeightedGraph, createWeightContext } from './graph-builder';
@@ -97,6 +101,27 @@ export function generateWeightedPairing(
   const graph = buildWeightedGraph(players, context, multipliers);
   const matching = maximumWeightMatching(graph);
 
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    let nullMateCount = 0;
+    const mateValues = new Set<string>();
+    for (const [, mate] of matching) {
+      if (mate === null) {
+        nullMateCount++;
+      } else {
+        mateValues.add(mate);
+      }
+    }
+    matchingLogger
+      .withMetadata({
+        matchingSize: matching.size,
+        nullMateCount,
+        uniqueMates: mateValues.size,
+        playerCount: players.length,
+        roundNumber,
+      })
+      .debug('Matching result stats');
+  }
+
   // Validate maximum cardinality: all vertices must be matched
   const actualMatchedVertices = countMatchedVertices(matching);
   validateMaximumCardinality(
@@ -105,7 +130,19 @@ export function generateWeightedPairing(
     context.hasOddPlayers,
   );
 
-  return extractPairingFromMatching(matching, players);
+  const pairs = extractPairingFromMatching(matching, players);
+
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    matchingLogger
+      .withMetadata({
+        pairCount: pairs.length,
+        expectedPairs: Math.floor(players.length / 2),
+        roundNumber,
+      })
+      .debug('Extracted pairs');
+  }
+
+  return pairs;
 }
 
 export { buildWeightedGraph, createWeightContext } from './graph-builder';

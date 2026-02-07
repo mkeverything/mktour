@@ -21,11 +21,17 @@ const LOGGER_PREFIX = '[MATCHING]';
 /** Environment variable keyword for enabling matching logs */
 const DEBUG_KEYWORD = 'matching';
 
+/** Log level for trace output (most verbose) */
+const LOG_LEVEL_TRACE = 'trace';
+
 /** Log level for debug output */
 const LOG_LEVEL_DEBUG = 'debug';
 
 /** Log level for info output (default) */
 const LOG_LEVEL_INFO = 'info';
+
+/** Environment variable keyword for enabling verbose trace logs */
+const DEBUG_KEYWORD_VERBOSE = 'matching-verbose';
 
 // ============================================================================
 // Helper Functions
@@ -34,23 +40,31 @@ const LOG_LEVEL_INFO = 'info';
 /**
  * Determines log level based on environment variables
  *
- * Returns debug level if either:
- * - DEBUG environment variable contains 'matching' keyword
- * - LOG_LEVEL environment variable is set to 'debug'
- *
- * Otherwise returns info level (effectively disabling debug logs)
+ * Log level hierarchy (from most to least verbose):
+ * - trace: DEBUG=matching-verbose (all logs including per-edge delta computations)
+ * - debug: DEBUG=matching or LOG_LEVEL=debug (iteration counts, paths, key events)
+ * - info: default (minimal output)
  *
  * @returns Log level string for loglayer configuration
  */
 function determineLogLevel(): string {
+  const debugEnvContainsVerbose = process.env.DEBUG?.includes(
+    DEBUG_KEYWORD_VERBOSE,
+  );
   const debugEnvContainsKeyword = process.env.DEBUG?.includes(DEBUG_KEYWORD);
   const logLevelIsDebug = process.env.LOG_LEVEL === LOG_LEVEL_DEBUG;
 
+  if (debugEnvContainsVerbose) {
+    return LOG_LEVEL_TRACE;
+  }
+
   const shouldEnableDebug = debugEnvContainsKeyword || logLevelIsDebug;
 
-  const logLevel = shouldEnableDebug ? LOG_LEVEL_DEBUG : LOG_LEVEL_INFO;
+  if (shouldEnableDebug) {
+    return LOG_LEVEL_DEBUG;
+  }
 
-  return logLevel;
+  return LOG_LEVEL_INFO;
 }
 
 // ============================================================================
@@ -88,10 +102,21 @@ export const matchingLogger = new LogLayer(loggerConfig);
  * Whether debug logging is currently enabled for matching algorithm
  *
  * Use this to conditionally create debug-only variables to avoid overhead
- * when logging is disabled
+ * when logging is disabled. True for both debug and trace levels.
  */
 export const IS_MATCHING_DEBUG_ENABLED =
-  loggerConfig.logLevel === LOG_LEVEL_DEBUG;
+  loggerConfig.logLevel === LOG_LEVEL_DEBUG ||
+  loggerConfig.logLevel === LOG_LEVEL_TRACE;
+
+/**
+ * Whether trace logging is currently enabled for matching algorithm
+ *
+ * Use this to guard very verbose logs (e.g., per-edge delta computations)
+ * that can overwhelm output and slow down execution.
+ * Only true when DEBUG=matching-verbose is set.
+ */
+export const IS_MATCHING_TRACE_ENABLED =
+  loggerConfig.logLevel === LOG_LEVEL_TRACE;
 
 // ============================================================================
 // Debug Logging Interfaces

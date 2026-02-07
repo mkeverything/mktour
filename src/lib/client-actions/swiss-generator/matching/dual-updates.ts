@@ -20,11 +20,13 @@ import Graph from 'graphology';
 
 import {
   IS_MATCHING_DEBUG_ENABLED,
+  IS_MATCHING_TRACE_ENABLED,
   matchingLogger,
   type EdgeDeltaInfo,
 } from './matching-logger';
 import { findBase, findBaseVertexInfo } from './tree-operations';
 import { computeSlack, getEdgeEndpoints } from './weighted-operations';
+
 import type {
   BaseDelta,
   BlossomDelta,
@@ -55,14 +57,16 @@ const POSITIVE_SIGN = 1n;
 const NEGATIVE_SIGN = -1n;
 
 /**
- * Gets the label of a vertex's top-level blossom base
+ * Gets the label of a vertex's top-level blossom
+ *
+ * Per NetworkX: labels are stored on blossoms, not vertices.
  */
 function getVertexLabel(
   state: WeightedMatchingState,
   vertexKey: VertexKey,
 ): Label {
-  const { baseState } = findBaseVertexInfo(state, vertexKey);
-  return baseState.label;
+  const { blossomState } = findBaseVertexInfo(state, vertexKey);
+  return blossomState.label;
 }
 
 /**
@@ -125,7 +129,7 @@ export function computeEdgeDelta(
   // NetworkX only considers edges with positive slack for delta computation
   const hasNonPositiveDelta = result !== null && result.delta <= ZERO_DUAL;
 
-  if (IS_MATCHING_DEBUG_ENABLED && result !== null && !hasNonPositiveDelta) {
+  if (IS_MATCHING_TRACE_ENABLED && result !== null && !hasNonPositiveDelta) {
     const info: EdgeDeltaInfo = {
       type: isBothSLabelled ? 'S-S' : 'S-NONE',
       vertexU,
@@ -133,7 +137,7 @@ export function computeEdgeDelta(
       slack: result.delta.toString(),
       delta: result.delta.toString(),
     };
-    matchingLogger.withMetadata(info).debug('Edge delta computed');
+    matchingLogger.withMetadata(info).trace('Edge delta computed');
   }
 
   return hasNonPositiveDelta ? null : result;
@@ -166,15 +170,10 @@ export function computeBlossomDelta(
   const isNonTrivial = blossom.children.length > 1;
 
   if (isNonTrivial) {
-    const baseState = state.vertices.get(blossom.base);
-
-    if (baseState === undefined) {
-      throw new Error(`Base vertex ${blossom.base} not found`);
-    }
-
     // Second condition: blossom must be T-labelled
     // T-labelled blossoms have their dual decreased during updates
-    const isTLabelled = baseState.label === Label.T;
+    // Per NetworkX: labels are stored on blossoms, not vertices
+    const isTLabelled = blossom.label === Label.T;
 
     if (isTLabelled) {
       const blossomDual = state.duals.get(blossomId);
@@ -333,33 +332,27 @@ interface NodeDualInfo {
 function* iterateNodesWithLabels(
   state: WeightedMatchingState,
 ): Generator<NodeDualInfo> {
-  // Yield all vertices with their BASE vertex's label for consistency
+  // Yield all vertices with their top-level blossom's label for consistency
+  // Per NetworkX: labels are stored on blossoms, not vertices
   for (const [vertexKey] of state.vertices) {
-    const { baseState } = findBaseVertexInfo(state, vertexKey);
+    const { blossomState } = findBaseVertexInfo(state, vertexKey);
     const nodeInfo: NodeDualInfo = {
       nodeId: vertexKey,
-      label: baseState.label,
+      label: blossomState.label,
       isBlossom: false,
     };
     yield nodeInfo;
   }
 
   // Yield non-trivial blossoms
+  // Per NetworkX: labels are stored directly on blossoms
   for (const [blossomId, blossom] of state.blossoms) {
     const isNonTrivial = blossom.children.length > 1;
 
     if (isNonTrivial) {
-      const baseState = state.vertices.get(blossom.base);
-
-      if (baseState === undefined) {
-        throw new Error(
-          `Base vertex ${blossom.base} not found for blossom ${blossomId}`,
-        );
-      }
-
       const nodeInfo: NodeDualInfo = {
         nodeId: blossomId,
-        label: baseState.label,
+        label: blossom.label,
         isBlossom: true,
       };
       yield nodeInfo;
@@ -456,22 +449,27 @@ export function computeMinimumDelta(
 }
 
 /**
- * Checks if a vertex entry has S-label
- */
-function isSLabelledVertex(entry: VertexEntry): boolean {
-  const [, vertexState] = entry;
-  return vertexState.label === Label.S;
-}
-
-/**
  * Filters vertices to only S-labelled ones
+ *
+ * Per NetworkX: labels are stored on blossoms, so we check
+ * the top-level blossom's label for each vertex.
  *
  * @param state - Weighted matching state
  * @returns Array of vertex entries for S-labelled vertices
  */
 function filterSLabelledVertices(state: WeightedMatchingState): VertexEntry[] {
-  const allVertices = Array.from(state.vertices.entries());
-  return allVertices.filter(isSLabelledVertex);
+  const sLabelledVertices: VertexEntry[] = [];
+
+  for (const entry of state.vertices.entries()) {
+    const [vertexKey] = entry;
+    const { blossomState } = findBaseVertexInfo(state, vertexKey);
+
+    if (blossomState.label === Label.S) {
+      sLabelledVertices.push(entry);
+    }
+  }
+
+  return sLabelledVertices;
 }
 
 /**

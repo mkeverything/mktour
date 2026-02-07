@@ -61,6 +61,18 @@ export type ScanFunction<State extends MatchingState> = (
   vertex: VertexKey,
 ) => ScanAndLabelResult;
 
+/**
+ * Function type for creating a blossom during BFS
+ *
+ * Cardinality matching uses plain addBlossom.
+ * Weighted matching uses addWeightedBlossom which also initializes duals.
+ */
+export type AddBlossomFunction<State extends MatchingState> = (
+  state: State,
+  vertexU: VertexKey,
+  vertexV: VertexKey,
+) => void;
+
 // ============================================================================
 // Enums
 // ============================================================================
@@ -93,18 +105,23 @@ export interface VertexState {
   /** Current mate (partner in matching), or null if unmatched */
   mate: Mate;
 
-  /** Label for augmenting path search */
-  label: Label;
-
-  /** Endpoint of edge that gave this vertex its label, or null if unlabelled */
-  labelEnd: LabelEndpoint;
-
-  /** ID of blossom containing this vertex */
+  /** ID of blossom containing this vertex (top-level blossom) */
   inBlossom: BlossomId;
+
+  /**
+   * Immediate parent blossom ID if this vertex is a direct child of a blossom.
+   * Per NetworkX: blossomparent[v] = b when vertex v is a direct child of blossom b.
+   * null if vertex is not directly inside any non-trivial blossom.
+   */
+  blossomParent: BlossomId | null;
 }
 
 /**
  * State information for a blossom
+ *
+ * Per NetworkX, labels are stored per-blossom, not per-vertex:
+ * - label[b] = 1 (S), 2 (T), or None (unlabelled)
+ * - labeledge[b] = (v, w) edge through which b got its label
  */
 export interface BlossomState {
   /** Unique identifier for this blossom */
@@ -119,8 +136,38 @@ export interface BlossomState {
   /** Base vertex where blossom connects to alternating tree */
   base: VertexKey;
 
+  /** Label for augmenting path search (per NetworkX: labels are per-blossom) */
+  label: Label;
+
+  /** Endpoint of edge that gave this blossom its label, or null if unlabelled */
+  labelEnd: LabelEndpoint;
+
+  /**
+   * The vertex in THIS blossom that received the label
+   *
+   * Combined with labelEnd, forms the complete labeling edge:
+   * - labelEnd: vertex in parent blossom (the labeler)
+   * - labelEdgeVertex: vertex in this blossom (the labeled)
+   *
+   * Per NetworkX: labeledge[b] = (labelEnd, labelEdgeVertex)
+   */
+  labelEdgeVertex: LabelEndpoint;
+
   /** Edge endpoints where this blossom was created */
   endpoints: [VertexKey, VertexKey];
+
+  /**
+   * Junction edges between consecutive children in the blossom cycle
+   *
+   * edges[i] = [vertexInChild[i], vertexInChild[i+1]] for i < children.length-1
+   * edges[children.length-1] = [vertexInChild[last], vertexInChild[0]] (closing edge)
+   *
+   * These are the actual vertex endpoints that connect adjacent children.
+   * Used by augmentBlossom to flip internal mates when augmenting through blossom.
+   *
+   * Per NetworkX: `b.edges` stores the junction edges for mate flipping.
+   */
+  edges: Array<[VertexKey, VertexKey]>;
 }
 
 /**
@@ -149,6 +196,17 @@ export interface MatchingState {
 /**
  * Result of finding lowest common ancestor in alternating tree
  */
+/**
+ * Result of building a path to root with edge information
+ */
+export interface PathWithEdges {
+  /** Blossom IDs along the path */
+  path: BlossomId[];
+
+  /** Edges connecting consecutive blossoms: [vertexInCurrent, vertexInParent] */
+  edges: Array<[VertexKey, VertexKey]>;
+}
+
 export interface LowestCommonAncestorResult {
   /** The LCA blossom ID where paths converge */
   lcaBlossomId: BlossomId;
@@ -158,20 +216,38 @@ export interface LowestCommonAncestorResult {
 
   /** Path of blossom IDs from second vertex to LCA (excluding LCA) */
   pathFromV: BlossomId[];
+
+  /**
+   * Edges along path from U to LCA
+   *
+   * Each edge [a, b] connects consecutive blossoms in pathFromU:
+   * - a is in pathFromU[i]
+   * - b is in pathFromU[i+1] (or LCA for the last edge)
+   */
+  edgesFromU: Array<[VertexKey, VertexKey]>;
+
+  /**
+   * Edges along path from V to LCA
+   *
+   * Each edge [a, b] connects consecutive blossoms in pathFromV:
+   * - a is in pathFromV[i]
+   * - b is in pathFromV[i+1] (or LCA for the last edge)
+   */
+  edgesFromV: Array<[VertexKey, VertexKey]>;
 }
 
 /**
  * Result of looking up the base vertex information for a vertex
  *
  * Contains the base vertex of the top-level blossom containing a vertex,
- * along with the base's state and the blossom ID.
+ * along with the blossom state (which holds label/labelEnd per NetworkX).
  */
 export interface BaseVertexInfo {
   /** Base vertex key of the top-level blossom */
   baseVertex: VertexKey;
 
-  /** State of the base vertex */
-  baseState: VertexState;
+  /** State of the top-level blossom (contains label/labelEnd) */
+  blossomState: BlossomState;
 
   /** ID of the top-level blossom containing the vertex */
   topLevelBlossomId: BlossomId;
@@ -187,8 +263,8 @@ export interface TraversalStepResult {
   /** Base vertex for this step */
   baseVertex: VertexKey;
 
-  /** Base vertex state */
-  baseState: VertexState;
+  /** Top-level blossom state (contains label/labelEnd) */
+  blossomState: BlossomState;
 
   /** Top-level blossom ID containing the current vertex */
   topLevelBlossomId: BlossomId;
@@ -209,6 +285,20 @@ export interface BlossomChainStepResult {
 
   /** Whether this is a non-trivial blossom (has children > 1) */
   isNonTrivial: boolean;
+}
+
+/**
+ * Result of finding a labeled vertex within a blossom
+ *
+ * Used in phase 2 of delta4 expansion to check if children are
+ * reachable from external S-vertices.
+ */
+export interface LabeledVertexInfo {
+  /** The labeled vertex key */
+  vertex: VertexKey;
+
+  /** The blossom containing this vertex (has the label) */
+  blossom: BlossomState;
 }
 
 /**

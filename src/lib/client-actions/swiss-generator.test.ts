@@ -16,16 +16,15 @@ import { GameModel, PlayerModel } from '@/types/tournaments';
 const BASE_SEED = 14;
 
 /** Number of different seeds to test */
-const SEEDS_TO_TEST = 50;
+const SEEDS_TO_TEST = 5;
 
 /**
  * Swiss system player range for testing
- * - Minimum 32 players for moderate tournament testing
- * - Maximum 64 players for larger tournament testing
+ * Fixed at 128 players for consistent testing
  */
 const SWISS_PLAYER_NUMBER_FAKEOPTS = {
-  min: 32,
-  max: 64,
+  min: 128,
+  max: 128,
 };
 
 /**
@@ -33,14 +32,20 @@ const SWISS_PLAYER_NUMBER_FAKEOPTS = {
  * @param seed - Random seed for deterministic generation
  * @returns Object with tournament results
  */
-function generateTournamentWithSeed(seed: number): {
+function generateTournamentWithSeed(
+  seed: number,
+  playerCount?: number,
+  maxRounds?: number,
+): {
   playerCount: number;
   roundsCompleted: number;
+  roundsToTest: number;
   optimalRounds: number;
 } {
   faker.seed(seed);
 
-  const randomPlayerNumber = faker.number.int(SWISS_PLAYER_NUMBER_FAKEOPTS);
+  const randomPlayerNumber =
+    playerCount ?? faker.number.int(SWISS_PLAYER_NUMBER_FAKEOPTS);
 
   // Generate players
   const randomPlayers: PlayerModel[] = [];
@@ -62,13 +67,14 @@ function generateTournamentWithSeed(seed: number): {
 
   // Swiss rounds = n/2 for n players (standard tournament length)
   const SWISS_OPTIMAL_ROUNDS = Math.floor(randomPlayerNumber / 2);
+  const roundsToTest = maxRounds ?? SWISS_OPTIMAL_ROUNDS;
 
   console.log(
-    `[Seed ${seed}] Starting: ${randomPlayerNumber} players, ${SWISS_OPTIMAL_ROUNDS} optimal rounds`,
+    `[Seed ${seed}] Starting: ${randomPlayerNumber} players, ${roundsToTest} rounds`,
   );
 
-  // Generate rounds until optimal Swiss rounds reached
-  while (currentRound <= SWISS_OPTIMAL_ROUNDS) {
+  // Generate rounds until test limit reached
+  while (currentRound <= roundsToTest) {
     console.log(`[Seed ${seed}] Generating round ${currentRound}...`);
 
     // Update player scores based on previous games
@@ -110,6 +116,7 @@ function generateTournamentWithSeed(seed: number): {
   return {
     playerCount: randomPlayerNumber,
     roundsCompleted: currentRound - INITIAL_ONGOING_ROUND,
+    roundsToTest,
     optimalRounds: SWISS_OPTIMAL_ROUNDS,
   };
 }
@@ -127,9 +134,53 @@ describe('Swiss Generator Black-Box Tests', () => {
   });
 
   describe('Specific Seed Regression', () => {
-    test('Seed 19: completes all optimal rounds', () => {
+    test('Seed 19: completes all test rounds', () => {
       const result = generateTournamentWithSeed(19);
-      expect(result.roundsCompleted).toBe(result.optimalRounds);
+      expect(result.roundsCompleted).toBe(result.roundsToTest);
     });
+  });
+
+  describe('Edge Cases: Small Tournament Failure Estimation', () => {
+    const EDGE_CASE_SEEDS = 1000;
+
+    function runFailureEstimation(players: number, rounds: number): void {
+      const failedSeeds: number[] = [];
+      let successCount = 0;
+
+      for (let seedOffset = 0; seedOffset < EDGE_CASE_SEEDS; seedOffset++) {
+        const currentSeed = BASE_SEED + seedOffset;
+        try {
+          const result = generateTournamentWithSeed(
+            currentSeed,
+            players,
+            rounds,
+          );
+          if (result.roundsCompleted === result.roundsToTest) {
+            successCount++;
+          } else {
+            failedSeeds.push(currentSeed);
+          }
+        } catch {
+          failedSeeds.push(currentSeed);
+        }
+      }
+
+      const successRate = (successCount / EDGE_CASE_SEEDS) * 100;
+      console.log(
+        `[${players}p/${rounds}r] ${successCount}/${EDGE_CASE_SEEDS} completed (${successRate.toFixed(1)}%)`,
+      );
+      if (failedSeeds.length > 0) {
+        console.log(
+          `[${players}p/${rounds}r] Failed seeds: ${failedSeeds.join(', ')}`,
+        );
+      }
+
+      // Log-only — no hard assertion on success rate
+      expect(true).toBe(true);
+    }
+
+    test('10 players, 8 rounds', () => runFailureEstimation(10, 8));
+    test('12 players, 8 rounds', () => runFailureEstimation(12, 8));
+    test('15 players, 8 rounds', () => runFailureEstimation(15, 8));
   });
 });

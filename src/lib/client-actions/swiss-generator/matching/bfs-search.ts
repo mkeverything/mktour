@@ -29,7 +29,7 @@ import type {
   ScanFunction,
   VertexKey,
 } from './types';
-import { Label, NO_MATE } from './types';
+import { Label, NO_LABEL_ENDPOINT, NO_MATE } from './types';
 
 /**
  * Function type for creating a blossom during BFS.
@@ -59,7 +59,10 @@ export function findMatchedBases(state: MatchingState): Set<VertexKey> {
     const hasMatch = vertexState.mate !== NO_MATE;
     if (hasMatch) {
       // Mark this vertex's blossom base as having a matched vertex
-      const { baseVertex: baseKey } = findBaseVertexInfo(state, vertexState.key);
+      const { baseVertex: baseKey } = findBaseVertexInfo(
+        state,
+        vertexState.key,
+      );
       matchedBases.add(baseKey);
     }
   }
@@ -94,7 +97,8 @@ export function labelFreeVerticesAsRoots(state: MatchingState): void {
 
     if (shouldLabel) {
       // Label this free blossom's base as S-root for BFS exploration
-      assignLabel(state, baseKey, Label.S, baseKey);
+      // Per NetworkX: roots have labelEnd = null (not self-referential)
+      assignLabel(state, baseKey, Label.S, NO_LABEL_ENDPOINT);
       labelledBases.add(baseKey);
     }
   }
@@ -145,6 +149,9 @@ export function countMatchedVertices(matching: MatchingResult): number {
  * @param addBlossomFn - Function to create blossoms (cardinality: addBlossom, weighted: addWeightedBlossom)
  * @returns true if augmenting path found and matching augmented, false otherwise
  */
+/** Maximum BFS iterations before assuming infinite loop */
+const MAX_BFS_ITERATIONS = 500;
+
 export function bfsSearchForAugmentingPath<State extends MatchingState>(
   state: State,
   scanFn: ScanFunction<State>,
@@ -159,7 +166,14 @@ export function bfsSearchForAugmentingPath<State extends MatchingState>(
       .debug('Starting BFS search for augmenting path');
   }
 
+  let bfsIterations = 0;
+
   while (state.queue.length > 0) {
+    bfsIterations++;
+    if (bfsIterations > MAX_BFS_ITERATIONS) {
+      throw new Error(`Infinite BFS loop after ${bfsIterations} iterations`);
+    }
+
     const currentVertex = state.queue.shift();
     if (currentVertex === undefined) {
       throw new Error('Queue unexpectedly empty');
@@ -215,10 +229,6 @@ export function bfsSearchForAugmentingPath<State extends MatchingState>(
         // After blossom creation, the vertex's base may have changed, and we may
         // find augmenting paths to other trees through neighbors we haven't checked
         state.queue.unshift(currentVertex);
-
-        if (IS_MATCHING_DEBUG_ENABLED) {
-          matchingLogger.debug('Blossom created, re-scanning vertex');
-        }
       } else {
         // Different trees - found augmenting path
         if (IS_MATCHING_DEBUG_ENABLED) {

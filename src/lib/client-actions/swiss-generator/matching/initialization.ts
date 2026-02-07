@@ -10,6 +10,7 @@
 
 import Graph from 'graphology';
 
+import { IS_MATCHING_DEBUG_ENABLED, matchingLogger } from './matching-logger';
 import type {
   BlossomId,
   BlossomState,
@@ -18,7 +19,7 @@ import type {
   VertexKey,
   VertexState,
 } from './types';
-import { Label, NO_LABEL_ENDPOINT, NO_MATE, NO_PARENT_BLOSSOM } from './types';
+import { Label, NO_MATE, NO_PARENT_BLOSSOM } from './types';
 
 /**
  * Builds adjacency list from graphology Graph
@@ -61,8 +62,9 @@ export function buildAdjacencyList(graph: Graph): Map<VertexKey, NeighbourSet> {
  *
  * Each vertex starts:
  * - Unmatched (mate = null)
- * - Unlabelled (label = NONE, labelEnd = null)
- * - In its own trivial blossom (inBlossom = vertexKey as BlossomId)
+ * - In its own trivial blossom (inBlossom = trivialBlossomId)
+ *
+ * Note: labels are stored on blossoms, not vertices (per NetworkX)
  *
  * @param vertexKey - Vertex key from graph
  * @param trivialBlossomId - ID of trivial blossom for this vertex
@@ -75,9 +77,8 @@ export function createInitialVertexState(
   const initialState: VertexState = {
     key: vertexKey,
     mate: NO_MATE,
-    label: Label.NONE,
-    labelEnd: NO_LABEL_ENDPOINT,
     inBlossom: trivialBlossomId,
+    blossomParent: null, // Not inside any non-trivial blossom initially
   };
   return initialState;
 }
@@ -93,7 +94,9 @@ export function createInitialVertexState(
  * - No parent (top-level)
  * - Single child (the vertex itself)
  * - Base is the vertex
+ * - Unlabelled (label = NONE, labelEnd = null)
  * - Endpoints are meaningless (set to vertex for completeness)
+ * - No edges (single vertex has no junction edges)
  *
  * @param blossomId - Unique ID for this trivial blossom
  * @param vertexKey - Vertex key this blossom contains
@@ -108,7 +111,11 @@ export function createTrivialBlossom(
     parent: NO_PARENT_BLOSSOM,
     children: [vertexKey],
     base: vertexKey,
+    label: Label.NONE,
+    labelEnd: null,
+    labelEdgeVertex: null,
     endpoints: [vertexKey, vertexKey],
+    edges: [],
   };
   return trivialBlossom;
 }
@@ -172,14 +179,18 @@ export function initialiseState(graph: Graph): MatchingState {
 }
 
 /**
- * Clears vertex labels and label endpoints
+ * Clears blossom labels and label endpoints
+ *
+ * Per NetworkX: labels are stored on blossoms, not vertices.
+ * This resets all blossoms to unlabelled state at start of each search stage.
  *
  * @param state - Matching state (modified in place)
  */
-function clearVertexLabels(state: MatchingState): void {
-  for (const [, vertexState] of state.vertices) {
-    vertexState.label = Label.NONE;
-    vertexState.labelEnd = NO_LABEL_ENDPOINT;
+function clearBlossomLabels(state: MatchingState): void {
+  for (const [, blossom] of state.blossoms) {
+    blossom.label = Label.NONE;
+    blossom.labelEnd = null;
+    blossom.labelEdgeVertex = null;
   }
 }
 
@@ -255,8 +266,18 @@ function removeNonTrivialBlossoms(state: MatchingState): void {
  * @param state - Matching state (modified in place)
  */
 export function resetLabels(state: MatchingState): void {
-  clearVertexLabels(state);
+  const blossomCountBefore = state.blossoms.size;
+  const nextIdBefore = state.nextBlossomId;
+
+  clearBlossomLabels(state);
   resetVerticesToTrivialBlossoms(state);
   removeNonTrivialBlossoms(state);
   state.queue = [];
+
+  if (IS_MATCHING_DEBUG_ENABLED) {
+    matchingLogger.debug(
+      `resetLabels: blossoms ${blossomCountBefore}→${state.blossoms.size}, ` +
+        `nextBlossomId ${nextIdBefore}→${state.nextBlossomId}`,
+    );
+  }
 }

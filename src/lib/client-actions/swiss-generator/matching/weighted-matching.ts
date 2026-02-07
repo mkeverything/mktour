@@ -29,7 +29,6 @@ import {
   matchingLogger,
   type BlossomExpansionInfo,
   type DeltaComputationInfo,
-  type IterationInfo,
   type RequeueInfo,
   type WeightedBFSIterationInfo,
   type WeightedMatchingStartInfo,
@@ -86,11 +85,11 @@ function processTightNeighbour(
   neighbourKey: VertexKey,
 ): VertexKey | null {
   const { baseVertex: currentBase } = findBaseVertexInfo(state, currentVertex);
-  const { baseVertex: neighbourBase, baseState: neighbourBaseState } =
+  const { baseVertex: neighbourBase, blossomState: neighbourBlossomState } =
     findBaseVertexInfo(state, neighbourKey);
 
   const isSameBlossom = currentBase === neighbourBase;
-  const neighbourLabel = neighbourBaseState.label;
+  const neighbourLabel = neighbourBlossomState.label;
 
   if (IS_MATCHING_DEBUG_ENABLED) {
     matchingLogger.debug(
@@ -122,15 +121,8 @@ function processTightNeighbour(
       result = neighbourKey;
     } else {
       // Matched vertex: extend alternating tree
-      // Label neighbour as T, its mate as S (adds mate to queue)
-      const neighbourMate = neighbourState.mate;
-
-      if (neighbourMate === null) {
-        throw new Error(`Neighbour ${neighbourKey} should be matched`);
-      }
-
+      // T-label recursively labels mate as S (via assignLabel)
       assignLabel(state, neighbourKey, Label.T, currentVertex);
-      assignLabel(state, neighbourMate, Label.S, neighbourBase);
     }
   }
   // T-labelled: already in tree, result stays null
@@ -254,7 +246,10 @@ function applyDeltaAndExpand(
     if (blossom === undefined) {
       throw new Error(`Blossom ${delta.blossomId} not found for expansion`);
     }
-    expandBlossom(state, delta.blossomId, blossom.base);
+    // endstage=false: relabel children with alternating T-S
+    // Per NetworkX: entrychild = inblossom[labeledge[b][1]]
+    const entryVertex = blossom.labelEdgeVertex ?? blossom.base;
+    expandBlossom(state, delta.blossomId, entryVertex, false);
   }
 }
 
@@ -282,7 +277,13 @@ function requeueSLabelledVertices(state: WeightedMatchingState): void {
   state.queue = [];
 
   for (const [vertexKey, vertexState] of state.vertices) {
-    if (vertexState.label === Label.S) {
+    const blossom = state.blossoms.get(vertexState.inBlossom);
+    if (blossom === undefined) {
+      throw new Error(
+        `Blossom ${vertexState.inBlossom} not found for vertex ${vertexKey}`,
+      );
+    }
+    if (blossom.label === Label.S) {
       state.queue.push(vertexKey);
     }
   }
@@ -348,6 +349,9 @@ function shouldTerminateSearch(
  * @param maxCardinality - If true, prioritize cardinality over weight optimality
  * @returns Stage result indicating what happened
  */
+/** Maximum iterations before assuming infinite loop */
+const MAX_STAGE_ITERATIONS = 500;
+
 function performSearchStage(
   state: WeightedMatchingState,
   graph: Graph,
@@ -355,8 +359,16 @@ function performSearchStage(
   maxCardinality: boolean,
 ): StageResult {
   let result: StageResult | null = null;
+  let iterationCount = 0;
 
   while (result === null) {
+    iterationCount++;
+    if (iterationCount > MAX_STAGE_ITERATIONS) {
+      throw new Error(
+        `Infinite loop in performSearchStage after ${iterationCount} iterations`,
+      );
+    }
+
     if (IS_MATCHING_DEBUG_ENABLED) {
       const iterationInfo: WeightedBFSIterationInfo = {
         queueSize: state.queue.length,
@@ -397,7 +409,9 @@ function performSearchStage(
           deltaInfo = { deltaValue: minDelta.delta, isBlossomDelta: true };
         }
 
-        matchingLogger.withMetadata(deltaInfo).debug('Delta computation result');
+        matchingLogger
+          .withMetadata(deltaInfo)
+          .debug('Delta computation result');
       }
 
       // Check termination: if termination bound is smallest, no more paths exist

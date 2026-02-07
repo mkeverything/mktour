@@ -8,33 +8,24 @@
  * - Mate updates
  */
 
-import type {
-  AugmentFromVertexStartInfo,
-  AugmentFromVertexStepInfo,
-  AugmentMatchingStartInfo,
-} from './matching-logger';
-import { IS_MATCHING_DEBUG_ENABLED, matchingLogger } from './matching-logger';
 import {
+  assignLabel,
   collectBlossomLeaves,
   findBaseVertexInfo,
   findDirectChildOf,
   findLowestCommonAncestor,
-  isAlternatingTreeRoot,
 } from './tree-operations';
 import type {
-  AugmentStepResult,
   BlossomId,
   BlossomState,
   BlossomChildren,
+  LabeledVertexInfo,
   MatchingState,
-  TraversalStepResult,
   VertexKey,
-  WalkDirection,
 } from './types';
 import {
-  MIN_CHILDREN_FOR_NONTRIVIAL_BLOSSOM,
+  Label,
   NOT_FOUND_IN_ARRAY,
-  NO_NEXT_VERTEX,
   NO_PARENT_BLOSSOM,
   STEP_BACKWARD,
   STEP_FORWARD,
@@ -62,30 +53,223 @@ function findChildIndex(
 }
 
 /**
- * Determines which direction to walk around a blossom cycle
+ * Updates inBlossom and blossomParent for all vertices in child blossoms
  *
- * Given entry and base positions in a circular array, calculates
- * whether to walk forward or backward to minimize distance.
+ * After expansion, vertices need to point to their immediate child blossom,
+ * not the (now deleted) outer blossom.
+ *
+ * @param state - Current matching state
+ * @param blossom - Blossom being expanded
+ */
+function updateChildrenAfterExpansion(
+  state: MatchingState,
+  blossom: BlossomState,
+): void {
+  for (const childBlossomId of blossom.children) {
+    if (typeof childBlossomId === 'string') {
+      throw new Error(`Children should only contain blossom IDs`);
+    }
+
+    const childBlossom = state.blossoms.get(childBlossomId);
+    const leafVertices = collectBlossomLeaves(state, childBlossomId);
+
+    // Update inBlossom for all vertices in this child
+    for (const vertexKey of leafVertices) {
+      const vertexState = state.vertices.get(vertexKey);
+      if (vertexState === undefined) {
+        throw new Error(`Vertex ${vertexKey} not found`);
+      }
+      vertexState.inBlossom = childBlossomId;
+    }
+
+    // Reset blossomParent for trivial children
+    const isTrivial =
+      childBlossom !== undefined && childBlossom.children.length === 1;
+    if (isTrivial) {
+      const vertexKey = childBlossom.base;
+      const vertexState = state.vertices.get(vertexKey);
+      if (vertexState !== undefined) {
+        vertexState.blossomParent = blossom.parent;
+      }
+    }
+  }
+}
+
+/**
+ * Gets walk direction based on parity of entry index (per NetworkX)
+ *
+ * NetworkX uses parity to ensure we traverse an even number of edges,
+ * which is required for correct mate flipping.
+ *
+ * @param entryIndex - Index of entry child in blossom
+ * @returns +1 for forward, -1 for backward
+ */
+function getWalkStep(entryIndex: number): number {
+  const isOddEntry = (entryIndex & 1) === 1;
+  return isOddEntry ? STEP_FORWARD : STEP_BACKWARD;
+}
+
+/**
+ * Gets edge vertices w and x based on walk direction
+ *
+ * Per NetworkX:
+ * - Forward (jstep=1): w, x = edges[j]
+ * - Backward (jstep=-1): x, w = edges[j-1] (different index AND swapped)
+ *
+ * @param blossom - Blossom being traversed
+ * @param j - Current position (may be negative)
+ * @param jstep - Walk direction (+1 or -1)
+ * @returns Tuple [w, x] of edge vertices
+ */
+function getEdgeVertices(
+  blossom: BlossomState,
+  j: number,
+  jstep: number,
+): [VertexKey, VertexKey] {
+  const cycleLength = blossom.children.length;
+
+  if (jstep === STEP_FORWARD) {
+    const edgeIdx = (j + cycleLength) % cycleLength;
+    return blossom.edges[edgeIdx];
+  }
+
+  // Backward: use edges[j-1] with swapped order
+  const edgeIdx = (j - 1 + cycleLength) % cycleLength;
+  const edge = blossom.edges[edgeIdx];
+  return [edge[1], edge[0]];
+}
+
+/**
+ * Expands a child blossom if it's non-trivial
+ *
+ * @param state - Current matching state
+ * @param childId - Child blossom ID to potentially expand
+ * @param entryVertex - Vertex where augmenting path enters the child
+ */
+function expandChildIfNonTrivial(
+  state: MatchingState,
+  childId: BlossomId,
+  entryVertex: VertexKey,
+): void {
+  const child = state.blossoms.get(childId);
+  const isNonTrivial = child !== undefined && child.children.length > 1;
+
+  if (isNonTrivial) {
+    expandBlossom(state, childId, entryVertex);
+  }
+}
+
+/**
+ * Builds path of child indices from entry toward base (index 0)
+ *
+ * Direction based on parity per NetworkX:
+ * - Odd entry index: go forward (wrapping around)
+ * - Even entry index: go backward
+ *
+ * Path always has even length (blossom is odd cycle, entry != base).
  *
  * @param entryIndex - Starting position in cycle
- * @param baseIndex - Target position in cycle
- * @param cycleLength - Total length of cycle
- * @returns Walk direction (stepSize +1 or -1) and distance
+ * @param cycleLength - Total number of children
+ * @returns Array of child indices from entry toward base (excluding entry, including base)
  */
-function determineWalkDirection(
+function buildPathToBase(entryIndex: number, childCount: number): number[] {
+  const isOddEntry = entryIndex % 2 === 1;
+  const step = isOddEntry ? STEP_FORWARD : STEP_BACKWARD;
+
+  const path: number[] = [];
+  let position = entryIndex;
+
+  while (position !== 0) {
+    position = nextChildPosition(position, step, childCount);
+    path.push(position);
+  }
+
+  return path;
+}
+
+/**
+ * Updates mate pointers for two vertices
+ */
+function setMates(
+  state: MatchingState,
+  vertexA: VertexKey,
+  vertexB: VertexKey,
+): void {
+  const stateA = state.vertices.get(vertexA);
+  const stateB = state.vertices.get(vertexB);
+
+  if (stateA !== undefined && stateB !== undefined) {
+    stateA.mate = vertexB;
+    stateB.mate = vertexA;
+  }
+}
+
+/**
+ * Walks blossom cycle and updates mates per NetworkX algorithm
+ *
+ * Processes children in pairs from entry toward base (index 0).
+ * For each pair, recursively expands non-trivial children and
+ * matches the edge vertices connecting them.
+ *
+ * @param state - Current matching state
+ * @param blossom - Blossom being expanded
+ * @param entryIndex - Index of entry child
+ */
+function walkBlossomAndUpdateMates(
+  state: MatchingState,
+  blossom: BlossomState,
   entryIndex: number,
-  baseIndex: number,
-  cycleLength: number,
-): WalkDirection {
-  const forwardDistance = (baseIndex - entryIndex + cycleLength) % cycleLength;
-  const backwardDistance = (entryIndex - baseIndex + cycleLength) % cycleLength;
+): void {
+  const cycleLength = blossom.children.length;
+  const path = buildPathToBase(entryIndex, cycleLength);
+  const step = getWalkStep(entryIndex);
 
-  const shouldWalkForward = forwardDistance <= backwardDistance;
-  const stepSize = shouldWalkForward ? STEP_FORWARD : STEP_BACKWARD;
-  const distance = shouldWalkForward ? forwardDistance : backwardDistance;
+  // Process children in pairs
+  for (let pairIndex = 0; pairIndex < path.length; pairIndex += 2) {
+    const firstChildIndex = path[pairIndex];
+    const secondChildIndex = path[pairIndex + 1];
 
-  const direction: WalkDirection = { stepSize, distance };
-  return direction;
+    // Get edge vertices connecting this pair
+    const [vertexInFirst, vertexInSecond] = getEdgeVertices(
+      blossom,
+      firstChildIndex,
+      step,
+    );
+
+    // Expand first child with entry at vertexInFirst
+    const firstChildId = blossom.children[firstChildIndex];
+    if (typeof firstChildId === 'number') {
+      expandChildIfNonTrivial(state, firstChildId, vertexInFirst);
+    }
+
+    // Expand second child with entry at vertexInSecond
+    const secondChildId = blossom.children[secondChildIndex];
+    if (typeof secondChildId === 'number') {
+      expandChildIfNonTrivial(state, secondChildId, vertexInSecond);
+    }
+
+    // Match the edge vertices
+    setMates(state, vertexInFirst, vertexInSecond);
+  }
+}
+
+/**
+ * Rotates blossom arrays so entry becomes the new base position (index 0)
+ *
+ * Per NetworkX: b.childs = b.childs[i:] + b.childs[:i]
+ *
+ * @param blossom - Blossom to rotate
+ * @param entryIndex - Index to move to front
+ */
+function rotateBlossomToEntry(blossom: BlossomState, entryIndex: number): void {
+  blossom.children = [
+    ...blossom.children.slice(entryIndex),
+    ...blossom.children.slice(0, entryIndex),
+  ];
+  blossom.edges = [
+    ...blossom.edges.slice(entryIndex),
+    ...blossom.edges.slice(0, entryIndex),
+  ];
 }
 
 /**
@@ -100,10 +284,12 @@ function determineWalkDirection(
  *
  * @param state - Current matching state
  * @param blossom - Blossom whose children to restore
+ * @param clearLabels - If true, clear labels (for end-of-stage); if false, keep for relabeling
  */
 function restoreChildrenToTopLevel(
   state: MatchingState,
   blossom: BlossomState,
+  clearLabels: boolean = true,
 ): void {
   for (const childBlossomId of blossom.children) {
     // Type guard: ensure we only have blossom IDs
@@ -120,6 +306,190 @@ function restoreChildrenToTopLevel(
 
     // Children become top-level (no parent)
     childBlossom.parent = NO_PARENT_BLOSSOM;
+
+    // Clear labels if requested (for end-of-stage expansion)
+    if (clearLabels) {
+      childBlossom.label = Label.NONE;
+      childBlossom.labelEnd = null;
+      childBlossom.labelEdgeVertex = null;
+    }
+  }
+}
+
+/**
+ * Advances position in blossom cycle with wrap-around.
+ *
+ * Handles negative indices like Python: `(-1 + 5) % 5 = 4`
+ * JavaScript's `%` returns `-1 % 5 = -1`, so we add childCount first.
+ */
+function nextChildPosition(
+  position: number,
+  step: number,
+  childCount: number,
+): number {
+  return (position + step + childCount) % childCount;
+}
+
+/**
+ * Clears label information from a blossom.
+ *
+ * Per NetworkX: label[x] = None before relabeling.
+ */
+function clearBlossomLabel(blossom: BlossomState): void {
+  blossom.label = Label.NONE;
+  blossom.labelEnd = null;
+  blossom.labelEdgeVertex = null;
+}
+
+/**
+ * Checks if a labeled leaf is valid for relabeling in phase 2.
+ *
+ * Per NetworkX: label[v] == 2 and inblossom[v] == bv
+ */
+function isValidForRelabel(
+  labeled: LabeledVertexInfo | null,
+  childId: BlossomId,
+): labeled is LabeledVertexInfo {
+  return (
+    labeled !== null &&
+    labeled.blossom.label === Label.T &&
+    labeled.blossom.id === childId
+  );
+}
+
+/**
+ * Clears labels and relabels a reachable child in phase 2.
+ *
+ * Per NetworkX: clear label[v] and label[mate[blossombase[bv]]], then assignLabel.
+ */
+function relabelReachableChild(
+  state: MatchingState,
+  child: BlossomState,
+  labeled: LabeledVertexInfo,
+): void {
+  const labelingVertex = labeled.blossom.labelEnd;
+
+  // Per NetworkX: clear labels before relabeling
+  clearBlossomLabel(labeled.blossom);
+
+  const baseState = state.vertices.get(child.base);
+  if (baseState === undefined) {
+    throw new Error(`Child base vertex ${child.base} not found`);
+  }
+
+  if (baseState.mate !== null) {
+    const { blossomState: mateBlossom } = findBaseVertexInfo(
+      state,
+      baseState.mate,
+    );
+    clearBlossomLabel(mateBlossom);
+  }
+
+  if (labelingVertex !== null) {
+    assignLabel(state, labeled.vertex, Label.T, labelingVertex);
+  }
+}
+
+/**
+ * Finds the first labeled vertex within a child blossom.
+ */
+function findLabeledLeafInChild(
+  state: MatchingState,
+  childId: BlossomId,
+): LabeledVertexInfo | null {
+  const leaves = collectBlossomLeaves(state, childId);
+
+  for (const vertex of leaves) {
+    const vertexState = state.vertices.get(vertex);
+    if (vertexState === undefined) {
+      throw new Error(`Vertex ${vertex} not found in state`);
+    }
+
+    const blossom = state.blossoms.get(vertexState.inBlossom);
+    if (blossom === undefined) {
+      throw new Error(
+        `Blossom ${vertexState.inBlossom} not found for vertex ${vertex}`,
+      );
+    }
+
+    if (blossom.label !== Label.NONE) {
+      return { vertex, blossom };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Relabels children of expanded T-blossom with alternating T-S labels.
+ *
+ * Per NetworkX, two phases:
+ * - Phase 1: T-label from entry to base (assignLabel recursively S-labels mate)
+ * - Phase 2: Check remaining children for external reachability
+ */
+function relabelChildrenForDelta4(
+  state: MatchingState,
+  blossom: BlossomState,
+  entryIndex: number,
+): void {
+  const childCount = blossom.children.length;
+  const step = getWalkStep(entryIndex);
+
+  let labelingVertex = blossom.labelEnd;
+  let labeledVertex = blossom.labelEdgeVertex;
+
+  if (labelingVertex === null || labeledVertex === null) {
+    throw new Error(`T-blossom ${blossom.id} missing labelEnd/labelEdgeVertex`);
+  }
+
+  // Phase 1: T-label from entry toward base
+  let position = entryIndex;
+  while (position !== 0) {
+    // Per NetworkX: clear labels before assignLabel
+    const { blossomState: labeledBlossom } = findBaseVertexInfo(
+      state,
+      labeledVertex,
+    );
+    clearBlossomLabel(labeledBlossom);
+
+    const childId = blossom.children[position];
+    if (typeof childId === 'number') {
+      const childBlossom = state.blossoms.get(childId);
+      if (childBlossom !== undefined) {
+        clearBlossomLabel(childBlossom);
+      }
+    }
+
+    assignLabel(state, labeledVertex, Label.T, labelingVertex);
+
+    position = nextChildPosition(position, step, childCount);
+    if (position === 0) {
+      break;
+    }
+
+    [labelingVertex, labeledVertex] = getEdgeVertices(blossom, position, step);
+    position = nextChildPosition(position, step, childCount);
+  }
+
+  // Phase 2: Check children on other path (base to entry)
+  position = 0;
+  while (blossom.children[position] !== blossom.children[entryIndex]) {
+    const childId = blossom.children[position];
+    if (typeof childId === 'number') {
+      const child = state.blossoms.get(childId);
+      if (child === undefined) {
+        throw new Error(`Child blossom ${childId} not found`);
+      }
+
+      if (child.label !== Label.S) {
+        const labeled = findLabeledLeafInChild(state, childId);
+        if (isValidForRelabel(labeled, childId)) {
+          relabelReachableChild(state, child, labeled);
+        }
+      }
+    }
+
+    position = nextChildPosition(position, step, childCount);
   }
 }
 
@@ -141,7 +511,8 @@ export function addBlossom(
 ): void {
   // Find the lowest common ancestor and paths from both vertices
   const lcaResult = findLowestCommonAncestor(state, vertexU, vertexV);
-  const { lcaBlossomId, pathFromU, pathFromV } = lcaResult;
+  const { lcaBlossomId, pathFromU, pathFromV, edgesFromU, edgesFromV } =
+    lcaResult;
 
   // Get the LCA blossom to inherit its base
   const lcaBlossom = state.blossoms.get(lcaBlossomId);
@@ -155,400 +526,266 @@ export function addBlossom(
 
   // Build children list forming the cycle around the blossom
   // Order: pathFromU (U→LCA excluding LCA) + [LCA] + reverse(pathFromV) (LCA→V excluding LCA)
-  const reversedPathFromV = [...pathFromV].reverse();
-  const childBlossomIds: BlossomId[] = [
+  const unrotatedChildren: BlossomId[] = [
     ...pathFromU,
     lcaBlossomId,
-    ...reversedPathFromV,
+    ...pathFromV.toReversed(),
+  ];
+
+  // Build junction edges between consecutive children
+  // Per NetworkX: b.edges[i] connects b.children[i] to b.children[i+1]
+  //
+  // edgesFromU[i] connects pathFromU[i] to pathFromU[i+1] (or LCA for last)
+  // edgesFromV needs reversal: both array order and endpoint order swapped
+  // Closing edge connects last child (vertexV) back to first child (vertexU)
+  const swapEndpoints = ([a, b]: [VertexKey, VertexKey]): [
+    VertexKey,
+    VertexKey,
+  ] => [b, a];
+  const reversedEdgesFromV = edgesFromV.toReversed().map(swapEndpoints);
+  const closingEdge: [VertexKey, VertexKey] = [vertexV, vertexU];
+
+  const unrotatedEdges: Array<[VertexKey, VertexKey]> = [
+    ...edgesFromU,
+    ...reversedEdgesFromV,
+    closingEdge,
+  ];
+
+  // Rotate so base (LCA) is at index 0, per NetworkX convention
+  // This simplifies expandBlossom which expects base at index 0
+  const lcaIndex = pathFromU.length;
+  const childBlossomIds = [
+    ...unrotatedChildren.slice(lcaIndex),
+    ...unrotatedChildren.slice(0, lcaIndex),
+  ];
+  const blossomEdges = [
+    ...unrotatedEdges.slice(lcaIndex),
+    ...unrotatedEdges.slice(0, lcaIndex),
   ];
 
   // Create the new blossom
+  // Inherit label/labelEnd from LCA (both S-vertices are in same alternating tree)
   const newBlossom: BlossomState = {
     id: newBlossomId,
     parent: NO_PARENT_BLOSSOM,
     children: childBlossomIds,
     base: lcaBlossom.base,
+    label: lcaBlossom.label,
+    labelEnd: lcaBlossom.labelEnd,
+    labelEdgeVertex: lcaBlossom.labelEdgeVertex,
     endpoints: [vertexU, vertexV],
+    edges: blossomEdges,
   };
 
   // Add to blossoms map
   state.blossoms.set(newBlossomId, newBlossom);
 
   // Update parent pointers for all sub-blossoms
+  // Also set blossomParent for vertices in trivial child blossoms
   for (const childBlossomId of childBlossomIds) {
     const childBlossom = state.blossoms.get(childBlossomId);
     if (childBlossom === undefined) {
       throw new Error(`Child blossom ${childBlossomId} not found in state`);
     }
     childBlossom.parent = newBlossomId;
+
+    // If this is a trivial blossom (single vertex), set the vertex's blossomParent
+    // Per NetworkX: blossomparent[v] = b when v is a direct child of blossom b
+    const isTrivial = childBlossom.children.length === 1;
+    if (isTrivial) {
+      const vertexKey = childBlossom.base;
+      const vertexState = state.vertices.get(vertexKey);
+      if (vertexState !== undefined) {
+        vertexState.blossomParent = newBlossomId;
+      }
+    }
   }
 
-  // Update inBlossom for all vertices inside the new blossom
-  // Per NetworkX: for v in b.leaves(): inblossom[v] = b
+  // Collect leaf vertices
   const leafVertices = collectBlossomLeaves(state, newBlossomId);
+
+  // Update inBlossom for all vertices inside the new blossom
+  // Per NetworkX: for v in b.leaves(): if label[inblossom[v]] == 2: queue.append(v); inblossom[v] = b
   for (const vertexKey of leafVertices) {
     const vertexState = state.vertices.get(vertexKey);
     if (vertexState === undefined) {
       throw new Error(`Vertex ${vertexKey} not found in state`);
     }
+
+    // Per NetworkX: add T-labeled vertices to queue before updating inBlossom
+    // These vertices can now scan from the S-labeled blossom
+    const oldBlossom = state.blossoms.get(vertexState.inBlossom);
+    if (oldBlossom === undefined) {
+      throw new Error(
+        `Blossom ${vertexState.inBlossom} not found for vertex ${vertexKey}`,
+      );
+    }
+    if (oldBlossom.label === Label.T) {
+      state.queue.push(vertexKey);
+    }
+
     vertexState.inBlossom = newBlossomId;
   }
 }
 
 /**
- * Expands a blossom when an augmenting path passes through it
+ * Expands a blossom during augmentation or delta4
  *
- * When an augmenting path enters a blossom at some vertex, we need to:
- * 1. Find which sub-blossom contains the entry vertex
- * 2. Trace the path through the blossom's cycle to the base
- * 3. Update the matching along this path
- * 4. Recursively expand any sub-blossoms encountered
- * 5. Update parent pointers to restore the blossom hierarchy
+ * Per NetworkX, expansion differs based on context:
+ * - endstage=true: Just clear labels (end of stage, cleanup)
+ * - endstage=false: Relabel children with alternating T-S (delta4 during BFS)
  *
  * @param state - Current matching state (modified in place)
  * @param blossomId - Blossom to expand
- * @param entryVertex - Vertex where augmenting path enters the blossom
+ * @param entryVertex - Vertex where path enters the blossom
+ * @param endstage - If true, just clear labels; if false, relabel for delta4
  */
 export function expandBlossom(
   state: MatchingState,
   blossomId: BlossomId,
   entryVertex: VertexKey,
+  endstage: boolean = true,
 ): void {
   const blossom = state.blossoms.get(blossomId);
   if (blossom === undefined) {
     throw new Error(`Blossom ${blossomId} not found in state`);
   }
 
-  // Find which sub-blossom contains the entry vertex
-  // Use findDirectChildOf because inBlossom points to innermost blossom,
-  // but we need the direct child of this outer blossom
-  const entryBlossomId = findDirectChildOf(state, blossomId, entryVertex);
-  const entryIndex = findChildIndex(entryBlossomId, blossom.children);
+  // Find which child contains the entry vertex
+  const entryChildId = findDirectChildOf(state, blossomId, entryVertex);
+  const entryIndex = findChildIndex(entryChildId, blossom.children);
 
-  // Find the base sub-blossom
-  const baseVertex = blossom.base;
-  const baseBlossomId = findDirectChildOf(state, blossomId, baseVertex);
-  const baseIndex = findChildIndex(baseBlossomId, blossom.children);
+  // Restore children to top-level
+  // For delta4 (endstage=false): don't clear labels, we'll relabel them
+  // For augmentation (endstage=true): clear labels
+  restoreChildrenToTopLevel(state, blossom, endstage);
+  updateChildrenAfterExpansion(state, blossom);
 
-  // Determine direction to walk around the cycle
-  const cycleLength = blossom.children.length;
-  const walkDirection = determineWalkDirection(
-    entryIndex,
-    baseIndex,
-    cycleLength,
-  );
-
-  // Restore children to top-level BEFORE expansion
-  // Per NetworkX: children become independent blossoms (parent = None)
-  restoreChildrenToTopLevel(state, blossom);
-
-  // Update inBlossom for vertices inside each child blossom
-  // Per NetworkX: for s in b.childs: for v in s.leaves(): inblossom[v] = s
-  for (const childBlossomId of blossom.children) {
-    if (typeof childBlossomId === 'string') {
-      throw new Error(`Children should only contain blossom IDs`);
-    }
-    const leafVertices = collectBlossomLeaves(state, childBlossomId);
-    for (const vertexKey of leafVertices) {
-      const vertexState = state.vertices.get(vertexKey);
-      if (vertexState === undefined) {
-        throw new Error(`Vertex ${vertexKey} not found`);
-      }
-      vertexState.inBlossom = childBlossomId;
-    }
+  if (endstage) {
+    // Augmentation: expand children and update mates
+    expandChildIfNonTrivial(state, entryChildId, entryVertex);
+    walkBlossomAndUpdateMates(state, blossom, entryIndex);
+    rotateBlossomToEntry(blossom, entryIndex);
+  } else {
+    // Delta4: relabel children with alternating T-S
+    relabelChildrenForDelta4(state, blossom, entryIndex);
   }
 
-  // Walk from entry toward base, recursively expanding sub-blossoms
-  let currentIndex = entryIndex;
-
-  for (
-    let stepsWalked = 0;
-    stepsWalked < walkDirection.distance;
-    stepsWalked++
-  ) {
-    const currentChildId = blossom.children[currentIndex];
-
-    // Type guard: ensure we only have blossom IDs
-    if (typeof currentChildId === 'string') {
-      throw new Error(
-        `Blossom ${blossomId} children should only contain blossom IDs, not vertex keys`,
-      );
-    }
-
-    const currentChild = state.blossoms.get(currentChildId);
-    if (currentChild === undefined) {
-      throw new Error(`Child blossom ${currentChildId} not found in state`);
-    }
-
-    // Recursively expand non-trivial sub-blossoms
-    const childCount = currentChild.children.length;
-    const isNonTrivialBlossom =
-      childCount >= MIN_CHILDREN_FOR_NONTRIVIAL_BLOSSOM;
-
-    if (isNonTrivialBlossom) {
-      expandBlossom(state, currentChildId, currentChild.base);
-    }
-
-    // Move to next child in cycle
-    const nextIndex = currentIndex + walkDirection.stepSize;
-    const wrappedIndex = (nextIndex + cycleLength) % cycleLength;
-    currentIndex = wrappedIndex;
-  }
-
-  // Remove the expanded blossom from state to prevent re-expansion
+  // Remove the expanded blossom
   state.blossoms.delete(blossomId);
 }
 
+type AugmentStepPair = { sVertex: VertexKey; sVertexMate: VertexKey };
+
 /**
- * Updates mate assignments for two vertices
+ * Sets a single vertex's mate (one direction only)
  *
- * Sets both vertices to be matched with each other, clearing any
- * previous mate assignments to maintain matching symmetry.
+ * Unlike symmetric mate updates, this only sets vertex.mate = mate.
+ * The reverse direction is set separately during the other pass
+ * of augmentMatching, or in a different step of the same pass.
  *
  * @param state - Current matching state
- * @param vertexU - First vertex
- * @param vertexV - Second vertex
+ * @param vertex - Vertex whose mate to set
+ * @param mate - New mate for vertex
  */
-export function updateMates(
+function setMate(
   state: MatchingState,
-  vertexU: VertexKey,
-  vertexV: VertexKey,
+  vertex: VertexKey,
+  mate: VertexKey,
 ): void {
-  const stateU = state.vertices.get(vertexU);
-  const stateV = state.vertices.get(vertexV);
-
-  if (stateU === undefined) {
-    throw new Error(`Vertex ${vertexU} not found in state`);
+  const vertexState = state.vertices.get(vertex);
+  if (vertexState === undefined) {
+    throw new Error(`Vertex ${vertex} not found`);
   }
-  if (stateV === undefined) {
-    throw new Error(`Vertex ${vertexV} not found in state`);
-  }
-
-  // Clear old mate pointers ONLY if they still point back to us (symmetric check)
-  // This prevents clearing mates that were already re-matched earlier in the same augmentation
-  const oldMateU = stateU.mate;
-  const oldMateV = stateV.mate;
-
-  if (oldMateU !== null && oldMateU !== vertexV) {
-    const oldMateUState = state.vertices.get(oldMateU);
-    const oldMateStillPointsToU =
-      oldMateUState !== undefined && oldMateUState.mate === vertexU;
-    if (oldMateStillPointsToU) {
-      oldMateUState.mate = null;
-    }
-  }
-
-  if (oldMateV !== null && oldMateV !== vertexU) {
-    const oldMateVState = state.vertices.get(oldMateV);
-    const oldMateStillPointsToV =
-      oldMateVState !== undefined && oldMateVState.mate === vertexV;
-    if (oldMateStillPointsToV) {
-      oldMateVState.mate = null;
-    }
-  }
-
-  // Set new mates
-  stateU.mate = vertexV;
-  stateV.mate = vertexU;
+  vertexState.mate = mate;
 }
 
 /**
- * Processes one step of augmenting path traversal
+ * Checks whether a blossom has sub-blossoms that need expansion
  *
- * Handles blossom expansion when the current vertex is inside a non-trivial
- * blossom. After expansion, recomputes the base vertex state since the vertex
- * may now be at top-level with different properties.
+ * @param blossom - Blossom to check
+ * @returns true if blossom has more than one child (non-trivial)
+ */
+function isNonTrivialBlossom(blossom: BlossomState): boolean {
+  return blossom.children.length > 1;
+}
+
+/**
+ * Processes one S-T step of augmenting path traversal
+ *
+ * Handles two mate flips per step:
+ * 1. sVertex.mate = sVertexMate (completing the pair started by the previous step)
+ * 2. nextSVertexMate.mate = nextSVertex (starting a pair the next step will complete)
+ *
+ * Returns the next pair, or null when we reach a free vertex (alternating tree root).
  *
  * @param state - Current matching state
- * @param step - Traversal step information
- * @returns Result indicating whether to continue and next vertex
+ * @param sVertex - Current S-vertex being processed
+ * @param sVertexMate - Vertex that sVertex should be matched to
+ * @returns Next (sVertex, sVertexMate) pair, or null if at root
  */
-export function processAugmentStep(
+function augmentOneStep(
   state: MatchingState,
-  step: TraversalStepResult,
-): AugmentStepResult {
-  const { currentVertex } = step;
-
-  // Expand blossom if current vertex is inside one
-  const currentVertexState = state.vertices.get(currentVertex);
-  if (currentVertexState === undefined) {
-    throw new Error(`Vertex ${currentVertex} not found in state`);
+  sVertex: VertexKey,
+  sVertexMate: VertexKey,
+): AugmentStepPair | null {
+  // Rearrange internal matching before setting external mate
+  const { blossomState: sBlossom, topLevelBlossomId: sBlossomId } =
+    findBaseVertexInfo(state, sVertex);
+  if (isNonTrivialBlossom(sBlossom)) {
+    expandBlossom(state, sBlossomId, sVertex);
   }
 
-  const currentBlossomId = currentVertexState.inBlossom;
-  const currentBlossom = state.blossoms.get(currentBlossomId);
-  if (currentBlossom === undefined) {
-    throw new Error(`Blossom ${currentBlossomId} not found in state`);
+  // One direction only; the other pass of augmentMatching sets the reverse
+  setMate(state, sVertex, sVertexMate);
+
+  // labelEnd === null means free vertex (root of alternating tree)
+  if (sBlossom.labelEnd === null) {
+    return null;
   }
 
-  const isInsideBlossom = currentBlossom.parent !== NO_PARENT_BLOSSOM;
+  // Follow the tree edge: S-blossom's labelEnd points to the T-vertex that labelled it
+  const tVertex = sBlossom.labelEnd;
+  const { blossomState: tBlossom, topLevelBlossomId: tBlossomId } =
+    findBaseVertexInfo(state, tVertex);
 
-  if (IS_MATCHING_DEBUG_ENABLED) {
-    matchingLogger.debug(
-      `processAugmentStep: vertex=${currentVertex}, blossomId=${currentBlossomId}, ` +
-        `parent=${currentBlossom.parent}, isInsideBlossom=${isInsideBlossom}`,
-    );
+  // T-blossom's labeledge tells us which S-vertex labelled it and from where
+  const nextSVertex = tBlossom.labelEnd;
+  const nextSVertexMate = tBlossom.labelEdgeVertex;
+  if (nextSVertex === null || nextSVertexMate === null) {
+    throw new Error('T-blossom missing labeledge');
   }
 
-  if (isInsideBlossom) {
-    const parentBlossomId = currentBlossom.parent;
-    if (parentBlossomId === null) {
-      throw new Error('Expected non-null parent for nested blossom');
-    }
-
-    if (IS_MATCHING_DEBUG_ENABLED) {
-      matchingLogger.debug(`Expanding parent blossom ${parentBlossomId}`);
-    }
-
-    expandBlossom(state, parentBlossomId, currentVertex);
-
-    // Check if still inside a blossom after expansion
-    const blossomAfterExpansion = state.blossoms.get(currentBlossomId);
-    if (IS_MATCHING_DEBUG_ENABLED && blossomAfterExpansion) {
-      matchingLogger.debug(
-        `After expansion: blossom ${currentBlossomId} parent=${blossomAfterExpansion.parent}`,
-      );
-    }
+  // Expand T-blossom with entry at the vertex the augmenting path passes through
+  if (isNonTrivialBlossom(tBlossom)) {
+    expandBlossom(state, tBlossomId, nextSVertexMate);
   }
 
-  // Use original base state for path traversal, not recomputed state
-  // After blossom expansion, the newly exposed vertex may have stale labels
-  // because only the outer blossom's base was labelled during BFS.
-  // The original base (from step) has the correct labelEnd for the tree structure.
-  const { baseState: originalBaseState } = step;
+  // Flip the T-blossom's matched edge (next step completes the symmetric pair)
+  setMate(state, nextSVertexMate, nextSVertex);
 
-  if (IS_MATCHING_DEBUG_ENABLED) {
-    matchingLogger.debug(
-      `Using original base for traversal: labelEnd=${originalBaseState.labelEnd}, ` +
-        `mate=${originalBaseState.mate}, isRoot=${step.isRoot}`,
-    );
-  }
-
-  // Check if we've reached a root using the original base state
-  if (step.isRoot) {
-    const stopResult: AugmentStepResult = {
-      shouldContinue: false,
-      nextVertex: NO_NEXT_VERTEX,
-    };
-    return stopResult;
-  }
-
-  // Get the vertex that gave the original base its label
-  const labelEnd = originalBaseState.labelEnd;
-
-  if (labelEnd === null) {
-    throw new Error(
-      `Vertex ${step.baseVertex} has label ${originalBaseState.label} but no labelEnd`,
-    );
-  }
-
-  // Find the T-vertex (labelEnd) and get its base
-  const { baseVertex: labelEndBase, baseState: labelEndBaseState } =
-    findBaseVertexInfo(state, labelEnd);
-
-  // Get the S-vertex that labelled T (the next S-vertex in the path toward root)
-  // Per NetworkX: s, j = labeledge[bt] - we follow labelEnd, not mate
-  const nextSVertex = labelEndBaseState.labelEnd;
-
-  // If T has no labelEnd, we've reached the end of the path
-  if (nextSVertex === null) {
-    const stopResult: AugmentStepResult = {
-      shouldContinue: false,
-      nextVertex: NO_NEXT_VERTEX,
-    };
-    return stopResult;
-  }
-
-  // Get the actual S-vertex base that labelled T
-  const { baseVertex: nextSBase } = findBaseVertexInfo(state, nextSVertex);
-
-  // Match T-vertex with the S-vertex that labelled it
-  // Per NetworkX pattern: mate[j] = s where (s, j) = labeledge[bt]
-  // This flips the matching edge: T was matched with current S, now T matches with previous S
-  updateMates(state, labelEndBase, nextSBase);
-
-  // Continue from the S-vertex that labelled T (toward the root)
-  const continueResult: AugmentStepResult = {
-    shouldContinue: true,
-    nextVertex: nextSVertex,
-  };
-  return continueResult;
+  return { sVertex: nextSVertex, sVertexMate: nextSVertexMate };
 }
 
 /**
  * Augments matching along path from a vertex toward its alternating tree root
  *
- * Traces backward through the alternating tree following labelEnd pointers,
- * flipping mate assignments along the path. Also expands any blossoms encountered.
+ * Traces backward through the alternating tree, expanding blossoms and
+ * flipping mate assignments at each S-T pair along the path.
  *
  * @param state - Current matching state (modified in place)
- * @param startVertex - Vertex to start tracing from
+ * @param sVertex - Starting S-vertex
+ * @param sVertexMate - Vertex that sVertex should be matched to
  */
-export function augmentFromVertex(
+function augmentFromVertex(
   state: MatchingState,
-  startVertex: VertexKey,
+  sVertex: VertexKey,
+  sVertexMate: VertexKey,
 ): void {
-  if (IS_MATCHING_DEBUG_ENABLED) {
-    const startInfo: AugmentFromVertexStartInfo = { startVertex };
-    matchingLogger
-      .withMetadata(startInfo)
-      .debug('Starting augment from vertex');
-  }
+  let current: AugmentStepPair | null = { sVertex, sVertexMate };
 
-  let currentVertex = startVertex;
-  let shouldContinue = true;
-  const visitedVertices = new Set<VertexKey>();
-
-  while (shouldContinue) {
-    if (visitedVertices.has(currentVertex)) {
-      throw new Error(
-        `Cycle detected in path traversal at vertex ${currentVertex}`,
-      );
-    }
-    visitedVertices.add(currentVertex);
-
-    const { baseVertex, baseState, topLevelBlossomId } = findBaseVertexInfo(
-      state,
-      currentVertex,
-    );
-    const isRoot = isAlternatingTreeRoot(baseState);
-
-    if (IS_MATCHING_DEBUG_ENABLED) {
-      const stepInfo: AugmentFromVertexStepInfo = {
-        currentVertex,
-        baseVertex,
-        isRoot,
-        label: baseState.label,
-        labelEnd: baseState.labelEnd,
-        mate: baseState.mate,
-      };
-      matchingLogger
-        .withMetadata(stepInfo)
-        .debug('Augment from vertex - processing step');
-    }
-
-    const stepResult: TraversalStepResult = {
-      currentVertex,
-      baseVertex,
-      baseState,
-      topLevelBlossomId,
-      isRoot,
-    };
-    const augmentResult = processAugmentStep(state, stepResult);
-
-    shouldContinue = augmentResult.shouldContinue;
-
-    if (shouldContinue) {
-      const nextVertex = augmentResult.nextVertex;
-      if (nextVertex === null) {
-        throw new Error('shouldContinue is true but nextVertex is null');
-      }
-      currentVertex = nextVertex;
-    }
-  }
-
-  if (IS_MATCHING_DEBUG_ENABLED) {
-    matchingLogger.debug('Augment from vertex completed');
+  while (current !== null) {
+    current = augmentOneStep(state, current.sVertex, current.sVertexMate);
   }
 }
 
@@ -559,6 +796,10 @@ export function augmentFromVertex(
  * starting and ending at free (unmatched) vertices. Flipping all edges
  * along the path increases the matching size by 1.
  *
+ * Each pass traces from one endpoint toward its root, setting mates
+ * one direction at a time. The two passes together produce symmetric
+ * mate assignments for the augmenting edge endpoints.
+ *
  * @param state - Current matching state (modified in place)
  * @param vertexU - First endpoint of augmenting path
  * @param vertexV - Second endpoint of augmenting path
@@ -568,30 +809,7 @@ export function augmentMatching(
   vertexU: VertexKey,
   vertexV: VertexKey,
 ): void {
-  if (IS_MATCHING_DEBUG_ENABLED) {
-    const startInfo: AugmentMatchingStartInfo = { vertexU, vertexV };
-    matchingLogger.withMetadata(startInfo).debug('Starting augment matching');
-  }
-
-  // Match the two endpoints
-  updateMates(state, vertexU, vertexV);
-
-  if (IS_MATCHING_DEBUG_ENABLED) {
-    matchingLogger.debug('Endpoints matched, augmenting from first vertex');
-  }
-
-  // Augment from both sides toward their respective roots
-  augmentFromVertex(state, vertexU);
-
-  if (IS_MATCHING_DEBUG_ENABLED) {
-    matchingLogger.debug(
-      'First vertex augmented, augmenting from second vertex',
-    );
-  }
-
-  augmentFromVertex(state, vertexV);
-
-  if (IS_MATCHING_DEBUG_ENABLED) {
-    matchingLogger.debug('Second vertex augmented, augment matching complete');
-  }
+  // Trace from each endpoint toward its root, flipping mates along the path
+  augmentFromVertex(state, vertexU, vertexV);
+  augmentFromVertex(state, vertexV, vertexU);
 }

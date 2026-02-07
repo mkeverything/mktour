@@ -13,14 +13,16 @@ import type {
   BaseVertexInfo,
   BlossomChainStepResult,
   BlossomId,
+  BlossomState,
+  LabelEndpoint,
   LowestCommonAncestorResult,
   MatchingState,
+  PathWithEdges,
   ScanAndLabelResult,
   TraversalStepResult,
   VertexKey,
-  VertexState,
 } from './types';
-import { isBlossomId, Label, NO_EDGE_FOUND } from './types';
+import { isBlossomId, Label, NO_EDGE_FOUND, NO_LABEL_ENDPOINT } from './types';
 
 /**
  * Traverses the blossom chain from a vertex upward to the top-level blossom.
@@ -32,6 +34,9 @@ import { isBlossomId, Label, NO_EDGE_FOUND } from './types';
  * @param vertexKey - Vertex to start traversal from
  * @param processStep - Callback invoked for each blossom; return true to stop early
  */
+/** Maximum blossom chain depth before assuming cycle */
+const MAX_BLOSSOM_CHAIN_DEPTH = 500;
+
 export function traverseBlossomChain(
   state: MatchingState,
   vertexKey: VertexKey,
@@ -45,8 +50,24 @@ export function traverseBlossomChain(
   let currentBlossomId = vertexState.inBlossom;
   let currentBlossom = state.blossoms.get(currentBlossomId);
   let shouldStop = false;
+  let depth = 0;
+  const visitedBlossomIds = new Set<number>();
 
   while (currentBlossom !== undefined && !shouldStop) {
+    depth++;
+    if (depth > MAX_BLOSSOM_CHAIN_DEPTH) {
+      console.error(
+        `traverseBlossomChain: MAX DEPTH exceeded for vertex ${vertexKey}`,
+      );
+      throw new Error(`Blossom chain too deep for ${vertexKey}`);
+    }
+    if (visitedBlossomIds.has(currentBlossomId)) {
+      console.error(
+        `traverseBlossomChain: CYCLE at blossom ${currentBlossomId}`,
+      );
+      throw new Error(`Cycle in blossom chain at ${currentBlossomId}`);
+    }
+    visitedBlossomIds.add(currentBlossomId);
     const isNonTrivial = currentBlossom.children.length > 1;
 
     const stepResult: BlossomChainStepResult = {
@@ -73,6 +94,9 @@ export function traverseBlossomChain(
  * Traverses DOWN the blossom hierarchy to find all graph vertices.
  * Per NetworkX: b.leaves() yields all vertex keys inside blossom b.
  */
+/** Maximum iterations in collectBlossomLeaves */
+const MAX_COLLECT_ITERATIONS = 10000;
+
 export function collectBlossomLeaves(
   state: MatchingState,
   blossomId: BlossomId,
@@ -84,9 +108,20 @@ export function collectBlossomLeaves(
 
   const leaves: VertexKey[] = [];
   const stack = blossom.children.filter(isBlossomId);
+  let iterations = 0;
 
   while (stack.length > 0) {
-    const childId = stack.pop()!;
+    iterations++;
+    if (iterations > MAX_COLLECT_ITERATIONS) {
+      console.error(
+        `collectBlossomLeaves: MAX ITERATIONS at blossom ${blossomId}`,
+      );
+      throw new Error(`Too many iterations in collectBlossomLeaves`);
+    }
+    const childId = stack.pop();
+    if (childId === undefined) {
+      throw new Error('Stack unexpectedly empty in collectBlossomLeaves');
+    }
     const childBlossom = state.blossoms.get(childId);
 
     if (childBlossom === undefined) {
@@ -172,6 +207,48 @@ export function findDirectChildOf(
   outerBlossomId: BlossomId,
   vertexKey: VertexKey,
 ): BlossomId {
+  const vertexState = state.vertices.get(vertexKey);
+  if (vertexState === undefined) {
+    throw new Error(`Vertex ${vertexKey} not found in state`);
+  }
+
+  const outerBlossom = state.blossoms.get(outerBlossomId);
+  if (outerBlossom === undefined) {
+    throw new Error(`Outer blossom ${outerBlossomId} not found`);
+  }
+
+  // Per NetworkX: bubble up from vertex using blossomparent until we find
+  // a node (vertex or blossom) whose parent is the outer blossom
+
+  // Check vertex's blossomParent first
+  if (vertexState.blossomParent === outerBlossomId) {
+    // The vertex's trivial blossom is a direct child of outerBlossom
+    // Find the trivial blossom for this vertex
+    for (const [blossomId, blossom] of state.blossoms) {
+      if (blossom.base === vertexKey && blossom.children.length === 1) {
+        return blossomId;
+      }
+    }
+    throw new Error(`Trivial blossom not found for vertex ${vertexKey}`);
+  }
+
+  // Case 2: vertex is in a non-trivial child - traverse UP from blossomParent
+  // Per NetworkX: while blossomparent[t] != b: t = blossomparent[t]
+  if (vertexState.blossomParent !== null) {
+    let currentId: BlossomId | null = vertexState.blossomParent;
+    while (currentId !== null) {
+      const blossom = state.blossoms.get(currentId);
+      if (blossom === undefined) {
+        break;
+      }
+      if (blossom.parent === outerBlossomId) {
+        return currentId;
+      }
+      currentId = blossom.parent;
+    }
+  }
+
+  // Case 3: fallback using traverseBlossomChain (should rarely hit this)
   let result: BlossomId | null = null;
 
   const findChildWithParent = (step: BlossomChainStepResult): boolean => {
@@ -199,17 +276,19 @@ export function findDirectChildOf(
 }
 
 /**
- * Checks if a vertex is a root of an alternating tree
+ * Checks if a blossom is a root of an alternating tree
  *
- * A vertex is a root if it is S-labelled and its labelEnd points to itself.
+ * Per NetworkX: a blossom is a root if S-labelled with labelEnd = null.
+ * This distinguishes roots from non-root S-blossoms which have labelEnd
+ * pointing to the vertex that labelled them.
  *
- * @param vertexState - Vertex state to check
- * @returns true if vertex is a root
+ * @param blossom - Blossom state to check
+ * @returns true if blossom is a root
  */
-export function isAlternatingTreeRoot(vertexState: VertexState): boolean {
-  const isSLabelled = vertexState.label === Label.S;
-  const labelEndPointsToSelf = vertexState.labelEnd === vertexState.key;
-  return isSLabelled && labelEndPointsToSelf;
+export function isAlternatingTreeRoot(blossom: BlossomState): boolean {
+  const isSLabelled = blossom.label === Label.S;
+  const hasNullLabelEnd = blossom.labelEnd === NO_LABEL_ENDPOINT;
+  return isSLabelled && hasNullLabelEnd;
 }
 
 /**
@@ -227,15 +306,15 @@ export function findBaseVertexInfo(
   vertex: VertexKey,
 ): BaseVertexInfo {
   const [baseVertex, topLevelBlossomId] = findBaseWithBlossomId(state, vertex);
-  const baseState = state.vertices.get(baseVertex);
+  const blossomState = state.blossoms.get(topLevelBlossomId);
 
-  if (baseState === undefined) {
-    throw new Error(`Base vertex ${baseVertex} not found in state`);
+  if (blossomState === undefined) {
+    throw new Error(`Blossom ${topLevelBlossomId} not found in state`);
   }
 
   const baseInfo: BaseVertexInfo = {
     baseVertex,
-    baseState,
+    blossomState,
     topLevelBlossomId,
   };
 
@@ -252,6 +331,9 @@ export function findBaseVertexInfo(
  * @param startVertex - Vertex to start traversal from
  * @param processStep - Callback invoked for each step; returns true to stop early
  */
+/** Maximum traversal steps before assuming cycle */
+const MAX_TRAVERSAL_STEPS = 1000;
+
 export function traverseTowardRoot(
   state: MatchingState,
   startVertex: VertexKey,
@@ -259,24 +341,56 @@ export function traverseTowardRoot(
 ): void {
   let currentVertex = startVertex;
   let reachedRoot = false;
+  let stepCount = 0;
+  const visitedVertices = new Set<VertexKey>();
 
   while (!reachedRoot) {
+    stepCount++;
+    if (stepCount > MAX_TRAVERSAL_STEPS) {
+      console.error(
+        `traverseTowardRoot: CYCLE DETECTED after ${stepCount} steps`,
+      );
+      console.error(`Start: ${startVertex}, Current: ${currentVertex}`);
+      console.error(`Visited: ${[...visitedVertices].join(', ')}`);
+      throw new Error(`Cycle in traverseTowardRoot from ${startVertex}`);
+    }
+    if (visitedVertices.has(currentVertex)) {
+      // Dump diagnostic info about each vertex in the cycle
+      console.error(`\n=== CYCLE DETECTED ===`);
+      console.error(
+        `Path: ${[...visitedVertices].join(' -> ')} -> ${currentVertex}`,
+      );
+      for (const v of [...visitedVertices, currentVertex]) {
+        const [base, blossomId] = findBaseWithBlossomId(state, v);
+        const blossom = state.blossoms.get(blossomId);
+        console.error(
+          `  ${v}: base=${base}, blossom=${blossomId}, label=${blossom?.label}, labelEnd=${blossom?.labelEnd}`,
+        );
+      }
+      console.error(`======================\n`);
+      throw new Error(
+        `Cycle in tree traversal: revisited ${currentVertex}. ` +
+          `Path: ${[...visitedVertices].join(' -> ')} -> ${currentVertex}`,
+      );
+    }
+    visitedVertices.add(currentVertex);
+
     const [baseVertex, topLevelBlossomId] = findBaseWithBlossomId(
       state,
       currentVertex,
     );
-    const baseState = state.vertices.get(baseVertex);
+    const blossomState = state.blossoms.get(topLevelBlossomId);
 
-    if (baseState === undefined) {
-      throw new Error(`Base vertex ${baseVertex} not found in state`);
+    if (blossomState === undefined) {
+      throw new Error(`Blossom ${topLevelBlossomId} not found in state`);
     }
 
-    const isRoot = isAlternatingTreeRoot(baseState);
+    const isRoot = isAlternatingTreeRoot(blossomState);
 
     const stepResult: TraversalStepResult = {
       currentVertex,
       baseVertex,
-      baseState,
+      blossomState,
       topLevelBlossomId,
       isRoot,
     };
@@ -285,12 +399,13 @@ export function traverseTowardRoot(
     reachedRoot = isRoot || shouldStopEarly;
 
     // Only move to next vertex if we haven't reached root and shouldn't stop
-    // Roots don't have meaningful labelEnd pointers, so we must check first
+    // Roots have labelEnd = null per NetworkX, so we must check isRoot first
     if (!reachedRoot) {
-      const labelEnd = baseState.labelEnd;
+      const labelEnd = blossomState.labelEnd;
+      // Use null check (not NO_LABEL_ENDPOINT) so TypeScript narrows the type
       if (labelEnd === null) {
         throw new Error(
-          `Vertex ${baseVertex} has label ${baseState.label} but no labelEnd`,
+          `Blossom ${topLevelBlossomId} has label ${blossomState.label} but no labelEnd`,
         );
       }
 
@@ -324,6 +439,50 @@ export function buildPathToRoot(
   traverseTowardRoot(state, startVertex, addBlossomToPath);
 
   return path;
+}
+
+/**
+ * Builds path from a vertex to the root, collecting edges along the way
+ *
+ * Each edge connects consecutive blossoms in the path:
+ * - edge[i] = [vertexInBlossom[i], vertexInBlossom[i+1]]
+ * - The first vertex is labelEdgeVertex (in this blossom)
+ * - The second vertex is labelEnd (in parent blossom)
+ *
+ * @param state - Current matching state
+ * @param startVertex - Vertex to start from
+ * @returns Path of blossom IDs and connecting edges
+ */
+export function buildPathToRootWithEdges(
+  state: MatchingState,
+  startVertex: VertexKey,
+): PathWithEdges {
+  const path: BlossomId[] = [];
+  const edges: Array<[VertexKey, VertexKey]> = [];
+
+  const collectPathAndEdges = (step: TraversalStepResult): boolean => {
+    path.push(step.topLevelBlossomId);
+
+    // Collect edge to parent (if not root)
+    // labelEdgeVertex: vertex in this blossom that was labeled
+    // labelEnd: vertex in parent blossom that did the labeling
+    const labelEdgeVertex = step.blossomState.labelEdgeVertex;
+    const labelEnd = step.blossomState.labelEnd;
+
+    const hasEdgeToParent = labelEdgeVertex !== null && labelEnd !== null;
+    if (hasEdgeToParent) {
+      const edgeToParent: [VertexKey, VertexKey] = [labelEdgeVertex, labelEnd];
+      edges.push(edgeToParent);
+    }
+
+    const shouldStopEarly = false;
+    return shouldStopEarly;
+  };
+
+  traverseTowardRoot(state, startVertex, collectPathAndEdges);
+
+  const result: PathWithEdges = { path, edges };
+  return result;
 }
 
 /**
@@ -364,51 +523,62 @@ export function findAlternatingTreeRoot(
 }
 
 /**
- * Constructs LCA result from paths and intersection point
+ * Constructs LCA result from paths, edges, and intersection point
  *
- * Trims the first path to exclude LCA (second path already excludes it)
+ * Trims the first path and edges to exclude LCA (second path already excludes it)
  *
  * @param lcaBlossomId - The blossom ID where paths intersect
  * @param firstPath - First path (will be trimmed to exclude LCA)
+ * @param firstEdges - Edges along first path (will be trimmed to match)
  * @param secondPath - Second path (already excludes LCA)
- * @returns LCA result with trimmed paths
+ * @param secondEdges - Edges along second path (already excludes LCA)
+ * @returns LCA result with trimmed paths and edges
  */
 function buildLCAResult(
   lcaBlossomId: BlossomId,
   firstPath: BlossomId[],
+  firstEdges: Array<[VertexKey, VertexKey]>,
   secondPath: BlossomId[],
+  secondEdges: Array<[VertexKey, VertexKey]>,
 ): LowestCommonAncestorResult {
   // Trim first path to exclude LCA
   const lcaIndexInFirstPath = firstPath.indexOf(lcaBlossomId);
   const trimmedFirstPath = firstPath.slice(0, lcaIndexInFirstPath);
 
+  // Trim first edges to match trimmed path
+  // edges[i] connects path[i] to path[i+1], so slice(0, lcaIndex) includes edge to LCA
+  const trimmedFirstEdges = firstEdges.slice(0, lcaIndexInFirstPath);
+
   const result: LowestCommonAncestorResult = {
     lcaBlossomId,
     pathFromU: trimmedFirstPath,
     pathFromV: secondPath,
+    edgesFromU: trimmedFirstEdges,
+    edgesFromV: secondEdges,
   };
 
   return result;
 }
 
 /**
- * Finds where two paths intersect
+ * Finds where two paths intersect, collecting edges along the way
  *
  * Builds the second path while checking for intersection with the first path.
  * Checks for intersection BEFORE adding to path to avoid trimming.
  *
  * @param state - Current matching state
  * @param startVertex - Vertex to build second path from
- * @param firstPath - First path to check intersection against
- * @returns Intersection result with LCA and trimmed paths, or null if no intersection
+ * @param firstPathWithEdges - First path with edges to check intersection against
+ * @returns Intersection result with LCA, trimmed paths, and edges; or null if no intersection
  */
 function findPathIntersection(
   state: MatchingState,
   startVertex: VertexKey,
-  firstPath: BlossomId[],
+  firstPathWithEdges: PathWithEdges,
 ): LowestCommonAncestorResult | null {
   const pathBeforeLCA: BlossomId[] = [];
-  const firstPathSet = new Set(firstPath);
+  const edgesBeforeLCA: Array<[VertexKey, VertexKey]> = [];
+  const firstPathSet = new Set(firstPathWithEdges.path);
   let intersectionBlossomId: BlossomId | null = null;
 
   const checkForIntersection = (step: TraversalStepResult): boolean => {
@@ -420,12 +590,22 @@ function findPathIntersection(
       intersectionBlossomId = blossomId;
       const shouldStopEarly = true;
       return shouldStopEarly;
-    } else {
-      // Add to path (LCA won't be added since we stop when found)
-      pathBeforeLCA.push(blossomId);
-      const shouldStopEarly = false;
-      return shouldStopEarly;
     }
+
+    // Add blossom to path (LCA won't be added since we stop when found)
+    pathBeforeLCA.push(blossomId);
+
+    // Collect edge to parent (if exists)
+    const labelEdgeVertex = step.blossomState.labelEdgeVertex;
+    const labelEnd = step.blossomState.labelEnd;
+    const hasEdgeToParent = labelEdgeVertex !== null && labelEnd !== null;
+    if (hasEdgeToParent) {
+      const edgeToParent: [VertexKey, VertexKey] = [labelEdgeVertex, labelEnd];
+      edgesBeforeLCA.push(edgeToParent);
+    }
+
+    const shouldStopEarly = false;
+    return shouldStopEarly;
   };
 
   traverseTowardRoot(state, startVertex, checkForIntersection);
@@ -434,13 +614,15 @@ function findPathIntersection(
   if (intersectionBlossomId !== null) {
     const result = buildLCAResult(
       intersectionBlossomId,
-      firstPath,
+      firstPathWithEdges.path,
+      firstPathWithEdges.edges,
       pathBeforeLCA,
+      edgesBeforeLCA,
     );
     return result;
-  } else {
-    return null;
   }
+
+  return null;
 }
 
 /**
@@ -452,18 +634,18 @@ function findPathIntersection(
  * @param state - Current matching state
  * @param vertexU - First vertex
  * @param vertexV - Second vertex
- * @returns LCA result with blossom ID and trimmed paths
+ * @returns LCA result with blossom ID, trimmed paths, and connecting edges
  */
 export function findLowestCommonAncestor(
   state: MatchingState,
   vertexU: VertexKey,
   vertexV: VertexKey,
 ): LowestCommonAncestorResult {
-  // Build path from U to root
-  const pathFromU = buildPathToRoot(state, vertexU);
+  // Build path from U to root, collecting edges along the way
+  const pathFromUWithEdges = buildPathToRootWithEdges(state, vertexU);
 
-  // Find where path from V intersects path from U
-  const intersection = findPathIntersection(state, vertexV, pathFromU);
+  // Find where path from V intersects path from U, collecting V's edges too
+  const intersection = findPathIntersection(state, vertexV, pathFromUWithEdges);
 
   if (intersection === null) {
     throw new Error(
@@ -483,27 +665,49 @@ export function findLowestCommonAncestor(
  * The label is assigned to the base vertex of the top-level blossom containing
  * the vertex. If labelling as S, the vertex is added to the processing queue.
  *
+ * Per NetworkX: roots have labelEnd = null (NO_LABEL_ENDPOINT), while
+ * non-root vertices have labelEnd pointing to the vertex that labelled them.
+ *
  * @param state - Current matching state (modified in place)
  * @param vertex - Vertex to label
  * @param label - Label to assign (S or T)
- * @param labelEnd - Endpoint of edge that caused this labelling
+ * @param labelEnd - Endpoint of edge that caused this labelling, or null for roots
  */
 export function assignLabel(
   state: MatchingState,
   vertex: VertexKey,
   label: Label,
-  labelEnd: VertexKey,
+  labelEnd: LabelEndpoint,
 ): void {
-  // Find the base vertex of the top-level blossom containing this vertex
-  const { baseVertex, baseState } = findBaseVertexInfo(state, vertex);
+  // Find the top-level blossom containing this vertex
+  const { baseVertex, blossomState } = findBaseVertexInfo(state, vertex);
 
-  // Assign label and label endpoint to the base vertex
-  baseState.label = label;
-  baseState.labelEnd = labelEnd;
+  // Per NetworkX: assert label.get(w) is None and label.get(b) is None
+  if (blossomState.label !== Label.NONE) {
+    throw new Error(
+      `assignLabel: blossom ${blossomState.id} already has label ${blossomState.label}, ` +
+        `cannot assign ${label}. Vertex=${vertex}, labelEnd=${labelEnd}`,
+    );
+  }
 
-  // If labelling as S, add to queue for processing
+  // Assign label and label endpoints to the blossom (per NetworkX: labels are per-blossom)
+  // labelEnd: vertex in parent blossom that caused labeling
+  // labelEdgeVertex: vertex in this blossom that was labeled
+  blossomState.label = label;
+  blossomState.labelEnd = labelEnd;
+  blossomState.labelEdgeVertex = vertex;
+
+  // Per NetworkX: handle S and T labels differently
   if (label === Label.S) {
+    // S-blossom: add base vertex to queue for processing
     state.queue.push(baseVertex);
+  } else if (label === Label.T) {
+    // T-blossom: recursively label the base's mate as S
+    // Per NetworkX: assignLabel(mate[base], 1, base)
+    const baseState = state.vertices.get(baseVertex);
+    if (baseState !== undefined && baseState.mate !== null) {
+      assignLabel(state, baseState.mate, Label.S, baseVertex);
+    }
   }
 }
 
@@ -551,14 +755,14 @@ export function scanAndLabelNeighbours(
   const { baseVertex: vertexBase } = findBaseVertexInfo(state, vertex);
 
   for (const neighbour of neighbours) {
-    const { baseVertex: neighbourBase, baseState: neighbourBaseState } =
+    const { baseVertex: neighbourBase, blossomState: neighbourBlossomState } =
       findBaseVertexInfo(state, neighbour);
 
     // Skip internal edges within same top-level blossom
     const isInternalEdge = vertexBase === neighbourBase;
 
     if (!isInternalEdge) {
-      const neighbourLabel = neighbourBaseState.label;
+      const neighbourLabel = neighbourBlossomState.label;
 
       // Case 1: Neighbour is unlabelled
       if (neighbourLabel === Label.NONE) {
@@ -573,16 +777,39 @@ export function scanAndLabelNeighbours(
           return edge;
         } else {
           // Neighbour is matched - extend alternating tree by labeling
-          const neighbourState = state.vertices.get(neighbour);
-          if (neighbourState === undefined) {
-            throw new Error(`Neighbour ${neighbour} not found in state`);
+          // Per NetworkX: label the mate of T's BASE, not T itself
+          // In a blossom, base.mate is the external matched edge
+          const baseState = state.vertices.get(neighbourBase);
+          if (baseState === undefined) {
+            throw new Error(`Base vertex ${neighbourBase} not found`);
           }
-          const neighbourMate = neighbourState.mate;
-          if (neighbourMate === null) {
-            throw new Error(`Neighbour ${neighbour} should be matched`);
+          const baseMate = baseState.mate;
+          if (baseMate === null) {
+            throw new Error(`T-vertex base ${neighbourBase} should be matched`);
           }
+
+          // Per NetworkX: assert mate's blossom is unlabeled before labeling
+          // If already labeled, something is wrong with blossom structure
+          const { blossomState: baseMateBlossomState } = findBaseVertexInfo(
+            state,
+            baseMate,
+          );
+          if (baseMateBlossomState.label !== Label.NONE) {
+            console.error(
+              `BUG: mate ${baseMate} already labeled ${baseMateBlossomState.label}`,
+            );
+            console.error(
+              `  neighbour=${neighbour}, neighbourBase=${neighbourBase}`,
+            );
+            console.error(
+              `  mate blossom=${baseMateBlossomState.id}, labelEnd=${baseMateBlossomState.labelEnd}`,
+            );
+            // Skip labeling to avoid creating cycle
+            continue;
+          }
+
+          // Per NetworkX: assignLabel(w, 2, p) - T-label recursively labels mate as S
           assignLabel(state, neighbour, Label.T, vertex);
-          assignLabel(state, neighbourMate, Label.S, neighbourBase);
           // Continue scanning (return null at end if nothing else found)
         }
       }

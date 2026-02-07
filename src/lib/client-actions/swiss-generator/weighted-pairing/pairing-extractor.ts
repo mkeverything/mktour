@@ -1,4 +1,7 @@
-import type { ChessTournamentEntity, ColouredEntitiesPair } from '@/lib/client-actions/common-generator';
+import type {
+  ChessTournamentEntity,
+  ColouredEntitiesPair,
+} from '@/lib/client-actions/common-generator';
 import { getSwissColouredPair } from '@/lib/client-actions/swiss-generator/colouring';
 import type { MatchingResult } from '@/lib/client-actions/swiss-generator/matching/types';
 import { PAB_NODE_ID } from '@/lib/client-actions/swiss-generator/quality-evaluation/evaluate';
@@ -34,10 +37,14 @@ function createColouredPairFromIds(
 ): ColouredEntitiesPair | null {
   const firstPlayer = playerMap.get(vertexId);
   const secondPlayer = playerMap.get(mateId);
-  const areBothPlayersFound = firstPlayer !== undefined && secondPlayer !== undefined;
+  const areBothPlayersFound =
+    firstPlayer !== undefined && secondPlayer !== undefined;
 
   if (areBothPlayersFound) {
-    const simplePair: [ChessTournamentEntity, ChessTournamentEntity] = [firstPlayer, secondPlayer];
+    const simplePair: [ChessTournamentEntity, ChessTournamentEntity] = [
+      firstPlayer,
+      secondPlayer,
+    ];
     return getSwissColouredPair(simplePair);
   }
 
@@ -58,8 +65,9 @@ export function extractPairingFromMatching(
   matching: MatchingResult,
   players: readonly ChessTournamentEntity[],
 ): readonly ColouredEntitiesPair[] {
-  const createPlayerEntry = (player: ChessTournamentEntity): [string, ChessTournamentEntity] =>
-    [player.entityId, player];
+  const createPlayerEntry = (
+    player: ChessTournamentEntity,
+  ): [string, ChessTournamentEntity] => [player.entityId, player];
   const playerMap: PlayerLookupMap = new Map(players.map(createPlayerEntry));
 
   const colouredPairs: ColouredEntitiesPair[] = [];
@@ -68,21 +76,24 @@ export function extractPairingFromMatching(
   for (const [vertexId, mateId] of matching) {
     const isAlreadyProcessed = processedVertices.has(vertexId);
     const hasNoMate = mateId === null;
-    const shouldSkip = isAlreadyProcessed || hasNoMate;
 
-    if (!shouldSkip) {
-      processedVertices.add(vertexId);
-      processedVertices.add(mateId);
+    if (isAlreadyProcessed || hasNoMate) {
+      continue;
+    }
 
-      const isPab = isPabEdge(vertexId, mateId);
+    processedVertices.add(vertexId);
+    processedVertices.add(mateId);
 
-      if (!isPab) {
-        const colouredPair = createColouredPairFromIds(vertexId, mateId, playerMap);
+    const isPab = isPabEdge(vertexId, mateId);
 
-        if (colouredPair !== null) {
-          colouredPairs.push(colouredPair);
-        }
-      }
+    if (isPab) {
+      continue;
+    }
+
+    const colouredPair = createColouredPairFromIds(vertexId, mateId, playerMap);
+
+    if (colouredPair !== null) {
+      colouredPairs.push(colouredPair);
     }
   }
 
