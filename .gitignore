@@ -27,6 +27,10 @@ yarn-error.log*
 debug_*.log
 debug_*.ts
 *.un~
+/logs.txt
+
+# claude code
+.claude/
 
 # local env files
 .env*.local
