@@ -417,24 +417,12 @@
     "title": "about mktour",
     "description": "open-source chess tournament management platform",
     "intro": "mktour is a free, open-source platform designed to make organizing chess tournaments simple and efficient. built by chess enthusiasts, for chess enthusiasts.",
-    "features": {
-      "title": "features",
-      "tournaments": "create and manage various tournament formats",
-      "clubs": "organize players and track club statistics",
-      "players": "comprehensive player profiles and performance tracking",
-      "realtime": "live updates and real-time tournament progress"
-    },
-    "opensource": {
-      "title": "open source",
-      "description": "mktour is completely open source and available on github. contributions, bug reports, and feature requests are welcome!",
-      "github": "view on github"
-    },
     "contact": {
       "title": "get in touch",
       "lichess": "lichess team",
-      "lichess_desc": "join our community and get support",
-      "github": "github",
-      "github_desc": "report issues and contribute"
+      "lichess_desc": "there is a forum for your questions",
+      "email": "mkcode.org@gmail.com",
+      "email_desc": "contact us privately"
     },
     "Changelog": {
       "title": "changelog",

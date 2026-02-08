@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { type ChangeItem, type ChangelogVersion } from '@/lib/changelog';
+import { MailIcon } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -38,43 +39,6 @@ export default function AboutContent({ changelog }: AboutContentProps) {
             <p className="text-muted-foreground">{t('intro')}</p>
           </CardContent>
         </Card>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('features.title')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="text-muted-foreground space-y-2 text-sm">
-                <li>• {t('features.tournaments')}</li>
-                <li>• {t('features.clubs')}</li>
-                <li>• {t('features.players')}</li>
-                <li>• {t('features.realtime')}</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('opensource.title')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4 text-sm">
-                {t('opensource.description')}
-              </p>
-              <div className="flex gap-4">
-                <Link
-                  href="https://github.com/sukalov/mktour"
-                  target="_blank"
-                  className="hover:text-foreground flex items-center gap-2 text-sm"
-                >
-                  <GithubLogo size="20" theme={theme || 'dark'} />
-                  {t('opensource.github')}
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         <Card>
           <CardHeader>
@@ -173,15 +137,15 @@ export default function AboutContent({ changelog }: AboutContentProps) {
                 </div>
               </Link>
               <Link
-                href="https://github.com/sukalov/mktour"
+                href="mailto:mkcode.org@gmail.com"
                 target="_blank"
                 className="flex items-center gap-3"
               >
-                <GithubLogo size="24" theme={theme || 'dark'} />
+                <MailIcon size="24" />
                 <div>
-                  <p className="font-medium">{t('contact.github')}</p>
+                  <p className="font-medium">{t('contact.email')}</p>
                   <p className="text-muted-foreground text-sm">
-                    {t('contact.github_desc')}
+                    {t('contact.email_desc')}
                   </p>
                 </div>
               </Link>
