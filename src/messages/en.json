@@ -223,7 +223,8 @@
     "affiliation requested": "request sent",
     "affiliation canceled": "request cancelled",
     "player deleted": "player deleted",
-    "player has tournaments": "sorry! the player, who is added to a tournament, cannot be deleted. otherwise you have to delete that tournament too"
+    "player has tournaments": "sorry! the player, who is added to a tournament, cannot be deleted. otherwise you have to delete that tournament too",
+    "club updated": "club updated"
   },
   "UserSettings": {
     "header": "settings",
