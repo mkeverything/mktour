@@ -13,7 +13,7 @@ function ErrorFallback({
   error,
   resetErrorBoundary,
 }: {
-  error: Error;
+  error: unknown;
   resetErrorBoundary?: () => void;
 }) {
   return (
@@ -28,7 +28,7 @@ function ErrorFallback({
         </CardHeader>
         <CardContent>
           <pre className="bg-muted overflow-auto rounded-md p-3 text-sm">
-            {error.message}
+            {error instanceof Error ? error.message : String(error)}
           </pre>
         </CardContent>
         <CardFooter className="flex gap-2">
