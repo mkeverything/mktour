@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { verifyTestDatabase } from '@/lib/config/urls';
 import { appRouter } from '@/server/api';
 import { createTRPCContext } from '@/server/api/trpc';
 import { db } from '@/server/db';
@@ -10,17 +11,7 @@ import type { User } from 'lucia';
 import { NextRequest } from 'next/server';
 
 export const cleanupTestDb = async () => {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      '🚨 CRITICAL: cleanupTestDb cannot run in production! This would wipe the database.',
-    );
-  }
-
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error(
-      '🚨 CRITICAL: cleanupTestDb can only run with NODE_ENV=test',
-    );
-  }
+  verifyTestDatabase();
 
   // cleaning all tables in correct order to handle foreign key constraints
   await db.delete(schema.user_notifications);

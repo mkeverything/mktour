@@ -4,24 +4,7 @@ import { and, eq, notInArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/libsql';
 import { reset, seed } from 'drizzle-seed';
 
-const verifyTestDatabase = () => {
-  const dbUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL ?? '';
-  const isTestEnv = process.env.NODE_ENV === 'test';
-  const isTestUrl = dbUrl.toLowerCase().includes('test');
-
-  if (!isTestEnv) {
-    throw new Error(
-      `🚨 CRITICAL: seedComprehensiveTestData requires NODE_ENV=test (current: ${process.env.NODE_ENV})`,
-    );
-  }
-
-  if (!isTestUrl) {
-    throw new Error(
-      `🚨 CRITICAL: Database URL does not appear to be a test database. URL must contain "test". Got: ${dbUrl.substring(0, 50)}...`,
-    );
-  }
-  return true;
-};
+import { verifyTestDatabase } from '@/lib/config/urls';
 
 export const seedComprehensiveTestData = async () => {
   if (verifyTestDatabase()) {
