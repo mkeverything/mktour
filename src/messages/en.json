@@ -435,6 +435,13 @@
       "lichess_desc": "join our community and get support",
       "github": "github",
       "github_desc": "report issues and contribute"
+    },
+    "Changelog": {
+      "title": "changelog",
+      "see more": "see more on github",
+      "features": "features",
+      "bug_fixes": "bug fixes",
+      "others": "other changes"
     }
   },
   "Notifications": {
