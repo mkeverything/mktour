@@ -1,3 +1,10 @@
+## [0.11.1](https://github.com/mkeverything/mktour/compare/v0.11.0...v0.11.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **?:** beta releases ([4bdb613](https://github.com/mkeverything/mktour/commit/4bdb6139c8c3d5ecedcbce4b7e1f19343a1d7e97))
+
 # [0.11.0](https://github.com/mkeverything/mktour/compare/v0.10.0...v0.11.0) (2026-01-22)
 
 
