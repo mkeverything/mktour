@@ -14,7 +14,10 @@ import {
 
 import type { WeightContext } from './types';
 import type { CriterionMultipliers } from './weight-calculator';
-import { computePabEdgeWeight, computeRegularEdgeWeight } from './weight-calculator';
+import {
+  computePabEdgeWeight,
+  computeRegularEdgeWeight,
+} from './weight-calculator';
 
 /** Maps score values to the count of players with that score. */
 type ScoregroupSizeMap = Map<number, number>;
@@ -39,7 +42,8 @@ function computeScoregroupSizes(
   const sizes: ScoregroupSizeMap = new Map();
 
   for (const player of players) {
-    const currentCount = sizes.get(player.entityScore) ?? DEFAULT_SCOREGROUP_COUNT;
+    const currentCount =
+      sizes.get(player.entityScore) ?? DEFAULT_SCOREGROUP_COUNT;
     sizes.set(player.entityScore, currentCount + 1);
   }
 
@@ -93,20 +97,40 @@ function addRegularEdges(
   nonTopscorers: readonly ChessTournamentEntity[],
 ): void {
   for (let firstIndex = 0; firstIndex < players.length; firstIndex++) {
-    for (let secondIndex = firstIndex + 1; secondIndex < players.length; secondIndex++) {
+    for (
+      let secondIndex = firstIndex + 1;
+      secondIndex < players.length;
+      secondIndex++
+    ) {
       const firstPlayer = players[firstIndex];
       const secondPlayer = players[secondIndex];
 
       const hasNotPlayedBefore = !havePlayedBefore(firstPlayer, secondPlayer);
-      const isCompatibleByC3 = areEntitiesCompatibleByC3(firstPlayer, secondPlayer, [...nonTopscorers]);
-
-      if (hasNotPlayedBefore && isCompatibleByC3) {
-        const simplePair: [ChessTournamentEntity, ChessTournamentEntity] = [firstPlayer, secondPlayer];
+      const isCompatibleByC3 = areEntitiesCompatibleByC3(
+        firstPlayer,
+        secondPlayer,
+        [...nonTopscorers],
+      );
+      //FIXME: uncomment iscompatiblebyc3
+      if (hasNotPlayedBefore) {
+        const simplePair: [ChessTournamentEntity, ChessTournamentEntity] = [
+          firstPlayer,
+          secondPlayer,
+        ];
         const colouredPair = getSwissColouredPair(simplePair);
-        const edgeWeight = computeRegularEdgeWeight(colouredPair, context, multipliers, topscorers);
+        const edgeWeight = computeRegularEdgeWeight(
+          colouredPair,
+          context,
+          multipliers,
+          topscorers,
+        );
         const edgeAttributes = { [EDGE_WEIGHT_ATTRIBUTE]: edgeWeight };
 
-        graph.addEdge(firstPlayer.entityId, secondPlayer.entityId, edgeAttributes);
+        graph.addEdge(
+          firstPlayer.entityId,
+          secondPlayer.entityId,
+          edgeAttributes,
+        );
       }
     }
   }
@@ -134,7 +158,12 @@ function addPabEdges(
     const canReceivePab = canEntityReceivePAB(player, context.roundNumber);
 
     if (canReceivePab) {
-      const edgeWeight = computePabEdgeWeight(player, context, multipliers, topscorers);
+      const edgeWeight = computePabEdgeWeight(
+        player,
+        context,
+        multipliers,
+        topscorers,
+      );
       const edgeAttributes = { [EDGE_WEIGHT_ATTRIBUTE]: edgeWeight };
 
       graph.addEdge(PAB_NODE_ID, player.entityId, edgeAttributes);
@@ -170,7 +199,14 @@ export function buildWeightedGraph(
   const topscorers = getTopscorers([...players], context.roundNumber);
   const nonTopscorers = getNonTopscorers([...players], context.roundNumber);
 
-  addRegularEdges(graph, players, context, multipliers, topscorers, nonTopscorers);
+  addRegularEdges(
+    graph,
+    players,
+    context,
+    multipliers,
+    topscorers,
+    nonTopscorers,
+  );
 
   if (context.hasOddPlayers) {
     addPabEdges(graph, players, context, multipliers, topscorers);
@@ -179,4 +215,4 @@ export function buildWeightedGraph(
   return graph;
 }
 
-export { PAB_NODE_ID, EDGE_WEIGHT_ATTRIBUTE };
+export { EDGE_WEIGHT_ATTRIBUTE, PAB_NODE_ID };

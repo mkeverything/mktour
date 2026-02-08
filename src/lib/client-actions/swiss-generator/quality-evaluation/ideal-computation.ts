@@ -150,9 +150,9 @@ export function willHaveSameColourThreeTimes(
   if (lastTwoGames.length < 2) {
     return false;
   } else if (newColour === ChessColour.White) {
-    return lastTwoGames.every((game) => game.white_id === entity.entityId);
+    return lastTwoGames.every((game) => game.whiteId === entity.entityId);
   } else {
-    return lastTwoGames.every((game) => game.black_id === entity.entityId);
+    return lastTwoGames.every((game) => game.blackId === entity.entityId);
   }
 }
 

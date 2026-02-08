@@ -97,7 +97,9 @@ export type PenaltyInput = PabPenaltyInput | RegularPenaltyInput;
  * @param penaltyInput - The penalty input to check
  * @returns True if penaltyInput is PabPenaltyInput
  */
-export function isPabPenaltyInput(penaltyInput: PenaltyInput): penaltyInput is PabPenaltyInput {
+export function isPabPenaltyInput(
+  penaltyInput: PenaltyInput,
+): penaltyInput is PabPenaltyInput {
   return 'player' in penaltyInput && !('colouredPair' in penaltyInput);
 }
 
@@ -110,7 +112,9 @@ export function isPabPenaltyInput(penaltyInput: PenaltyInput): penaltyInput is P
  * @param penaltyInput - The penalty input to check
  * @returns True if penaltyInput is RegularPenaltyInput
  */
-export function isRegularPenaltyInput(penaltyInput: PenaltyInput): penaltyInput is RegularPenaltyInput {
+export function isRegularPenaltyInput(
+  penaltyInput: PenaltyInput,
+): penaltyInput is RegularPenaltyInput {
   return 'colouredPair' in penaltyInput;
 }
 
@@ -135,7 +139,9 @@ export interface CriterionDefinition {
   readonly priority: number;
 
   /** Computes penalty for this criterion */
-  readonly computePenalty: (input: PabPenaltyInput | RegularPenaltyInput) => number;
+  readonly computePenalty: (
+    input: PabPenaltyInput | RegularPenaltyInput,
+  ) => number;
 }
 
 // ============================================================================
@@ -684,7 +690,9 @@ export function computeC10Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
     throw new Error('C10 requires regular penalty input');
   }
-  return countC10ViolationsInPair(penaltyInput.colouredPair, [...penaltyInput.topscorers]);
+  return countC10ViolationsInPair(penaltyInput.colouredPair, [
+    ...penaltyInput.topscorers,
+  ]);
 }
 
 /**
@@ -699,7 +707,9 @@ export function computeC11Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
     throw new Error('C11 requires regular penalty input');
   }
-  return countC11ViolationsInPair(penaltyInput.colouredPair, [...penaltyInput.topscorers]);
+  return countC11ViolationsInPair(penaltyInput.colouredPair, [
+    ...penaltyInput.topscorers,
+  ]);
 }
 
 /**
@@ -754,7 +764,9 @@ interface MdpResidentPair {
  * Identifies MDP (higher-scored) and resident (lower-scored) in a pair.
  * Returns null if same score (not a cross-score pairing).
  */
-function getMdpAndResident(colouredPair: ColouredEntitiesPair): MdpResidentPair | null {
+function getMdpAndResident(
+  colouredPair: ColouredEntitiesPair,
+): MdpResidentPair | null {
   const { whiteEntity, blackEntity } = colouredPair;
   const whiteScore = whiteEntity.entityScore;
   const blackScore = blackEntity.entityScore;
@@ -787,7 +799,8 @@ export function computeC14Penalty(penaltyInput: PenaltyInput): number {
   const isCrossScorePairing = mdpResident !== null;
   const prevRound = penaltyInput.context.roundNumber - 1;
 
-  const hasViolation = isCrossScorePairing && didDownfloat(mdpResident.mdp, prevRound);
+  const hasViolation =
+    isCrossScorePairing && didDownfloat(mdpResident.mdp, prevRound);
   const penalty = hasViolation ? SINGLE_FLOAT_VIOLATION : NO_FLOAT_VIOLATION;
 
   return penalty;
@@ -807,7 +820,8 @@ export function computeC15Penalty(penaltyInput: PenaltyInput): number {
   const isCrossScorePairing = mdpResident !== null;
   const prevRound = penaltyInput.context.roundNumber - 1;
 
-  const hasViolation = isCrossScorePairing && didUpfloat(mdpResident.resident, prevRound);
+  const hasViolation =
+    isCrossScorePairing && didUpfloat(mdpResident.resident, prevRound);
   const penalty = hasViolation ? SINGLE_FLOAT_VIOLATION : NO_FLOAT_VIOLATION;
 
   return penalty;
@@ -827,7 +841,8 @@ export function computeC16Penalty(penaltyInput: PenaltyInput): number {
   const isCrossScorePairing = mdpResident !== null;
   const twoRoundsAgo = penaltyInput.context.roundNumber - 2;
 
-  const hasViolation = isCrossScorePairing && didDownfloat(mdpResident.mdp, twoRoundsAgo);
+  const hasViolation =
+    isCrossScorePairing && didDownfloat(mdpResident.mdp, twoRoundsAgo);
   const penalty = hasViolation ? SINGLE_FLOAT_VIOLATION : NO_FLOAT_VIOLATION;
 
   return penalty;
@@ -847,7 +862,8 @@ export function computeC17Penalty(penaltyInput: PenaltyInput): number {
   const isCrossScorePairing = mdpResident !== null;
   const twoRoundsAgo = penaltyInput.context.roundNumber - 2;
 
-  const hasViolation = isCrossScorePairing && didUpfloat(mdpResident.resident, twoRoundsAgo);
+  const hasViolation =
+    isCrossScorePairing && didUpfloat(mdpResident.resident, twoRoundsAgo);
   const penalty = hasViolation ? SINGLE_FLOAT_VIOLATION : NO_FLOAT_VIOLATION;
 
   return penalty;
@@ -864,7 +880,9 @@ const NO_SCORE_DIFF_PENALTY = 0;
  * Computes absolute score difference between MDP and resident.
  */
 function computeMdpResidentScoreDiff(mdpResident: MdpResidentPair): number {
-  return Math.abs(mdpResident.mdp.entityScore - mdpResident.resident.entityScore);
+  return Math.abs(
+    mdpResident.mdp.entityScore - mdpResident.resident.entityScore,
+  );
 }
 
 /**
@@ -876,10 +894,15 @@ export function computeC18Penalty(penaltyInput: PenaltyInput): number {
   }
 
   const prevRound = penaltyInput.context.roundNumber - 1;
-  const filterByMdpDownfloatPrev: MdpPairingFilterCriterion = (mdp, _resident) =>
-    didDownfloat(mdp, prevRound);
+  const filterByMdpDownfloatPrev: MdpPairingFilterCriterion = (
+    mdp,
+    _resident,
+  ) => didDownfloat(mdp, prevRound);
 
-  const penalty = computeMdpScoreDiffPenaltyWithCriterion(penaltyInput, filterByMdpDownfloatPrev);
+  const penalty = computeMdpScoreDiffPenaltyWithCriterion(
+    penaltyInput,
+    filterByMdpDownfloatPrev,
+  );
   return penalty;
 }
 
@@ -920,10 +943,15 @@ export function computeC19Penalty(penaltyInput: PenaltyInput): number {
   }
 
   const prevRound = penaltyInput.context.roundNumber - 1;
-  const filterByResidentUpfloatPrev: MdpPairingFilterCriterion = (_mdp, resident) =>
-    didUpfloat(resident, prevRound);
+  const filterByResidentUpfloatPrev: MdpPairingFilterCriterion = (
+    _mdp,
+    resident,
+  ) => didUpfloat(resident, prevRound);
 
-  const penalty = computeMdpScoreDiffPenaltyWithCriterion(penaltyInput, filterByResidentUpfloatPrev);
+  const penalty = computeMdpScoreDiffPenaltyWithCriterion(
+    penaltyInput,
+    filterByResidentUpfloatPrev,
+  );
   return penalty;
 }
 
@@ -934,10 +962,15 @@ export function computeC20Penalty(penaltyInput: PenaltyInput): number {
   }
 
   const twoRoundsAgo = penaltyInput.context.roundNumber - 2;
-  const filterByMdpDownfloatPrev2: MdpPairingFilterCriterion = (mdp, _resident) =>
-    didDownfloat(mdp, twoRoundsAgo);
+  const filterByMdpDownfloatPrev2: MdpPairingFilterCriterion = (
+    mdp,
+    _resident,
+  ) => didDownfloat(mdp, twoRoundsAgo);
 
-  const penalty = computeMdpScoreDiffPenaltyWithCriterion(penaltyInput, filterByMdpDownfloatPrev2);
+  const penalty = computeMdpScoreDiffPenaltyWithCriterion(
+    penaltyInput,
+    filterByMdpDownfloatPrev2,
+  );
   return penalty;
 }
 
@@ -948,10 +981,15 @@ export function computeC21Penalty(penaltyInput: PenaltyInput): number {
   }
 
   const twoRoundsAgo = penaltyInput.context.roundNumber - 2;
-  const filterByResidentUpfloatPrev2: MdpPairingFilterCriterion = (_mdp, resident) =>
-    didUpfloat(resident, twoRoundsAgo);
+  const filterByResidentUpfloatPrev2: MdpPairingFilterCriterion = (
+    _mdp,
+    resident,
+  ) => didUpfloat(resident, twoRoundsAgo);
 
-  const penalty = computeMdpScoreDiffPenaltyWithCriterion(penaltyInput, filterByResidentUpfloatPrev2);
+  const penalty = computeMdpScoreDiffPenaltyWithCriterion(
+    penaltyInput,
+    filterByResidentUpfloatPrev2,
+  );
   return penalty;
 }
 
@@ -987,10 +1025,14 @@ export function computeRankingPenalty(penaltyInput: PenaltyInput): number {
     }
 
     const idealDiff = Math.floor(scoregroupSize / 2);
-    const actualDiff = Math.abs(whiteEntity.pairingNumber - blackEntity.pairingNumber);
+    const actualDiff = Math.abs(
+      whiteEntity.pairingNumber - blackEntity.pairingNumber,
+    );
     penalty = Math.abs(actualDiff - idealDiff);
   } else {
-    const maxScoregroupSize = Math.max(...penaltyInput.context.scoregroupSizes.values());
+    const maxScoregroupSize = Math.max(
+      ...penaltyInput.context.scoregroupSizes.values(),
+    );
     const maxPenalty = Math.floor(maxScoregroupSize / 2);
     penalty = maxPenalty;
   }
@@ -1070,7 +1112,12 @@ export function computePabEdgeWeight(
   multipliers: CriterionMultipliers,
   topscorers: readonly ChessTournamentEntity[],
 ): bigint {
-  const pabInput: PabPenaltyInput = { player, context, multipliers, topscorers };
+  const pabInput: PabPenaltyInput = {
+    player,
+    context,
+    multipliers,
+    topscorers,
+  };
   const c5Weight = computeCriterionWeight(C5, pabInput);
   const c9Weight = computeCriterionWeight(C9, pabInput);
   return c5Weight + c9Weight;
@@ -1087,7 +1134,12 @@ export function computeRegularEdgeWeight(
   multipliers: CriterionMultipliers,
   topscorers: readonly ChessTournamentEntity[],
 ): bigint {
-  const regularInput: RegularPenaltyInput = { colouredPair, context, multipliers, topscorers };
+  const regularInput: RegularPenaltyInput = {
+    colouredPair,
+    context,
+    multipliers,
+    topscorers,
+  };
 
   let totalWeight = 0n;
   for (const criterion of REGULAR_CRITERIA) {

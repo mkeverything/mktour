@@ -1,12 +1,16 @@
 import { newid } from '@/lib/utils';
-import { FloatHistoryItem, GameModel, PlayerModel } from '@/types/tournaments';
+import { GameModel } from '@/server/db/zod/tournaments';
+import {
+  FloatHistoryItem,
+  SwissPlayerModel,
+} from '@/lib/client-actions/swiss-generator/types';
 
 // default set of round properties, may be changed internally
 export interface RoundProps {
   /**
    * Current round players
    */
-  players: PlayerModel[];
+  players: SwissPlayerModel[];
 
   /**
    * Previously played games, not all round generators require those
@@ -107,7 +111,7 @@ function getMaxRoundNumber(games: GameModel[]): number {
   if (games.length === 0) {
     return 0;
   } else {
-    const roundNumbers = games.map((game) => game.round_number);
+    const roundNumbers = games.map((game) => game.roundNumber);
     return Math.max(...roundNumbers);
   }
 }
@@ -131,7 +135,7 @@ function calculateByeCount(
  * @param playerModel a joined representation of player
  */
 export function convertPlayerToEntity(
-  playerModel: PlayerModel,
+  playerModel: SwissPlayerModel,
   allGames: GameModel[],
 ) {
   if (playerModel.pairingNumber === null) {
@@ -141,7 +145,7 @@ export function convertPlayerToEntity(
   // Filter games involving this player (either as white or black)
   const previousGames = allGames.filter(
     (game) =>
-      game.white_id === playerModel.id || game.black_id === playerModel.id,
+      game.whiteId === playerModel.id || game.blackId === playerModel.id,
   );
 
   // Calculate bye count (rounds where player didn't play = received PAB)

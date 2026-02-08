@@ -1,10 +1,11 @@
 import { mock } from 'bun:test';
 
 import { newid } from '@/lib/utils';
-import { DatabaseClub } from '@/server/db/schema/clubs';
-import { DatabaseTournament } from '@/server/db/schema/tournaments';
-import { DatabaseUser } from '@/server/db/schema/users';
-import { GameModel, PlayerModel, Result } from '@/types/tournaments';
+import { GameResult } from '@/server/db/zod/enums';
+import { ClubModel } from '@/server/db/zod/clubs';
+import { GameModel, TournamentModel } from '@/server/db/zod/tournaments';
+import { UserModel } from '@/server/db/zod/users';
+import { SwissPlayerModel } from '@/lib/client-actions/swiss-generator/types';
 import { faker } from '@faker-js/faker';
 import assert from 'assert';
 
@@ -19,14 +20,14 @@ const DEFAULT_IS_EXITED = false;
 const DEFAULT_FORMAT = 'round robin';
 const DEFAULT_TYPE = 'solo';
 
-const POSSIBLE_RESULTS: Result[] = ['0-1', '1-0', '1/2-1/2'];
+const POSSIBLE_RESULTS: GameResult[] = ['0-1', '1-0', '1/2-1/2'];
 
 const RATING_FAKEOPTS = {
   min: 500,
   max: 3000,
 };
 
-const generateDatabaseUser = mock<() => DatabaseUser>(() => {
+const generateUserModel = mock<() => UserModel>(() => {
   const randomId = newid();
   const randomNickname = faker.internet.username();
   const randomRealName = faker.person.fullName();
@@ -35,58 +36,58 @@ const generateDatabaseUser = mock<() => DatabaseUser>(() => {
   const randomClubName = faker.company.name();
   const randomCreationDate = faker.date.anytime();
 
-  const randomUser: DatabaseUser = {
+  const randomUser: UserModel = {
     id: randomId,
     username: randomNickname,
     name: randomRealName,
     email: randomEmail,
     rating: randomRating,
-    selected_club: randomClubName,
-    created_at: randomCreationDate,
+    selectedClub: randomClubName,
+    createdAt: randomCreationDate,
   };
   return randomUser;
 });
 
-const generateRandomDatabaseClub = mock<() => DatabaseClub>(() => {
+const generateRandomClubModel = mock<() => ClubModel>(() => {
   const randomId = newid();
   const randomTitle = faker.animal.cat();
   const randomDescription = faker.food.description();
   const randomCreatedAt = faker.date.anytime();
   const randomLichessTeam = faker.book.title();
-  const randomClub: DatabaseClub = {
+  const randomClub: ClubModel = {
     id: randomId,
     name: randomTitle,
     description: randomDescription,
-    created_at: randomCreatedAt,
-    lichess_team: randomLichessTeam,
+    createdAt: randomCreatedAt,
+    lichessTeam: randomLichessTeam,
   };
   return randomClub;
 });
 
-export const generateRandomDatabaseTournament = mock<() => DatabaseTournament>(
+export const generateRandomDatabaseTournament = mock<() => TournamentModel>(
   () => {
     const randomDate = faker.date.anytime();
     const randomId = newid();
     const randomTitle = faker.music.songName();
     const randomCreationDate = faker.date.anytime();
-    const randomClub = generateRandomDatabaseClub();
+    const randomClub = generateRandomClubModel();
     const randomStartDate = faker.date.anytime();
     const randomEndDate = faker.date.anytime();
     const randomRoundsNumber = faker.number.int();
     const randomIsRated = faker.datatype.boolean();
 
-    const randomTournament: DatabaseTournament = {
+    const randomTournament: TournamentModel = {
       date: randomDate.toDateString(),
       id: randomId,
       title: randomTitle,
       format: DEFAULT_FORMAT,
       type: DEFAULT_TYPE,
-      created_at: randomCreationDate,
-      club_id: randomClub.id,
-      started_at: randomStartDate,
-      closed_at: randomEndDate,
-      rounds_number: randomRoundsNumber,
-      ongoing_round: INITIAL_ONGOING_ROUND,
+      createdAt: randomCreationDate,
+      clubId: randomClub.id,
+      startedAt: randomStartDate,
+      closedAt: randomEndDate,
+      roundsNumber: randomRoundsNumber,
+      ongoingRound: INITIAL_ONGOING_ROUND,
       rated: randomIsRated,
     };
 
@@ -112,20 +113,21 @@ export const fillRandomResult = mock(
   },
 );
 export const generatePlayerModel = mock(() => {
-  const randomUser = generateDatabaseUser();
+  const randomUser = generateUserModel();
 
-  const randomPlayer: PlayerModel = {
+  const randomPlayer: SwissPlayerModel = {
     id: randomUser.id,
     nickname: randomUser.username,
     wins: INITIAL_WINS,
     draws: INITIAL_DRAWS,
     losses: INITIAL_LOSSES,
-    color_index: INITIAL_COLOUR_INDEX,
+    colorIndex: INITIAL_COLOUR_INDEX,
     realname: randomUser.name,
     rating: randomUser.rating ?? 0,
-    is_out: DEFAULT_IS_EXITED,
+    isOut: DEFAULT_IS_EXITED,
     place: DEFAULT_PLACE,
     pairingNumber: null,
+    floatHistory: [],
   };
 
   return randomPlayer;
@@ -154,7 +156,7 @@ interface PlayerScoreResults {
  * @returns true if player participated in the game
  */
 function isPlayerInGame(game: GameModel, playerId: string): boolean {
-  return game.white_id === playerId || game.black_id === playerId;
+  return game.whiteId === playerId || game.blackId === playerId;
 }
 
 /**
@@ -177,16 +179,24 @@ function countPlayerResults(
       continue;
     }
 
-    const isWhite = game.white_id === playerId;
+    const isWhite = game.whiteId === playerId;
 
     // Count based on result and player colour
     switch (game.result) {
       case '1-0':
-        if (isWhite) { wins++; } else { losses++; }
+        if (isWhite) {
+          wins++;
+        } else {
+          losses++;
+        }
         break;
 
       case '0-1':
-        if (isWhite) { losses++; } else { wins++; }
+        if (isWhite) {
+          losses++;
+        } else {
+          wins++;
+        }
         break;
 
       case '1/2-1/2':
@@ -221,7 +231,7 @@ function calculateByeCount(
   }
 
   // Find the maximum round number to determine how many rounds have been played
-  const maxRoundNumber = Math.max(...allGames.map((game) => game.round_number));
+  const maxRoundNumber = Math.max(...allGames.map((game) => game.roundNumber));
 
   // Byes = rounds played by others minus games this player participated in
   const byeCount = maxRoundNumber - playerGamesCount;
@@ -239,9 +249,9 @@ function calculateByeCount(
  * @returns Updated player with recalculated wins/draws/losses
  */
 function updateSinglePlayerScore(
-  player: PlayerModel,
+  player: SwissPlayerModel,
   games: GameModel[],
-): PlayerModel {
+): SwissPlayerModel {
   // Filter games involving this player
   const playerGames = games.filter((game) => isPlayerInGame(game, player.id));
 
@@ -268,7 +278,7 @@ function updateSinglePlayerScore(
  * @returns Updated players with recalculated wins/draws/losses
  */
 export const updatePlayerScores = mock(
-  (players: PlayerModel[], games: GameModel[]): PlayerModel[] => {
+  (players: SwissPlayerModel[], games: GameModel[]): SwissPlayerModel[] => {
     return players.map((player) => updateSinglePlayerScore(player, games));
   },
 );

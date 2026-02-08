@@ -1,9 +1,9 @@
 import { GameResult } from '@/server/db/zod/enums';
-import { PlayerModel } from '@/types/tournaments';
+import { PlayerTournamentModel } from '@/server/db/zod/players';
 
 type DashboardMessage =
-  | { event: 'add-existing-player'; body: PlayerModel }
-  | { event: 'add-new-player'; body: PlayerModel }
+  | { event: 'add-existing-player'; body: PlayerTournamentModel }
+  | { event: 'add-new-player'; body: PlayerTournamentModel }
   | { event: 'remove-player'; id: string } // onError add-exidsting-player
   | {
       event: 'set-game-result';

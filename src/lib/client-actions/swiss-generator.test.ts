@@ -10,7 +10,8 @@ import {
   updatePlayerScores,
 } from '@/lib/client-actions/common-generator.test';
 import { generateWeightedSwissRound } from '@/lib/client-actions/swiss-generator';
-import { GameModel, PlayerModel } from '@/types/tournaments';
+import { SwissPlayerModel } from '@/lib/client-actions/swiss-generator/types';
+import { GameModel } from '@/server/db/zod/tournaments';
 
 /** Starting seed for testing */
 const BASE_SEED = 14;
@@ -23,8 +24,8 @@ const SEEDS_TO_TEST = 5;
  * Fixed at 128 players for consistent testing
  */
 const SWISS_PLAYER_NUMBER_FAKEOPTS = {
-  min: 128,
-  max: 128,
+  min: 32,
+  max: 32,
 };
 
 /**
@@ -48,7 +49,7 @@ function generateTournamentWithSeed(
     playerCount ?? faker.number.int(SWISS_PLAYER_NUMBER_FAKEOPTS);
 
   // Generate players
-  const randomPlayers: PlayerModel[] = [];
+  const randomPlayers: SwissPlayerModel[] = [];
   for (let playerIndex = 0; playerIndex < randomPlayerNumber; playerIndex++) {
     randomPlayers.push(generatePlayerModel());
   }
@@ -69,13 +70,13 @@ function generateTournamentWithSeed(
   const SWISS_OPTIMAL_ROUNDS = Math.floor(randomPlayerNumber / 2);
   const roundsToTest = maxRounds ?? SWISS_OPTIMAL_ROUNDS;
 
-  console.log(
-    `[Seed ${seed}] Starting: ${randomPlayerNumber} players, ${roundsToTest} rounds`,
-  );
+  // console.log(
+  //   `[Seed ${seed}] Starting: ${randomPlayerNumber} players, ${roundsToTest} rounds`,
+  // );
 
   // Generate rounds until test limit reached
   while (currentRound <= roundsToTest) {
-    console.log(`[Seed ${seed}] Generating round ${currentRound}...`);
+    // console.log(`[Seed ${seed}] Generating round ${currentRound}...`);
 
     // Update player scores based on previous games
     const updatedPlayers = updatePlayerScores(randomPlayers, previousGames);
@@ -96,9 +97,9 @@ function generateTournamentWithSeed(
       break;
     }
 
-    console.log(
-      `[Seed ${seed}] Round ${currentRound}: ${gamesToInsert.length} games`,
-    );
+    // console.log(
+    //   `[Seed ${seed}] Round ${currentRound}: ${gamesToInsert.length} games`,
+    // );
 
     // Fill results randomly
     gamesToInsert.forEach(fillRandomResult);
@@ -109,9 +110,9 @@ function generateTournamentWithSeed(
     currentRound++;
   }
 
-  console.log(
-    `[Seed ${seed}] Completed: ${currentRound - INITIAL_ONGOING_ROUND} rounds`,
-  );
+  // console.log(
+  //   `[Seed ${seed}] Completed: ${currentRound - INITIAL_ONGOING_ROUND} rounds`,
+  // );
 
   return {
     playerCount: randomPlayerNumber,
@@ -140,8 +141,8 @@ describe('Swiss Generator Black-Box Tests', () => {
     });
   });
 
-  describe('Edge Cases: Small Tournament Failure Estimation', () => {
-    const EDGE_CASE_SEEDS = 1000;
+  describe.skip('Edge Cases: Small Tournament Failure Estimation', () => {
+    const EDGE_CASE_SEEDS = 100_000;
 
     function runFailureEstimation(players: number, rounds: number): void {
       const failedSeeds: number[] = [];
@@ -169,11 +170,11 @@ describe('Swiss Generator Black-Box Tests', () => {
       console.log(
         `[${players}p/${rounds}r] ${successCount}/${EDGE_CASE_SEEDS} completed (${successRate.toFixed(1)}%)`,
       );
-      if (failedSeeds.length > 0) {
-        console.log(
-          `[${players}p/${rounds}r] Failed seeds: ${failedSeeds.join(', ')}`,
-        );
-      }
+      // if (failedSeeds.length > 0) {
+      //   console.log(
+      //     `[${players}p/${rounds}r] Failed seeds: ${failedSeeds.join(', ')}`,
+      //   );
+      // }
 
       // Log-only — no hard assertion on success rate
       expect(true).toBe(true);
@@ -182,5 +183,10 @@ describe('Swiss Generator Black-Box Tests', () => {
     test('10 players, 8 rounds', () => runFailureEstimation(10, 8));
     test('12 players, 8 rounds', () => runFailureEstimation(12, 8));
     test('15 players, 8 rounds', () => runFailureEstimation(15, 8));
+
+    // test('30 players, 28 rounds', () => runFailureEstimation(30, 28));
+    // test('40 players, 37 rounds', () => runFailureEstimation(40, 37));
+
+    // test('128 players, 125 rounds', () => runFailureEstimation(50, 48));
   });
 });

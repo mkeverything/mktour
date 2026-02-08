@@ -31,8 +31,8 @@ function tryAlternateFromLastDifferentColours(
     const secondGame = secondEntityGames[i];
 
     // Determine what colour each entity played in this round
-    const firstEntityWasWhite = firstGame.white_id === firstEntity.entityId;
-    const secondEntityWasWhite = secondGame.white_id === secondEntity.entityId;
+    const firstEntityWasWhite = firstGame.whiteId === firstEntity.entityId;
+    const secondEntityWasWhite = secondGame.whiteId === secondEntity.entityId;
 
     // Check if they played different colours in this round
     if (firstEntityWasWhite !== secondEntityWasWhite) {
@@ -71,7 +71,7 @@ function getEntityInitialColour(entity: ChessTournamentEntity): ChessColour {
   const sortedGames = entity.previousGames.toSorted(compareGamesByRound);
   const firstGame = sortedGames[0];
 
-  return firstGame.white_id === entity.entityId
+  return firstGame.whiteId === entity.entityId
     ? ChessColour.White
     : ChessColour.Black;
 }

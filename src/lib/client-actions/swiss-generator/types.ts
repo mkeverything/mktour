@@ -1,3 +1,17 @@
+import { PlayerTournamentModel } from '@/server/db/zod/players';
+
+export type FloatType = 'up' | 'down' | 'none';
+
+export interface FloatHistoryItem {
+  roundNumber: number;
+  floatType: FloatType;
+}
+
+/** PlayerTournamentModel extended with Swiss-specific float history */
+export interface SwissPlayerModel extends PlayerTournamentModel {
+  floatHistory: FloatHistoryItem[];
+}
+
 import {
   ChessTournamentEntity,
   ColouredEntitiesPair,
@@ -135,8 +149,7 @@ export interface ExtendedAbsoluteEvaluationReport {
  * Contains all FIDE (Dutch) System criteria C1-C5 which are absolute criteria that cannot be violated
  * These criteria must all be satisfied before proceeding to quality evaluation phase
  */
-export interface AbsoluteEvaluationReport
-  extends BasicAbsoluteEvaluationReport {
+export interface AbsoluteEvaluationReport extends BasicAbsoluteEvaluationReport {
   /** C4: Downfloaters and players from other groups allow pairing */
   c4PairingCompatibility: boolean;
 }

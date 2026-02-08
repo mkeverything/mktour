@@ -10,7 +10,8 @@ import {
   generateRandomDatabaseTournament,
 } from '@/lib/client-actions/common-generator.test';
 import { generateRoundRobinRound } from '@/lib/client-actions/round-robin-generator';
-import { GameModel, PlayerModel } from '@/types/tournaments';
+import { GameModel } from '@/server/db/zod/tournaments';
+import { SwissPlayerModel } from '@/lib/client-actions/swiss-generator/types';
 import { faker } from '@faker-js/faker';
 
 describe('pure matching generation test', () => {
@@ -23,7 +24,7 @@ describe('pure matching generation test', () => {
     const randomPlayerNumber = faker.number.int(PLAYER_NUMBER_FAKEOPTS);
 
     // initialising the player list
-    const randomPlayers: PlayerModel[] = [];
+    const randomPlayers: SwissPlayerModel[] = [];
     for (let playerIdx = 0; playerIdx < randomPlayerNumber; playerIdx++) {
       const generatedPlayer = generatePlayerModel();
       randomPlayers.push(generatedPlayer);

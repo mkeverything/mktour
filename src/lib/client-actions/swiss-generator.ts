@@ -36,7 +36,8 @@ import {
   EvaluatedPairingCandidate,
   isHeteroBracket,
 } from '@/lib/client-actions/swiss-generator/types';
-import { GameModel, PlayerModel } from '@/types/tournaments';
+import { GameModel } from '@/server/db/zod/tournaments';
+import { SwissPlayerModel } from '@/lib/client-actions/swiss-generator/types';
 
 /*
  * This function generates the bracket round for the Swiss tournament. It gets the
@@ -50,7 +51,7 @@ export function generateSwissRound({
   roundNumber,
   tournamentId,
 }: RoundProps): GameModel[] {
-  games = games?.filter((game) => game.round_number !== roundNumber) ?? [];
+  games = games?.filter((game) => game.roundNumber !== roundNumber) ?? [];
 
   // checking if the set of layers is even, if not, making it even with a smart alg
   const matchedEntities = players.map((player) =>
@@ -451,10 +452,11 @@ export function generateWeightedSwissRound({
   tournamentId,
 }: RoundProps): GameModel[] {
   // Filter out any games from the current round (in case of re-generation)
-  const filteredGames = games?.filter((game) => game.round_number !== roundNumber) ?? [];
+  const filteredGames =
+    games?.filter((game) => game.roundNumber !== roundNumber) ?? [];
 
   // Convert player models to chess tournament entities with history
-  const convertPlayer = (player: PlayerModel): ChessTournamentEntity =>
+  const convertPlayer = (player: SwissPlayerModel): ChessTournamentEntity =>
     convertPlayerToEntity(player, filteredGames);
   const matchedEntities = players.map(convertPlayer);
 
@@ -462,7 +464,10 @@ export function generateWeightedSwissRound({
   const sortedEntities = getInitialOrdering(matchedEntities);
 
   // Assign pairing numbers according to initial order
-  const assignPairingNumber = (entity: ChessTournamentEntity, index: number): void => {
+  const assignPairingNumber = (
+    entity: ChessTournamentEntity,
+    index: number,
+  ): void => {
     entity.pairingNumber = index;
   };
   sortedEntities.forEach(assignPairingNumber);

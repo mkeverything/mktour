@@ -1,5 +1,5 @@
 import { ChessTournamentEntity } from '@/lib/client-actions/common-generator';
-import { GameModel } from '@/types/tournaments';
+import { GameModel } from '@/server/db/zod/tournaments';
 
 /**
  * Generic numeric comparison for sorting (ascending order - lower values first)
@@ -28,7 +28,7 @@ export function compareGamesByRound(
   firstGame: GameModel,
   secondGame: GameModel,
 ): number {
-  return compareNumeric(firstGame.round_number, secondGame.round_number);
+  return compareNumeric(firstGame.roundNumber, secondGame.roundNumber);
 }
 
 /**
