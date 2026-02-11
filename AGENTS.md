@@ -1,182 +1,177 @@
-# mktour - development guidelines
+## mktour - agent guidelines
+
+this file describes how to operate as an agent inside this repo. it covers build, lint, test workflows, and code style expectations so agents can work consistently and safely.
 
 ## commands
 
-### development
+- development
+- bun dev # start development server
+- bun dev:test # run with test environment
+- bun dev:local # offline/local database mode
+- bun opt # enable optimizations
 
-```bash
-bun dev                 # start development server
-bun dev:test           # start with test environment
-bun dev:local          # start with offline/local database
-bun opt                # start with optimizations enabled
-```
+- building & production
+- bun build # production build
+- bun start # start production server
+- bun analyze # analyze bundle size
 
-### building & production
+- code quality
+- bun check # typecheck, lint, tests
+- bun lint # eslint
+- bun format # prettier formatting
+- bun knip # find unused dependencies/exports
 
-```bash
-bun build              # build for production
-bun start              # start production server
-bun analyze            # analyze bundle size
-```
+- testing
+- bun test # run all tests
+- bun test path/to/file # run a single test file (e.g. bun test src/tests/foo.test.ts)
+- bun test path/to/file -t "name" # run a single test by name (where supported)
+- bun test path/to/file -- -t "name" # alternative passthrough form for test name filtering
 
-### code quality
+- database
+- bun db:push # generate and run migrations
+- bun db:drop # drop database
+- bun db:studio # open drizzle studio
+- bun db:check # check database schema
+- bun localdb:\* # offline development commands (aliases)
 
-```bash
-bun check              # run typecheck, lint, and tests
-bun lint               # run eslint
-bun format             # format with prettier
-bun knip               # find unused dependencies/exports
-```
+- other
+- bun generate-erd # generate entity-relationship diagram
+- bun generate-openapi # generate openapi specification
 
-### testing
+> notes:
 
-```bash
-bun test               # run all tests
-bun test path/to/file  # run single test file (e.g., bun test src/tests/glicko2.test.ts)
-```
-
-### database
-
-```bash
-bun db:push            # generate and run migrations
-bun db:drop            # drop database
-bun db:studio          # open drizzle studio
-bun db:check           # check database schema
-bun localdb:*          # same commands but for offline development
-```
-
-### other
-
-```bash
-bun generate-erd       # generate entity-relationship diagram
-bun generate-openapi   # generate openapi specification
-```
+- always run tests and lint before pushing; use single-file test when validating changes.
+- if a test name pattern is used, ensure the pattern matches an existing test description.
 
 ## code style & conventions
 
-### ui & formatting rules
-
+- ui & formatting rules
 - no capital letters in ui text at all
 - no capital letters in comments
 - no unnecessary comments in code
 - write everything in lowercase unless technically required
 
-### file structure
-
-- use `src/` as the base directory
+- file structure
+- use 'src/' as the base directory
 - follow next.js 13+ app router conventions
-- components in `src/components/` (subdirectories for categories)
-- pages in `src/app/[route]/page.tsx`
-- api routes in `src/app/api/[...]/route.ts`
-- database schema in `src/server/db/schema/`
-- utilities in `src/lib/`
+- components in 'src/components/' (subdirectories for categories)
+- pages in 'src/app/[route]/page.tsx'
+- api routes in 'src/app/api/[...] /route.ts'
+- database schema in 'src/server/db/schema/'
+- utilities in 'src/lib/'
 
-### component organization
-
-- `src/components/ui/` only for default shadcn components
-- all customized components go in `src/components/ui-custom/`
+- component organization
+- 'src/components/ui/' only for default shadcn components
+- all customized components go in 'src/components/ui-custom/'
 - never modify shadcn components directly, extend them in ui-custom
 
-### import style
+- import style
+- use absolute imports with '@/ prefix: 'import { button } from '@/components/ui/button''
+- order: react → third-party → internal (blank lines between groups)
+- use 'import type' for type-only imports
+- consolidate import paths when possible (vs code organize imports)
 
-- use absolute imports with `@/` prefix: `import { button } from '@/components/ui/button'`
-- order: react → third-party → internal (separated by blank lines)
-- use `import type` for type-only imports
-- consolidate import paths when possible (vsc organize imports available)
+- naming conventions
+- files: kebab-case ('user-profile.tsx')
+- components: PascalCase ('UserProfile')
+- variables/functions: camelCase ('getUserData')
+- constants: lower_snake_case ('api_base_url')
+- interfaces/types: PascalCase ('UserData')
 
-### naming conventions
+- typescript & typing
+- strict typing; follow a single source of truth where possible
+- all types relate to the database schema when feasible
+- schema/types prefixed with 'database' (e.g. 'DatabaseUser')
+- models defined in 'server/db/zod/' and inferred from schema
+- avoid defining ad-hoc types outside the canonical folder
+- types exported from the schema should be used by api boundaries
+- use zod for input/output validation in APIs
 
-- **files**: kebab-case (`user-profile.tsx`)
-- **components**: pascalcase (`userprofile`)
-- **variables/functions**: camelcase (`getuserdata`)
-- **constants**: upper_snake_case (`api_base_url`)
-- **interfaces/types**: pascalcase with descriptive names (`userdata`)
-
-### typescript & typing system
-
-- strict typing system enforced
-- follow single source of truth pattern
-- all types relate to database schema
-- schema types prefixed with `database` (e.g., `databaseuser`)
-- all models defined in `server/db/zod/`
-- models are inferred from database schema with necessary modifications
-- avoid defining types outside `server/db/zod/` folder
-- types are inferred from schemas and exported
-- only place to define zod schemas for api (both inputs and outputs)
-- definition means inference + modification
-
-### react components
-
-- use functional components with hooks
-- server components by default, use "use client" for interactive components
-- prefer `cn()` utility for conditional tailwind classes
+- react components
+- prefer functional components with hooks
+- server components by default; add 'use client' only for interactive parts
+- use cn() for conditional tailwind classes
 - use class-variance-authority (cva) for component variants
 
-### styling
-
+- styling
 - tailwind css as primary styling solution
-- follow mobile-first responsive design
-- use shadcn/ui components as base, extend with variants
-- use css-in-js only when absolutely necessary
+- mobile-first responsive design
+- extend shadcn/ui components via 'ui-custom/'; avoid editing upstream files
+- css-in-js only when absolutely necessary
 
-### database & api
-
+- database & api
 - drizzle orm with zod schemas for type safety
-- trpc for api endpoints with auto-generated types
-- separate router files by domain (`user.ts`, `club.ts`, etc.)
-- use optimistic updates for better ux
-- implement proper error handling with appropriate http status codes
+- tRPC for API endpoints with auto-generated types
+- separate router files by domain (e.g. 'user.ts', 'club.ts')
+- implement optimistic UI updates where appropriate
+- proper error handling and http status codes; avoid leaking sensitive data
 
-### error handling
-
+- error handling
 - use react-error-boundary for react components
-- implement try-catch blocks in api routes
-- return appropriate error messages via trpc procedures
-- log errors but don't expose sensitive information
+- api routes should use try/catch and return clear errors
+- log errors with context; avoid exposing secrets
 
-### testing
+- testing
+- bun test runner; tests end with '.test.ts' or '.test.tsx'
+- place tests under 'src/tests/'
+- share utilities under 'tests/setup/utils.ts'
+- use mocks from 'bun:test'
+- test both success and failure paths
+- focus tests to a single file when validating changes
 
-- use bun test runner
-- test files end with `.test.ts` or `.test.tsx`
-- place tests in `src/tests/` directory
-- use mock functions from `bun:test`
-- test both happy path and error cases
-- setup utilities in `tests/setup/utils.ts`
-
-### internationalization
-
-- use next-intl for translations
-- messages in `messages/en.json` and `messages/ru.json`
-- use `<formattedmessage />` component for ui text
+- internationalization
+- next-intl for translations
+- translation bundles in 'messages/' per locale
+- use structured text components (no hard-coded strings)
 - format dates with date-fns
 
-### performance
+- performance
+- caching and memoization where appropriate
+- avoid unnecessary re-renders; use React.memo
+- suspense for data loading states
+- optimize images; use framework image components when possible
+- run bundle analysis with 'bun analyze'
 
-- enable next.js caching where appropriate
-- use react.memo for expensive components
-- implement loading states with suspense
-- optimize images and use next.js image component
-- bundle analyzer available with `bun analyze`
+- git & commits
+- follow conventional commits (feat, impr, fix, docs, style, ref, perf, test, build, ci, chore, revert)
+- subject line <= 100 characters; imperative mood
+- body wrapped at ~100 characters; explain why the change matters
+- small, focused commits; avoid large rewrites
+- avoid amend unless explicitly requested and safe
+- do not push to remote without user approval
 
-### git & commits
-
-- follow conventional commits (see commitlint.config.js)
-- types: feat, impr, fix, docs, style, ref, perf, test, build, ci, chore, revert
-- subject line: max 100 characters, imperative tense
-- body: wrapped at 100 characters
-- use `impr` for improvements (instead of `refactor`)
-
-### code quality tools
-
-- eslint with next.js typescript config
+- code quality tools
+- eslint with next.js ts config
 - prettier with tailwind plugin
-- husky for pre-commit hooks
+- husky pre-commit hooks
 - knip for unused code detection
 - semantic release for versioning
 
-### environment
+- environment
+- use '.env.local' for local development
+- separate test environment with 'node_env=test'
+- database URLs configured per environment; env vars validated via schemas
+- secrets should never be committed
 
-- use `.env.local` for local development
-- separate test environment with `node_env=test`
-- database url configuration for online/offline modes
-- environment variables validated via zod schemas
+## cursor rules and copilot guidance
+
+- cursor rules: not configured in this repo; follow editor and team conventions
+- copilot instructions: see .github/copilot-instructions.md for full policy
+- summary: edits should be patch-based (apply_patch); avoid destructive git commands unless asked
+- always run tests and lint locally; report failures and fix before prs
+- ensure no secrets are introduced by generated code
+- when in doubt, craft small, reviewable changes and add tests
+
+## copilot guidelines (summary)
+
+- follow repository conventions when generating code
+- prefer patch-based edits; avoid large rewrites without review
+- validate changes with tests locally
+- guard against leaking sensitive data in generated patches
+- consult .github/copilot-instructions.md for full policy
+
+## closing
+
+- this file should be kept up to date with repository practices
+- if cursor rules exist later, append them here
+- aim for clear, actionable guidance that agents can follow without extra context

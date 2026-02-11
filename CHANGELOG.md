@@ -1,3 +1,17 @@
+## [0.11.2](https://github.com/mkeverything/mktour/compare/v0.11.1...v0.11.2) (2026-02-08)
+
+
+### Bug Fixes
+
+* add beta to release workflow branches ([eaba37c](https://github.com/mkeverything/mktour/commit/eaba37c630bad8db4b5cea7a567168abd04d396b))
+
+## [0.11.1](https://github.com/mkeverything/mktour/compare/v0.11.0...v0.11.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **?:** beta releases ([4bdb613](https://github.com/mkeverything/mktour/commit/4bdb6139c8c3d5ecedcbce4b7e1f19343a1d7e97))
+
 # [0.11.0](https://github.com/mkeverything/mktour/compare/v0.10.0...v0.11.0) (2026-01-22)
 
 

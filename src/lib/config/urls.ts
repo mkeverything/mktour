@@ -23,3 +23,24 @@ export const getDatabaseAuthToken = () =>
     : process.env.MKTOURTEST === 'true' || process.env.NODE_ENV === 'test'
       ? process.env.TEST_DATABASE_AUTH_TOKEN
       : process.env.DATABASE_AUTH_TOKEN;
+
+export const verifyTestDatabase = () => {
+  const isTestEnv = process.env.NODE_ENV === 'test';
+
+  if (!isTestEnv) {
+    throw new Error(
+      `🚨 CRITICAL: Operation requires NODE_ENV=test (current: ${process.env.NODE_ENV})`,
+    );
+  }
+
+  const dbUrl = getDatabaseUrl() ?? '';
+  const isTestUrl = dbUrl.toLowerCase().includes('test');
+
+  if (!isTestUrl) {
+    throw new Error(
+      `🚨 CRITICAL: Database URL does not appear to be a test database. URL must contain "test". YOUR DATA IS AT RISK. Got: ${dbUrl.substring(0, 50)}...`,
+    );
+  }
+
+  return true;
+};
