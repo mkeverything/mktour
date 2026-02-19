@@ -1,68 +1,88 @@
+'use client';
+
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { cn } from '@/lib/utils';
 import useSaveRoundsNumberMutation from '@/components/hooks/mutation-hooks/use-tournament-update-swiss-rounds-number';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { getSwissMinRoundsNumber } from '@/lib/utils';
+import { getSwissMaxRoundsNumber, getSwissMinRoundsNumber } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 
-export default function SwissRoundsNumber() {
+type SwissRoundsNumberProps = {
+  className?: string;
+};
+
+export default function SwissRoundsNumber({
+  className,
+}: SwissRoundsNumberProps) {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data } = useTournamentInfo(tournamentId);
   const { data: players } = useTournamentPlayers(tournamentId);
-  const t = useTranslations('Tournament.Main');
-  const [value, setValue] = useState(data?.tournament.roundsNumber);
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
+  const { sendJsonMessage, status } = useContext(DashboardContext);
   const { mutate, isPending } = useSaveRoundsNumberMutation(
     queryClient,
     sendJsonMessage,
   );
 
-  const minValue =
-    data?.tournament.roundsNumber ||
-    (players ? getSwissMinRoundsNumber(players.length) : undefined);
+  const isOrganizer = status === 'organizer';
+  const currentValue = data?.tournament.roundsNumber ?? 0;
+  const playerCount = players?.length ?? 0;
+  const minValue = getSwissMinRoundsNumber(playerCount);
+  const maxValue = getSwissMaxRoundsNumber(playerCount);
 
-  const isInputChaged =
-    (value !== 0 || data?.tournament.roundsNumber) &&
-    data?.tournament.roundsNumber !== value;
+  const canDecrement = currentValue > minValue;
+  const canIncrement = currentValue < maxValue;
+
+  const handleIncrement = () => {
+    const newValue = currentValue + 1;
+    mutate({ tournamentId, roundsNumber: newValue });
+  };
+
+  const handleDecrement = () => {
+    const newValue = currentValue - 1;
+    mutate({ tournamentId, roundsNumber: newValue });
+  };
+
+  if (!isOrganizer) {
+    return <span className={className}>{currentValue}</span>;
+  }
 
   return (
-    <form
-      className="-my-4 inline-flex w-full flex-row items-center-safe gap-3 align-middle"
-      onSubmit={(e) => {
-        e.preventDefault();
-        mutate({
-          tournamentId,
-          roundsNumber: Number(value),
-        });
-      }}
-    >
-      <span>{t('swiss')}</span>
-      <Input
-        className="max-h-1/2 w-14"
-        placeholder={minValue ? minValue.toString() : undefined}
-        value={value ? value.toString() : ''}
-        onChange={(e) => setValue(Number(e.target.value))}
-        name="roundsNumber"
-      />
-      <Label className="text-base" htmlFor="roundsNumber">
-        {t('number of rounds')}
-      </Label>
-      <div className="grow" />
-      {isInputChaged && (
-        <Button
-          className="max-h-1/2 justify-self-end"
-          disabled={isPending || !value}
-        >
-          {t('save')}
-        </Button>
-      )}
-    </form>
+    <div className={cn('inline-flex items-center gap-2', className)}>
+      <button
+        type="button"
+        onClick={handleDecrement}
+        disabled={isPending || !canDecrement}
+        className={cn(
+          'border-input bg-background hover:bg-accent hover:text-accent-foreground',
+          'flex h-8 w-8 items-center justify-center rounded border text-lg',
+          'disabled:pointer-events-none disabled:opacity-50',
+        )}
+      >
+        −
+      </button>
+      <div
+        className={cn(
+          'border-input bg-background flex h-8 w-8 items-center justify-center rounded border text-center text-lg',
+        )}
+      >
+        {currentValue}
+      </div>
+      <button
+        type="button"
+        onClick={handleIncrement}
+        disabled={isPending || !canIncrement}
+        className={cn(
+          'border-input bg-background hover:bg-accent hover:text-accent-foreground',
+          'flex h-8 w-8 items-center justify-center rounded border text-lg',
+          'disabled:pointer-events-none disabled:opacity-50',
+        )}
+      >
+        +
+      </button>
+    </div>
   );
 }
