@@ -8,14 +8,9 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import { FallbackProps } from 'react-error-boundary';
 
-function ErrorFallback({
-  error,
-  resetErrorBoundary,
-}: {
-  error: unknown;
-  resetErrorBoundary?: () => void;
-}) {
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <div
       role="alert"
