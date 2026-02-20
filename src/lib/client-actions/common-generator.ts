@@ -1,9 +1,9 @@
-import { newid } from '@/lib/utils';
-import { GameModel } from '@/server/db/zod/tournaments';
 import {
   FloatHistoryItem,
   SwissPlayerModel,
 } from '@/lib/client-actions/swiss-generator/types';
+import { newid } from '@/lib/utils';
+import { GameModel } from '@/server/db/zod/tournaments';
 
 // default set of round properties, may be changed internally
 export interface RoundProps {
@@ -54,7 +54,7 @@ export type ColouringFunction = (
 /**
  * The type representing entities we are matching inside our algorithms
  * */
-interface ChessTournamentEntity {
+export interface ChessTournamentEntity {
   entityId: string;
   colourIndex: number;
   entityRating: number;
@@ -100,7 +100,7 @@ type OnlyChild<Child, Parent> = Omit<Child, keyof Parent>;
 /**
  * First generated type of a round is just a pair of two entities
  */
-type EntitiesPair = [ChessTournamentEntity, ChessTournamentEntity];
+export type EntitiesPair = [ChessTournamentEntity, ChessTournamentEntity];
 
 /**
  * Calculates the maximum round number from a list of games
@@ -141,6 +141,9 @@ export function convertPlayerToEntity(
   if (playerModel.pairingNumber === null) {
     throw new TypeError('PAIRING_NUMBER_IS_NULL');
   }
+  //TODO: Add floathistory calculation for 2 rounds
+  //TODO: after that, purge the swissplayermodel everywhere, whilst ensuring that
+  // the floathistory is correctyl propagated to the CEM.
 
   // Filter games involving this player (either as white or black)
   const previousGames = allGames.filter(
