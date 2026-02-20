@@ -1,3 +1,17 @@
+## [0.11.4](https://github.com/mkeverything/mktour/compare/v0.11.3...v0.11.4) (2026-02-20)
+
+
+### Bug Fixes
+
+* **ci:** create local main branch ref for semantic-release on beta ([f79e4fe](https://github.com/mkeverything/mktour/commit/f79e4fe168aada09e1605a1296b1b5deb5b005f1))
+
+## [0.11.3](https://github.com/mkeverything/mktour/compare/v0.11.2...v0.11.3) (2026-02-20)
+
+
+### Bug Fixes
+
+* **ci:** override GITHUB_REF and set explicit branch for semantic-release ([#48](https://github.com/mkeverything/mktour/issues/48)) ([c1c861a](https://github.com/mkeverything/mktour/commit/c1c861ac008ecde5498493dd342f99df5063cf83))
+
 ## [0.11.2](https://github.com/mkeverything/mktour/compare/v0.11.1...v0.11.2) (2026-02-08)
 
 
