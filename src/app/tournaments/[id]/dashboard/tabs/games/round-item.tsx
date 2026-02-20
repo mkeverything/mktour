@@ -13,7 +13,7 @@ import { useRoundData } from '@/components/hooks/use-round-data';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
-import { generateRoundRobinRound } from '@/lib/client-actions/round-robin-generator';
+import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
 import { GameModel } from '@/server/db/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';

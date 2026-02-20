@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { RoundProps } from '@/lib/client-actions/common-generator';
+import { RoundProps } from '@/lib/pairing-generators/common-generator';
 import {
   INITIAL_ONGOING_ROUND,
   PLAYER_NUMBER_FAKEOPTS,
@@ -8,10 +8,10 @@ import {
   fillRandomResult,
   generatePlayerModel,
   generateRandomDatabaseTournament,
-} from '@/lib/client-actions/common-generator.test';
-import { generateRoundRobinRound } from '@/lib/client-actions/round-robin-generator';
-import { GameModel } from '@/server/db/zod/tournaments';
+} from '@/lib/pairing-generators/common-generator.test';
+import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
 import type { PlayerTournamentModel } from '@/server/db/zod/players';
+import { GameModel } from '@/server/db/zod/tournaments';
 import { faker } from '@faker-js/faker';
 
 describe('pure matching generation test', () => {

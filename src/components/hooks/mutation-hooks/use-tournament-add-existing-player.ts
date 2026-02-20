@@ -1,6 +1,6 @@
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
-import { generateRandomRoundGames } from '@/lib/client-actions/random-pairs-generator';
+import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
 import { PlayerTournamentModel } from '@/server/db/zod/players';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
