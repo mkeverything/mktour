@@ -1,6 +1,6 @@
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
-import { generateRandomRoundGames } from '@/lib/client-actions/random-pairs-generator';
+import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
 import { newid } from '@/lib/utils';
 import {
   PlayerFormModel,

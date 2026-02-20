@@ -1,143 +1,18 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 
-import { RoundProps } from '@/lib/client-actions/common-generator';
-import { generateRoundRobinRound } from '@/lib/client-actions/round-robin-generator';
-import { newid } from '@/lib/utils';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { GameResult } from '@/server/db/zod/enums';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
-import { GameModel, TournamentModel } from '@/server/db/zod/tournaments';
-import { UserModel } from '@/server/db/zod/users';
+import { RoundProps } from '@/lib/pairing-generators/common-generator';
+import {
+  INITIAL_ONGOING_ROUND,
+  PLAYER_NUMBER_FAKEOPTS,
+  RANDOM_TOURNAMENTS_COUNT,
+  fillRandomResult,
+  generatePlayerModel,
+  generateRandomDatabaseTournament,
+} from '@/lib/pairing-generators/common-generator.test';
+import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
+import type { PlayerTournamentModel } from '@/server/db/zod/players';
+import { GameModel } from '@/server/db/zod/tournaments';
 import { faker } from '@faker-js/faker';
-import assert from 'assert';
-
-const INITIAL_WINS = 0;
-const INITIAL_LOSSES = 0;
-const INITIAL_DRAWS = 0;
-const INITIAL_ONGOING_ROUND = 1;
-const INITIAL_COLOUR_INDEX = 0;
-
-const DEFAULT_PLACE = null;
-const DEFAULT_IS_EXITED = false;
-const DEFAULT_FORMAT = 'round robin';
-const DEFAULT_TYPE = 'solo';
-
-const POSSIBLE_RESULTS: GameResult[] = ['0-1', '1-0', '1/2-1/2'];
-
-const RATING_FAKEOPTS = {
-  min: 500,
-  max: 3000,
-};
-
-const generateDatabaseUser = mock<() => UserModel>(() => {
-  const randomId = newid();
-  const randomNickname = faker.internet.username();
-  const randomRealName = faker.person.fullName();
-  const randomRating = faker.number.int(RATING_FAKEOPTS);
-  const randomEmail = faker.internet.email();
-  const randomClubName = faker.company.name();
-  const randomCreationDate = faker.date.anytime();
-
-  const randomUser: UserModel = {
-    id: randomId,
-    username: randomNickname,
-    name: randomRealName,
-    email: randomEmail,
-    rating: randomRating,
-    selectedClub: randomClubName,
-    createdAt: randomCreationDate,
-  };
-  return randomUser;
-});
-
-const generateRandomDatabaseClub = mock<() => ClubModel>(() => {
-  const randomId = newid();
-  const randomTitle = faker.animal.cat();
-  const randomDescription = faker.food.description();
-  const randomCreatedAt = faker.date.anytime();
-  const randomLichessTeam = faker.book.title();
-  const randomClub: ClubModel = {
-    id: randomId,
-    name: randomTitle,
-    description: randomDescription,
-    createdAt: randomCreatedAt,
-    lichessTeam: randomLichessTeam,
-  };
-  return randomClub;
-});
-
-const generateRandomDatabaseTournament = mock<() => TournamentModel>(() => {
-  const randomDate = faker.date.anytime();
-  const randomId = newid();
-  const randomTitle = faker.music.songName();
-  const randomCreationDate = faker.date.anytime();
-  const randomClub = generateRandomDatabaseClub();
-  const randomStartDate = faker.date.anytime();
-  const randomEndDate = faker.date.anytime();
-  const randomRoundsNumber = faker.number.int();
-  const randomIsRated = faker.datatype.boolean();
-
-  const randomTournament: TournamentModel = {
-    date: randomDate.toDateString(),
-    id: randomId,
-    title: randomTitle,
-    format: DEFAULT_FORMAT,
-    type: DEFAULT_TYPE,
-    createdAt: randomCreationDate,
-    clubId: randomClub.id,
-    startedAt: randomStartDate,
-    closedAt: randomEndDate,
-    roundsNumber: randomRoundsNumber,
-    ongoingRound: INITIAL_ONGOING_ROUND,
-    rated: randomIsRated,
-  };
-
-  return randomTournament;
-});
-
-const fillRandomResult = mock(
-  /**
-   * This function takes an array of games, and sets random results there
-   * @param gameScheduled , a Game model with a null-result
-   * @returns
-   */
-  (gameScheduled: GameModel) => {
-    assert(
-      gameScheduled.result === null,
-      'A game result here should be null, or something went wrong!',
-    );
-    // selecting random result
-    const randomGameResult = faker.helpers.arrayElement(POSSIBLE_RESULTS);
-    gameScheduled.result = randomGameResult;
-    return gameScheduled;
-  },
-);
-const generatePlayerModel = mock(() => {
-  const randomUser = generateDatabaseUser();
-
-  const randomPlayer: PlayerTournamentModel = {
-    id: randomUser.id,
-    nickname: randomUser.username,
-    wins: INITIAL_WINS,
-    draws: INITIAL_DRAWS,
-    losses: INITIAL_LOSSES,
-    colorIndex: INITIAL_COLOUR_INDEX,
-    realname: randomUser.name,
-    rating: randomUser.rating ?? 0,
-    isOut: DEFAULT_IS_EXITED,
-    place: DEFAULT_PLACE,
-    pairingNumber: null,
-  };
-
-  return randomPlayer;
-});
-
-const PLAYER_NUMBER_FAKEOPTS = {
-  min: 2,
-  max: 1024,
-};
-
-const RANDOM_TOURNAMENTS_COUNT = 5;
 
 describe('pure matching generation test', () => {
   for (

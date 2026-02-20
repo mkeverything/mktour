@@ -1,5 +1,9 @@
+import type {
+  FloatHistoryItem,
+  FloatType,
+} from '@/lib/pairing-generators/swiss-generator/types';
 import { newid } from '@/lib/utils';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
+import type { PlayerTournamentModel } from '@/server/db/zod/players';
 import { GameModel } from '@/server/db/zod/tournaments';
 
 // default set of round properties, may be changed internally
@@ -38,21 +42,49 @@ type PairsGenerator = (
 ) => NumberPair[];
 
 /**
+ * Type of function which assigns colours to entity pairs based on tournament rules
+ * @param uncolouredPair - The pair of entities to assign colours to
+ * @param roundNumber - Current round number (optional, some colouring functions don't need it)
+ * @returns Coloured pair with white/black assignment
+ */
+export type ColouringFunction = (
+  uncolouredPair: EntitiesPair,
+  roundNumber?: number,
+) => ColouredEntitiesPair;
+
+/**
  * The type representing entities we are matching inside our algorithms
  * */
-interface ChessTournamentEntity {
+export interface ChessTournamentEntity {
   entityId: string;
   colourIndex: number;
   entityRating: number;
   gamesPlayed: number;
   entityNickname: string;
   pairingNumber: number;
+  entityTitle: ChessTitle;
+  entityScore: number;
+  previousGames: GameModel[];
+  floatHistory: FloatHistoryItem[];
+  byeCount: number;
+}
+
+enum ChessTitle {
+  CM,
+  FM,
+  IM,
+  GM,
+}
+
+export enum ChessColour {
+  White = 'white',
+  Black = 'black',
 }
 
 /**
  * This interface is representing an entiies pair, which is already has colour in it
  */
-interface ColouredEntitiesPair {
+export interface ColouredEntitiesPair {
   whiteEntity: ChessTournamentEntity;
   blackEntity: ChessTournamentEntity;
 }
@@ -69,16 +101,254 @@ type OnlyChild<Child, Parent> = Omit<Child, keyof Parent>;
 /**
  * First generated type of a round is just a pair of two entities
  */
-type EntitiesPair = [ChessTournamentEntity, ChessTournamentEntity];
+export type EntitiesPair = [ChessTournamentEntity, ChessTournamentEntity];
 
 /**
- * This simple converter is taking a joined player info and transforms it to a matched entity
- * @param playerModel a joined representation of player
+ * Calculates the maximum round number from a list of games
+ * @param games - Array of games to analyse
+ * @returns The highest round number, or 0 if no games
  */
-export function convertPlayerToEntity(playerModel: PlayerTournamentModel) {
-  if (playerModel.pairingNumber === null)
-    throw new TypeError('PAIRING_NUMBER_IS_NULL');
+function getMaxRoundNumber(games: GameModel[]): number {
+  if (games.length === 0) {
+    return 0;
+  } else {
+    const roundNumbers = games.map((game) => game.roundNumber);
+    return Math.max(...roundNumbers);
+  }
+}
 
+/**
+ * Calculates the number of byes a player has received
+ * TODO: Verify this bye calculation logic is correct per FIDE rules
+ * @param roundsPlayed - Total rounds played in tournament
+ * @param playerGameCount - Number of games this player has played
+ * @returns Number of byes received (minimum 0)
+ */
+function calculateByeCount(
+  roundsPlayed: number,
+  playerGameCount: number,
+): number {
+  return Math.max(0, roundsPlayed - playerGameCount);
+}
+
+/** Breakdown of a player's game outcomes */
+export interface PlayerScoreResults {
+  wins: number;
+  draws: number;
+  losses: number;
+}
+
+/**
+ * Counts wins/draws/losses for a player from their game history.
+ *
+ * All games must have results — previous rounds are always completed.
+ *
+ * @param playerId - Player ID to count for
+ * @param playerGames - Games the player participated in
+ * @returns Object with wins, draws, losses counts
+ */
+export function countPlayerResults(
+  playerId: string,
+  playerGames: GameModel[],
+): PlayerScoreResults {
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
+
+  for (const game of playerGames) {
+    const isWhite = game.whiteId === playerId;
+
+    switch (game.result) {
+      case '1-0':
+        if (isWhite) {
+          wins++;
+        } else {
+          losses++;
+        }
+        break;
+
+      case '0-1':
+        if (isWhite) {
+          losses++;
+        } else {
+          wins++;
+        }
+        break;
+
+      case '1/2-1/2':
+        draws++;
+        break;
+
+      default:
+        throw new Error(`Invalid game result: ${game.result}`);
+    }
+  }
+
+  return { wins, draws, losses };
+}
+
+/** Points awarded per game result */
+const POINTS_PER_WIN = 1;
+const POINTS_PER_DRAW = 0.5;
+const POINTS_PER_BYE = 1;
+
+/**
+ * Computes a player's tournament score from games strictly before a target round.
+ *
+ * Uses countPlayerResults for win/draw/loss breakdown, then adds byes
+ * (rounds where the player had no game but others did).
+ *
+ * @param playerId - The player to compute score for
+ * @param targetRound - Only games with roundNumber < targetRound are counted
+ * @param allGames - All tournament games
+ * @returns Player's score before the target round
+ */
+function computeScoreBeforeRound(
+  playerId: string,
+  targetRound: number,
+  allGames: GameModel[],
+): number {
+  const gamesBeforeRound = allGames.filter(
+    (game) => game.roundNumber < targetRound,
+  );
+  const playerGames = gamesBeforeRound.filter(
+    (game) => game.whiteId === playerId || game.blackId === playerId,
+  );
+
+  const results = countPlayerResults(playerId, playerGames);
+
+  const roundsBeforeTarget = getMaxRoundNumber(gamesBeforeRound);
+  const byeCount = calculateByeCount(roundsBeforeTarget, playerGames.length);
+
+  return (
+    results.wins * POINTS_PER_WIN +
+    results.draws * POINTS_PER_DRAW +
+    byeCount * POINTS_PER_BYE
+  );
+}
+
+/** Number of previous rounds to track for float history */
+const FLOAT_HISTORY_DEPTH = 2;
+
+/** Minimum valid round number */
+const MIN_ROUND_NUMBER = 1;
+
+/**
+ * Determines the float type for a single round from score comparison.
+ *
+ * @param playerScore - Player's score before the round
+ * @param opponentScore - Opponent's score before the round
+ * @returns 'up' if player scored lower, 'down' if higher, null if equal
+ */
+function determineFloatType(
+  playerScore: number,
+  opponentScore: number,
+): FloatType | null {
+  if (playerScore < opponentScore) {
+    return 'up';
+  } else if (playerScore > opponentScore) {
+    return 'down';
+  } else {
+    return null;
+  }
+}
+
+/**
+ * Computes float history for a player from actual game data.
+ *
+ * A player "floats" when paired with someone from a different score bracket:
+ * - Upfloat: paired with a higher-scored opponent
+ * - Downfloat: paired with a lower-scored opponent
+ *
+ * Examines the last FLOAT_HISTORY_DEPTH rounds. Byes are skipped (not floats).
+ * Equal scores produce no entry — absence means no float.
+ *
+ * @param playerId - The player to compute float history for
+ * @param playerGames - Games this player participated in
+ * @param allGames - All tournament games (for computing opponent scores)
+ * @param currentRoundNumber - The round being paired
+ * @returns Float history items for the last 2 rounds
+ */
+function computeFloatHistory(
+  playerId: string,
+  playerGames: GameModel[],
+  allGames: GameModel[],
+  currentRoundNumber: number,
+): FloatHistoryItem[] {
+  const history: FloatHistoryItem[] = [];
+
+  const startRound = Math.max(
+    MIN_ROUND_NUMBER,
+    currentRoundNumber - FLOAT_HISTORY_DEPTH,
+  );
+
+  for (let round = startRound; round < currentRoundNumber; round++) {
+    const gameInRound = playerGames.find((game) => game.roundNumber === round);
+
+    if (gameInRound !== undefined) {
+      const opponentId =
+        gameInRound.whiteId === playerId
+          ? gameInRound.blackId
+          : gameInRound.whiteId;
+
+      const playerScore = computeScoreBeforeRound(playerId, round, allGames);
+      const opponentScore = computeScoreBeforeRound(
+        opponentId,
+        round,
+        allGames,
+      );
+      const floatType = determineFloatType(playerScore, opponentScore);
+
+      if (floatType !== null) {
+        const historyItem: FloatHistoryItem = { roundNumber: round, floatType };
+        history.push(historyItem);
+      }
+    }
+  }
+
+  return history;
+}
+
+/**
+ * Converts a player model to a chess tournament entity for pairing algorithms.
+ *
+ * Computes float history from game data and derives all entity fields
+ * from the player model and game history.
+ *
+ * @param playerModel - Player data from the database
+ * @param allGames - All tournament games played so far (excluding current round)
+ */
+export function convertPlayerToEntity(
+  playerModel: PlayerTournamentModel,
+  allGames: GameModel[],
+): ChessTournamentEntity {
+  if (playerModel.pairingNumber === null) {
+    throw new TypeError('PAIRING_NUMBER_IS_NULL');
+  }
+
+  // Filter games involving this player (either as white or black)
+  const previousGames = allGames.filter(
+    (game) =>
+      game.whiteId === playerModel.id || game.blackId === playerModel.id,
+  );
+
+  // Calculate bye count (rounds where player didn't play = received PAB)
+  const roundsPlayed = getMaxRoundNumber(allGames);
+  const byeCount = calculateByeCount(roundsPlayed, previousGames.length);
+
+  const scoreFromGames =
+    playerModel.wins * POINTS_PER_WIN + playerModel.draws * POINTS_PER_DRAW;
+  const entityScore = scoreFromGames + byeCount * POINTS_PER_BYE;
+
+  const currentRoundNumber = roundsPlayed + 1;
+  const floatHistory = computeFloatHistory(
+    playerModel.id,
+    previousGames,
+    allGames,
+    currentRoundNumber,
+  );
+
+  // TODO: Add chess title logic
   const tournamentEntity: ChessTournamentEntity = {
     entityId: playerModel.id,
     entityNickname: playerModel.nickname,
@@ -86,6 +356,11 @@ export function convertPlayerToEntity(playerModel: PlayerTournamentModel) {
     entityRating: playerModel.rating,
     gamesPlayed: playerModel.draws + playerModel.wins + playerModel.losses,
     pairingNumber: playerModel.pairingNumber,
+    entityTitle: ChessTitle.GM,
+    entityScore,
+    previousGames,
+    floatHistory,
+    byeCount,
   };
   return tournamentEntity;
 }
