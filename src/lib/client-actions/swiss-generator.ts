@@ -14,16 +14,15 @@ import {
   reorderBracketGroups,
 } from '@/lib/client-actions/swiss-generator/bracket-formation';
 import { getInitialOrdering } from '@/lib/client-actions/swiss-generator/ordering';
-import { generateWeightedPairing } from '@/lib/client-actions/swiss-generator/weighted-pairing';
-import {
-  IS_PAIRING_DEBUG_ENABLED,
-  pairingLogger,
-} from '@/lib/client-actions/swiss-generator/pairing-logger';
 import type {
   AlterationBracketInfo,
   AlterationGeneratorInfo,
   BracketGroupsInfo,
   PerfectQualityCheckInfo,
+} from '@/lib/client-actions/swiss-generator/pairing-logger';
+import {
+  IS_PAIRING_DEBUG_ENABLED,
+  pairingLogger,
 } from '@/lib/client-actions/swiss-generator/pairing-logger';
 import {
   compareQualityReports,
@@ -36,8 +35,9 @@ import {
   EvaluatedPairingCandidate,
   isHeteroBracket,
 } from '@/lib/client-actions/swiss-generator/types';
+import { generateWeightedPairing } from '@/lib/client-actions/swiss-generator/weighted-pairing';
+import type { PlayerTournamentModel } from '@/server/db/zod/players';
 import { GameModel } from '@/server/db/zod/tournaments';
-import { SwissPlayerModel } from '@/lib/client-actions/swiss-generator/types';
 
 /*
  * This function generates the bracket round for the Swiss tournament. It gets the
@@ -456,8 +456,9 @@ export function generateWeightedSwissRound({
     games?.filter((game) => game.roundNumber !== roundNumber) ?? [];
 
   // Convert player models to chess tournament entities with history
-  const convertPlayer = (player: SwissPlayerModel): ChessTournamentEntity =>
-    convertPlayerToEntity(player, filteredGames);
+  const convertPlayer = (
+    player: PlayerTournamentModel,
+  ): ChessTournamentEntity => convertPlayerToEntity(player, filteredGames);
   const matchedEntities = players.map(convertPlayer);
 
   // Sort entities by initial ordering rules (score, then tiebreakers)

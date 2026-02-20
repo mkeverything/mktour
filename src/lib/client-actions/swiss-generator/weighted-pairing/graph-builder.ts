@@ -111,8 +111,7 @@ function addRegularEdges(
         secondPlayer,
         [...nonTopscorers],
       );
-      //FIXME: uncomment iscompatiblebyc3
-      if (hasNotPlayedBefore) {
+      if (hasNotPlayedBefore && isCompatibleByC3) {
         const simplePair: [ChessTournamentEntity, ChessTournamentEntity] = [
           firstPlayer,
           secondPlayer,

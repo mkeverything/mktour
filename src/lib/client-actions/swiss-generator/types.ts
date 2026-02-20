@@ -1,15 +1,8 @@
-import { PlayerTournamentModel } from '@/server/db/zod/players';
-
-export type FloatType = 'up' | 'down' | 'none';
+export type FloatType = 'up' | 'down';
 
 export interface FloatHistoryItem {
   roundNumber: number;
   floatType: FloatType;
-}
-
-/** PlayerTournamentModel extended with Swiss-specific float history */
-export interface SwissPlayerModel extends PlayerTournamentModel {
-  floatHistory: FloatHistoryItem[];
 }
 
 import {

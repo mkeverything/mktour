@@ -10,7 +10,7 @@ import {
   updatePlayerScores,
 } from '@/lib/client-actions/common-generator.test';
 import { generateWeightedSwissRound } from '@/lib/client-actions/swiss-generator';
-import { SwissPlayerModel } from '@/lib/client-actions/swiss-generator/types';
+import type { PlayerTournamentModel } from '@/server/db/zod/players';
 import { GameModel } from '@/server/db/zod/tournaments';
 
 /** Starting seed for testing */
@@ -49,7 +49,7 @@ function generateTournamentWithSeed(
     playerCount ?? faker.number.int(SWISS_PLAYER_NUMBER_FAKEOPTS);
 
   // Generate players
-  const randomPlayers: SwissPlayerModel[] = [];
+  const randomPlayers: PlayerTournamentModel[] = [];
   for (let playerIndex = 0; playerIndex < randomPlayerNumber; playerIndex++) {
     randomPlayers.push(generatePlayerModel());
   }
@@ -70,14 +70,8 @@ function generateTournamentWithSeed(
   const SWISS_OPTIMAL_ROUNDS = Math.floor(randomPlayerNumber / 2);
   const roundsToTest = maxRounds ?? SWISS_OPTIMAL_ROUNDS;
 
-  // console.log(
-  //   `[Seed ${seed}] Starting: ${randomPlayerNumber} players, ${roundsToTest} rounds`,
-  // );
-
   // Generate rounds until test limit reached
   while (currentRound <= roundsToTest) {
-    // console.log(`[Seed ${seed}] Generating round ${currentRound}...`);
-
     // Update player scores based on previous games
     const updatedPlayers = updatePlayerScores(randomPlayers, previousGames);
 
@@ -93,13 +87,8 @@ function generateTournamentWithSeed(
 
     // No games generated = completion
     if (gamesToInsert.length === 0) {
-      console.log(`[Seed ${seed}] No games generated at round ${currentRound}`);
       break;
     }
-
-    // console.log(
-    //   `[Seed ${seed}] Round ${currentRound}: ${gamesToInsert.length} games`,
-    // );
 
     // Fill results randomly
     gamesToInsert.forEach(fillRandomResult);
@@ -109,10 +98,6 @@ function generateTournamentWithSeed(
 
     currentRound++;
   }
-
-  // console.log(
-  //   `[Seed ${seed}] Completed: ${currentRound - INITIAL_ONGOING_ROUND} rounds`,
-  // );
 
   return {
     playerCount: randomPlayerNumber,

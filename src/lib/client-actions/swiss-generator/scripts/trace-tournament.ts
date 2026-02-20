@@ -47,7 +47,7 @@ import {
   TournamentTraceResult,
 } from '@/lib/client-actions/swiss-generator/scripts/trace-types';
 import { GameModel } from '@/server/db/zod/tournaments';
-import { SwissPlayerModel } from '@/lib/client-actions/swiss-generator/types';
+import type { PlayerTournamentModel } from '@/server/db/zod/players';
 
 // ============================================================================
 // Constants
@@ -187,8 +187,8 @@ function analyseCompatibilityGraph(
  */
 function generatePlayersWithPairingNumbers(
   playerCount: number,
-): SwissPlayerModel[] {
-  const players: SwissPlayerModel[] = [];
+): PlayerTournamentModel[] {
+  const players: PlayerTournamentModel[] = [];
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const player = generatePlayerModel();
@@ -205,7 +205,9 @@ function generatePlayersWithPairingNumbers(
  * @param players - Players to map
  * @returns Map from entity ID to nickname
  */
-function buildEntityDisplayMap(players: SwissPlayerModel[]): EntityDisplayMap {
+function buildEntityDisplayMap(
+  players: PlayerTournamentModel[],
+): EntityDisplayMap {
   const displayMap: EntityDisplayMap = new Map();
   for (const player of players) {
     displayMap.set(player.id, player.nickname);
@@ -264,7 +266,7 @@ const ROUND_FAILURE: RoundSimulationResult = {
  * @returns Simulation result with success status and generated data
  */
 function simulateRound(
-  players: SwissPlayerModel[],
+  players: PlayerTournamentModel[],
   previousGames: GameModel[],
   roundNumber: number,
   tournamentId: string,
@@ -327,13 +329,14 @@ function simulateRound(
  * @returns Sorted entities with pairing numbers assigned
  */
 function buildEntitiesForAnalysis(
-  players: SwissPlayerModel[],
+  players: PlayerTournamentModel[],
   previousGames: GameModel[],
 ): ChessTournamentEntity[] {
   const updatedPlayers = updatePlayerScores(players, previousGames);
 
-  const convertToEntity = (player: SwissPlayerModel): ChessTournamentEntity =>
-    convertPlayerToEntity(player, previousGames);
+  const convertToEntity = (
+    player: PlayerTournamentModel,
+  ): ChessTournamentEntity => convertPlayerToEntity(player, previousGames);
   const entities = updatedPlayers.map(convertToEntity);
 
   const sortedEntities = getInitialOrdering(entities);

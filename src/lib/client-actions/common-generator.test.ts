@@ -1,11 +1,12 @@
 import { mock } from 'bun:test';
 
+import { countPlayerResults } from '@/lib/client-actions/common-generator';
 import { newid } from '@/lib/utils';
 import { GameResult } from '@/server/db/zod/enums';
 import { ClubModel } from '@/server/db/zod/clubs';
 import { GameModel, TournamentModel } from '@/server/db/zod/tournaments';
 import { UserModel } from '@/server/db/zod/users';
-import { SwissPlayerModel } from '@/lib/client-actions/swiss-generator/types';
+import type { PlayerTournamentModel } from '@/server/db/zod/players';
 import { faker } from '@faker-js/faker';
 import assert from 'assert';
 
@@ -115,7 +116,7 @@ export const fillRandomResult = mock(
 export const generatePlayerModel = mock(() => {
   const randomUser = generateUserModel();
 
-  const randomPlayer: SwissPlayerModel = {
+  const randomPlayer: PlayerTournamentModel = {
     id: randomUser.id,
     nickname: randomUser.username,
     wins: INITIAL_WINS,
@@ -127,7 +128,6 @@ export const generatePlayerModel = mock(() => {
     isOut: DEFAULT_IS_EXITED,
     place: DEFAULT_PLACE,
     pairingNumber: null,
-    floatHistory: [],
   };
 
   return randomPlayer;
@@ -141,15 +141,6 @@ export const PLAYER_NUMBER_FAKEOPTS = {
 export const RANDOM_TOURNAMENTS_COUNT = 5;
 
 /**
- * Interface for player score results
- */
-interface PlayerScoreResults {
-  wins: number;
-  draws: number;
-  losses: number;
-}
-
-/**
  * Checks if a game involves a specific player (as white or black)
  * @param game - Game to check
  * @param playerId - Player ID to match
@@ -157,58 +148,6 @@ interface PlayerScoreResults {
  */
 function isPlayerInGame(game: GameModel, playerId: string): boolean {
   return game.whiteId === playerId || game.blackId === playerId;
-}
-
-/**
- * Counts wins/draws/losses for a player from their game history
- * @param playerId - Player ID to count for
- * @param playerGames - Games the player participated in
- * @returns Object with wins, draws, losses counts
- */
-function countPlayerResults(
-  playerId: string,
-  playerGames: GameModel[],
-): PlayerScoreResults {
-  let wins = 0;
-  let draws = 0;
-  let losses = 0;
-
-  for (const game of playerGames) {
-    // Skip games without results
-    if (!game.result) {
-      continue;
-    }
-
-    const isWhite = game.whiteId === playerId;
-
-    // Count based on result and player colour
-    switch (game.result) {
-      case '1-0':
-        if (isWhite) {
-          wins++;
-        } else {
-          losses++;
-        }
-        break;
-
-      case '0-1':
-        if (isWhite) {
-          losses++;
-        } else {
-          wins++;
-        }
-        break;
-
-      case '1/2-1/2':
-        draws++;
-        break;
-
-      default:
-        throw new Error(`Invalid game result: ${game.result}`);
-    }
-  }
-
-  return { wins, draws, losses };
 }
 
 /**
@@ -249,9 +188,9 @@ function calculateByeCount(
  * @returns Updated player with recalculated wins/draws/losses
  */
 function updateSinglePlayerScore(
-  player: SwissPlayerModel,
+  player: PlayerTournamentModel,
   games: GameModel[],
-): SwissPlayerModel {
+): PlayerTournamentModel {
   // Filter games involving this player
   const playerGames = games.filter((game) => isPlayerInGame(game, player.id));
 
@@ -278,7 +217,10 @@ function updateSinglePlayerScore(
  * @returns Updated players with recalculated wins/draws/losses
  */
 export const updatePlayerScores = mock(
-  (players: SwissPlayerModel[], games: GameModel[]): SwissPlayerModel[] => {
+  (
+    players: PlayerTournamentModel[],
+    games: GameModel[],
+  ): PlayerTournamentModel[] => {
     return players.map((player) => updateSinglePlayerScore(player, games));
   },
 );

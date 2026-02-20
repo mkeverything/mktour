@@ -20,7 +20,9 @@ export function generateRandomRoundGames(
   randomRoundProps: RoundProps,
 ): GameModel[] {
   // checking if the set of layers is even, if not, making it even with a smart alg
-  const matchedEntities = randomRoundProps.players.map(convertPlayerToEntity);
+  const matchedEntities = randomRoundProps.players.map((player) =>
+    convertPlayerToEntity(player, randomRoundProps.games),
+  );
 
   // generating set of base matches
   const entitiesMatchingsGenerated = generateRoundPairs(
