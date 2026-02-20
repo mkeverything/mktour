@@ -155,9 +155,15 @@ export const useMarkAllNotificationAsSeenMutation = () => {
         }
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.auth.notifications.pathKey(),
-        });
+        if (
+          queryClient.isMutating({
+            mutationKey: trpc.auth.notifications.markAllAsSeen.mutationKey(),
+          }) === 1
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.auth.notifications.pathKey(),
+          });
+        }
       },
     }),
   );
@@ -212,9 +218,15 @@ export const useChangeClubNotificationStatusMutation = () => {
         }
       },
       onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.club.notifications.pathKey(),
-        });
+        if (
+          queryClient.isMutating({
+            mutationKey: trpc.club.notifications.toggleSeen.mutationKey(),
+          }) === 1
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.club.notifications.pathKey(),
+          });
+        }
       },
     }),
   );

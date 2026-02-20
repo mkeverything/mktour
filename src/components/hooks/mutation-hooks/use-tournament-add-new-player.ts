@@ -68,9 +68,15 @@ export const useTournamentAddNewPlayer = (
         });
       },
       onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-        });
+        if (
+          queryClient.isMutating({
+            mutationKey: trpc.tournament.addNewPlayer.mutationKey(),
+          }) === 1
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+          });
+        }
       },
       onSuccess: (_err, _data, context) => {
         sendJsonMessage({ event: 'add-new-player', body: context.newPlayer });

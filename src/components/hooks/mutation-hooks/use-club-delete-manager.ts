@@ -25,9 +25,15 @@ export default function useDeleteClubManagerMutation() {
       },
       onSuccess: () => {
         toast.success('club manager deleted');
-        queryClient.invalidateQueries({
-          queryKey: trpc.club.managers.all.queryKey(),
-        });
+        if (
+          queryClient.isMutating({
+            mutationKey: trpc.club.managers.delete.mutationKey(),
+          }) === 1
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.club.managers.all.queryKey(),
+          });
+        }
         // setOpen(false);
       },
       onError: (error, _, context) => {

@@ -121,7 +121,32 @@ use react-query optimistic updates when the UI needs to feel instant (e.g. count
 - onMutate: cancel queries, save previous state, optimistically update cache
 - onSuccess: broadcast changes via WebSocket if multi-client sync needed
 - onError: rollback to previous state
-- onSettled: use `isMutating() === 1` check - invalidation only runs after the final mutation, preventing flicker during rapid clicks
+- onSettled / onSuccess: use `isMutating() === 1` check - invalidation only runs after the final mutation, preventing flicker during rapid clicks
+
+### when to use isMutating() === 1 check
+
+the check is required ONLY for updates (onMutate with manual cache update). these mutations create mutations that use optimistic a gap between client and server state, so we must wait for all concurrent mutations to complete before invalidating.
+
+pattern:
+
+```typescript
+// with mutationKey (recommended - more specific)
+onSettled: () => {
+  if (
+    queryClient.isMutating({
+      mutationKey: trpc.tournament.addNewPlayer.mutationKey(),
+    }) === 1
+  ) {
+    queryClient.invalidateQueries({ queryKey: ... });
+  }
+},
+
+// or without mutationKey (checks all mutations)
+onSettled: () => {
+  if (queryClient.isMutating() === 1) {
+  }
+},
+```
 
 ## testing
 
@@ -188,3 +213,7 @@ use react-query optimistic updates when the UI needs to feel instant (e.g. count
 - this file should be kept up to date with repository practices
 - if cursor rules exist later, append them here
 - aim for clear, actionable guidance that agents can follow without extra context
+
+```
+
+```

@@ -25,9 +25,15 @@ export const useAuthSelectClub = (queryClient: QueryClient) => {
       },
 
       onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.auth.pathKey(),
-        });
+        if (
+          queryClient.isMutating({
+            mutationKey: trpc.auth.selectClub.mutationKey(),
+          }) === 1
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.auth.pathKey(),
+          });
+        }
       },
       onError: (_error, _variables, context) => {
         toast.error('error happened', {
