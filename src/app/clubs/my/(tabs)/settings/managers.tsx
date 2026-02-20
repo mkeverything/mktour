@@ -25,7 +25,7 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClubManager } from '@/server/db/zod/clubs';
+import { ClubManagerModel } from '@/server/db/zod/clubs';
 import { Trash2, User2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
@@ -79,10 +79,10 @@ const ClubManagersList: FC<{ clubId: string; userId: string }> = ({
 };
 
 const ManagerItem: FC<{
-  manager: ClubManager;
+  manager: ClubManagerModel;
   index: number;
   length: number;
-  user: ClubManager | null;
+  user: ClubManagerModel | null;
 }> = ({ manager, index, length, user }) => {
   const canDelete =
     user?.clubs_to_users.status === 'co-owner' &&

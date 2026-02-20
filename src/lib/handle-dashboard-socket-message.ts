@@ -131,6 +131,10 @@ export const handleSocketMessage = (
           return cache;
         },
       );
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+      });
+      break;
     case 'reset-tournament':
       queryClient.setQueryData(
         trpc.tournament.info.queryKey({ tournamentId }),
@@ -177,6 +181,19 @@ export const handleSocketMessage = (
         (cache) => {
           if (!cache) return cache;
           cache.tournament.closedAt = message.closedAt;
+          return cache;
+        },
+      );
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+      });
+      break;
+    case 'swiss-new-rounds-number':
+      queryClient.setQueryData(
+        trpc.tournament.info.queryKey({ tournamentId }),
+        (cache) => {
+          if (!cache) return cache;
+          cache.tournament.roundsNumber = message.roundsNumber;
           return cache;
         },
       );

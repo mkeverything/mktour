@@ -31,8 +31,8 @@ import {
   NewTournamentFormType,
   newTournamentFormSchema,
 } from '@/lib/zod/new-tournament-form';
-import { DatabaseClub } from '@/server/db/schema/clubs';
-import { DatabaseUser } from '@/server/db/schema/users';
+import { ClubModel } from '@/server/db/zod/clubs';
+import { UserModel } from '@/server/db/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -120,13 +120,11 @@ export default function NewTournamentForm({
                       }}
                     >
                       <SelectGroup>
-                        {clubs.map(
-                          (club: Pick<DatabaseClub, 'id' | 'name'>) => (
-                            <SelectItem key={club.id} value={club.id}>
-                              {club.name}
-                            </SelectItem>
-                          ),
-                        )}
+                        {clubs.map((club: Pick<ClubModel, 'id' | 'name'>) => (
+                          <SelectItem key={club.id} value={club.id}>
+                            {club.name}
+                          </SelectItem>
+                        ))}
                         <SelectGroup>
                           <Link
                             href="/clubs/create"
@@ -257,6 +255,6 @@ export default function NewTournamentForm({
 }
 
 interface NewTournamentFormProps {
-  clubs: Array<Pick<DatabaseClub, 'id' | 'name'>>;
-  user: DatabaseUser;
+  clubs: Array<Pick<ClubModel, 'id' | 'name'>>;
+  user: UserModel;
 }

@@ -27,7 +27,7 @@ export default function useTournamentSetGameResult(
         });
       },
       onSuccess: (
-        res,
+        _res,
         { gameId, result, roundNumber, prevResult, whiteId, blackId },
       ) => {
         function updatePlayerStats(

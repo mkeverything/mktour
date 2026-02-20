@@ -6,7 +6,7 @@ import {
   TournamentFormat,
   TournamentType,
 } from '@/server/db/zod/enums';
-import { InferInsertModel, InferSelectModel, relations } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const tournaments = sqliteTable('tournament', {
@@ -100,15 +100,3 @@ export const players_to_tournaments_relations = relations(
     }),
   }),
 );
-
-export type DatabaseTournament = InferSelectModel<typeof tournaments>;
-export type DatabaseGame = InferSelectModel<typeof games>;
-export type DatabasePlayerToTournament = InferSelectModel<
-  typeof players_to_tournaments
->;
-export type InsertDatabaseTournament = InferInsertModel<typeof tournaments>;
-
-export type InsertDatabaseGame = InferInsertModel<typeof games>;
-export type InsertDatabasePlayerToTournament = InferInsertModel<
-  typeof players_to_tournaments
->;

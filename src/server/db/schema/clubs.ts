@@ -3,7 +3,7 @@ import { affiliations, players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { StatusInClub } from '@/server/db/zod/enums';
-import { InferInsertModel, InferSelectModel, relations } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const clubs = sqliteTable('club', {
@@ -34,10 +34,3 @@ export const clubs_relations = relations(clubs, ({ many }) => ({
   notifications: many(club_notifications), // user can be involved in many notifications
   affiliations: many(affiliations),
 }));
-
-export type DatabaseClub = InferSelectModel<typeof clubs>;
-export type DatabaseClubsToUsers = InferSelectModel<typeof clubs_to_users>;
-export type InsertDatabaseClub = InferInsertModel<typeof clubs>;
-export type InsertDatabaseClubsToUsers = InferInsertModel<
-  typeof clubs_to_users
->;

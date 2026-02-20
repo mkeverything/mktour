@@ -2,7 +2,10 @@ import {
   club_notifications,
   user_notifications,
 } from '@/server/db/schema/notifications';
-import { clubNotificationEventEnum } from '@/server/db/zod/enums';
+import {
+  clubNotificationEventEnum,
+  userNotificationEventEnum,
+} from '@/server/db/zod/enums';
 import {
   affiliationMinimalSchema,
   playersMinimalSchema,
@@ -23,10 +26,18 @@ export const clubNotificationsSelectSchema = createSelectSchema(
     event: clubNotificationEventEnum,
   },
 );
-export const userNotificationsInsertSchema =
-  createInsertSchema(user_notifications);
-export const clubNotificationsInsertSchema =
-  createInsertSchema(club_notifications);
+export const userNotificationsInsertSchema = createInsertSchema(
+  user_notifications,
+  {
+    event: userNotificationEventEnum,
+  },
+);
+export const clubNotificationsInsertSchema = createInsertSchema(
+  club_notifications,
+  {
+    event: clubNotificationEventEnum,
+  },
+);
 export const userNotificationsUpdateSchema =
   createUpdateSchema(user_notifications);
 export const clubNotificationsUpdateSchema =
@@ -39,6 +50,26 @@ export const clubNotificationExtendedSchema =
     player: playersMinimalSchema.nullable(),
   });
 
-export type ClubNotificationExtended = z.infer<
+export type ClubNotificationExtendedModel = z.infer<
   typeof clubNotificationExtendedSchema
+>;
+
+export type UserNotificationModel = z.infer<
+  typeof userNotificationsSelectSchema
+>;
+export type UserNotificationInsertModel = z.infer<
+  typeof userNotificationsInsertSchema
+>;
+export type UserNotificationUpdateModel = z.infer<
+  typeof userNotificationsUpdateSchema
+>;
+
+export type ClubNotificationModel = z.infer<
+  typeof clubNotificationsSelectSchema
+>;
+export type ClubNotificationInsertModel = z.infer<
+  typeof clubNotificationsInsertSchema
+>;
+export type ClubNotificationUpdateModel = z.infer<
+  typeof clubNotificationsUpdateSchema
 >;

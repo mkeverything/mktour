@@ -2,14 +2,14 @@
 
 import FormattedMessage from '@/components/formatted-message';
 import { PlayerModel } from '@/server/db/zod/players';
-import { UserMinimal } from '@/server/db/zod/users';
+import { UserMinimalModel } from '@/server/db/zod/users';
 
 const FullName = ({
   player,
   user,
 }: {
   player: PlayerModel;
-  user: UserMinimal | null;
+  user: UserMinimalModel | null;
 }) => {
   let name;
   if (!user && !player.realname) return null;

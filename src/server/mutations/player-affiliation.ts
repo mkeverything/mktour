@@ -5,15 +5,14 @@ import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import {
   club_notifications,
-  InsertDatabaseClubNotification,
-  InsertDatabaseUserNotification,
   user_notifications,
 } from '@/server/db/schema/notifications';
+import { affiliations, players } from '@/server/db/schema/players';
 import {
-  affiliations,
-  InsertDatabaseAffiliation,
-  players,
-} from '@/server/db/schema/players';
+  ClubNotificationInsertModel,
+  UserNotificationInsertModel,
+} from '@/server/db/zod/notifications';
+import { AffiliationInsertModel } from '@/server/db/zod/players';
 import { TRPCError } from '@trpc/server';
 import { and, eq, sql } from 'drizzle-orm';
 import { User } from 'lucia';
@@ -49,7 +48,7 @@ export async function requestAffiliation({
 
   const createdAt = new Date();
 
-  const newAffiliation: InsertDatabaseAffiliation = {
+  const newAffiliation: AffiliationInsertModel = {
     id: newid(),
     userId: userId,
     playerId: playerId,
@@ -59,7 +58,7 @@ export async function requestAffiliation({
     updatedAt: createdAt,
   };
 
-  const newNotification: InsertDatabaseClubNotification = {
+  const newNotification: ClubNotificationInsertModel = {
     id: newid(),
     clubId: clubId,
     event: 'affiliation_request',
@@ -95,7 +94,7 @@ export async function acceptAffiliation({
   if (affiliation.status !== 'requested')
     throw new Error('AFFILIATION_STATUS_NOT_REQUESTED');
 
-  const newNotification: InsertDatabaseUserNotification = {
+  const newNotification: UserNotificationInsertModel = {
     id: newid(),
     userId: affiliation.userId,
     event: 'affiliation_approved',
@@ -143,7 +142,7 @@ export async function rejectAffiliation({
   if (affiliation.status !== 'requested')
     throw new Error('AFFILIATION_STATUS_NOT_REQUESTED');
 
-  const newNotification: InsertDatabaseUserNotification = {
+  const newNotification: UserNotificationInsertModel = {
     id: newid(),
     userId: affiliation.userId,
     event: 'affiliation_rejected',

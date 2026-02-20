@@ -5,13 +5,9 @@ import { newid } from '@/lib/utils';
 import { NewTournamentFormType } from '@/lib/zod/new-tournament-form';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
-import { DatabasePlayer, players } from '@/server/db/schema/players';
+import { players } from '@/server/db/schema/players';
 import {
-  DatabasePlayerToTournament,
-  DatabaseTournament,
   games,
-  InsertDatabasePlayerToTournament,
-  InsertDatabaseTournament,
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
@@ -19,9 +15,16 @@ import { GameResult, TournamentFormat } from '@/server/db/zod/enums';
 import {
   PlayerFormModel,
   PlayerInsertModel,
+  PlayerModel,
   PlayerTournamentModel,
 } from '@/server/db/zod/players';
-import { GameModel, TournamentInfoModel } from '@/server/db/zod/tournaments';
+import {
+  GameModel,
+  PlayerToTournamentInsertModel,
+  TournamentInfoModel,
+  TournamentModel,
+  tournamentsInsertSchema,
+} from '@/server/db/zod/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import {
   aliasedTable,
@@ -44,7 +47,7 @@ export const createTournament = async (
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   const newTournamentID = newid();
-  const newTournament: InsertDatabaseTournament = {
+  const newTournament = tournamentsInsertSchema.parse({
     ...values,
     id: newTournamentID,
     createdAt: new Date(),
@@ -52,7 +55,7 @@ export const createTournament = async (
     startedAt: null,
     roundsNumber: null,
     ongoingRound: 1,
-  };
+  });
 
   await db.insert(tournaments).values(newTournament);
   return { id: newTournamentID };
@@ -106,7 +109,7 @@ export async function getTournamentInfo(
 // moved to API endpoint
 export async function getTournamentPossiblePlayers(
   id: string,
-): Promise<Array<DatabasePlayer>> {
+): Promise<Array<PlayerModel>> {
   const result = (await db.all(sql`
     SELECT p.*
     FROM ${players} p
@@ -118,7 +121,7 @@ export async function getTournamentPossiblePlayers(
       WHERE t.id = ${id}
     )
     AND pt.player_id IS NULL;
-  `)) as Array<DatabasePlayer>;
+  `)) as Array<PlayerModel>;
   return result;
 }
 
@@ -156,7 +159,7 @@ export async function addNewPlayer({
   await db
     .insert(players)
     .values({ ...player, lastSeenAt: new Date(), id: playerId });
-  const playerToTournament: InsertDatabasePlayerToTournament = {
+  const playerToTournament: PlayerToTournamentInsertModel = {
     playerId,
     tournamentId,
     id: `${playerId}=${tournamentId}`,
@@ -190,7 +193,7 @@ export async function addExistingPlayer({
   const status = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
 
-  const playerToTournament: DatabasePlayerToTournament = {
+  const playerToTournament: PlayerToTournamentInsertModel = {
     playerId: player.id,
     tournamentId: tournamentId,
     id: `${player.id}=${tournamentId}`,
@@ -299,7 +302,6 @@ export async function saveRound({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const insertPromises: Promise<any>[] = []; // FIXME any
   newGames.forEach((game) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { blackNickname, whiteNickname, ...newGame } = game;
     insertPromises.push(db.insert(games).values(newGame));
   });
@@ -312,7 +314,7 @@ export async function startTournament({
   startedAt,
   format,
   roundsNumber,
-}: Pick<DatabaseTournament, 'format' | 'roundsNumber' | 'startedAt'> & {
+}: Pick<TournamentModel, 'format' | 'roundsNumber' | 'startedAt'> & {
   tournamentId: string;
 }) {
   const { user } = await validateRequest();

@@ -41,16 +41,16 @@ export const NAVMENU_ITEMS: NavbarItem[] = [
     path: '/info/about',
     topTab: 'about',
     subMenuItems: [
-      {
-        title: 'FAQ',
-        path: '/info/faq',
-        description: true,
-      },
-      {
-        title: 'contact',
-        path: '/info/contact',
-        description: true,
-      },
+      // {
+      //   title: 'FAQ',
+      //   path: '/info/faq',
+      //   description: true,
+      // },
+      // {
+      //   title: 'contact',
+      //   path: '/info/contact',
+      //   description: true,
+      // },
     ],
   },
 ];

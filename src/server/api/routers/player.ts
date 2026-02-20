@@ -60,7 +60,7 @@ export const playerRouter = {
     .output(playersSelectSchema)
     .mutation(async (opts) => {
       const { input: player } = opts;
-      return await createPlayer({ player });
+      return await createPlayer(player);
     }),
   lastTournaments: publicProcedure
     .meta(meta.playersLastTournaments)

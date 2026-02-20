@@ -2,7 +2,7 @@ import { CACHE_TAGS } from '@/lib/cache-tags';
 import { BASE_URL } from '@/lib/config/urls';
 import { adapter } from '@/server/db/lucia-adapter';
 
-import type { DatabaseUser } from '@/server/db/schema/users';
+import { UserModel } from '@/server/db/zod/users';
 import { Lichess } from 'arctic';
 import type { Session, User } from 'lucia';
 import { Lucia } from 'lucia';
@@ -16,7 +16,7 @@ export const lucia = new Lucia(adapter, {
       secure: process.env.NODE_ENV === 'production',
     },
   },
-  getUserAttributes: (attributes: Omit<DatabaseUser, 'id'>) => {
+  getUserAttributes: (attributes: Omit<UserModel, 'id'>) => {
     return {
       username: attributes.username,
       name: attributes.name,
@@ -31,7 +31,7 @@ export const lucia = new Lucia(adapter, {
 declare module 'lucia' {
   export interface Register {
     Lucia: typeof lucia;
-    DatabaseUserAttributes: Omit<DatabaseUser, 'id'>;
+    DatabaseUserAttributes: Omit<UserModel, 'id'>;
   }
 }
 

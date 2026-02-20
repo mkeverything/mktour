@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ItemActions } from '@/components/ui/item';
 import { UserNotificationEvent } from '@/server/db/zod/enums';
-import { ClubNotificationExtended } from '@/server/db/zod/notifications';
+import { ClubNotificationExtendedModel } from '@/server/db/zod/notifications';
 import {
   AnyUserNotificationExtended,
   UserNotificationExtended,
@@ -40,7 +40,7 @@ export const AffiliationNotificationLi = ({
   clubId,
   id,
   isSeen,
-}: ClubNotificationExtended) => {
+}: ClubNotificationExtendedModel) => {
   const queryClient = useQueryClient();
   const { mutate: acceptAffiliation, isPending: pendingAccept } =
     useAffiliationAcceptMutation({

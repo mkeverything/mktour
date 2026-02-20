@@ -17,9 +17,9 @@ import {
 } from '@/components/ui/command';
 import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DatabaseClub } from '@/server/db/schema/clubs';
-import { DatabasePlayer } from '@/server/db/schema/players';
-import { DatabaseUser } from '@/server/db/schema/users';
+import { ClubModel } from '@/server/db/zod/clubs';
+import { PlayerModel } from '@/server/db/zod/players';
+import { UserModel } from '@/server/db/zod/users';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -170,7 +170,7 @@ export default function GlobalSearch() {
                   {data?.users && data?.users.length > 0 && (
                     <>
                       <CommandGroup heading={t('users')}>
-                        {data.users.map((item: DatabaseUser) => (
+                        {data.users.map((item: UserModel) => (
                           <Link key={item.id} href={`/user/${item.username}`}>
                             <CommandItem
                               value={item.id}
@@ -190,7 +190,7 @@ export default function GlobalSearch() {
                   {'clubs' in data && data?.clubs && data?.clubs.length > 0 && (
                     <>
                       <CommandGroup heading={t('clubs')}>
-                        {data?.clubs.map((item: DatabaseClub) => (
+                        {data?.clubs.map((item: ClubModel) => (
                           <Link key={item.id} href={`/clubs/${item.id}`}>
                             <CommandItem
                               value={item.id}
@@ -229,7 +229,7 @@ export default function GlobalSearch() {
                   {data?.players && data?.players.length > 0 && (
                     <>
                       <CommandGroup heading={t('players')}>
-                        {data.players.map((item: DatabasePlayer) => (
+                        {data.players.map((item: PlayerModel) => (
                           <Link key={item.id} href={`/player/${item.id}`}>
                             <CommandItem
                               value={item.id}

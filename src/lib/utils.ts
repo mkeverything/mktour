@@ -94,9 +94,19 @@ export function debounce<T extends (..._args: any[]) => any>(
   };
 }
 
-export function getSwissMinRoundsNumber(players: number): number {
+export function getSwissRecommendedRoundsNumber(players: number): number {
   if (players < 2) return 0;
   if (players === 2) return 1;
   if (players < 7) return Math.floor(Math.log2(players - 1)) + 2;
   return Math.floor(Math.log2(players - 1)) + 3;
+}
+
+export function getSwissMinRoundsNumber(players: number): number {
+  if (players < 2) return 0;
+  return 1;
+}
+
+export function getSwissMaxRoundsNumber(players: number): number {
+  if (players < 4) return players;
+  return players % 2 === 0 ? players - 3 : players - 2;
 }

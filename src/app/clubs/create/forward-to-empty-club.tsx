@@ -5,11 +5,11 @@ import RichText from '@/components/rich-text';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import { DatabaseClub } from '@/server/db/schema/clubs';
+import { ClubModel } from '@/server/db/zod/clubs';
 import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-export default function ForwardToEmptyClub({ club }: { club: DatabaseClub }) {
+export default function ForwardToEmptyClub({ club }: { club: ClubModel }) {
   const t = useTranslations('Club.New.forward to empty');
   return (
     <div className="mk-container pt-mk-2">

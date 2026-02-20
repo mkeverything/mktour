@@ -1,0 +1,466 @@
+/**
+ * Types, interfaces, enums and constants for Edmonds' Blossom Algorithm
+ *
+ * These definitions are used throughout the matching algorithm implementation.
+ */
+
+// ============================================================================
+// Public API Types
+// ============================================================================
+
+/** Vertex key from graphology Graph */
+export type VertexKey = string;
+
+/** Mate in matching: vertex key or null if unmatched */
+export type Mate = VertexKey | null;
+
+/** Matching result mapping each vertex to its mate (or null) */
+export type MatchingResult = Map<VertexKey, Mate>;
+
+// ============================================================================
+// Internal Algorithm Types
+// ============================================================================
+
+/** Identifier for a blossom (unique numeric ID) */
+export type BlossomId = number;
+
+/** Identifier for either a vertex or blossom */
+export type NodeId = VertexKey | BlossomId;
+
+/** Parent blossom: blossom ID or null if top-level */
+export type ParentBlossom = BlossomId | null;
+
+/** Label endpoint: vertex key or null if not labelled */
+export type LabelEndpoint = VertexKey | null;
+
+/** Set of adjacent vertex keys */
+export type NeighbourSet = Set<VertexKey>;
+
+/** Children of a blossom (can be vertices or sub-blossoms) */
+export type BlossomChildren = NodeId[];
+
+/** Type guard: BlossomId (number) vs VertexKey (string) */
+export const isBlossomId = (node: NodeId): node is BlossomId =>
+  typeof node === 'number';
+
+/** Result of scanning and labelling a vertex's neighbours */
+export type ScanAndLabelResult = [VertexKey, VertexKey] | null;
+
+/**
+ * Function type for scanning a vertex's neighbours during BFS
+ *
+ * Used to abstract the difference between cardinality matching (all edges)
+ * and weighted matching (only tight edges with slack = 0).
+ *
+ * @param state - Matching state (MatchingState or WeightedMatchingState)
+ * @param vertex - S-labelled vertex to scan from
+ * @returns S-S edge pair if found, null otherwise
+ */
+export type ScanFunction<State extends MatchingState> = (
+  state: State,
+  vertex: VertexKey,
+) => ScanAndLabelResult;
+
+/**
+ * Function type for creating a blossom during BFS
+ *
+ * Cardinality matching uses plain addBlossom.
+ * Weighted matching uses addWeightedBlossom which also initializes duals.
+ */
+export type AddBlossomFunction<State extends MatchingState> = (
+  state: State,
+  vertexU: VertexKey,
+  vertexV: VertexKey,
+) => void;
+
+// ============================================================================
+// Enums
+// ============================================================================
+
+/**
+ * Label assigned to vertices during augmenting path search
+ */
+export enum Label {
+  /** Vertex is not in any alternating tree */
+  NONE = 'NONE',
+
+  /** Vertex is S-labelled: root or odd distance from root in alternating tree */
+  S = 'S',
+
+  /** Vertex is T-labelled: even distance from root in alternating tree */
+  T = 'T',
+}
+
+// ============================================================================
+// Interfaces
+// ============================================================================
+
+/**
+ * State information for a single vertex
+ */
+export interface VertexState {
+  /** Vertex key from graph */
+  readonly key: VertexKey;
+
+  /** Current mate (partner in matching), or null if unmatched */
+  mate: Mate;
+
+  /** ID of blossom containing this vertex (top-level blossom) */
+  inBlossom: BlossomId;
+
+  /**
+   * Immediate parent blossom ID if this vertex is a direct child of a blossom.
+   * Per NetworkX: blossomparent[v] = b when vertex v is a direct child of blossom b.
+   * null if vertex is not directly inside any non-trivial blossom.
+   */
+  blossomParent: BlossomId | null;
+}
+
+/**
+ * State information for a blossom
+ *
+ * Per NetworkX, labels are stored per-blossom, not per-vertex:
+ * - label[b] = 1 (S), 2 (T), or None (unlabelled)
+ * - labeledge[b] = (v, w) edge through which b got its label
+ */
+export interface BlossomState {
+  /** Unique identifier for this blossom */
+  readonly id: BlossomId;
+
+  /** Parent blossom in hierarchy, or null if top-level */
+  parent: ParentBlossom;
+
+  /** Children (vertices or sub-blossoms) forming the blossom */
+  children: BlossomChildren;
+
+  /** Base vertex where blossom connects to alternating tree */
+  base: VertexKey;
+
+  /** Label for augmenting path search (per NetworkX: labels are per-blossom) */
+  label: Label;
+
+  /** Endpoint of edge that gave this blossom its label, or null if unlabelled */
+  labelEnd: LabelEndpoint;
+
+  /**
+   * The vertex in THIS blossom that received the label
+   *
+   * Combined with labelEnd, forms the complete labeling edge:
+   * - labelEnd: vertex in parent blossom (the labeler)
+   * - labelEdgeVertex: vertex in this blossom (the labeled)
+   *
+   * Per NetworkX: labeledge[b] = (labelEnd, labelEdgeVertex)
+   */
+  labelEdgeVertex: LabelEndpoint;
+
+  /** Edge endpoints where this blossom was created */
+  endpoints: [VertexKey, VertexKey];
+
+  /**
+   * Junction edges between consecutive children in the blossom cycle
+   *
+   * edges[i] = [vertexInChild[i], vertexInChild[i+1]] for i < children.length-1
+   * edges[children.length-1] = [vertexInChild[last], vertexInChild[0]] (closing edge)
+   *
+   * These are the actual vertex endpoints that connect adjacent children.
+   * Used by augmentBlossom to flip internal mates when augmenting through blossom.
+   *
+   * Per NetworkX: `b.edges` stores the junction edges for mate flipping.
+   */
+  edges: Array<[VertexKey, VertexKey]>;
+}
+
+/**
+ * Overall state of the matching algorithm
+ */
+export interface MatchingState {
+  /** State for each vertex in the graph, keyed by vertex key */
+  vertices: Map<VertexKey, VertexState>;
+
+  /** State for each blossom, keyed by blossom ID */
+  blossoms: Map<BlossomId, BlossomState>;
+
+  /** Queue of S-labelled vertices to process */
+  queue: VertexKey[];
+
+  /** Adjacency list representation of graph */
+  adjacencyList: Map<VertexKey, NeighbourSet>;
+
+  /** Total number of vertices in original graph */
+  readonly nodeCount: number;
+
+  /** Next available blossom ID */
+  nextBlossomId: BlossomId;
+}
+
+/**
+ * Result of finding lowest common ancestor in alternating tree
+ */
+/**
+ * Result of building a path to root with edge information
+ */
+export interface PathWithEdges {
+  /** Blossom IDs along the path */
+  path: BlossomId[];
+
+  /** Edges connecting consecutive blossoms: [vertexInCurrent, vertexInParent] */
+  edges: Array<[VertexKey, VertexKey]>;
+}
+
+export interface LowestCommonAncestorResult {
+  /** The LCA blossom ID where paths converge */
+  lcaBlossomId: BlossomId;
+
+  /** Path of blossom IDs from first vertex to LCA (excluding LCA) */
+  pathFromU: BlossomId[];
+
+  /** Path of blossom IDs from second vertex to LCA (excluding LCA) */
+  pathFromV: BlossomId[];
+
+  /**
+   * Edges along path from U to LCA
+   *
+   * Each edge [a, b] connects consecutive blossoms in pathFromU:
+   * - a is in pathFromU[i]
+   * - b is in pathFromU[i+1] (or LCA for the last edge)
+   */
+  edgesFromU: Array<[VertexKey, VertexKey]>;
+
+  /**
+   * Edges along path from V to LCA
+   *
+   * Each edge [a, b] connects consecutive blossoms in pathFromV:
+   * - a is in pathFromV[i]
+   * - b is in pathFromV[i+1] (or LCA for the last edge)
+   */
+  edgesFromV: Array<[VertexKey, VertexKey]>;
+}
+
+/**
+ * Result of looking up the base vertex information for a vertex
+ *
+ * Contains the base vertex of the top-level blossom containing a vertex,
+ * along with the blossom state (which holds label/labelEnd per NetworkX).
+ */
+export interface BaseVertexInfo {
+  /** Base vertex key of the top-level blossom */
+  baseVertex: VertexKey;
+
+  /** State of the top-level blossom (contains label/labelEnd) */
+  blossomState: BlossomState;
+
+  /** ID of the top-level blossom containing the vertex */
+  topLevelBlossomId: BlossomId;
+}
+
+/**
+ * Result of processing a single step in alternating tree traversal
+ */
+export interface TraversalStepResult {
+  /** Current vertex being processed */
+  currentVertex: VertexKey;
+
+  /** Base vertex for this step */
+  baseVertex: VertexKey;
+
+  /** Top-level blossom state (contains label/labelEnd) */
+  blossomState: BlossomState;
+
+  /** Top-level blossom ID containing the current vertex */
+  topLevelBlossomId: BlossomId;
+
+  /** Whether this step reached the root */
+  isRoot: boolean;
+}
+
+/**
+ * Result of processing a single step in blossom chain traversal
+ */
+export interface BlossomChainStepResult {
+  /** Current blossom ID being visited */
+  blossomId: BlossomId;
+
+  /** Blossom state */
+  blossom: BlossomState;
+
+  /** Whether this is a non-trivial blossom (has children > 1) */
+  isNonTrivial: boolean;
+}
+
+/**
+ * Result of finding a labeled vertex within a blossom
+ *
+ * Used in phase 2 of delta4 expansion to check if children are
+ * reachable from external S-vertices.
+ */
+export interface LabeledVertexInfo {
+  /** The labeled vertex key */
+  vertex: VertexKey;
+
+  /** The blossom containing this vertex (has the label) */
+  blossom: BlossomState;
+}
+
+/**
+ * Result of determining walk direction through blossom cycle
+ */
+export interface WalkDirection {
+  /** Step size for each iteration: +1 for forward, -1 for backward */
+  stepSize: number;
+
+  /** Distance from entry to base in chosen direction */
+  distance: number;
+}
+
+/**
+ * Result of an augmenting step including next vertex to continue from
+ */
+export interface AugmentStepResult {
+  /** Whether to continue augmenting */
+  shouldContinue: boolean;
+
+  /** Next vertex to continue from (null if shouldContinue is false) */
+  nextVertex: VertexKey | null;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Indicates top-level blossom with no parent */
+export const NO_PARENT_BLOSSOM: ParentBlossom = null;
+
+/** Indicates vertex is unmatched */
+export const NO_MATE: Mate = null;
+
+/** Indicates vertex has no label endpoint */
+export const NO_LABEL_ENDPOINT: LabelEndpoint = null;
+
+/** Sentinel value for scan result when no edge found */
+export const NO_EDGE_FOUND: ScanAndLabelResult = null;
+
+/** Sentinel for no next vertex in augmenting path */
+export const NO_NEXT_VERTEX: VertexKey | null = null;
+
+/** Sentinel for array index not found */
+export const NOT_FOUND_IN_ARRAY = -1;
+
+/** Step direction: forward through blossom cycle */
+export const STEP_FORWARD = 1;
+
+/** Step direction: backward through blossom cycle */
+export const STEP_BACKWARD = -1;
+
+/** Minimum number of children for a non-trivial blossom */
+export const MIN_CHILDREN_FOR_NONTRIVIAL_BLOSSOM = 2;
+
+// ============================================================================
+// Weighted Matching Types (BigInt for precision)
+// ============================================================================
+
+/**
+ * Edge weight using BigInt for exact precision in mixed radix encoding
+ *
+ * BigInt prevents overflow when combining multiple criteria with large bases.
+ * All weights should be positive; higher weight = more preferred pairing.
+ */
+export type EdgeWeight = bigint;
+
+/**
+ * Dual variable for vertices and blossoms
+ * Initialised to maxWeight; edges are tight when u.dual + v.dual = 2 * weight
+ */
+export type DualVariable = bigint;
+
+/**
+ * Edge identifier using graphology's edge key
+ * This is the string key returned by graph.addEdge() or graph.forEachEdge()
+ */
+export type GraphEdgeKey = string;
+
+/**
+ * Extended state for weighted maximum matching
+ *
+ * Adds dual variable tracking required by weighted Blossom algorithm.
+ * The algorithm only considers "tight" edges where slack = 0.
+ * When stuck, it adjusts duals to make new edges tight.
+ */
+export interface WeightedMatchingState extends MatchingState {
+  /**
+   * Dual variable for each node (vertex or non-trivial blossom)
+   *
+   * Vertices are keyed by VertexKey (string), blossoms by BlossomId (number).
+   * Discrimination via typeof: string = vertex, number = blossom.
+   */
+  duals: Map<NodeId, DualVariable>;
+
+  /**
+   * Best edge from each S-vertex/blossom to outside vertices
+   * Used for delta2/delta3 computation
+   */
+  bestEdgeByNode: Map<NodeId, GraphEdgeKey>;
+
+  /**
+   * Best edges leading into each blossom's vertices
+   * Used for delta3 computation when blossom is not S-labelled
+   */
+  blossomBestEdges: Map<BlossomId, GraphEdgeKey[]>;
+
+  /** Maximum edge weight in the graph (used for dual initialisation) */
+  maxEdgeWeight: EdgeWeight;
+}
+
+/**
+ * Scan function specialised for weighted matching
+ *
+ * Scans only tight edges (slack = 0) from S-labelled vertices.
+ */
+export type WeightedScanFunction = ScanFunction<WeightedMatchingState>;
+
+/**
+ * Base interface for all delta results
+ *
+ * Used when only the delta value matters (e.g., comparisons).
+ */
+export interface BaseDelta {
+  readonly delta: DualVariable;
+}
+
+/**
+ * Delta result for edge-tightening updates
+ *
+ * Represents an edge that will become tight after applying the delta.
+ */
+export interface EdgeDelta extends BaseDelta {
+  readonly edgeKey: GraphEdgeKey;
+}
+
+/**
+ * Delta result for blossom expansion
+ *
+ * When a blossom's dual variable reaches zero, it must be expanded.
+ */
+export interface BlossomDelta extends BaseDelta {
+  readonly blossomId: BlossomId;
+}
+
+/**
+ * Type guard for EdgeDelta
+ */
+export function isEdgeDelta(delta: BaseDelta): delta is EdgeDelta {
+  return 'edgeKey' in delta;
+}
+
+/**
+ * Type guard for BlossomDelta
+ */
+export function isBlossomDelta(delta: BaseDelta): delta is BlossomDelta {
+  return 'blossomId' in delta;
+}
+
+// ============================================================================
+// Weighted Matching Constants
+// ============================================================================
+
+/** Zero dual variable for comparisons and initialisations */
+export const ZERO_DUAL: DualVariable = 0n;

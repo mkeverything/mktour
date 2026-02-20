@@ -1,9 +1,8 @@
 import { db } from '@/server/db';
-import { clubs, clubs_to_users, DatabaseClub } from '@/server/db/schema/clubs';
-import {
-  DatabaseTournament,
-  tournaments,
-} from '@/server/db/schema/tournaments';
+import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
+import { tournaments } from '@/server/db/schema/tournaments';
+import { ClubModel } from '@/server/db/zod/clubs';
+import { TournamentModel } from '@/server/db/zod/tournaments';
 import { eq, inArray } from 'drizzle-orm';
 
 export default async function getTournamentsToUserClubsQuery({
@@ -31,14 +30,14 @@ export default async function getTournamentsToUserClubsQuery({
     .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
     .where(inArray(tournaments.clubId, clubIds));
 
-  return tournamentsFromUserClubs as TournamentWithClub[];
+  return tournamentsFromUserClubs as TournamentWithClubModel[];
 }
 
 interface UserClubsQueryProps {
   user: { id: string };
 }
 
-export interface TournamentWithClub {
-  tournament: DatabaseTournament;
-  club: DatabaseClub;
+export interface TournamentWithClubModel {
+  tournament: TournamentModel;
+  club: ClubModel;
 }

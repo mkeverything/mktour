@@ -1,7 +1,7 @@
 import TournamentItemIteratee from '@/components/tournament-item';
 import { publicCaller } from '@/server/api';
 import getTournamentsToUserClubsQuery, {
-  TournamentWithClub,
+  TournamentWithClubModel,
 } from '@/server/queries/get-tournaments-to-user-clubs-query';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -35,7 +35,9 @@ export default async function MyTournaments() {
   );
 }
 
-const TournamentGroups: FC<{ props: TournamentWithClub[] }> = ({ props }) => {
+const TournamentGroups: FC<{ props: TournamentWithClubModel[] }> = ({
+  props,
+}) => {
   const groupedTournaments = getGroupedTournaments(props);
 
   return Object.entries(groupedTournaments).map(
@@ -57,7 +59,7 @@ const TournamentGroups: FC<{ props: TournamentWithClub[] }> = ({ props }) => {
   );
 };
 
-const getGroupedTournaments = (props: TournamentWithClub[]) =>
+const getGroupedTournaments = (props: TournamentWithClubModel[]) =>
   props.reduce(
     (acc, curr) => {
       const { id: clubId, name: clubName } = curr.club;
@@ -72,6 +74,6 @@ const getGroupedTournaments = (props: TournamentWithClub[]) =>
     },
     {} as Record<
       string,
-      { clubName: string; tournaments: TournamentWithClub[] }
+      { clubName: string; tournaments: TournamentWithClubModel[] }
     >,
   );

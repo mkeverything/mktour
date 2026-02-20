@@ -8,14 +8,9 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import { FallbackProps } from 'react-error-boundary';
 
-function ErrorFallback({
-  error,
-  resetErrorBoundary,
-}: {
-  error: Error;
-  resetErrorBoundary?: () => void;
-}) {
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <div
       role="alert"
@@ -28,7 +23,7 @@ function ErrorFallback({
         </CardHeader>
         <CardContent>
           <pre className="bg-muted overflow-auto rounded-md p-3 text-sm">
-            {error.message}
+            {error instanceof Error ? error.message : String(error)}
           </pre>
         </CardContent>
         <CardFooter className="flex gap-2">

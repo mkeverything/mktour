@@ -5,7 +5,7 @@ import ActionButtons from '@/app/tournaments/[id]/dashboard/tabs/main/action-but
 import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tournament-info';
 import Center from '@/components/center';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import SwissRoundsNumber from '@/components/swiss-rounds-number';
+
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslations } from 'next-intl';
@@ -53,18 +53,15 @@ export const InfoItem: FC<{
   value: string | number | null | undefined;
   href?: string;
   format?: boolean;
-}> = ({ icon: Icon, value, href, format }) => {
+  children?: React.ReactNode;
+}> = ({ icon: Icon, value, href, format, children }) => {
   const t = useTranslations('Tournament.Main');
   return (
     <div className="flex gap-2">
       <Icon className="text-muted-foreground my-auto size-4" />
       {!href ? (
         format ? (
-          value === 'swiss' ? (
-            <SwissRoundsNumber />
-          ) : (
-            <span>{t(String(value))}</span>
-          )
+          <span>{t(String(value))}</span>
         ) : (
           <span>{value}</span>
         )
@@ -73,6 +70,7 @@ export const InfoItem: FC<{
           {value}
         </Link>
       )}
+      {children}
     </div>
   );
 };

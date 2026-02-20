@@ -39,6 +39,13 @@ export const clubManagersSchema = z.object({
   clubs_to_users: clubsToUsersSelectSchema,
 });
 
-export type ClubManager = z.infer<typeof clubManagersSchema>;
-export type ClubEditType = z.infer<typeof clubsEditSchema>;
-export type ClubFormType = z.infer<typeof clubsInsertSchema>;
+export type ClubManagerModel = z.infer<typeof clubManagersSchema>;
+export type ClubEditModel = z.infer<typeof clubsEditSchema>;
+export type ClubFormModel = z.infer<typeof clubsInsertSchema>;
+
+export type ClubModel = z.infer<typeof clubsSelectSchema>;
+export type ClubUpdateModel = z.infer<typeof clubsEditSchema>;
+export type ClubInsertModel = z.infer<typeof clubsInsertSchema>;
+
+export type ClubToUserModel = z.infer<typeof clubsToUsersSelectSchema>;
+export type ClubToUserInsertModel = z.infer<typeof clubsToUsersSelectSchema>;

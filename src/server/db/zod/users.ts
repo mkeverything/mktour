@@ -51,7 +51,15 @@ export const validateRequestSchema = z.object({
   session: sessionsSelectSchema.nullable(),
 });
 
-export type UserPublic = z.infer<typeof usersSelectPublicSchema>;
-export type UserMinimal = z.infer<typeof usersSelectMinimalSchema>;
-export type EditProfileFormType = z.infer<typeof editProfileFormSchema>;
-export type ApiToken = z.infer<typeof apiToken>;
+export type UserPublicModel = z.infer<typeof usersSelectPublicSchema>;
+export type UserMinimalModel = z.infer<typeof usersSelectMinimalSchema>;
+export type EditProfileFormModel = z.infer<typeof editProfileFormSchema>;
+export type ApiTokenModel = z.infer<typeof apiToken>;
+export type ApiTokenInsertModel = z.infer<typeof apiTokensInsertSchema>;
+
+export type UserModel = z.infer<typeof usersSelectSchema>;
+export type UserInsertModel = z.infer<typeof usersInsertSchema>;
+export type UserUpdateModel = z.infer<typeof usersUpdateSchema>;
+
+export type SessionModel = z.infer<typeof sessionsSelectSchema>;
+export type SessionInsertModel = z.infer<typeof sessionsInsertSchema>;

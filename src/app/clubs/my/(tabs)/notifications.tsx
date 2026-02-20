@@ -8,7 +8,7 @@ import {
   NotificationItem,
 } from '@/components/notification-items';
 import SkeletonList from '@/components/skeleton-list';
-import { ClubNotificationExtended } from '@/server/db/zod/notifications';
+import { ClubNotificationExtendedModel } from '@/server/db/zod/notifications';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 
@@ -49,7 +49,7 @@ const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
 };
 
 const Notification: FC<{
-  data: ClubNotificationExtended;
+  data: ClubNotificationExtendedModel;
   t: NotificationTranslator;
 }> = ({ data, t }) => {
   switch (data.event) {
@@ -120,7 +120,7 @@ const Notification: FC<{
 };
 
 type NotificationTranslator = (
-  key: ClubNotificationExtended['event'],
+  key: ClubNotificationExtendedModel['event'],
   values?: Record<string, string | number | Date>,
 ) => string;
 

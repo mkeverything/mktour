@@ -5,7 +5,7 @@ import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
-import { generateRandomRoundGames } from '@/lib/client-actions/random-pairs-generator';
+import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Shuffle } from 'lucide-react';
 import { useParams } from 'next/navigation';

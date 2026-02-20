@@ -41,7 +41,9 @@ export const playersUpdateSchema = createUpdateSchema(players);
 export const affiliationsSelectSchema = createSelectSchema(affiliations, {
   status: affiliationStatusEnum,
 });
-export const affiliationsInsertSchema = createInsertSchema(affiliations);
+export const affiliationsInsertSchema = createInsertSchema(affiliations, {
+  status: affiliationStatusEnum,
+});
 export const affiliationsUpdateSchema = createUpdateSchema(affiliations);
 
 export const affiliationExtendedSchema = affiliationsSelectSchema
@@ -159,8 +161,12 @@ export const playerAuthStatsSchema = z.object({
 
 export type PlayerTournamentModel = z.infer<typeof playerTournamentSchema>;
 
-export type AffiliationExtended = z.infer<typeof affiliationExtendedSchema>;
-export type AffiliationMinimal = z.infer<typeof affiliationMinimalSchema>;
+export type AffiliationModel = z.infer<typeof affiliationsSelectSchema>;
+export type AffiliationInsertModel = z.infer<typeof affiliationsInsertSchema>;
+export type AffiliationExtendedModel = z.infer<
+  typeof affiliationExtendedSchema
+>;
+export type AffiliationMinimalModel = z.infer<typeof affiliationMinimalSchema>;
 export type PlayerModel = z.infer<typeof playersSelectSchema>;
 export type PlayerMinimalModel = z.infer<typeof playersMinimalSchema>;
 export type PlayerFormModel = z.infer<typeof playerFormSchema>;

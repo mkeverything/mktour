@@ -2,19 +2,13 @@
 
 import { emptyClubCheck } from '@/app/clubs/create/empty-club-check';
 import { getUserLichessTeams } from '@/lib/api/lichess';
-import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { newid } from '@/lib/utils';
 import { validateLichessTeam } from '@/lib/zod/new-club-validation-action';
 import { db } from '@/server/db';
-import {
-  clubs,
-  clubs_to_users,
-  DatabaseClubsToUsers,
-} from '@/server/db/schema/clubs';
+import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
   club_notifications,
-  InsertDatabaseUserNotification,
   user_notifications,
 } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
@@ -23,15 +17,21 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { DatabaseUser, users } from '@/server/db/schema/users';
-import { ClubEditType, ClubFormType } from '@/server/db/zod/clubs';
+import { users } from '@/server/db/schema/users';
+import {
+  ClubEditModel,
+  ClubFormModel,
+  ClubToUserModel,
+} from '@/server/db/zod/clubs';
+import { UserNotificationInsertModel } from '@/server/db/zod/notifications';
 import { PlayerEditModel, PlayerFormModel } from '@/server/db/zod/players';
+import { UserModel } from '@/server/db/zod/users';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { and, eq, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
-export const createClub = async (user: User, values: ClubFormType) => {
+export const createClub = async (user: User, values: ClubFormModel) => {
   const emptyClub = await emptyClubCheck({ user });
   if (emptyClub) throw new Error('EMPTY_CLUB_EXISTS');
 
@@ -42,7 +42,7 @@ export const createClub = async (user: User, values: ClubFormType) => {
     id,
     createdAt,
   };
-  const newRelation: DatabaseClubsToUsers = {
+  const newRelation: ClubToUserModel = {
     id: `${user.id}=${id}`,
     clubId: id,
     userId: user.id,
@@ -70,7 +70,7 @@ export const editClub = async ({
   username,
 }: {
   clubId: string;
-  values: ClubEditType;
+  values: ClubEditModel;
   username: string;
 }) => {
   if (values.lichessTeam) {
@@ -103,15 +103,12 @@ type ClubDeleteProps = {
 export const deleteClub = async ({
   clubId,
   userId,
-  userDeletion = false,
+  userDeletion,
 }: ClubDeleteProps) => {
-  const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
-  await deleteClubFunction({ clubId, userId, userDeletion });
+  return await deleteClubFunction({ clubId, userId, userDeletion });
 };
 
-export const createPlayer = async ({ player }: { player: PlayerFormModel }) => {
+export const createPlayer = async (player: PlayerFormModel) => {
   const newPlayer = (
     await db
       .insert(players)
@@ -123,6 +120,7 @@ export const createPlayer = async ({ player }: { player: PlayerFormModel }) => {
       })
       .returning()
   ).at(0);
+
   if (!newPlayer) throw new Error('PLAYER_NOT_CREATED');
   return newPlayer;
 };
@@ -262,7 +260,7 @@ export const addClubManager = async ({
   clubId: string;
   userId: string;
   status: 'co-owner' | 'admin';
-  user: DatabaseUser;
+  user: UserModel;
 }) => {
   const authorStatus = await getStatusInClub({
     userId: user.id,
@@ -277,7 +275,7 @@ export const addClubManager = async ({
       and(eq(clubs_to_users.clubId, clubId), eq(clubs_to_users.userId, userId)),
     );
   if (existingRelation.length > 0) throw new Error('RELATION_EXISTS');
-  const newRelation: DatabaseClubsToUsers = {
+  const newRelation: ClubToUserModel = {
     id: `${clubId}=${userId}`,
     clubId: clubId,
     userId: userId,
@@ -285,7 +283,7 @@ export const addClubManager = async ({
     promotedAt: new Date(),
   };
 
-  const userNotification: InsertDatabaseUserNotification = {
+  const userNotification: UserNotificationInsertModel = {
     id: newid(),
     userId: userId,
     event: 'became_club_manager',
@@ -306,7 +304,7 @@ export const deleteClubManager = async ({
 }: {
   clubId: string;
   userId: string;
-  user: DatabaseUser;
+  user: UserModel;
 }) => {
   const authorStatus = await getStatusInClub({
     userId: user.id,

@@ -1,15 +1,23 @@
 import { Card, CardTitle } from '@/components/ui/card';
-import { DatabaseClub } from '@/server/db/schema/clubs';
-import { DatabaseTournament } from '@/server/db/schema/tournaments';
+import { getTournamentDisplayName } from '@/lib/tournament-display';
+import { ClubModel } from '@/server/db/zod/clubs';
+import { TournamentModel } from '@/server/db/zod/tournaments';
 import { Dot } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 const TournamentItem = ({ club, tournament }: Props) => {
-  const { date, type, format, id, title } = tournament;
-  const locale = useLocale();
-  const localizedDate = new Date(date).toLocaleDateString([locale]);
+  const { date, type, format, id } = tournament;
+  const formatUtil = useFormatter();
   const t = useTranslations('MakeTournament');
+  const tournamentDisplayName = getTournamentDisplayName(
+    tournament,
+    t,
+    formatUtil,
+  );
+  const localizedDate = formatUtil.dateTime(new Date(date), {
+    dateStyle: 'short',
+  });
   const details = [
     tournament.rated ? t('rated') : t('unrated'),
     t(format),
@@ -34,7 +42,7 @@ const TournamentItem = ({ club, tournament }: Props) => {
   return (
     <Link key={id} href={`/tournaments/${id}`}>
       <Card className="mk-card flex flex-col">
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle className="text-base">{tournamentDisplayName}</CardTitle>
         {club && (
           <span className="text-muted-foreground text-xs">{club.name}</span>
         )}
@@ -48,6 +56,6 @@ const TournamentItemIteratee = ({ club, tournament }: Props) => (
   <TournamentItem tournament={tournament} club={club} />
 );
 
-type Props = { tournament: DatabaseTournament; club?: DatabaseClub };
+type Props = { tournament: TournamentModel; club?: ClubModel };
 
 export default TournamentItemIteratee;

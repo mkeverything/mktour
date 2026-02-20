@@ -1,13 +1,15 @@
-import type {
-  DatabaseClubNotification,
-  DatabaseUserNotification,
-} from '@/server/db/schema/notifications';
+import { ClubModel } from '@/server/db/zod/clubs';
 import type {
   ClubNotificationEvent,
   StatusInClub,
   UserNotificationEvent,
 } from '@/server/db/zod/enums';
-import type { ClubNotificationExtended } from '@/server/db/zod/notifications';
+import type { ClubNotificationExtendedModel } from '@/server/db/zod/notifications';
+import {
+  ClubNotificationModel,
+  UserNotificationModel,
+} from '@/server/db/zod/notifications';
+import { AffiliationModel, PlayerModel } from '@/server/db/zod/players';
 
 type UserNotificationMetadata = {
   affiliation_approved: { clubId: string; affiliationId: string };
@@ -27,7 +29,7 @@ type ClubNotificationMetadata = {
 
 // typed notifications (database + typed metadata)
 type UserNotification<T extends UserNotificationEvent> = Omit<
-  DatabaseUserNotification,
+  UserNotificationModel,
   'event' | 'metadata'
 > & {
   event: T;
@@ -35,7 +37,7 @@ type UserNotification<T extends UserNotificationEvent> = Omit<
 };
 
 type ClubNotification<T extends ClubNotificationEvent> = Omit<
-  DatabaseClubNotification,
+  ClubNotificationModel,
   'event' | 'metadata'
 > & {
   event: T;
@@ -57,9 +59,9 @@ export type UserNotificationExtended<T extends UserNotificationEvent> = {
   event: T;
   notification: UserNotification<T>;
   metadata: UserNotificationMetadata[T];
-  affiliation: DatabaseAffiliation | null;
-  player: Pick<DatabasePlayer, 'id' | 'nickname'> | null;
-  club: DatabaseClub | null;
+  affiliation: AffiliationModel | null;
+  player: Pick<PlayerModel, 'id' | 'nickname'> | null;
+  club: ClubModel | null;
 };
 
 export type AnyUserNotificationExtended = {
@@ -68,7 +70,7 @@ export type AnyUserNotificationExtended = {
 
 // Generic typed version that narrows event and metadata from the schema-inferred type
 type ClubNotificationExtendedTyped<T extends ClubNotificationEvent> = Omit<
-  ClubNotificationExtended,
+  ClubNotificationExtendedModel,
   'event' | 'metadata'
 > & {
   event: T;

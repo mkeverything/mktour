@@ -4,7 +4,7 @@ import {
   ClubNotificationEvent,
   UserNotificationEvent,
 } from '@/server/db/zod/enums';
-import { InferInsertModel, InferSelectModel, relations } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const user_notifications = sqliteTable('user_notification', {
@@ -66,16 +66,3 @@ export const club_notifications_relations = relations(
     }),
   }),
 );
-
-export type DatabaseUserNotification = InferSelectModel<
-  typeof user_notifications
->;
-export type DatabaseClubNotification = InferSelectModel<
-  typeof club_notifications
->;
-export type InsertDatabaseUserNotification = InferInsertModel<
-  typeof user_notifications
->;
-export type InsertDatabaseClubNotification = InferInsertModel<
-  typeof club_notifications
->;

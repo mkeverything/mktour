@@ -14,14 +14,14 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DatabaseUser } from '@/server/db/schema/users';
+import { UserModel } from '@/server/db/zod/users';
 import { CalendarDays, Settings, Star, Users2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
 
 const Profile: FC<{
-  user: Pick<DatabaseUser, 'id' | 'username' | 'name' | 'rating' | 'createdAt'>;
+  user: Pick<UserModel, 'id' | 'username' | 'name' | 'rating' | 'createdAt'>;
   isOwner: boolean;
 }> = ({ user, isOwner }) => {
   const { data, isPending } = useUserClubs(user.id);

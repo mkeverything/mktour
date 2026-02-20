@@ -6,7 +6,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { DatabaseUser } from '@/server/db/schema/users';
+import { UserModel } from '@/server/db/zod/users';
 import { VariantProps } from 'class-variance-authority';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren, useState } from 'react';
@@ -24,7 +24,7 @@ const AddManager = ({
   debouncedValue: string;
   userId: string;
 }) => {
-  const [promotingUser, setPromotingUser] = useState<DatabaseUser | undefined>(
+  const [promotingUser, setPromotingUser] = useState<UserModel | undefined>(
     undefined,
   );
   const affiliatedUsers = useClubAffiliatedUsers(clubId);
@@ -51,7 +51,7 @@ const AddManager = ({
     return <Skeleton className="h-svh w-full pt-8" />;
   }
 
-  let users: DatabaseUser[];
+  let users: UserModel[];
   if (debouncedValue === '') {
     // users = affiliatedUsers.data;
     users = []; // FIXME when search typing is updated

@@ -4,11 +4,13 @@ import {
 } from '@/app/tournaments/[id]/dashboard/tabs/main';
 import Winners from '@/app/tournaments/[id]/dashboard/tabs/main/winners';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import SwissRoundsNumber from '@/components/swiss-rounds-number';
 import {
   CalendarDays,
   ChartNoAxesCombinedIcon,
   Dices,
   HomeIcon,
+  Layers,
   UserRound,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -69,6 +71,13 @@ const TournamentInfoList = () => {
       />
       <InfoItem icon={UserRound} value={t(`Types.${data.tournament.type}`)} />
       <InfoItem icon={Dices} value={data.tournament.format} format={true} />
+      {data.tournament.format === 'swiss' && (
+        <div className="flex items-center gap-2">
+          <Layers className="text-muted-foreground size-4" />
+          <span>{t('number of rounds')}</span>
+          <SwissRoundsNumber className="-my-1" />
+        </div>
+      )}
       <InfoItem
         icon={ChartNoAxesCombinedIcon}
         value={data.tournament.rated ? t('rated') : t('unrated')}

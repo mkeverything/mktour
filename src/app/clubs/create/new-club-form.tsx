@@ -16,8 +16,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { DatabaseUser } from '@/server/db/schema/users';
-import { ClubFormType, clubsInsertSchema } from '@/server/db/zod/clubs';
+import { ClubFormModel, clubsInsertSchema } from '@/server/db/zod/clubs';
+import { UserModel } from '@/server/db/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -26,7 +26,7 @@ import { useForm, UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
 export default function NewClubForm({ teams }: NewClubFormProps) {
-  const form = useForm<ClubFormType>({
+  const form = useForm<ClubFormModel>({
     resolver: zodResolver(clubsInsertSchema),
     defaultValues: {
       name: '',
@@ -41,7 +41,7 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
   const [isNavigating, startNavigation] = useTransition();
   const isPending = isMutating || isNavigating || form.formState.isSubmitting;
 
-  const handleSubmit = (data: ClubFormType) => {
+  const handleSubmit = (data: ClubFormModel) => {
     const dataWithDate = {
       ...data,
       createdAt: new Date(),
@@ -112,11 +112,11 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
 }
 
 interface NewClubFormProps {
-  user: DatabaseUser;
+  user: UserModel;
   teams: {
     label: string;
     value: string;
   }[];
 }
 
-export type NewClubForm = UseFormReturn<ClubFormType>;
+export type NewClubForm = UseFormReturn<ClubFormModel>;

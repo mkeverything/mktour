@@ -27,7 +27,10 @@ export const gameSchema = createSelectSchema(games).extend({
   roundName: roundNameEnum.nullable(),
   result: gameResultEnum.nullable(),
 });
-export const tournamentsInsertSchema = createInsertSchema(tournaments);
+export const tournamentsInsertSchema = createInsertSchema(tournaments, {
+  format: tournamentFormatEnum,
+  type: tournamentTypeEnum,
+});
 export const gamesInsertSchema = createInsertSchema(games);
 export const tournamentsUpdateSchema = createUpdateSchema(tournaments);
 export const gamesUpdateSchema = createUpdateSchema(games);
@@ -58,5 +61,17 @@ export const tournamentInfoSchema = z.object({
 
 export type TournamentInfoModel = z.infer<typeof tournamentInfoSchema>;
 export type TournamentModel = z.infer<typeof tournamentSchema>;
+export type TournamentInsertModel = z.infer<typeof tournamentsInsertSchema>;
+export type TournamentUpdateModel = z.infer<typeof tournamentsUpdateSchema>;
+
 export type GameModel = z.infer<typeof gameSchema>;
+export type GameInsertModel = z.infer<typeof gamesInsertSchema>;
+export type GameUpdateModel = z.infer<typeof gamesUpdateSchema>;
+
 export type PlayerToTournamentModel = z.infer<typeof playerToTournamentSchema>;
+export type PlayerToTournamentInsertModel = z.infer<
+  typeof playerTournamentInsertSchema
+>;
+export type PlayerToTournamentUpdateModel = z.infer<
+  typeof playerTournamentUpdateSchema
+>;

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { shallowEqual } from '@/lib/utils';
-import { ClubFormType, clubsInsertSchema } from '@/server/db/zod/clubs';
+import { ClubFormModel, clubsInsertSchema } from '@/server/db/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
@@ -39,7 +39,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     lichessTeam: '',
   };
 
-  const form = useForm<ClubFormType>({
+  const form = useForm<ClubFormModel>({
     resolver: zodResolver(clubsInsertSchema),
     values: data
       ? {

@@ -10,7 +10,7 @@ import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { DatabasePlayer } from '@/server/db/schema/players';
+import { PlayerModel } from '@/server/db/zod/players';
 import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -39,11 +39,11 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub }) => {
   );
 };
 
-const PlayerItemIteratee = (player: DatabasePlayer) => {
+const PlayerItemIteratee = (player: PlayerModel) => {
   return <PlayerItem player={player} key={player.id} />;
 };
 
-const PlayerItem: FC<{ player: DatabasePlayer }> = ({ player }) => {
+const PlayerItem: FC<{ player: PlayerModel }> = ({ player }) => {
   // const t = useTranslations();
   // const formatter = useFormatter();
   const { id, nickname, rating } = player;

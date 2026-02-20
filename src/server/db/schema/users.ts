@@ -1,5 +1,4 @@
 import { clubs } from '@/server/db/schema/clubs';
-import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { int, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('user', {
@@ -39,10 +38,3 @@ export const apiTokens = sqliteTable('api_token', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
 });
-
-export type DatabaseSession = InferSelectModel<typeof sessions>;
-export type DatabaseUser = InferSelectModel<typeof users>;
-export type InsertDatabaseSession = InferInsertModel<typeof sessions>;
-export type InsertDatabaseUser = InferInsertModel<typeof users>;
-export type DatabaseApiToken = InferSelectModel<typeof apiTokens>;
-export type InsertDatabaseApiToken = InferInsertModel<typeof apiTokens>;

@@ -4,11 +4,8 @@ import { lichess, lucia } from '@/lib/auth/lucia';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
-import {
-  DatabaseUser,
-  user_preferences,
-  users,
-} from '@/server/db/schema/users';
+import { user_preferences, users } from '@/server/db/schema/users';
+import { UserModel } from '@/server/db/zod/users';
 import { LichessUser } from '@/types/lichess-api';
 import { ArcticFetchError, OAuth2RequestError } from 'arctic';
 import { eq } from 'drizzle-orm';
@@ -65,7 +62,7 @@ export async function GET(request: Request): Promise<Response> {
 
     const existingUser = (
       await db.select().from(users).where(eq(users.username, lichessUser.id))
-    ).at(0) as DatabaseUser | undefined;
+    ).at(0) as UserModel | undefined;
 
     if (existingUser) {
       const session = await lucia.createSession(existingUser.id, {});

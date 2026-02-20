@@ -14,26 +14,43 @@ export default function useTournamentSaveRoundsNumber(
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.updateSwissRoundsNumber.mutationOptions({
+      onMutate: async ({ tournamentId, roundsNumber }) => {
+        queryClient.cancelQueries({
+          queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+        });
+        const previousData = queryClient.getQueryData(
+          trpc.tournament.info.queryKey({ tournamentId }),
+        );
+        queryClient.setQueryData(
+          trpc.tournament.info.queryKey({ tournamentId }),
+          (cache) => {
+            if (!cache) return cache;
+            return {
+              ...cache,
+              tournament: { ...cache.tournament, roundsNumber },
+            };
+          },
+        );
+        return { previousData };
+      },
       onSuccess: (_, { roundsNumber }) => {
         sendJsonMessage({ event: 'swiss-new-rounds-number', roundsNumber });
-        queryClient.setQueryData(
-          trpc.tournament.info.queryKey(),
-          (cache) =>
-            cache && {
-              ...cache,
-              rounds_number: roundsNumber,
-            },
-        );
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.pathKey(),
-        });
       },
-      onError: (e) => {
-        toast.error(t('server error'));
-        console.log(e);
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.pathKey(),
-        });
+      onError: (error, { tournamentId }, context) => {
+        toast.error(t('server error') + `: ` + error.message);
+        if (context?.previousData) {
+          queryClient.setQueryData(
+            trpc.tournament.info.queryKey({ tournamentId }),
+            context.previousData,
+          );
+        }
+      },
+      onSettled: () => {
+        if (queryClient.isMutating() === 1) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.tournament.info.pathKey(),
+          });
+        }
       },
     }),
   );

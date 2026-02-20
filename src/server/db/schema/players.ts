@@ -2,7 +2,7 @@ import { clubs } from '@/server/db/schema/clubs';
 import { players_to_tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { AffiliationStatus } from '@/server/db/zod/enums';
-import { InferInsertModel, InferSelectModel, relations } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import {
   integer,
   real,
@@ -93,8 +93,3 @@ export const affiliations_relations = relations(affiliations, ({ one }) => ({
     references: [players.id],
   }),
 }));
-
-export type DatabasePlayer = InferSelectModel<typeof players>;
-export type InsertDatabasePlayer = InferInsertModel<typeof players>;
-export type DatabaseAffiliation = InferSelectModel<typeof affiliations>;
-export type InsertDatabaseAffiliation = InferInsertModel<typeof affiliations>;

@@ -1,13 +1,13 @@
 import Profile from '@/app/user/[username]/profile';
 import { publicCaller } from '@/server/api';
-import { UserPublic } from '@/server/db/zod/users';
+import { UserPublicModel } from '@/server/db/zod/users';
 import { TRPCError } from '@trpc/server';
 import { notFound } from 'next/navigation';
 
 export default async function UserPage(props: TournamentPageProps) {
   const params = await props.params;
   const user = await publicCaller.auth.info();
-  let data: UserPublic;
+  let data: UserPublicModel;
   try {
     data = await publicCaller.user.infoByUsername({
       username: params.username,

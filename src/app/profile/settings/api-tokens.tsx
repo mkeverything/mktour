@@ -27,7 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ApiToken } from '@/server/db/zod/users';
+import { ApiTokenModel } from '@/server/db/zod/users';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Eye, EyeOff, Info, Plus, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -195,11 +195,11 @@ export default function ApiTokens() {
   );
 }
 
-const ApiTokenIteratee = (token: ApiToken) => {
+const ApiTokenIteratee = (token: ApiTokenModel) => {
   return <ApiTokenRow token={token} key={token.id} />;
 };
 
-const ApiTokenRow: FC<{ token: ApiToken }> = ({ token }) => {
+const ApiTokenRow: FC<{ token: ApiTokenModel }> = ({ token }) => {
   const locale = useLocale();
   const { mutate: revoke, isPending: isRevoking } = useTokenRevokeMutation();
   return (

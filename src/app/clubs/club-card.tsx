@@ -1,11 +1,11 @@
 import LichessLogo from '@/components/ui-custom/lichess-logo';
 import { Card, CardTitle } from '@/components/ui/card';
-import { DatabaseClub } from '@/server/db/schema/clubs';
+import { ClubModel } from '@/server/db/zod/clubs';
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { FC } from 'react';
 
-const ClubCard: FC<{ club: DatabaseClub }> = async ({ club }) => {
+const ClubCard: FC<{ club: ClubModel }> = async ({ club }) => {
   const t = await getTranslations();
   const locale = await getLocale();
 

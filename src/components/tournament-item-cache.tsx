@@ -4,8 +4,8 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { publicCaller } from '@/server/api';
-import { DatabaseClub } from '@/server/db/schema/clubs';
-import { DatabaseTournament } from '@/server/db/schema/tournaments';
+import { ClubModel } from '@/server/db/zod/clubs';
+import { TournamentModel } from '@/server/db/zod/tournaments';
 import { Dot } from 'lucide-react';
 import { cacheTag } from 'next/cache';
 import Link from 'next/link';
@@ -43,7 +43,7 @@ const TournamentItemCacheIteratee = ({ club, tournament }: Props) => (
   <TournamentItemCache tournament={tournament} club={club} />
 );
 
-type Props = { tournament: DatabaseTournament; club?: DatabaseClub };
+type Props = { tournament: TournamentModel; club?: ClubModel };
 
 export default async function TournamentsAllCache() {
   const allTournaments = await publicCaller.tournament.all();

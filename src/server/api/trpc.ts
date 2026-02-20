@@ -9,8 +9,9 @@
 
 import { validateRequest } from '@/lib/auth/lucia';
 import { db } from '@/server/db';
-import { apiTokens, DatabaseUser, users } from '@/server/db/schema/users';
+import { apiTokens, users } from '@/server/db/schema/users';
 import { StatusInClub } from '@/server/db/zod/enums';
+import { UserModel } from '@/server/db/zod/users';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { getUserClubIds } from '@/server/queries/get-user-clubs';
 import { initTRPC, TRPCError } from '@trpc/server';
@@ -37,7 +38,7 @@ export const createTRPCContext = async (opts: {
   headers: Headers;
   req: NextRequest;
 }) => {
-  let user: DatabaseUser | null = null;
+  let user: UserModel | null = null;
 
   const authHeader = opts.headers.get('authorization');
 

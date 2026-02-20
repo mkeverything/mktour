@@ -18,8 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { shallowEqual } from '@/lib/utils';
 import {
+  EditProfileFormModel,
   editProfileFormSchema,
-  EditProfileFormType,
 } from '@/server/db/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -36,10 +36,12 @@ export default function EditProfileForm() {
     name: userQuery.data?.name || '',
   };
 
-  const form = useForm<EditProfileFormType>({
+  const form = useForm<EditProfileFormModel>({
     resolver: zodResolver(editProfileFormSchema),
     values: defaultValues,
   });
+  const handleSubmit = (data: EditProfileFormModel) =>
+    editUserMutation.mutate(data);
   const t = useTranslations('UserSettings');
 
   if (userQuery.isLoading) return <Skeleton className="m-4 w-full" />;
@@ -51,9 +53,7 @@ export default function EditProfileForm() {
         <HalfCard className="w-full">
           <CardContent className="p-2 sm:p-8">
             <form
-              onSubmit={form.handleSubmit((data) =>
-                editUserMutation.mutate(data),
-              )}
+              onSubmit={form.handleSubmit(handleSubmit)}
               className="flex flex-col gap-8"
               name="new-tournament-form"
             >

@@ -1,5 +1,6 @@
 import { db } from '@/server/db';
-import { clubs, DatabaseClub } from '@/server/db/schema/clubs';
+import { clubs } from '@/server/db/schema/clubs';
+import { ClubModel } from '@/server/db/zod/clubs';
 import { asc } from 'drizzle-orm';
 
 export default async function getAllClubs() {
@@ -12,5 +13,5 @@ export default async function getAllClubs() {
     // .limit(pageSize)
     // .offset((page - 1) * pageSize)
     .$dynamic();
-  return allClubs as DatabaseClub[];
+  return allClubs as ClubModel[];
 }

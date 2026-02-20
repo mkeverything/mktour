@@ -24,9 +24,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DatabaseClub } from '@/server/db/schema/clubs';
-import { DatabasePlayer } from '@/server/db/schema/players';
+import { ClubModel } from '@/server/db/zod/clubs';
 import { StatusInClub } from '@/server/db/zod/enums';
+import { PlayerModel } from '@/server/db/zod/players';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Home, Search, Trophy, Users2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -34,7 +34,7 @@ import Link from 'next/link';
 import { FC, useEffect, useState } from 'react';
 
 const ClubPage: FC<{
-  club: DatabaseClub;
+  club: ClubModel;
   statusInClub: StatusInClub | null;
   userId: string;
 }> = ({ club, statusInClub }) => {
@@ -75,7 +75,7 @@ const ClubPage: FC<{
 };
 
 const ClubHeader: FC<{
-  club: DatabaseClub;
+  club: ClubModel;
   statusInClub: StatusInClub | null;
 }> = ({ club, statusInClub }) => {
   const t = useTranslations('Club');
@@ -461,7 +461,7 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
   );
 };
 
-const PlayerItem: FC<{ player: DatabasePlayer }> = ({ player }) => {
+const PlayerItem: FC<{ player: PlayerModel }> = ({ player }) => {
   return (
     <Link href={`/player/${player.id}`}>
       <Card className="mk-card flex items-center justify-between truncate">

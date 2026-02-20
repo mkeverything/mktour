@@ -1,10 +1,11 @@
 import { db } from '@/server/db';
-import { clubs, DatabaseClub } from '@/server/db/schema/clubs';
+import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
+import { ClubModel } from '@/server/db/zod/clubs';
 import { PlayerModel } from '@/server/db/zod/players';
 import { desc, eq } from 'drizzle-orm';
 
-export const getClubInfo = async (id: DatabaseClub['id']) => {
+export const getClubInfo = async (id: ClubModel['id']) => {
   const data = (await db.select().from(clubs).where(eq(clubs.id, id)))?.at(0);
   if (!data) return null;
   return data;

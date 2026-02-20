@@ -12,12 +12,15 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { sessions, user_preferences, users } from '@/server/db/schema/users';
-import { EditProfileFormType } from '@/server/db/zod/users';
+import { EditProfileFormModel } from '@/server/db/zod/users';
 import { deleteClubFunction } from '@/server/mutations/club-managing';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
-export const editUser = async (userId: string, values: EditProfileFormType) => {
+export const editUser = async (
+  userId: string,
+  values: EditProfileFormModel,
+) => {
   const [user] = await db
     .update(users)
     .set(values)
