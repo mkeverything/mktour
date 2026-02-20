@@ -11,13 +11,12 @@ this file describes how to operate as an agent inside this repo. it covers build
 - bun opt # enable optimizations
 
 - building & production
-- bun build # production build
+- bun run build # production build
 - bun start # start production server
 - bun analyze # analyze bundle size
 
 - code quality
 - bun check # typecheck, lint, tests
-- bun lint # eslint
 - bun format # prettier formatting
 - bun knip # find unused dependencies/exports
 
@@ -33,6 +32,10 @@ this file describes how to operate as an agent inside this repo. it covers build
 - bun db:studio # open drizzle studio
 - bun db:check # check database schema
 - bun localdb:\* # offline development commands (aliases)
+
+- migrating production database
+  curl -X POST https://mktour.org/api/db/migrate \
+   -H "authorization: Bearer <CRON_SECRET>"
 
 - other
 - bun generate-erd # generate entity-relationship diagram

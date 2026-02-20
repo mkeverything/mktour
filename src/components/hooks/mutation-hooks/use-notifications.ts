@@ -76,9 +76,15 @@ export const useChangeNotificationStatusMutation = () => {
         }
       },
       onSettled: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.auth.notifications.pathKey(),
-        });
+        if (
+          queryClient.isMutating({
+            mutationKey: trpc.auth.notifications.pathKey(),
+          }) === 1
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.auth.notifications.pathKey(),
+          });
+        }
       },
     }),
   );

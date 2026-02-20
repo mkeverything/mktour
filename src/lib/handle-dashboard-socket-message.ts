@@ -131,6 +131,10 @@ export const handleSocketMessage = (
           return cache;
         },
       );
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+      });
+      break;
     case 'reset-tournament':
       queryClient.setQueryData(
         trpc.tournament.info.queryKey({ tournamentId }),
