@@ -2,7 +2,6 @@
 
 import Center from '@/components/center';
 import LichessSVG from '@/components/icons/lichess-svg';
-import GithubLogo from '@/components/ui-custom/github-logo';
 import {
   Card,
   CardContent,
@@ -13,7 +12,6 @@ import {
 import { type ChangeItem, type ChangelogVersion } from '@/lib/changelog';
 import { MailIcon } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useTheme } from 'next-themes';
 import Link from 'next/link';
 
 interface AboutContentProps {
@@ -21,7 +19,6 @@ interface AboutContentProps {
 }
 
 export default function AboutContent({ changelog }: AboutContentProps) {
-  const { theme } = useTheme();
   const t = useTranslations('About');
   const format = useFormatter();
 
