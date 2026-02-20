@@ -111,7 +111,17 @@ this file describes how to operate as an agent inside this repo. it covers build
 - api routes should use try/catch and return clear errors
 - log errors with context; avoid exposing secrets
 
-- testing
+## optimistic updates
+
+use react-query optimistic updates when the UI needs to feel instant (e.g. counters, toggles, quick actions). follow this pattern to handle concurrent mutations without flicker:
+
+- onMutate: cancel queries, save previous state, optimistically update cache
+- onSuccess: broadcast changes via WebSocket if multi-client sync needed
+- onError: rollback to previous state
+- onSettled: use `isMutating() === 1` check - invalidation only runs after the final mutation, preventing flicker during rapid clicks
+
+## testing
+
 - bun test runner; tests end with '.test.ts' or '.test.tsx'
 - place tests under 'src/tests/'
 - share utilities under 'tests/setup/utils.ts'

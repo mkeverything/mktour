@@ -22,10 +22,7 @@ export default function SwissRoundsNumber({
   const { data: players } = useTournamentPlayers(tournamentId);
   const queryClient = useQueryClient();
   const { sendJsonMessage, status } = useContext(DashboardContext);
-  const { mutate, isPending } = useSaveRoundsNumberMutation(
-    queryClient,
-    sendJsonMessage,
-  );
+  const { mutate } = useSaveRoundsNumberMutation(queryClient, sendJsonMessage);
 
   const isOrganizer = status === 'organizer';
   const currentValue = data?.tournament.roundsNumber ?? 0;
@@ -55,7 +52,7 @@ export default function SwissRoundsNumber({
       <button
         type="button"
         onClick={handleDecrement}
-        disabled={isPending || !canDecrement}
+        disabled={!canDecrement}
         className={cn(
           'border-input bg-background hover:bg-accent hover:text-accent-foreground',
           'flex h-8 w-8 items-center justify-center rounded border text-lg',
@@ -74,7 +71,7 @@ export default function SwissRoundsNumber({
       <button
         type="button"
         onClick={handleIncrement}
-        disabled={isPending || !canIncrement}
+        disabled={!canIncrement}
         className={cn(
           'border-input bg-background hover:bg-accent hover:text-accent-foreground',
           'flex h-8 w-8 items-center justify-center rounded border text-lg',
