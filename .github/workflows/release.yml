@@ -22,6 +22,11 @@ jobs:
         run: |
           BRANCH="${{ github.event.workflow_run.head_branch }}"
           git checkout -B "$BRANCH" "origin/$BRANCH"
+      - name: Set branch environment variable
+        run: |
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          echo "GITHUB_REF=refs/heads/$BRANCH" >> $GITHUB_ENV
+          echo "CI_BRANCH=$BRANCH" >> $GITHUB_ENV
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -29,12 +34,14 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
-      - name: Verify branch for debugging
+      - name: Debug environment
         run: |
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "CI_BRANCH=$CI_BRANCH"
+          echo "GITHUB_EVENT_NAME=$GITHUB_EVENT_NAME"
           git branch -a
           echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
       - run: bunx semantic-release --branch ${{ github.event.workflow_run.head_branch }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HUSKY: 0
-          GITHUB_REF: refs/heads/${{ github.event.workflow_run.head_branch }}
