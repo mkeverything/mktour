@@ -15,7 +15,6 @@ import { getLocale, getMessages } from 'next-intl/server';
 import Script from 'next/script';
 import { PropsWithChildren, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Monitoring } from 'react-scan/monitoring/next';
 
 async function LayoutContent({ children }: PropsWithChildren) {
   const locale = await getLocale();
@@ -43,12 +42,6 @@ export default function RootLayout({ children }: PropsWithChildren) {
     <html suppressHydrationWarning>
       <body className="small-scrollbar">
         <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <Monitoring
-            apiKey="lF6izIzLWPWQf0iBiCWoWp02icHdOhdg" // Safe to expose publically
-            url="https://monitoring.react-scan.com/api/v1/ingest"
-            commit={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA}
-            branch={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF}
-          />
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
