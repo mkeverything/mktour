@@ -35,3 +35,33 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
           DATABASE_AUTH_TOKEN: ${{ secrets.TEST_DATABASE_AUTH_TOKEN }}
+
+  release:
+    name: Release
+    needs: lint-and-check
+    if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Debug branch
+        run: |
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+      - run: bunx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HUSKY: 0
