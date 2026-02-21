@@ -1,3 +1,10 @@
+# [0.13.0-beta.1](https://github.com/mkeverything/mktour/compare/v0.12.8-beta.1...v0.13.0-beta.1) (2026-02-21)
+
+
+### Features
+
+* user.playerClubs - returns clubs where user has affiliated players ([0f9a356](https://github.com/mkeverything/mktour/commit/0f9a356ff067a4acd0855d807cebc3ec10bd8969))
+
 ## [0.12.8-beta.1](https://github.com/mkeverything/mktour/compare/v0.12.7...v0.12.8-beta.1) (2026-02-21)
 
 
