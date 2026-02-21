@@ -25,6 +25,7 @@
     "generate-erd": "bun run src/lib/generate-erd.ts",
     "prepare": "husky",
     "generate-openapi": "bun run src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
+    "test:noseed": "SKIP_SEED=1 bun test",
     "check": "bunx tsc --noEmit && bun lint && bun test"
   },
   "dependencies": {

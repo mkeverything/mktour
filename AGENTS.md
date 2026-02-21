@@ -119,21 +119,23 @@ the spec file is generated from trpc router definitions and should never be manu
 ## commands
 
 ```
-bun dev                # start dev server
-bun dev:test           # dev with test database (MKTOURTEST=true)
-bun dev:local          # offline mode (OFFLINE=true, local sqld at :8080)
-bun run build          # production build
-bun start              # start production server
-bun check              # typecheck + lint + tests (run before pushing)
-bun format             # prettier formatting
-bun knip               # find unused deps/exports
-bun test               # run all tests
-bun test path/to/file  # run single test file
-bun analyze            # bundle analysis
-bun db:push            # generate + run migrations
-bun db:studio          # open drizzle studio
-bun generate-erd       # generate entity-relationship diagram
-bun generate-openapi   # generate openapi spec
+bun dev                      # start dev server
+bun dev:test                 # dev with test database (MKTOURTEST=true)
+bun dev:local                # offline mode (OFFLINE=true, local sqld at :8080)
+bun run build                # production build
+bun start                    # start production server
+bun check                    # typecheck + lint + tests (run before pushing)
+bun format                   # prettier formatting
+bun knip                     # find unused deps/exports
+bun test                     # run all tests (with db seed)
+bun test path/to/file        # run single test file (with db seed)
+bun test:noseed path/to/file # run test without db seed (fast for non-db tests)
+SKIP_SEED=1 bun test ...     # alternative: skip seed via env var
+bun analyze                  # bundle analysis
+bun db:push                  # generate + run migrations
+bun db:studio                # open drizzle studio
+bun generate-erd             # generate entity-relationship diagram
+bun generate-openapi         # generate openapi spec
 ```
 
 always run `bun check` before pushing. use single-file test when validating changes.
@@ -188,6 +190,17 @@ onSettled: () => {
 - test utilities: `src/tests/setup/utils.ts` — `createAuthenticatedCaller()`, `createUnauthenticatedCaller()`, `cleanupTestDb()`, `getSeededTestData()`
 - use mocks from `bun:test`
 - test both success and failure paths
+
+### skipping database seed
+
+for tests that don't need database (e.g. pure logic tests like glicko-2, pairing generators), skip seeding to run tests instantly:
+
+```bash
+bun test:noseed path/to/test.ts  # using npm script
+SKIP_SEED=1 bun test path/to/test.ts  # using env var directly
+```
+
+this reduces test time from ~15s to ~20ms for non-db tests.
 
 ## i18n
 
