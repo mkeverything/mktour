@@ -1,3 +1,10 @@
+## [0.12.2](https://github.com/mkeverything/mktour/compare/v0.12.1...v0.12.2) (2026-02-21)
+
+
+### Bug Fixes
+
+* prevent semantic release automerge ([186784f](https://github.com/mkeverything/mktour/commit/186784f2dd26a55329de8363704a51fbea16494a))
+
 ## [0.12.1](https://github.com/mkeverything/mktour/compare/v0.12.0...v0.12.1) (2026-02-21)
 
 
