@@ -1,3 +1,10 @@
+## [0.12.4](https://github.com/mkeverything/mktour/compare/v0.12.3...v0.12.4) (2026-02-21)
+
+
+### Bug Fixes
+
+* **ci:** properly checkout branch for semantic-release to avoid detached HEAD ([20395e8](https://github.com/mkeverything/mktour/commit/20395e8e16b155b35d34e73f99894bcff77659c5))
+
 ## [0.12.3](https://github.com/mkeverything/mktour/compare/v0.12.2...v0.12.3) (2026-02-21)
 
 
