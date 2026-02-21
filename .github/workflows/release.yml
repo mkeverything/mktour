@@ -12,18 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
           persist-credentials: false
       - name: Configure git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Ensure local main branch exists for semantic-release
-        if: github.event.workflow_run.head_branch != 'main'
+      - name: Checkout the triggering branch
         run: |
-          git fetch origin main:main
-          git checkout ${{ github.event.workflow_run.head_branch }}
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          git checkout -B "$BRANCH" "origin/$BRANCH"
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -31,6 +29,10 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      - name: Verify branch for debugging
+        run: |
+          git branch -a
+          echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
       - run: bunx semantic-release --branch ${{ github.event.workflow_run.head_branch }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
