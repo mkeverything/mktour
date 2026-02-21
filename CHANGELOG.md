@@ -1,3 +1,10 @@
+## [0.12.6](https://github.com/mkeverything/mktour/compare/v0.12.5...v0.12.6) (2026-02-21)
+
+
+### Bug Fixes
+
+* empty ([09c30c4](https://github.com/mkeverything/mktour/commit/09c30c4374ebced48a82c2b03a5e5d3954a7c612))
+
 ## [0.12.5](https://github.com/mkeverything/mktour/compare/v0.12.4...v0.12.5) (2026-02-21)
 
 
