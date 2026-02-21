@@ -1,3 +1,43 @@
+# [0.12.0](https://github.com/mkeverything/mktour/compare/v0.11.4...v0.12.0) (2026-02-21)
+
+
+### Bug Fixes
+
+* **?:** beta releases ([e1237f0](https://github.com/mkeverything/mktour/commit/e1237f081f170bc3ed526d3418cbfae29f4f3b1e))
+* better stopguard to prevent dropping dev database if env renamed ([f390662](https://github.com/mkeverything/mktour/commit/f39066202773e092f665a52b1cb36ed8c480b98a))
+* build ([7a6fbad](https://github.com/mkeverything/mktour/commit/7a6fbade8bf2acd859f2cbd3c66efe9ee8cc2685))
+* **ci:** create local main branch ref for semantic-release on beta ([783f3d1](https://github.com/mkeverything/mktour/commit/783f3d156b01342e134b7a479447245c0ed0e538))
+* **ci:** override GITHUB_REF and set explicit branch for semantic-release ([3cbe64d](https://github.com/mkeverything/mktour/commit/3cbe64d7599d9cfbf452c06f6832bfbcb93aa798))
+* **ci:** trigger beta release with empty commit ([2ef2d83](https://github.com/mkeverything/mktour/commit/2ef2d834957964f2ae22706f6554ef927ac76b22))
+* correct type usage ([61caac1](https://github.com/mkeverything/mktour/commit/61caac12ba17c93e71b63265a47864eeb59b4314))
+* improve optimistic update for auth notifications (if isMutating === 1) ([ad8fa44](https://github.com/mkeverything/mktour/commit/ad8fa442957bc6daac7404cd1296c563e267b4e5))
+* intl toasts in club-settings form ([722ff13](https://github.com/mkeverything/mktour/commit/722ff13455480c5814dc4c5bf910b14c1622b29c))
+* **matching:** update inBlossom when creating/expanding blossoms ([62df685](https://github.com/mkeverything/mktour/commit/62df6855a64d1e67938aff608da2f42ee010bf07))
+* missing translation ([3376720](https://github.com/mkeverything/mktour/commit/3376720ccddf97f0268d2c0b7964dce2cc4dfeca))
+* prevent ANY tests from running if wrong database url is setup ([fbf7d39](https://github.com/mkeverything/mktour/commit/fbf7d3979acb078eadc12e4cb5c9ccb1fae7fdfd))
+* prevent cleaning up wrong database ([09dbdbf](https://github.com/mkeverything/mktour/commit/09dbdbf9645def691d92a9ed0fecdc12b8a1f6f1))
+* prevent flickering on all mutations with optimistic updates (+ fix description for agents) ([c98de0f](https://github.com/mkeverything/mktour/commit/c98de0f4f29ed23d73df619b2dfff42111ee713e))
+* type error from new version of react-error-boundary ([b1c60a7](https://github.com/mkeverything/mktour/commit/b1c60a7f72e79e65daba90275101317242999af4))
+* typo ([e75f765](https://github.com/mkeverything/mktour/commit/e75f76533ee6a7e2bad0b8a334e86c5602fe0db6))
+* updated lockfile ([2cda099](https://github.com/mkeverything/mktour/commit/2cda09948b43936d409e95fe55ab3bad1d13b2f2))
+* updating swiss round number spinner onClick ([dddb439](https://github.com/mkeverything/mktour/commit/dddb439ef73adc4911763363f2603927cc765acf))
+
+
+### Features
+
+* add changelog block with three last releases listing all commits ([e1a7d36](https://github.com/mkeverything/mktour/commit/e1a7d362b6b1b119b2cc514d72fe20aab2f8d144))
+* enhance tournament display for unnamed tournaments ([8b73353](https://github.com/mkeverything/mktour/commit/8b73353d5ab62a89f96ca3adffa3ce4645834440))
+* **matching:** add cardinality validation and extract shared BFS ([a5021d9](https://github.com/mkeverything/mktour/commit/a5021d99088e0a56f4a96a34d29074c79fae2003))
+* **matching:** add generic BFS search and weighted matching foundation ([f161841](https://github.com/mkeverything/mktour/commit/f16184160b7311d4e60c599bb2c9a1167f5475d2))
+* **matching:** complete weighted Blossom algorithm with comprehensive tests ([4f66853](https://github.com/mkeverything/mktour/commit/4f668539ef781bdc85dbb63fdb2fabdecf095e87))
+* redesign of swiss rounds number selector ([ddf15a1](https://github.com/mkeverything/mktour/commit/ddf15a1281d2577cb843c25f0cb6bfb0933ef7bf))
+* **swiss:** add modular Swiss system components with criterion interface ([3d5139e](https://github.com/mkeverything/mktour/commit/3d5139e6cbbc73d6d003974649743cc430c7017b))
+* **swiss:** compute float history from game data and re-enable C3 ([687b7e3](https://github.com/mkeverything/mktour/commit/687b7e3908e81551870062d02a216feac59a2020))
+* **swiss:** fix weighted blossom augmentation and add edge case tests ([02562ca](https://github.com/mkeverything/mktour/commit/02562ca7c107fad7782c78f47d5243e8db9da1c0))
+* **swiss:** migrate to beta Zod types and add diagnostic scripts ([aee7f10](https://github.com/mkeverything/mktour/commit/aee7f10082e73e0fc05c66d7476c99e126e019d1))
+* **weighted-pairing:** add FIDE criteria weight calculation module ([cd6f905](https://github.com/mkeverything/mktour/commit/cd6f905c2358f1e5c00680e2df7bd3d25cc89204))
+* ws handling for swiss round number change ([d9fccc7](https://github.com/mkeverything/mktour/commit/d9fccc7036697f5c69d4ee5200db5150cffab930))
+
 ## [0.11.4](https://github.com/mkeverything/mktour/compare/v0.11.3...v0.11.4) (2026-02-20)
 
 
