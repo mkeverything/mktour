@@ -1,3 +1,10 @@
+## [0.12.8-beta.1](https://github.com/mkeverything/mktour/compare/v0.12.7...v0.12.8-beta.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* wrong date to dateString translations ([7adcdb7](https://github.com/mkeverything/mktour/commit/7adcdb7de1caa52e15be6e6ac8326ca523ac138a))
+
 ## [0.12.7](https://github.com/mkeverything/mktour/compare/v0.12.6...v0.12.7) (2026-02-21)
 
 
