@@ -90,6 +90,37 @@ export const seedComprehensiveTestData = async () => {
         .where(eq(schema.users.id, relation.userId));
     }
 
+    const users = await db.select().from(schema.users).limit(5);
+    const players = await db.select().from(schema.players).limit(10);
+
+    // link first 3 players to first user
+    if (users[0] && players[0]) {
+      await db
+        .update(schema.players)
+        .set({ userId: users[0].id })
+        .where(eq(schema.players.id, players[0].id));
+    }
+    if (users[0] && players[1]) {
+      await db
+        .update(schema.players)
+        .set({ userId: users[0].id })
+        .where(eq(schema.players.id, players[1].id));
+    }
+    if (users[0] && players[2]) {
+      await db
+        .update(schema.players)
+        .set({ userId: users[0].id })
+        .where(eq(schema.players.id, players[2].id));
+    }
+
+    // link one player to second user
+    if (users[1] && players[3]) {
+      await db
+        .update(schema.players)
+        .set({ userId: users[1].id })
+        .where(eq(schema.players.id, players[3].id));
+    }
+
     const usersWithValidSelectedClub = db
       .select({ id: schema.users.id })
       .from(schema.users)

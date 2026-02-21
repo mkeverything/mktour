@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { publicCaller } from '@/server/api/index';
 import { clubsSelectSchema } from '@/server/db/zod/clubs';
+import { playersSelectSchema } from '@/server/db/zod/players';
 import {
   usersSelectPublicSchema,
   usersSelectSchema,
@@ -137,6 +138,117 @@ describe('user router', () => {
     });
   });
 
+  describe('user.playerClubs', () => {
+    it('validates output schema', async () => {
+      const userWithPlayers = testData.players.find((p) => p.userId);
+
+      if (!userWithPlayers?.userId) {
+        console.log('no players with userId found, skipping test');
+        return;
+      }
+
+      const result = await publicCaller.user.playerClubs({
+        userId: userWithPlayers.userId,
+      });
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+
+      if (result.length > 0) {
+        const clubSchema = clubsSelectSchema.pick({ id: true, name: true });
+        const playerSchema = playersSelectSchema.pick({
+          id: true,
+          nickname: true,
+          rating: true,
+        });
+
+        result.forEach((item) => {
+          expect(item.club).toBeDefined();
+          expect(item.player).toBeDefined();
+
+          const clubParseResult = clubSchema.safeParse(item.club);
+          expect(clubParseResult.success).toBe(true);
+
+          const playerParseResult = playerSchema.safeParse(item.player);
+          expect(playerParseResult.success).toBe(true);
+        });
+      }
+    });
+
+    it('returns empty array for user with no players', async () => {
+      const userWithoutPlayers = testData.users.find(
+        (u) => !testData.players.some((p) => p.userId === u.id),
+      );
+
+      if (!userWithoutPlayers) {
+        console.log('all users have players, skipping test');
+        return;
+      }
+
+      const result = await publicCaller.user.playerClubs({
+        userId: userWithoutPlayers.id,
+      });
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBe(0);
+    });
+
+    it('handles non-existent user id', async () => {
+      const result = await publicCaller.user.playerClubs({
+        userId: 'non-existent-user-id',
+      });
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBe(0);
+    });
+
+    it('returns distinct clubs when user has multiple players in same club', async () => {
+      const userWithPlayers = testData.players.find((p) => p.userId);
+
+      if (!userWithPlayers?.userId) {
+        console.log('no players with userId found, skipping test');
+        return;
+      }
+
+      const result = await publicCaller.user.playerClubs({
+        userId: userWithPlayers.userId,
+      });
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+
+      const clubIds = result.map((item) => item.club.id);
+      const uniqueClubIds = new Set(clubIds);
+      expect(clubIds.length).toBe(uniqueClubIds.size);
+    });
+
+    it('includes correct player data', async () => {
+      const userWithPlayers = testData.players.find((p) => p.userId);
+
+      if (!userWithPlayers?.userId) {
+        console.log('no players with userId found, skipping test');
+        return;
+      }
+
+      const result = await publicCaller.user.playerClubs({
+        userId: userWithPlayers.userId,
+      });
+
+      if (result.length > 0) {
+        const firstItem = result[0];
+
+        expect(firstItem.player.id).toBeDefined();
+        expect(typeof firstItem.player.id).toBe('string');
+        expect(firstItem.player.nickname).toBeDefined();
+        expect(typeof firstItem.player.nickname).toBe('string');
+        expect(firstItem.player.rating).toBeDefined();
+        expect(typeof firstItem.player.rating).toBe('number');
+      }
+    });
+  });
+
   describe('edge cases', () => {
     it('handles malformed input', () => {
       expect(
@@ -149,6 +261,10 @@ describe('user router', () => {
 
       expect(
         publicCaller.user.clubs({ userId: undefined as any }),
+      ).rejects.toThrow();
+
+      expect(
+        publicCaller.user.playerClubs({ userId: undefined as any }),
       ).rejects.toThrow();
     });
 
@@ -171,6 +287,7 @@ describe('user router', () => {
         publicCaller.user.all(),
         publicCaller.user.info({ userId: testData.firstUser.id }),
         publicCaller.user.clubs({ userId: testData.firstUser.id }),
+        publicCaller.user.playerClubs({ userId: testData.firstUser.id }),
       ];
 
       const results = await Promise.all(promises);

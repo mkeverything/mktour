@@ -28,6 +28,15 @@ const meta = {
     },
   },
 
+  userPlayerClubs: {
+    openapi: {
+      method: 'GET',
+      path: '/users/{userId}/player-clubs',
+      summary: 'get clubs where user has players',
+      tags: ['users'],
+    },
+  },
+
   usersInfoByUsername: {
     openapi: {
       method: 'GET',
