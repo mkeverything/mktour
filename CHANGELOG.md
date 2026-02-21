@@ -1,3 +1,11 @@
+## [0.12.6-beta.1](https://github.com/mkeverything/mktour/compare/v0.12.5...v0.12.6-beta.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* **ci:** combine CI and release into single workflow to fix branch detection ([8ebd409](https://github.com/mkeverything/mktour/commit/8ebd40933094b9ac4e8f3e34378fbc032783bb21))
+* empty ([09c30c4](https://github.com/mkeverything/mktour/commit/09c30c4374ebced48a82c2b03a5e5d3954a7c612))
+
 ## [0.12.5](https://github.com/mkeverything/mktour/compare/v0.12.4...v0.12.5) (2026-02-21)
 
 
