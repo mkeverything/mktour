@@ -177,6 +177,7 @@ onSettled: () => {
 - small, focused commits; avoid large rewrites
 - avoid amend unless explicitly requested and safe
 - do not push to remote without user approval
+- syncing branches: to make beta identical to main without merge commits: `git checkout beta && git reset --hard origin/main && git push --force origin beta`
 
 - code quality tools
 - eslint with next.js ts config
