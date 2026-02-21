@@ -28,8 +28,9 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import {
-  NewTournamentFormType,
+  dateToLocalDateString,
   newTournamentFormSchema,
+  NewTournamentFormType,
 } from '@/lib/zod/new-tournament-form';
 import { ClubModel } from '@/server/db/zod/clubs';
 import { UserModel } from '@/server/db/zod/users';
@@ -67,7 +68,7 @@ export default function NewTournamentForm({
     mutate(
       {
         ...data,
-        date: data.date.toISOString().slice(0, 10),
+        date: dateToLocalDateString(data.date),
       },
       {
         onSuccess: (result) => {
