@@ -1,3 +1,10 @@
+## [0.12.5](https://github.com/mkeverything/mktour/compare/v0.12.4...v0.12.5) (2026-02-21)
+
+
+### Bug Fixes
+
+* **ci:** use GITHUB_ENV to override GITHUB_REF for semantic-release ([992e3e5](https://github.com/mkeverything/mktour/commit/992e3e50d925f1d8291c4e8f0a310ff5c25809e1))
+
 ## [0.12.4](https://github.com/mkeverything/mktour/compare/v0.12.3...v0.12.4) (2026-02-21)
 
 
