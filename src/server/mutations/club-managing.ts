@@ -149,16 +149,19 @@ export const editPlayer = async ({
   values: PlayerEditModel;
   user: User;
 }) => {
-  const [playerClub] = await db
-    .select({ clubId: players.clubId })
+  const [player] = await db
+    .select({ clubId: players.clubId, userId: players.userId })
     .from(players)
     .where(eq(players.id, values.id));
 
-  const status = await getStatusInClub({
+  const isAffiliated = player.userId === user.id;
+  const isClubAdmin = await getStatusInClub({
     userId: user.id,
-    clubId: playerClub.clubId,
+    clubId: player.clubId,
   });
-  if (!status) throw new Error('NOT_ADMIN');
+
+  if (!isAffiliated && !isClubAdmin) throw new Error('NOT_AUTHORIZED');
+
   const result = (
     await db
       .update(players)

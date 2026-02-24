@@ -163,7 +163,7 @@ export const playerRouter = {
       if (!isAdmin) throw new TRPCError({ code: 'UNAUTHORIZED' });
       await deletePlayer(input);
     }),
-  edit: clubAdminProcedure
+  edit: protectedProcedure
     .meta(meta.playersEdit)
     .input(playerEditSchema)
     .output(playersSelectSchema)
