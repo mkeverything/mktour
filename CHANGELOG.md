@@ -1,3 +1,13 @@
+# [0.13.0-beta.7](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.6...v0.13.0-beta.7) (2026-02-24)
+
+
+### Bug Fixes
+
+* cancel button in start tournament modal ([60dfa08](https://github.com/mkeverything/mktour/commit/60dfa08131204bed3de7367fc9a7ac4344433482))
+* dashboard fabs positioning ([7e9be45](https://github.com/mkeverything/mktour/commit/7e9be453c5432fec5243c1baca13156c1364234d))
+* player modal in trnmt ([70363ca](https://github.com/mkeverything/mktour/commit/70363ca835f477ed61ccd5d45804b9903396e7e0))
+* round controls paddings; minor styling ([f1006ed](https://github.com/mkeverything/mktour/commit/f1006eda68bd6cd9e88ccc76b1845be732bdfe0c))
+
 # [0.13.0-beta.6](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.5...v0.13.0-beta.6) (2026-02-24)
 
 
