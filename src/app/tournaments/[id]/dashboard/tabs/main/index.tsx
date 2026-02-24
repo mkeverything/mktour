@@ -46,6 +46,33 @@ const Main = () => {
   );
 };
 
+export const InfoItem: FC<{
+  icon: FC<{ className?: string }>;
+  value: string | number | null | undefined;
+  href?: string;
+  format?: boolean;
+  children?: React.ReactNode;
+}> = ({ icon: Icon, value, href, format, children }) => {
+  const t = useTranslations('Tournament.Main');
+  return (
+    <div className="gap-mk flex md:gap-1">
+      <Icon className="text-muted-foreground my-auto size-4" />
+      {!href ? (
+        format ? (
+          <span>{t(String(value))}</span>
+        ) : (
+          <span>{value}</span>
+        )
+      ) : (
+        <Link href={href} className="mk-link hover:opacity-75">
+          {value}
+        </Link>
+      )}
+      {children}
+    </div>
+  );
+};
+
 export const LoadingElement = () => {
   return (
     <div className="flex flex-col gap-4 p-4 md:pb-2">
@@ -61,33 +88,6 @@ export const LoadingElement = () => {
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
       </div>
-    </div>
-  );
-};
-
-export const InfoItem: FC<{
-  icon: FC<{ className?: string }>;
-  value: string | number | null | undefined;
-  href?: string;
-  format?: boolean;
-  children?: React.ReactNode;
-}> = ({ icon: Icon, value, href, format, children }) => {
-  const t = useTranslations('Tournament.Main');
-  return (
-    <div className="flex gap-2">
-      <Icon className="text-muted-foreground my-auto size-4" />
-      {!href ? (
-        format ? (
-          <span>{t(String(value))}</span>
-        ) : (
-          <span>{value}</span>
-        )
-      ) : (
-        <Link href={href} className="mk-link hover:opacity-75">
-          {value}
-        </Link>
-      )}
-      {children}
     </div>
   );
 };
