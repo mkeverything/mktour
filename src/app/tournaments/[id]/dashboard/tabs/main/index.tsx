@@ -31,7 +31,7 @@ const Main = () => {
   const title = data.tournament.title || tournamentDisplayName;
 
   return (
-    <div className="max-md:mk-container md:px-mk pt-2 md:flex md:justify-between">
+    <div className="max-md:mk-container md:px-mk md:pl-mk-2 pt-mk md:flex md:justify-between">
       <div>
         <div className="p-mk flex items-center truncate pt-0 pb-2 text-xl font-bold whitespace-break-spaces max-md:border-b md:pb-0">
           {title}

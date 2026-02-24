@@ -71,6 +71,7 @@ button {
   --spacing-mk: calc(var(--spacing) * 2);
   --spacing-mk-2: calc(var(--spacing-mk) * 2);
   --spacing-mk-3: calc(var(--spacing-mk) * 3);
+  --spacing-mk-4: calc(var(--spacing-mk) * 4);
   --spacing-mk-card-height: calc(var(--spacing-mk) * 4);
 }
 
