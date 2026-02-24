@@ -1,5 +1,6 @@
 'use client';
 
+import { turboPascal } from '@/app/fonts';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import ActionButtons from '@/app/tournaments/[id]/dashboard/tabs/main/action-buttons';
 import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tournament-info';
@@ -33,7 +34,9 @@ const Main = () => {
   return (
     <div className="max-md:mk-container md:px-mk md:pl-mk-2 pt-mk md:flex md:justify-between">
       <div>
-        <div className="p-mk flex items-center truncate pt-0 pb-2 text-xl font-bold whitespace-break-spaces max-md:border-b md:pb-0">
+        <div
+          className={`p-mk ${turboPascal.className} flex items-center truncate pt-0 pb-2 text-2xl leading-tight font-bold whitespace-break-spaces max-md:border-b md:pb-0`}
+        >
           {title}
         </div>
         <TournamentInfoList />
