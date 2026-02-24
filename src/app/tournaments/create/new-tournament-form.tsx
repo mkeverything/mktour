@@ -88,7 +88,7 @@ export default function NewTournamentForm({
   return (
     <Form {...form}>
       <h2
-        className={`m-2 text-center text-4xl font-bold ${turboPascal.className}`}
+        className={`mt-2 text-center text-4xl font-bold sm:m-3 sm:mb-4 ${turboPascal.className}`}
       >
         {t('new tournament')}
       </h2>
