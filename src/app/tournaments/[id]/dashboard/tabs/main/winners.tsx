@@ -12,7 +12,7 @@ const Winners: FC<TournamentInfoModel> = ({ tournament }) => {
 
   if (!winners || !tournament.closedAt) return null;
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:hidden">
       {Object.entries(winners).map(([place, players]) => (
         <MedalGroup key={place} place={place} players={players} />
       ))}

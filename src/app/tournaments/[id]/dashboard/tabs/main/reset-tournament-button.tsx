@@ -19,7 +19,11 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useContext, useState } from 'react';
 
-export default function ResetTournamentButton() {
+export default function ResetTournamentButton({
+  className,
+}: {
+  className?: string;
+}) {
   const { id: tournamentId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { sendJsonMessage, setRoundInView } = useContext(DashboardContext);
@@ -35,7 +39,11 @@ export default function ResetTournamentButton() {
   return (
     <Root open={open} onOpenChange={setOpen}>
       <Trigger asChild>
-        <Button variant="outline">
+        <Button
+          variant="outline"
+          size="lg"
+          className={`max-md:w-full ${className}`}
+        >
           <RotateCcw />
           {t('reset progress')}
         </Button>

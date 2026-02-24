@@ -156,7 +156,12 @@ const ActionButton = ({
       />
     );
   if (renderFinishButton)
-    return <FinishTournamentButton lastRoundNumber={roundsNumber} />;
+    return (
+      <div className="md:hidden">
+        <FinishTournamentButton lastRoundNumber={roundsNumber} />
+      </div>
+    );
+
   return null;
 };
 
