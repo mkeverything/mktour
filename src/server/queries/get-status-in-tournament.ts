@@ -10,9 +10,17 @@ import { cache } from 'react';
 
 export type Status = 'organizer' | 'player' | 'viewer';
 
+export type TournamentAuthStatus =
+  | { status: 'organizer' }
+  | { status: 'player'; playerId: string }
+  | { status: 'viewer' };
+
 export const getStatusInTournament = cache(
-  async (userId: string | null, tournamentId: string): Promise<Status> => {
-    if (!userId) return 'viewer';
+  async (
+    userId: string | null,
+    tournamentId: string,
+  ): Promise<TournamentAuthStatus> => {
+    if (!userId) return { status: 'viewer' };
     const clubId = (
       await db
         .select({ club: tournaments.clubId })
@@ -32,11 +40,17 @@ export const getStatusInTournament = cache(
           ),
         )
     ).at(0)?.status;
-    if (dbStatus) return 'organizer';
+    if (dbStatus) return { status: 'organizer' };
+
+    // find player by userId in this club
     const player = (
-      await db.select().from(players).where(eq(players.userId, userId))
+      await db
+        .select()
+        .from(players)
+        .where(and(eq(players.userId, userId), eq(players.clubId, clubId)))
     ).at(0);
-    if (!player) return 'viewer';
+    if (!player) return { status: 'viewer' };
+
     const isHere = (
       await db
         .select()
@@ -48,7 +62,7 @@ export const getStatusInTournament = cache(
           ),
         )
     ).at(0);
-    if (isHere) return 'player';
-    else return 'viewer';
+    if (isHere) return { status: 'player', playerId: player.id };
+    else return { status: 'viewer' };
   },
 );

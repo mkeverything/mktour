@@ -17,8 +17,8 @@ import { FC, useContext } from 'react';
 const StartTournamentDrawer: FC<{
   startedAt: number | undefined;
 }> = ({ startedAt }) => {
-  const { selectedGameId } = useContext(DashboardContext);
-  const open = !startedAt && !!selectedGameId;
+  const { selectedGameId, status } = useContext(DashboardContext);
+  const open = !startedAt && !!selectedGameId && status === 'organizer';
 
   return (
     <Root open={open}>

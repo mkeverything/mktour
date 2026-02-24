@@ -19,6 +19,7 @@ const Dashboard: FC<TournamentPageContentProps> = ({
   session,
   id,
   status,
+  playerId,
   currentRound,
 }) => {
   const [currentTab, setCurrentTab] =
@@ -41,6 +42,7 @@ const Dashboard: FC<TournamentPageContentProps> = ({
         currentTab,
         sendJsonMessage,
         status,
+        playerId,
         userId,
         setSelectedGameId,
         selectedGameId,
@@ -84,6 +86,7 @@ interface TournamentPageContentProps {
   session: string | null;
   id: string;
   status: Status;
+  playerId: string | null;
   userId: string | undefined;
   currentRound: number | null;
 }

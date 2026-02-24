@@ -6,6 +6,7 @@ export const DashboardContext = createContext<DashboardContextType>({
   currentTab: 'main',
   sendJsonMessage: () => null,
   status: 'viewer',
+  playerId: null,
   userId: undefined,
   selectedGameId: null,
   setSelectedGameId: () => null,
@@ -17,6 +18,7 @@ export type DashboardContextType = {
   currentTab: 'main' | 'table' | 'games';
   sendJsonMessage: (_jsonMessage: DashboardMessage, _keep?: boolean) => void;
   status: Status;
+  playerId: string | null;
   userId: string | undefined;
   selectedGameId: string | null;
   setSelectedGameId: Dispatch<SetStateAction<string | null>>;

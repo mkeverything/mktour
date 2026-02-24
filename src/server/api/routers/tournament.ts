@@ -40,7 +40,6 @@ import {
 import getAllTournaments from '@/server/queries/get-all-tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
-
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
@@ -269,7 +268,7 @@ export const tournamentRouter = {
     .input(z.object({ tournamentId: z.string() }))
     .query(async (opts) => {
       const { user } = await validateRequest();
-      if (!user) return 'viewer';
+      if (!user) return { status: 'viewer' as const };
       return await getStatusInTournament(user.id, opts.input.tournamentId);
     }),
   updateSwissRoundsNumber: tournamentAdminProcedure

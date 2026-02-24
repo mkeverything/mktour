@@ -201,7 +201,7 @@ export const clubAdminProcedure = protectedProcedure
 export const tournamentAdminProcedure = protectedProcedure
   .input(z.object({ tournamentId: z.string() }))
   .use(async (opts) => {
-    const status = await getStatusInTournament(
+    const { status } = await getStatusInTournament(
       opts.ctx.user.id,
       opts.input.tournamentId,
     );

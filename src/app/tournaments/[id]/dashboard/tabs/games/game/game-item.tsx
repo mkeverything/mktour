@@ -23,8 +23,13 @@ const GameItem: FC<GameProps> = ({
   roundNumber,
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
-  const { selectedGameId, setSelectedGameId, sendJsonMessage, status } =
-    useContext(DashboardContext);
+  const {
+    selectedGameId,
+    setSelectedGameId,
+    sendJsonMessage,
+    status,
+    playerId,
+  } = useContext(DashboardContext);
   const queryClient = useQueryClient();
   const mutation = useTournamentSetGameResult(queryClient, {
     tournamentId,
@@ -36,7 +41,14 @@ const GameItem: FC<GameProps> = ({
   const selected = selectedGameId === id;
   const muted = result && !selected;
   const hasStarted = !!data?.tournament.startedAt;
-  const disabled = status !== 'organizer' || !!data?.tournament.closedAt;
+  const isClosed = !!data?.tournament.closedAt;
+  // players can only edit their own games, and only after tournament has started
+  const isPlayerInGame =
+    playerId === playerLeft.whiteId || playerId === playerRight.blackId;
+  const canEdit =
+    status === 'organizer' ||
+    (status === 'player' && isPlayerInGame && hasStarted);
+  const disabled = !canEdit || isClosed;
   const draw = result === '1/2-1/2';
 
   const handleMutate = (newResult: GameResult) => {

@@ -190,7 +190,7 @@ export async function addExistingPlayer({
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
-  const status = await getStatusInTournament(user.id, tournamentId);
+  const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
 
   const playerToTournament: PlayerToTournamentInsertModel = {
@@ -280,7 +280,7 @@ export async function saveRound({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
+  const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
   const cleanupPromises = [
     db
@@ -319,8 +319,8 @@ export async function startTournament({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const { status } = await getStatusInTournament(user.id, tournamentId);
+  if (status !== 'organizer') throw new Error('NOT_ADMIN');
 
   const finalRoundsNumber = !roundsNumber
     ? await getRoundsNumber(tournamentId, format)
@@ -347,8 +347,8 @@ export async function resetTournament({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const { status } = await getStatusInTournament(user.id, tournamentId);
+  if (status !== 'organizer') throw new Error('NOT_ADMIN');
   const queries = [
     db
       .update(tournaments)
@@ -406,8 +406,14 @@ export async function setTournamentGameResult({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const authStatus = await getStatusInTournament(user.id, tournamentId);
+  if (authStatus.status === 'viewer') throw new Error('NOT_AUTHORIZED');
+  // players can only set results for their own games
+  if (authStatus.status === 'player') {
+    const isPlayerInGame =
+      authStatus.playerId === whiteId || authStatus.playerId === blackId;
+    if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
+  }
   const tournament = (
     await db.select().from(tournaments).where(eq(tournaments.id, tournamentId))
   ).at(0);
@@ -808,8 +814,8 @@ export async function finishTournament({
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
 
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const { status } = await getStatusInTournament(user.id, tournamentId);
+  if (status !== 'organizer') throw new Error('NOT_ADMIN');
 
   if (closedAt) {
     await db
@@ -873,8 +879,8 @@ export async function deleteTournament({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const { status } = await getStatusInTournament(user.id, tournamentId);
+  if (status !== 'organizer') throw new Error('NOT_ADMIN');
   const queries = [
     db.delete(games).where(eq(games.tournamentId, tournamentId)),
     db

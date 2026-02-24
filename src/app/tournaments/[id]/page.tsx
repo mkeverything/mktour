@@ -24,16 +24,18 @@ export default async function TournamentPage(props: TournamentPageProps) {
     notFound();
   }
 
-  const status = await publicCaller.tournament.authStatus({
+  const authStatus = await publicCaller.tournament.authStatus({
     tournamentId: params.id,
   });
+  const playerId = authStatus.status === 'player' ? authStatus.playerId : null;
 
   return (
     <HydrationBoundary state={dehydrate(tournamentQueryClient)}>
       <Dashboard
         session={session}
         id={params.id}
-        status={status}
+        status={authStatus.status}
+        playerId={playerId}
         userId={user?.id}
         currentRound={tournament.tournament.ongoingRound}
       />
