@@ -3,6 +3,8 @@
 import { useSignOutMutation } from '@/components/hooks/mutation-hooks/use-sign-out';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useUserNotificationsCounter } from '@/components/hooks/query-hooks/use-user-notifications';
+import LocaleSwitcher from '@/components/locale-switcher';
+import ModeToggler from '@/components/navigation/mode-toggler';
 import Badge, { BadgeWithCount } from '@/components/ui-custom/badge';
 import {
   DropdownMenu,
@@ -40,14 +42,16 @@ export default function AuthButton() {
 
   if (!user) {
     return (
-      <>
+      <div className="flex items-center">
         <Button className={`flex-row gap-2 p-2`} variant="ghost" asChild>
           <Link href="/login/lichess" prefetch={false}>
             <LichessLogo />
             <span className="hidden sm:block">{t('Profile.login')}</span>
           </Link>
         </Button>
-      </>
+        <LocaleSwitcher />
+        <ModeToggler />
+      </div>
     );
   }
 
@@ -63,7 +67,7 @@ export default function AuthButton() {
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="-translate-x-2 translate-y-1">
+        <DropdownMenuContent>
           {menuItems.map(({ path, title }) => (
             <Link href={path} key={title}>
               <StyledItem className="w-full">
@@ -85,6 +89,10 @@ export default function AuthButton() {
           >
             {t('Profile.logout')}
           </StyledItem>
+          <div className="p-mk mx-mk mt-mk flex items-center justify-evenly border-t">
+            <LocaleSwitcher />
+            <ModeToggler />
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
