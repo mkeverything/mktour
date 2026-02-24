@@ -10,10 +10,17 @@ import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import useScrollableContainer from '@/components/hooks/use-scrollable-container';
 import SwipeHandlerProvider from '@/components/swipe-handler-provider';
 import FabProvider from '@/components/ui-custom/fab-provider';
+import { StatusInClub } from '@/server/db/zod/enums';
 import { useTranslations } from 'next-intl';
 import { Dispatch, FC, ReactNode, SetStateAction, useState } from 'react';
 
-export default function Dashboard({ userId }: { userId: string }) {
+export default function Dashboard({
+  userId,
+  statusInClub,
+}: {
+  userId: string;
+  statusInClub: StatusInClub | null;
+}) {
   const t = useTranslations('Club.Dashboard');
   const { data, isLoading } = useAuth();
   const [tab, setTab] = useState<ClubDashboardTab>('main');
@@ -47,7 +54,11 @@ export default function Dashboard({ userId }: { userId: string }) {
       <div className="fixed h-full w-full overflow-scroll">
         <div ref={ref} className="mk-container relative pt-24">
           <div className="m-auto h-full max-w-xl pb-20">
-            <ActiveTab userId={userId} selectedClub={data.selectedClub} />
+            <ActiveTab
+              userId={userId}
+              selectedClub={data.selectedClub}
+              statusInClub={statusInClub}
+            />
           </div>
         </div>
       </div>
