@@ -22,8 +22,8 @@ const StartTournamentDrawer: FC<{
 
   return (
     <Root open={open}>
-      <Content className="z-10000">
-        <Header>
+      <Content className="flex flex-col">
+        <Header className="mb-mk">
           <Title>
             <FormattedMessage id="Tournament.Round.start tournament.title" />
           </Title>
