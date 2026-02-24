@@ -20,7 +20,7 @@ const Main = () => {
   const formatUtil = useFormatter();
   const t = useTranslations('MakeTournament');
 
-  if (isLoading || 0) return <LoadingElement />;
+  if (isLoading) return <LoadingElement />;
   if (!data) return <Center>no data</Center>;
 
   const tournamentDisplayName = getTournamentDisplayName(
