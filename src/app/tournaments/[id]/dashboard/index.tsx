@@ -1,11 +1,11 @@
 'use client';
 
-import DashboardMobile from '@/app/tournaments/[id]/dashboard/mobile/dashboard-mobile';
 import { DashboardContextType } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import DashboardDesktop from '@/app/tournaments/[id]/dashboard/desktop/dashboard-desktop';
+import DashboardMobile from '@/app/tournaments/[id]/dashboard/mobile/dashboard-mobile';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Status } from '@/server/queries/get-status-in-tournament';
-import { Dispatch, FC, SetStateAction, useState, useContext } from 'react';
+import { Dispatch, FC, SetStateAction, useContext, useState } from 'react';
 
 const Dashboard: FC<TournamentPageContentProps> = ({
   userId,
@@ -18,24 +18,10 @@ const Dashboard: FC<TournamentPageContentProps> = ({
   const [currentTab, setCurrentTab] =
     useState<DashboardContextType['currentTab']>('main');
   const { isDesktop } = useContext(MediaQueryContext);
-
-  if (isDesktop) {
-    return (
-      <DashboardDesktop
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        session={session}
-        id={id}
-        status={status}
-        playerId={playerId}
-        userId={userId}
-        currentRound={currentRound}
-      />
-    );
-  }
+  const Component = isDesktop ? DashboardDesktop : DashboardMobile;
 
   return (
-    <DashboardMobile
+    <Component
       currentTab={currentTab}
       setCurrentTab={setCurrentTab}
       session={session}
