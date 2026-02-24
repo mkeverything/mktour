@@ -1,3 +1,10 @@
+# [0.13.0-beta.3](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.2...v0.13.0-beta.3) (2026-02-24)
+
+
+### Features
+
+* integrate swiss pairing system into the website ([7796b86](https://github.com/mkeverything/mktour/commit/7796b86c83fde36c154a8aeea627ab249f605b3d))
+
 # [0.13.0-beta.2](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.1...v0.13.0-beta.2) (2026-02-24)
 
 
