@@ -6,8 +6,8 @@ import { FC } from 'react';
 const Desktop: FC = () => {
   return (
     <div className="flex w-full items-center justify-end align-middle">
-      <NavigationMenuContainer />
       <GlobalSearch />
+      <NavigationMenuContainer />
       <AuthButton />
     </div>
   );
