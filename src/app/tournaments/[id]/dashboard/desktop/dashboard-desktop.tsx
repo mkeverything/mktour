@@ -49,7 +49,7 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
     >
       <Overlay open={!!selectedGameId} />
       <Main />
-      <div className="flex h-[calc(100dvh-10rem)] gap-2 overflow-hidden p-2 lg:flex-row">
+      <div className="p-mk px-mk-2 flex h-[calc(100dvh-10rem)] gap-2 overflow-hidden lg:flex-row">
         <Card className="size-full">
           <CardContent className="relative flex size-full flex-col overflow-y-auto p-2">
             <TournamentTable />

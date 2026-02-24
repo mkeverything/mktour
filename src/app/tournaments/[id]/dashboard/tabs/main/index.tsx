@@ -6,7 +6,6 @@ import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tourn
 import Center from '@/components/center';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTournamentDisplayName } from '@/lib/tournament-display';
 import { useFormatter, useTranslations } from 'next-intl';
@@ -21,7 +20,7 @@ const Main = () => {
   const formatUtil = useFormatter();
   const t = useTranslations('MakeTournament');
 
-  if (isLoading) return <LoadingElement />;
+  if (isLoading || 0) return <LoadingElement />;
   if (!data) return <Center>no data</Center>;
 
   const tournamentDisplayName = getTournamentDisplayName(
@@ -46,14 +45,19 @@ const Main = () => {
 
 export const LoadingElement = () => {
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <Skeleton className="h-10 w-full" />
-      <Card className="items-left flex w-full flex-col gap-8 p-4 px-[15%]">
+    <div className="flex flex-col gap-4 p-4 md:pb-2">
+      <div className="md:gap-mk md:flex">
+        <Skeleton className="h-11 w-full" />
+        <div className="hidden w-1/3 md:block">
+          <Skeleton className="h-11" />
+        </div>
+      </div>
+      <div className="mk-list md:hidden">
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
-      </Card>
+      </div>
     </div>
   );
 };
