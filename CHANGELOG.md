@@ -1,3 +1,16 @@
+# [0.13.0-beta.2](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.1...v0.13.0-beta.2) (2026-02-24)
+
+
+### Bug Fixes
+
+* backend control of modifiable columns in players table. only names are editable ([4ff1ebf](https://github.com/mkeverything/mktour/commit/4ff1ebf8b91bf874a07f725eb36c0a14d57c9189))
+* player info can be edited by affiliated user (not only club admin) ([bbc05b0](https://github.com/mkeverything/mktour/commit/bbc05b01730e100da07f941d9f8d7fe68daef43c))
+
+
+### Features
+
+* user affiliated with player can now set their own result ([18ab3c6](https://github.com/mkeverything/mktour/commit/18ab3c6996d31e28865d69c2fb0c84fb68eb4688))
+
 # [0.13.0-beta.1](https://github.com/mkeverything/mktour/compare/v0.12.8-beta.1...v0.13.0-beta.1) (2026-02-21)
 
 
