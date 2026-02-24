@@ -50,10 +50,10 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
       <Overlay open={!!selectedGameId} />
       <Main />
       <div className="p-mk px-mk-2 flex h-[calc(100dvh-10rem)] gap-2 overflow-hidden lg:flex-row">
-        <Card className="relative size-full overflow-hidden">
-          <CardContent className="flex size-full flex-col overflow-y-auto p-2">
+        <Card className="bg-background relative size-full overflow-hidden">
+          <CardContent className="p-mk flex size-full flex-col overflow-y-auto">
             <TournamentTable />
-            <Fades from="from-card" to="to-card" />
+            <Fades from="from-background" to="to-background" />
           </CardContent>
           <AddPlayerDrawer />
         </Card>
