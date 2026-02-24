@@ -13,7 +13,10 @@ import { useRoundData } from '@/components/hooks/use-round-data';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
+import { RoundProps } from '@/lib/pairing-generators/common-generator';
 import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
+import { generateWeightedSwissRound } from '@/lib/pairing-generators/swiss-generator';
+import { TournamentFormat } from '@/server/db/zod/enums';
 import { GameModel } from '@/server/db/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';
@@ -46,7 +49,7 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
   if (isError) return <Center>error</Center>;
   if (!round) return <Center>no round</Center>;
 
-  const { ongoingRound, roundsNumber, closedAt } = info.data.tournament;
+  const { ongoingRound, roundsNumber, closedAt, format } = info.data.tournament;
   const renderFinishButton =
     status === 'organizer' && !closedAt && ongoingRound === roundsNumber;
   const renderNewRoundButton =
@@ -64,6 +67,7 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
         roundsNumber={roundsNumber}
         tournamentId={tournamentId}
         renderFinishButton={renderFinishButton}
+        format={format}
       />
       {sortedRound.map((game, index) => {
         return <GamesIteratee key={index} {...game} />;
@@ -72,10 +76,25 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
   );
 };
 
-const NewRoundButton: FC<{ tournamentId: string; roundNumber: number }> = ({
-  tournamentId,
-  roundNumber,
-}) => {
+function generateRound(
+  format: TournamentFormat,
+  props: RoundProps,
+): GameModel[] {
+  switch (format) {
+    case 'swiss':
+      return generateWeightedSwissRound(props);
+    case 'round robin':
+      return generateRoundRobinRound(props);
+    default:
+      throw new Error(`unsupported format: ${format}`);
+  }
+}
+
+const NewRoundButton: FC<{
+  tournamentId: string;
+  roundNumber: number;
+  format: TournamentFormat;
+}> = ({ tournamentId, roundNumber, format }) => {
   const t = useTranslations('Tournament.Round');
   const { data: tournamentGames } = useTournamentGames(tournamentId);
   const queryClient = useQueryClient();
@@ -95,7 +114,7 @@ const NewRoundButton: FC<{ tournamentId: string; roundNumber: number }> = ({
     );
     const games = tournamentGames;
     if (!players || !games) return;
-    const newGames = generateRoundRobinRound({
+    const newGames = generateRound(format, {
       players,
       games,
       roundNumber: roundNumber + 1,
@@ -118,17 +137,23 @@ const ActionButton = ({
   roundsNumber,
   tournamentId,
   renderFinishButton,
+  format,
 }: {
   renderNewRoundButton: boolean;
   roundNumber: number;
   roundsNumber: number | null;
   tournamentId: string;
   renderFinishButton: boolean;
+  format: TournamentFormat;
 }) => {
   if (!roundsNumber) return null;
   if (renderNewRoundButton)
     return (
-      <NewRoundButton tournamentId={tournamentId} roundNumber={roundNumber} />
+      <NewRoundButton
+        tournamentId={tournamentId}
+        roundNumber={roundNumber}
+        format={format}
+      />
     );
   if (renderFinishButton)
     return <FinishTournamentButton lastRoundNumber={roundsNumber} />;
