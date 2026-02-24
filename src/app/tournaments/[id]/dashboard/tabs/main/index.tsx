@@ -8,7 +8,8 @@ import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament
 
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslations } from 'next-intl';
+import { getTournamentDisplayName } from '@/lib/tournament-display';
+import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FC, useContext } from 'react';
@@ -17,18 +18,27 @@ const Main = () => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data, isLoading } = useTournamentInfo(tournamentId);
   const { status } = useContext(DashboardContext);
+  const formatUtil = useFormatter();
+  const t = useTranslations('MakeTournament');
 
   if (isLoading) return <LoadingElement />;
   if (!data) return <Center>no data</Center>;
 
+  const tournamentDisplayName = getTournamentDisplayName(
+    data?.tournament,
+    t,
+    formatUtil,
+  );
+  const title = data.tournament.title || tournamentDisplayName;
+
   return (
-    <div className="mk-container pt-2">
-      {data.tournament.title && (
-        <div className="p-mk truncate border-b pt-0 pb-2 text-xl font-bold whitespace-break-spaces">
-          {data.tournament.title}
+    <div className="max-md:mk-container pt-2 md:flex md:justify-between">
+      <div>
+        <div className="p-mk flex items-center truncate pt-0 pb-2 text-xl font-bold whitespace-break-spaces max-md:border-b md:pb-0">
+          {title}
         </div>
-      )}
-      <TournamentInfoList />
+        <TournamentInfoList />
+      </div>
       <ActionButtons status={status} tournament={data.tournament} />
     </div>
   );

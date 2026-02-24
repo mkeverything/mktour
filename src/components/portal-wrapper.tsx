@@ -61,7 +61,7 @@ const PortalWrapper: FC<PortalWrapperProps> = ({
               left: coords.x,
               width: coords.width,
               height: coords.height,
-              zIndex: 1000,
+              zIndex: 50,
             }}
           >
             {children}

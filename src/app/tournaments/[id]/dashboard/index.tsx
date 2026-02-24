@@ -1,18 +1,11 @@
 'use client';
 
-import CarouselContainer from '@/app/tournaments/[id]/dashboard/carousel-container';
-import {
-  DashboardContext,
-  DashboardContextType,
-} from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import ShuffleFab from '@/app/tournaments/[id]/dashboard/shuffle-fab';
-import TabsContainer from '@/app/tournaments/[id]/dashboard/tabs-container';
-import AddPlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
-import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
-import FabProvider from '@/components/ui-custom/fab-provider';
+import DashboardMobile from '@/app/tournaments/[id]/dashboard/mobile/dashboard-mobile';
+import { DashboardContextType } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import DashboardDesktop from '@/app/tournaments/[id]/dashboard/desktop/dashboard-desktop';
+import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Status } from '@/server/queries/get-status-in-tournament';
-import { useQueryClient } from '@tanstack/react-query';
-import { Dispatch, FC, SetStateAction, useState } from 'react';
+import { Dispatch, FC, SetStateAction, useState, useContext } from 'react';
 
 const Dashboard: FC<TournamentPageContentProps> = ({
   userId,
@@ -24,51 +17,35 @@ const Dashboard: FC<TournamentPageContentProps> = ({
 }) => {
   const [currentTab, setCurrentTab] =
     useState<DashboardContextType['currentTab']>('main');
-  const queryClient = useQueryClient();
-  const [roundInView, setRoundInView] = useState(currentRound || 1);
-  const { sendJsonMessage } = useDashboardWebsocket(
-    session,
-    id,
-    queryClient,
-    setRoundInView,
-  );
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-  const fabContent = fabTabMap[currentTab];
-  const [scrolling, setScrolling] = useState(false);
+  const { isDesktop } = useContext(MediaQueryContext);
 
-  return (
-    <DashboardContext.Provider
-      value={{
-        currentTab,
-        sendJsonMessage,
-        status,
-        playerId,
-        userId,
-        setSelectedGameId,
-        selectedGameId,
-        roundInView,
-        setRoundInView,
-      }}
-    >
-      <TabsContainer currentTab={currentTab} setCurrentTab={setCurrentTab} />
-      <CarouselContainer
+  if (isDesktop) {
+    return (
+      <DashboardDesktop
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
-        setScrolling={setScrolling}
-      />
-      <FabProvider
+        session={session}
+        id={id}
         status={status}
-        fabContent={fabContent}
-        scrolling={scrolling}
+        playerId={playerId}
+        userId={userId}
+        currentRound={currentRound}
       />
-    </DashboardContext.Provider>
-  );
-};
+    );
+  }
 
-const fabTabMap = {
-  main: <AddPlayerDrawer />,
-  table: <AddPlayerDrawer />,
-  games: <ShuffleFab />,
+  return (
+    <DashboardMobile
+      currentTab={currentTab}
+      setCurrentTab={setCurrentTab}
+      session={session}
+      id={id}
+      status={status}
+      playerId={playerId}
+      userId={userId}
+      currentRound={currentRound}
+    />
+  );
 };
 
 export type TabProps = {

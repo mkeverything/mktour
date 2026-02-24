@@ -5,6 +5,7 @@ import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
+import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Shuffle } from 'lucide-react';
@@ -25,10 +26,12 @@ const ShuffleFab = () => {
     sendJsonMessage,
     isTournamentGoing: false,
   });
+  const { isDesktop } = useContext(MediaQueryContext);
 
   if (data?.tournament.startedAt || !games.data || !players.data) return null;
 
-  if (players.data && players.data.length < 3) return <AddPlayerDrawer />;
+  if (players.data && players.data.length < 3)
+    return isDesktop ? null : <AddPlayerDrawer />;
 
   const handleClick = () => {
     const newGames = generateRandomRoundGames({

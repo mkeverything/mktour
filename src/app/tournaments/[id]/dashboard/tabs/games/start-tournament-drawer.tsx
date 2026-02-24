@@ -22,7 +22,7 @@ const StartTournamentDrawer: FC<{
 
   return (
     <Root open={open}>
-      <Content>
+      <Content className="z-10000">
         <Header>
           <Title>
             <FormattedMessage id="Tournament.Round.start tournament.title" />

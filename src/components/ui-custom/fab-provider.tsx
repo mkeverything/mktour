@@ -10,7 +10,7 @@ const FabProvider: FC<FabProviderProps> = ({
 
   return (
     <div
-      className={`${scrolling && 'opacity-50'} fixed z-10 transition-all duration-300 ease-linear`}
+      className={`${scrolling && 'opacity-50'} relative z-10 transition-all duration-300 ease-linear`}
     >
       {fabContent}
     </div>
