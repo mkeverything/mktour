@@ -1,3 +1,11 @@
+# [0.13.0-beta.6](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.5...v0.13.0-beta.6) (2026-02-24)
+
+
+### Bug Fixes
+
+* minor styling ([8227b0a](https://github.com/mkeverything/mktour/commit/8227b0ac4368795625f32242bd53a96dcd5e29b0))
+* minor styling ([f1d46ed](https://github.com/mkeverything/mktour/commit/f1d46ed8e538e682c7672c6aacfaabf79e82ce05))
+
 # [0.13.0-beta.5](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.4...v0.13.0-beta.5) (2026-02-24)
 
 
