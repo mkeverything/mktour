@@ -1,3 +1,17 @@
+# [0.13.0-beta.4](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.3...v0.13.0-beta.4) (2026-02-24)
+
+
+### Bug Fixes
+
+* minor styling ([dd56bcf](https://github.com/mkeverything/mktour/commit/dd56bcfff29e14fe8aacb0c93497b0b2150ee72b))
+* minor styling ([cff2506](https://github.com/mkeverything/mktour/commit/cff250646f5c02185bce9ce2995699fd450e2edd))
+* minor styling ([c48e1b8](https://github.com/mkeverything/mktour/commit/c48e1b8017d2ccaacb254af2b733443ca7b4d9cb))
+
+
+### Features
+
+* draft for desktop tournament dashboard ([e945c41](https://github.com/mkeverything/mktour/commit/e945c41ab00425e681b9c2d22382e70a6b33b19f))
+
 # [0.13.0-beta.3](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.2...v0.13.0-beta.3) (2026-02-24)
 
 
