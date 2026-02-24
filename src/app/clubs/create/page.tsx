@@ -1,5 +1,5 @@
 import { emptyClubCheck } from '@/app/clubs/create/empty-club-check';
-import ForwardToEmpryClub from '@/app/clubs/create/forward-to-empty-club';
+import ForwardToEmptyClub from '@/app/clubs/create/forward-to-empty-club';
 import NewClubForm from '@/app/clubs/create/new-club-form';
 import { getUserLichessTeams } from '@/lib/api/lichess';
 import { publicCaller } from '@/server/api';
@@ -18,7 +18,7 @@ export default async function CreateClubPage() {
   return (
     <div>
       {club ? (
-        <ForwardToEmpryClub club={club} />
+        <ForwardToEmptyClub club={club} />
       ) : (
         <NewClubForm user={user} teams={teams} />
       )}
