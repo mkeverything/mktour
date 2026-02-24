@@ -23,7 +23,7 @@ import { ControllerRenderProps, useForm, UseFormReturn } from 'react-hook-form';
 const EditPlayerForm: FC<{
   clubId: string;
   player: PlayerEditModel;
-  status: StatusInClub | null;
+  status: StatusInClub | null | undefined;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ player: { id, nickname, realname }, clubId, status, setOpen }) => {
   const editPlayerMutation = useEditPlayerMutation();

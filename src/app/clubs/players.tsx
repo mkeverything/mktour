@@ -55,7 +55,7 @@ const PlayerItemIteratee = ({
   statusInClub,
 }: {
   player: PlayerModel;
-  statusInClub: StatusInClub | null;
+  statusInClub: StatusInClub | null | undefined;
 }) => {
   return (
     <PlayerItem player={player} key={player.id} statusInClub={statusInClub} />
@@ -64,7 +64,7 @@ const PlayerItemIteratee = ({
 
 const PlayerItem: FC<{
   player: PlayerModel;
-  statusInClub: StatusInClub | null;
+  statusInClub: StatusInClub | null | undefined;
 }> = ({ player, statusInClub }) => {
   const { id, nickname, rating } = player;
 
