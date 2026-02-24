@@ -103,10 +103,6 @@ button {
   flex-direction: column;
   gap: var(--spacing-mk);
   padding-bottom: 10dvh;
-
-  @media screen and (min-width: 768px) {
-    gap: var(--spacing-mk-2);
-  }
 }
 
 @utility mk-link {
