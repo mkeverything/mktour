@@ -12,7 +12,7 @@ import Overlay from '@/components/overlay';
 import { Card, CardContent } from '@/components/ui/card';
 import { Status } from '@/server/queries/get-status-in-tournament';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { FC, useState } from 'react';
 
 const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   currentTab,
@@ -50,20 +50,35 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
       <Overlay open={!!selectedGameId} />
       <Main />
       <div className="p-mk px-mk-2 flex h-[calc(100dvh-10rem)] gap-2 overflow-hidden lg:flex-row">
-        <Card className="relative size-full">
+        <Card className="relative size-full overflow-hidden">
           <CardContent className="flex size-full flex-col overflow-y-auto p-2">
             <TournamentTable />
+            <Fades from="from-card" to="to-card" />
           </CardContent>
           <AddPlayerDrawer />
         </Card>
-        <Card className="relative size-full">
-          <CardContent className="flex size-full flex-col overflow-y-auto p-2">
+        <Card className="bg-background relative size-full overflow-hidden">
+          <CardContent className="flex size-full flex-col overflow-y-auto p-0">
             <Games />
+            <Fades from="from-background" to="to-background" />
           </CardContent>
           <ShuffleFab />
         </Card>
       </div>
     </DashboardContext.Provider>
+  );
+};
+
+const Fades: FC<{ from: string; to: string }> = ({ from, to }) => {
+  return (
+    <>
+      <div
+        className={`h-mk-2 bg-red absolute top-0 w-full bg-linear-to-b to-transparent ${from}`}
+      />
+      <div
+        className={`h-mk-2 ${to} absolute bottom-0 w-full bg-linear-to-b from-transparent`}
+      />
+    </>
   );
 };
 

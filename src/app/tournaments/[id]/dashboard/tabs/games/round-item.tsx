@@ -60,7 +60,7 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
     round.length > 0;
 
   return (
-    <div className="mk-list px-mk pt-2">
+    <div className="mk-list px-mk md:px-mk-2 pt-2">
       <ActionButton
         renderNewRoundButton={renderNewRoundButton}
         roundNumber={roundNumber}
