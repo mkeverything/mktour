@@ -1,3 +1,23 @@
+# [0.13.0-beta.5](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.4...v0.13.0-beta.5) (2026-02-24)
+
+
+### Bug Fixes
+
+* condition ([26bd740](https://github.com/mkeverything/mktour/commit/26bd7401c1a5b8a338f487bb319e4088ebb5a1e8))
+* minor ([44efd2d](https://github.com/mkeverything/mktour/commit/44efd2dd1a9be32a6c6b91d275a2d3a1d57429d7))
+* minor styling ([c2a6f1d](https://github.com/mkeverything/mktour/commit/c2a6f1d8f7ad6a80b99aa04c02ef04e30b56d335))
+* minor styling ([be48c81](https://github.com/mkeverything/mktour/commit/be48c817d1ab1bbf42a8ac8376adcd0c9c87541a))
+* minor styling ([82d68da](https://github.com/mkeverything/mktour/commit/82d68da7101c1eda1479d296107d9d4865331202))
+* tournament dashboard skeleton ([11e2b5b](https://github.com/mkeverything/mktour/commit/11e2b5ba9079fb174177071762a8602966c6408c))
+* valid statusInClub in club/my; minor styling ([592a048](https://github.com/mkeverything/mktour/commit/592a0480c882287da4a54a41024a6b7435786e4b))
+
+
+### Features
+
+* (exp) search button moved to the left of navbar ([3136b67](https://github.com/mkeverything/mktour/commit/3136b6702ff61a321b7deec26a549b0849b28bb5))
+* (experimental) turboPascal in tournament title ([804d042](https://github.com/mkeverything/mktour/commit/804d042504f8ef73ebb94895fafb7f7ec73ce277))
+* lang and theme toggles under auth button dropdown ([cc8430d](https://github.com/mkeverything/mktour/commit/cc8430dccc1e15377521423e2181704e2b903878))
+
 # [0.13.0-beta.4](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.3...v0.13.0-beta.4) (2026-02-24)
 
 
