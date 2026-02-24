@@ -25,12 +25,7 @@ const EditPlayerForm: FC<{
   player: PlayerEditModel;
   status: StatusInClub | null;
   setOpen: Dispatch<SetStateAction<boolean>>;
-}> = ({
-  player: { id, nickname, realname, rating },
-  clubId,
-  status,
-  setOpen,
-}) => {
+}> = ({ player: { id, nickname, realname }, clubId, status, setOpen }) => {
   const editPlayerMutation = useEditPlayerMutation();
   const router = useRouter();
   const form = useForm<PlayerEditModel>({
@@ -38,20 +33,16 @@ const EditPlayerForm: FC<{
       id,
       nickname,
       realname,
-      rating,
     },
   });
 
   const onSubmit = (values: PlayerEditModel) => {
-    editPlayerMutation.mutate(
-      { ...values, clubId },
-      {
-        onSuccess: () => {
-          setOpen(false);
-          router.refresh();
-        },
+    editPlayerMutation.mutate(values, {
+      onSuccess: () => {
+        setOpen(false);
+        router.refresh();
       },
-    );
+    });
   };
 
   return (

@@ -77,41 +77,15 @@ export const playerFormSchema = playersInsertSchema
   );
 
 export const playerEditSchema = playersUpdateSchema
+  .pick({ nickname: true, realname: true })
   .extend({
     id: z.string(),
-    clubId: z.string(),
     nickname: z
       .string()
-      .min(3, {
-        error: 'min nickname length',
-      })
-      .max(30, {
-        error: 'max nickname length',
-      })
+      .min(2, { error: 'min nickname length' })
+      .max(30, { error: 'max nickname length' })
       .optional(),
-    rating: z
-      .number()
-      .min(0, {
-        error: 'min rating',
-      })
-      .max(3000, {
-        error: 'max rating',
-      })
-      .optional(),
-    ratingPeak: z
-      .number()
-      .min(0, {
-        error: 'min peak rating',
-      })
-      .max(3000, {
-        error: 'max peak rating',
-      })
-      .optional(),
-  })
-  .omit({
-    lastSeenAt: true,
-    ratingPeak: true,
-    ratingLastUpdateAt: true,
+    realname: z.string().max(50).nullable().optional(),
   });
 
 export const playersToTournamentsSelectSchema = createSelectSchema(
