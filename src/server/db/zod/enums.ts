@@ -1,10 +1,9 @@
 import z from 'zod';
 
 export const affiliationStatusEnum = z.enum([
-  'requested',
+  'requested_by_user',
+  'requested_by_club',
   'active',
-  'cancelled_by_club',
-  'cancelled_by_user',
 ]);
 
 export const statusInClubEnum = z.enum(['admin', 'co-owner']);

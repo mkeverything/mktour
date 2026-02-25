@@ -39,7 +39,7 @@ const ClaimPlayer: FC<{
 
   const hasClaimed =
     userAffiliation &&
-    userAffiliation.status === 'requested' &&
+    userAffiliation.status === 'requested_by_user' &&
     id === userAffiliation.player.id;
 
   if (hasClaimed)

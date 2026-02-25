@@ -20,11 +20,22 @@ type UserNotificationMetadata = {
 };
 
 type ClubNotificationMetadata = {
-  affiliation_request: { userId: string; affiliationId: string };
+  affiliation_request: {
+    userId: string;
+    playerId: string;
+    affiliationId: string;
+  };
   manager_left: { userId: string };
-  affiliation_request_approved: { userId: string; affiliationId: string };
-  affiliation_request_rejected: { userId: string; affiliationId: string };
-  affiliation_cancelled: { userId: string; affiliationId: string };
+  affiliation_request_approved: {
+    userId: string;
+    playerId: string;
+    affiliationId: string;
+  };
+  affiliation_request_rejected: {
+    userId: string;
+    playerId: string;
+  };
+  affiliation_cancelled: { userId: string; playerId: string };
 };
 
 // typed notifications (database + typed metadata)

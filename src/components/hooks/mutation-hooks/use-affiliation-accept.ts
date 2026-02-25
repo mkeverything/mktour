@@ -3,7 +3,7 @@ import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
-export default function useAffiliationAcceptMutation({
+export default function useAffiliationAcceptByClubMutation({
   queryClient,
 }: {
   queryClient: QueryClient;
@@ -11,7 +11,7 @@ export default function useAffiliationAcceptMutation({
   const t = useTranslations('Toasts');
   const trpc = useTRPC();
   return useMutation(
-    trpc.player.affiliation.accept.mutationOptions({
+    trpc.player.affiliation.acceptByClub.mutationOptions({
       onSuccess: (_data, { clubId }) => {
         queryClient.invalidateQueries({
           queryKey: trpc.club.notifications.all.queryKey({ clubId }),

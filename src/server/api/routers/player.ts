@@ -22,7 +22,7 @@ import {
 } from '@/server/mutations/club-managing';
 import {
   abortAffiliationRequest,
-  acceptAffiliation,
+  acceptAffiliationByClub,
   affiliateUser,
   cancelAffiliationByUser,
   rejectAffiliation,
@@ -83,7 +83,7 @@ export const playerRouter = {
         const { input } = opts;
         await requestAffiliation(input);
       }),
-    accept: clubAdminProcedure
+    acceptByClub: clubAdminProcedure
       .input(
         z.object({
           clubId: z.string(),
@@ -94,7 +94,7 @@ export const playerRouter = {
       .mutation(async (opts) => {
         const { input } = opts;
         const { affiliationId, notificationId } = input;
-        await acceptAffiliation({ affiliationId, notificationId });
+        await acceptAffiliationByClub({ affiliationId, notificationId });
       }),
     reject: clubAdminProcedure
       .input(

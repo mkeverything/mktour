@@ -169,7 +169,7 @@
           "affiliation_request_approved": "игрок {player} был привязан к юзеру {user}",
           "affiliation_request_rejected": "запрос {user} на привязку к {player} был отклонён",
           "manager_left": "менеджер {user} покинул клуб",
-          "affiliation_cancelled": "юзер {user} отменил запрос на привязку к {player}"
+          "affiliation_cancelled": "юзер {user} отменил привязку к {player}"
         }
       }
     },

@@ -171,7 +171,7 @@
           "affiliation_request_approved": "player {player} is officially user {user}",
           "affiliation_request_rejected": "{user}'s request to link with {player} was rejected",
           "manager_left": "manager {user} has left the club",
-          "affiliation_cancelled": "{user} cancelled their request to link with {player}"
+          "affiliation_cancelled": "{user} is no more linked to {player}"
         }
       }
     },

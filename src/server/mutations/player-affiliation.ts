@@ -53,7 +53,7 @@ export async function requestAffiliation({
     userId: userId,
     playerId: playerId,
     clubId: clubId,
-    status: 'requested',
+    status: 'requested_by_user',
     createdAt,
     updatedAt: createdAt,
   };
@@ -64,7 +64,7 @@ export async function requestAffiliation({
     event: 'affiliation_request',
     isSeen: false,
     createdAt,
-    metadata: { affiliationId: newAffiliation.id, userId },
+    metadata: { affiliationId: newAffiliation.id, userId, playerId },
   };
 
   await Promise.all([
@@ -74,7 +74,7 @@ export async function requestAffiliation({
   revalidatePath(`/player/${playerId}`);
 }
 
-export async function acceptAffiliation({
+export async function acceptAffiliationByClub({
   affiliationId,
   notificationId,
 }: {
@@ -91,7 +91,7 @@ export async function acceptAffiliation({
   if (!affiliation) throw new Error('AFFILIATION_NOT_FOUND');
   if (affiliation.clubId !== user.selectedClub)
     throw new Error('CLUB_ID_NOT_MATCHING');
-  if (affiliation.status !== 'requested')
+  if (affiliation.status !== 'requested_by_user')
     throw new Error('AFFILIATION_STATUS_NOT_REQUESTED');
 
   const newNotification: UserNotificationInsertModel = {
@@ -139,7 +139,7 @@ export async function rejectAffiliation({
   if (!affiliation) throw new Error('AFFILIATION_NOT_FOUND');
   if (affiliation.clubId !== user.selectedClub)
     throw new Error('CLUB_ID_NOT_MATCHING');
-  if (affiliation.status !== 'requested')
+  if (affiliation.status !== 'requested_by_user')
     throw new Error('AFFILIATION_STATUS_NOT_REQUESTED');
 
   const newNotification: UserNotificationInsertModel = {
@@ -152,10 +152,7 @@ export async function rejectAffiliation({
   };
 
   await Promise.all([
-    db
-      .update(affiliations)
-      .set({ status: 'cancelled_by_club', updatedAt: new Date() })
-      .where(eq(affiliations.id, affiliationId)),
+    db.delete(affiliations).where(eq(affiliations.id, affiliationId)),
     db
       .update(club_notifications)
       .set({ isSeen: true, event: 'affiliation_request_rejected' })
@@ -183,7 +180,7 @@ export async function abortAffiliationRequest({
     where: eq(affiliations.id, affiliationId),
   });
   if (!affiliation) throw new Error('AFFILIATION_NOT_FOUND');
-  if (affiliation.status !== 'requested')
+  if (affiliation.status !== 'requested_by_user')
     throw new Error('AFFILIATION_STATUS_NOT_REQUESTED');
 
   await Promise.all([
@@ -213,23 +210,26 @@ export async function affiliateUser({
   });
   if (!player) throw new Error('PLAYER_NOT_FOUND');
 
-  const affiliation = await db.query.affiliations.findFirst({
+  const existingAffiliation = await db.query.affiliations.findFirst({
     where: and(
       eq(affiliations.userId, user.id),
       eq(affiliations.clubId, clubId),
     ),
   });
 
-  if (affiliation?.status === 'active') throw new Error('ALREADY_AFFILIATED');
+  if (existingAffiliation?.status === 'active')
+    throw new Error('ALREADY_AFFILIATED');
 
-  const affiliationQuery = affiliation
+  // if user has a pending request, update it to active; otherwise create new
+  const affiliationQuery = existingAffiliation
     ? db
         .update(affiliations)
         .set({
           status: 'active',
+          playerId: playerId,
           updatedAt: new Date(),
         })
-        .where(eq(affiliations.id, affiliation.id))
+        .where(eq(affiliations.id, existingAffiliation.id))
     : db.insert(affiliations).values({
         id: newid(),
         userId: user.id,
@@ -264,8 +264,7 @@ export async function cancelAffiliationByUser({
 
   await Promise.all([
     db
-      .update(affiliations)
-      .set({ status: 'cancelled_by_user' })
+      .delete(affiliations)
       .where(
         and(
           eq(affiliations.playerId, playerId),
