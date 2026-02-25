@@ -12,7 +12,7 @@ const PageContent = async (props: { searchParams: Promise<SearchParams> }) => {
   const user = await publicCaller.auth.info();
   if (user) redirect('/');
   return (
-    <main className="p-mk-2 mx-auto my-4 flex h-[calc(100svh-3.5rem)] w-full max-w-lg flex-auto items-center justify-center">
+    <main className="p-mk-2 h-mk-content-height mx-auto my-4 flex w-full max-w-lg flex-auto items-center justify-center">
       <SignInWithLichessButton className="py-16" from={from} />
     </main>
   );
@@ -22,7 +22,7 @@ const Page = async (props: { searchParams: Promise<SearchParams> }) => {
   return (
     <Suspense
       fallback={
-        <main className="mx-auto my-4 flex h-[calc(100svh-3.5rem)] w-full max-w-lg flex-auto items-center justify-center p-10">
+        <main className="h-mk-content-height mx-auto my-4 flex w-full max-w-lg flex-auto items-center justify-center p-10">
           <SignInWithLichessButton className="p-10 py-16" />
         </main>
       }

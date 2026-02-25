@@ -71,36 +71,38 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
       }}
     >
       <Overlay open={!!selectedGameId} />
-      <Main toggleFullscreen={toggleFullscreen} />
-      <div
-        ref={containerRef}
-        className="p-mk px-mk-2 flex h-[calc(100dvh-8rem)] gap-2 overflow-hidden lg:flex-row"
-      >
-        <Card className="bg-background relative size-full overflow-hidden">
-          <CardContent className="p-mk flex size-full flex-col overflow-y-auto">
-            <TournamentTable />
-            <Fades from="from-background" to="to-background" />
-          </CardContent>
-          <AddPlayerDrawer />
-        </Card>
-        <Card className="bg-background relative size-full overflow-hidden">
-          <CardContent className="flex size-full flex-col overflow-y-auto p-0">
-            <Games />
-            <Fades from="from-background" to="to-background" />
-          </CardContent>
-          <ShuffleFab />
-        </Card>
-        {isFullscreen && (
-          <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
-            <Button
-              className="opacity-30 duration-500 hover:opacity-90"
-              variant="secondary"
-              onClick={toggleFullscreen}
-            >
-              <FormattedMessage id="Tournament.Main.minimize" />
-            </Button>
-          </div>
-        )}
+      <div className="h-mk-content-height relative inset-0 flex flex-col overflow-hidden">
+        <Main toggleFullscreen={toggleFullscreen} />
+        <div
+          ref={containerRef}
+          className="p-mk px-mk-2 flex flex-1 gap-2 overflow-hidden lg:flex-row"
+        >
+          <Card className="bg-background relative size-full overflow-hidden">
+            <CardContent className="p-mk flex size-full flex-col overflow-y-auto">
+              <TournamentTable />
+              <Fades from="from-background" to="to-background" />
+            </CardContent>
+            <AddPlayerDrawer />
+          </Card>
+          <Card className="bg-background relative size-full overflow-hidden">
+            <CardContent className="flex size-full flex-col overflow-y-auto p-0">
+              <Games />
+              <Fades from="from-background" to="to-background" />
+            </CardContent>
+            <ShuffleFab />
+          </Card>
+          {isFullscreen && (
+            <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+              <Button
+                className="opacity-30 duration-500 hover:opacity-90"
+                variant="secondary"
+                onClick={toggleFullscreen}
+              >
+                <FormattedMessage id="Tournament.Main.minimize" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </DashboardContext.Provider>
   );

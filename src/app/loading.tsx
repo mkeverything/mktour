@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function Loading() {
   return (
-    <div className="flex h-[calc(100svh-3.5rem)] w-full flex-auto items-center justify-center">
+    <div className="h-mk-content-height flex w-full flex-auto items-center justify-center">
       <span className="sr-only">Loading...</span>
       <LoadingSpinner className="size-14" />
     </div>
