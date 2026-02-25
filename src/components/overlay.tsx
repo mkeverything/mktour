@@ -4,8 +4,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { FC } from 'react';
 import { createPortal } from 'react-dom';
 
-const Overlay: FC<{ open: boolean }> = ({ open }) =>
-  createPortal(
+const Overlay: FC<{ open: boolean }> = ({ open }) => {
+  if (!document) return null;
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -18,5 +19,5 @@ const Overlay: FC<{ open: boolean }> = ({ open }) =>
     </AnimatePresence>,
     document.body,
   );
-
+};
 export default Overlay;

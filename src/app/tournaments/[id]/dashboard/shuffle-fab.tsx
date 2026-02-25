@@ -18,7 +18,6 @@ const ShuffleFab = () => {
   const players = useTournamentPlayers(tournamentId);
   const games = useTournamentRoundGames({ tournamentId, roundNumber: 1 });
   const { userId } = useContext(DashboardContext);
-  if (!userId) throw new Error('USERID_NOT_FOUND_IN_CONTEXT');
   const queryClient = useQueryClient();
   const { sendJsonMessage } = useContext(DashboardContext);
   const { isPending, mutate } = useSaveRound({
@@ -28,7 +27,8 @@ const ShuffleFab = () => {
   });
   const { isDesktop } = useContext(MediaQueryContext);
 
-  if (data?.tournament.startedAt || !games.data || !players.data) return null;
+  if (data?.tournament.startedAt || !games.data || !players.data || !userId)
+    return null;
 
   if (players.data && players.data.length < 3)
     return isDesktop ? null : <AddPlayerDrawer />;
