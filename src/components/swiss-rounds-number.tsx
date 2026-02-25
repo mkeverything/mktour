@@ -1,11 +1,14 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import { cn } from '@/lib/utils';
 import useSaveRoundsNumberMutation from '@/components/hooks/mutation-hooks/use-tournament-update-swiss-rounds-number';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
-import { getSwissMaxRoundsNumber, getSwissMinRoundsNumber } from '@/lib/utils';
+import {
+  cn,
+  getSwissMaxRoundsNumber,
+  getSwissMinRoundsNumber,
+} from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useContext } from 'react';
@@ -48,7 +51,9 @@ export default function SwissRoundsNumber({
   }
 
   return (
-    <div className={cn('inline-flex items-center gap-2', className)}>
+    <div
+      className={cn('text-primary inline-flex items-center gap-2', className)}
+    >
       <button
         type="button"
         onClick={handleDecrement}
