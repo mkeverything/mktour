@@ -51,8 +51,6 @@ export const AffiliationNotificationLi = ({
       queryClient,
     });
 
-  const isPending = pendingAccept || pendingReject;
-
   if (!user || !affiliation) return null;
 
   const variables = {
@@ -60,13 +58,6 @@ export const AffiliationNotificationLi = ({
     affiliationId: affiliation.id,
     notificationId: id,
   };
-
-  const handleAccept = (accept: boolean) => {
-    const fn = accept ? acceptAffiliation : rejectMutation;
-    fn(variables);
-  };
-
-  if (!affiliation) return null;
 
   return (
     <Card
@@ -92,26 +83,24 @@ export const AffiliationNotificationLi = ({
           </div>
         </div>
         <ItemActions>
-          {isPending ? (
-            <LoadingSpinner />
-          ) : (
-            <div className="ml-3 flex gap-2">
-              <Button
-                size="icon-lg"
-                onClick={() => handleAccept(true)}
-                variant="secondary"
-              >
-                <Check />{' '}
-              </Button>
-              <Button
-                size="icon-lg"
-                onClick={() => handleAccept(false)}
-                variant="destructive"
-              >
-                <X />{' '}
-              </Button>
-            </div>
-          )}
+          <div className="ml-3 flex gap-2">
+            <Button
+              size="icon-lg"
+              onClick={() => acceptAffiliation(variables)}
+              variant="secondary"
+              disabled={pendingAccept || pendingReject}
+            >
+              {pendingAccept ? <LoadingSpinner /> : <Check />}
+            </Button>
+            <Button
+              size="icon-lg"
+              onClick={() => rejectMutation(variables)}
+              variant="destructive"
+              disabled={pendingAccept || pendingReject}
+            >
+              {pendingReject ? <LoadingSpinner /> : <X />}
+            </Button>
+          </div>
         </ItemActions>
       </div>
     </Card>
