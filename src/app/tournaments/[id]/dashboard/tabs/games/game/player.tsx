@@ -12,11 +12,11 @@ const Player: FC<PlayerProps> = ({
   <Button
     variant="ghost"
     className={cn(
-      `line-clamp-2 h-full w-full max-w-full ${!selected && position.text} rounded-sm p-1 px-2 break-words text-ellipsis hyphens-auto select-none ${selected && isWinner && 'mk-link'}`,
+      `text-2xs ${selected ? 'col-span-1' : 'col-span-2'} line-clamp-2 h-full w-full xl:text-xs ${!selected && position.text} w-full rounded-sm p-0 select-none ${selected && isWinner && 'mk-link'}`,
     )}
     onClick={handleMutate}
   >
-    <small>{nickname}</small>
+    <span className="text-wrap">{nickname}</span>
   </Button>
 );
 
