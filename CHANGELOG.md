@@ -1,3 +1,17 @@
+# [1.0.0-beta.3](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-02-25)
+
+
+### Bug Fixes
+
+* side-drawer width ([3cebbe1](https://github.com/mkeverything/mktour/commit/3cebbe1a625112b3cc5b9b2982d16f7b5d5a9a8b))
+
+
+### Features
+
+* compact game item ([0ca318c](https://github.com/mkeverything/mktour/commit/0ca318c32f50e6c3998a7ca9e918e0d65773ad41))
+* mk-content-height css variable ([f4c3070](https://github.com/mkeverything/mktour/commit/f4c30709a269b85a01e899bc73cfcfe500c5f555))
+* sticky table header ([171db78](https://github.com/mkeverything/mktour/commit/171db784beb830b2180a4931444f7b2159e1ab44))
+
 # [1.0.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2026-02-25)
 
 
