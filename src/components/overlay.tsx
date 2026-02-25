@@ -5,7 +5,7 @@ import { FC } from 'react';
 import { createPortal } from 'react-dom';
 
 const Overlay: FC<{ open: boolean }> = ({ open }) => {
-  if (!document) return null;
+  if (typeof window === 'undefined') return null;
   return createPortal(
     <AnimatePresence>
       {open && (
