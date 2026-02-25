@@ -73,6 +73,7 @@ button {
   --spacing-mk-3: calc(var(--spacing-mk) * 3);
   --spacing-mk-4: calc(var(--spacing-mk) * 4);
   --spacing-mk-card-height: calc(var(--spacing-mk) * 4);
+  --spacing-mk-navbar: calc(var(--spacing) * 14);
 }
 
 @utility mk-container {
