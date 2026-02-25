@@ -1,3 +1,10 @@
+# [1.0.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2026-02-25)
+
+
+### Features
+
+* enabled swiss selection ([0a0b681](https://github.com/mkeverything/mktour/commit/0a0b68185e9c23085f36e69fe3b1af1770dc0dcb))
+
 # [1.0.0-beta.1](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.7...v1.0.0-beta.1) (2026-02-25)
 
 
