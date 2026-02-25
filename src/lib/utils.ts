@@ -107,6 +107,6 @@ export function getSwissMinRoundsNumber(players: number): number {
 }
 
 export function getSwissMaxRoundsNumber(players: number): number {
-  if (players < 4) return players;
+  if (players <= 4) return players - 1;
   return players % 2 === 0 ? players - 3 : players - 2;
 }
