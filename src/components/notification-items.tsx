@@ -236,6 +236,7 @@ const messageIdMap: Record<
 > = {
   affiliation_approved: 'affiliation approved',
   affiliation_rejected: 'affiliation rejected',
+  affiliation_cancelled: 'affiliation cancelled',
   became_club_manager: 'became club manager',
   tournament_won: 'tournament won',
   removed_from_club_managers: 'removed from club managers',
@@ -244,6 +245,7 @@ const messageIdMap: Record<
 const iconMap: Record<UserNotificationEvent, LucideIcon> = {
   affiliation_approved: Check,
   affiliation_rejected: X,
+  affiliation_cancelled: X,
   became_club_manager: ShieldUser,
   tournament_won: Medal,
   removed_from_club_managers: Skull,

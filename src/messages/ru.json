@@ -89,7 +89,8 @@
     "linkedTo": "связан с",
     "not linked": "не привязан к аккаунту",
     "cancel affiliation": "отвязать",
-    "cancel affiliation description": "если вы отвяжете игрока от вашего аккаунта, он больше не будет у вас отображаться",
+    "cancel affiliation by user description": "вы сейчас отвяжете себя от этого игрока. он не будет отображаться в вашем профиле и результаты его игр вы тоже заносить сами не сможете",
+    "cancel affiliation by club description": "вы уберёте привязку пользователя к игроку вашего клуба",
     "Stats": {
       "gamesPlayed": "сыграно партий",
       "winRate": "победы",
@@ -438,6 +439,7 @@
     "User": {
       "affiliation approved": "привязка к игроку одобрена",
       "affiliation rejected": "привязка к игроку отклонена",
+      "affiliation cancelled": "привязка удалена",
       "became club manager": "вас сделали админом клуба",
       "tournament won": "вы выиграли турнир!",
       "removed from club managers": "вас удалили из админов клуба"

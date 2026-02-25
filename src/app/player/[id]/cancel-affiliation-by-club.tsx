@@ -3,7 +3,7 @@
 import { LoadingSpinner } from '@/app/loading';
 import { IconOnlyButton } from '@/app/player/[id]/claim-button';
 import FormattedMessage from '@/components/formatted-message';
-import { useAffiliationCancelByUserMutation } from '@/components/hooks/mutation-hooks/use-affiliation-cancel';
+import { useAffiliationCancelByClubMutation } from '@/components/hooks/mutation-hooks/use-affiliation-cancel';
 import {
   Close,
   Content,
@@ -19,16 +19,20 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { FC, useState } from 'react';
 
-const CancelAffiliationByUser: FC<{
+const CancelAffiliationByClub: FC<{
   playerId: string;
-}> = ({ playerId }) => {
+  clubId: string;
+  isOwnPlayer?: boolean;
+}> = ({ playerId, clubId, isOwnPlayer }) => {
   const [open, setOpen] = useState(false);
-  const { mutate, isPending } = useAffiliationCancelByUserMutation();
+  const { mutate, isPending } = useAffiliationCancelByClubMutation();
   const router = useRouter();
   const handleClick = () => {
     mutate(
       {
         playerId,
+        clubId,
+        skipNotification: isOwnPlayer,
       },
       {
         onSuccess: () => {
@@ -39,6 +43,17 @@ const CancelAffiliationByUser: FC<{
     );
   };
   const t = useTranslations();
+
+  if (isOwnPlayer) {
+    return (
+      <IconOnlyButton
+        disabled={isPending}
+        icon={isPending ? LoadingSpinner : UserX2}
+        title={t('Player.cancel affiliation')}
+        onClick={handleClick}
+      />
+    );
+  }
 
   return (
     <Root open={open} onOpenChange={setOpen}>
@@ -55,7 +70,7 @@ const CancelAffiliationByUser: FC<{
             <FormattedMessage id="Common.confirm" />
           </Title>
           <Description>
-            <FormattedMessage id="Player.cancel affiliation by user description" />
+            <FormattedMessage id="Player.cancel affiliation by club description" />
           </Description>
         </Header>
         <Button
@@ -78,4 +93,4 @@ const CancelAffiliationByUser: FC<{
   );
 };
 
-export default CancelAffiliationByUser;
+export default CancelAffiliationByClub;

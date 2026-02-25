@@ -89,7 +89,8 @@
     "linkedTo": "linked to",
     "not linked": "not linked to account",
     "cancel affiliation": "disconnect",
-    "cancel affiliation description": "you are going to disconnect your account from this player",
+    "cancel affiliation by user description": "you are going to disconnect your account. this player won't be displayed at your profile, and you won't be able to set their game results yourself",
+    "cancel affiliation by club description": "you are going to remove this player's affiliation to the club. the user will be notified.",
     "Stats": {
       "gamesPlayed": "games played",
       "winRate": "win rate",
@@ -438,6 +439,7 @@
     "User": {
       "affiliation approved": "linked",
       "affiliation rejected": "link rejected",
+      "affiliation cancelled": "affiliation removed",
       "became club manager": "you became club manager",
       "tournament won": "you won the tournament!",
       "removed from club managers": "you were removed from club managers"

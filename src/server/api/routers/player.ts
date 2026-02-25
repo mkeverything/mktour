@@ -26,6 +26,7 @@ import {
   affiliateUser,
   cancelAffiliationByUser,
   rejectAffiliation,
+  cancelAffiliationByClub,
   requestAffiliation,
 } from '@/server/mutations/player-affiliation';
 import getPlayer from '@/server/queries/get-player';
@@ -144,6 +145,18 @@ export const playerRouter = {
       .mutation(async (opts) => {
         const { input } = opts;
         await cancelAffiliationByUser({ userId: opts.ctx.user.id, ...input });
+      }),
+    cancelByClub: clubAdminProcedure
+      .input(
+        z.object({
+          playerId: z.string(),
+          clubId: z.string(),
+          skipNotification: z.boolean().optional(),
+        }),
+      )
+      .mutation(async (opts) => {
+        const { input } = opts;
+        await cancelAffiliationByClub(input);
       }),
   },
   delete: protectedProcedure

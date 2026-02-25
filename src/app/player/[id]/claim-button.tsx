@@ -109,6 +109,25 @@ export const ClaimActionButton: FC<ClaimActionButtonProps> = ({
   </Button>
 );
 
+export const IconOnlyButton: FC<
+  {
+    icon: FC;
+    disabled?: boolean;
+    title?: string;
+  } & React.ComponentProps<'button'>
+> = ({ icon: Icon, disabled, title, ...props }) => (
+  <Button
+    variant="outline"
+    className="size-9"
+    size="icon"
+    disabled={disabled}
+    title={title}
+    {...props}
+  >
+    <Icon />
+  </Button>
+);
+
 type ClaimActionButtonProps = {
   messageId: IntlMessageId;
   icon: FC;

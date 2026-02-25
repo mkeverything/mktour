@@ -19,6 +19,7 @@ export const clubNotificationEventEnum = z.enum([
 export const userNotificationEventEnum = z.enum([
   'affiliation_approved',
   'affiliation_rejected',
+  'affiliation_cancelled',
   'tournament_won',
   'became_club_manager',
   'removed_from_club_managers',

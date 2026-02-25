@@ -284,3 +284,54 @@ export async function cancelAffiliationByUser({
 
   return player;
 }
+
+export async function cancelAffiliationByClub({
+  playerId,
+  clubId,
+  skipNotification,
+}: {
+  playerId: string;
+  clubId: string;
+  skipNotification?: boolean;
+}) {
+  const player = await db.query.players.findFirst({
+    where: eq(players.id, playerId),
+  });
+  if (!player)
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'PLAYER_NOT_FOUND' });
+  if (player.clubId !== clubId)
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'CLUB_MISMATCH' });
+  if (!player.userId)
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'NO_AFFILIATION' });
+
+  const userId = player.userId;
+
+  const promises: Promise<unknown>[] = [
+    db
+      .delete(affiliations)
+      .where(
+        and(
+          eq(affiliations.playerId, playerId),
+          eq(affiliations.userId, userId),
+        ),
+      ),
+    db.update(players).set({ userId: null }).where(eq(players.id, playerId)),
+  ];
+
+  if (!skipNotification) {
+    promises.push(
+      db.insert(user_notifications).values({
+        id: newid(),
+        userId: userId,
+        event: 'affiliation_cancelled',
+        isSeen: false,
+        createdAt: new Date(),
+        metadata: { playerId: playerId, clubId: player.clubId },
+      }),
+    );
+  }
+
+  await Promise.all(promises);
+
+  return player;
+}

@@ -1,5 +1,6 @@
 import Loading from '@/app/loading';
 import { AffiliateButton } from '@/app/player/[id]/affiliate-button';
+import CancelAffiliationByClub from '@/app/player/[id]/cancel-affiliation-by-club';
 import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
 import ClaimPlayer from '@/app/player/[id]/claim-button';
 import EditButton from '@/app/player/[id]/edit-button';
@@ -66,6 +67,18 @@ async function PlayerPageContent(props: PlayerPageProps) {
       <PlayerHeader player={player} />
       {/* Action Toolbar */}
       <div className="flex justify-end gap-2">
+        {playerUser && (
+          <Button variant="outline" size="icon" className="gap-2" asChild>
+            <Link
+              href={`https://lichess.org/@/${playerUser.username}`}
+              target="_blank"
+            >
+              <div className="size-4">
+                <LichessLogo />
+              </div>
+            </Link>
+          </Button>
+        )}
         {playerUser ? (
           <Button variant="outline" className="max-w-3/5 gap-2" asChild>
             <Link href={`/user/${playerUser.username}`}>
@@ -79,21 +92,15 @@ async function PlayerPageContent(props: PlayerPageProps) {
             <span>{t('not linked')}</span>
           </Button>
         )}
-        {playerUser && (
-          <Button variant="outline" size="icon" className="gap-2" asChild>
-            <Link
-              href={`https://lichess.org/@/${playerUser.username}`}
-              target="_blank"
-            >
-              <div className="size-4">
-                <LichessLogo />
-              </div>
-            </Link>
-          </Button>
-        )}
         {canAffiliate && <AffiliateButton player={player} />}
-        {isOwnPlayer && status && (
-          <CancelAffiliationByUser playerId={player.id} />
+        {status !== null && player.userId ? (
+          <CancelAffiliationByClub
+            playerId={player.id}
+            clubId={club.id}
+            isOwnPlayer={!!isOwnPlayer}
+          />
+        ) : (
+          isOwnPlayer && <CancelAffiliationByUser playerId={player.id} />
         )}
         {user && canEdit && <EditButton player={player} status={status} />}
         {canClaim && <ClaimPlayer userId={user.id} clubId={club.id} />}
