@@ -16,7 +16,7 @@ const Player: FC<PlayerProps> = ({
     )}
     onClick={handleMutate}
   >
-    <span className="text-wrap">{nickname}</span>
+    <span className="text-wrap wrap-break-word">{nickname}</span>
   </Button>
 );
 
