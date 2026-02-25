@@ -6,15 +6,17 @@ import ActionButtons from '@/app/tournaments/[id]/dashboard/tabs/main/action-but
 import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tournament-info';
 import Center from '@/components/center';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { Button } from '@/components/ui/button';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTournamentDisplayName } from '@/lib/tournament-display';
+import { Maximize2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FC, useContext } from 'react';
 
-const Main = () => {
+const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data, isLoading } = useTournamentInfo(tournamentId);
   const { status } = useContext(DashboardContext);
@@ -38,6 +40,14 @@ const Main = () => {
           className={`p-mk ${turboPascal.className} flex items-center truncate pt-0 pb-2 text-2xl leading-tight font-bold whitespace-break-spaces max-md:border-b md:pb-0`}
         >
           {title}
+          <Button
+            className="ml-mk hidden md:flex"
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleFullscreen}
+          >
+            <Maximize2 className="size-4" />
+          </Button>
         </div>
         <TournamentInfoList />
       </div>

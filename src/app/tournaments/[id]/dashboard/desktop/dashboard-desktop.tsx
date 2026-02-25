@@ -7,12 +7,14 @@ import Games from '@/app/tournaments/[id]/dashboard/tabs/games';
 import Main from '@/app/tournaments/[id]/dashboard/tabs/main';
 import TournamentTable from '@/app/tournaments/[id]/dashboard/tabs/table';
 import AddPlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
+import FormattedMessage from '@/components/formatted-message';
 import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
 import Overlay from '@/components/overlay';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Status } from '@/server/queries/get-status-in-tournament';
 import { useQueryClient } from '@tanstack/react-query';
-import { FC, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 
 const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   currentTab,
@@ -32,6 +34,27 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
     setRoundInView,
   );
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = async () => {
+    if (!containerRef.current) return;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await containerRef.current.requestFullscreen();
+    }
+  };
 
   return (
     <DashboardContext.Provider
@@ -48,8 +71,11 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
       }}
     >
       <Overlay open={!!selectedGameId} />
-      <Main />
-      <div className="p-mk px-mk-2 flex h-[calc(100dvh-10rem)] gap-2 overflow-hidden lg:flex-row">
+      <Main toggleFullscreen={toggleFullscreen} />
+      <div
+        ref={containerRef}
+        className="p-mk px-mk-2 flex h-[calc(100dvh-8rem)] gap-2 overflow-hidden lg:flex-row"
+      >
         <Card className="bg-background relative size-full overflow-hidden">
           <CardContent className="p-mk flex size-full flex-col overflow-y-auto">
             <TournamentTable />
@@ -64,6 +90,17 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
           </CardContent>
           <ShuffleFab />
         </Card>
+        {isFullscreen && (
+          <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+            <Button
+              className="opacity-30 duration-500 hover:opacity-90"
+              variant="secondary"
+              onClick={toggleFullscreen}
+            >
+              <FormattedMessage id="Tournament.Main.minimize" />
+            </Button>
+          </div>
+        )}
       </div>
     </DashboardContext.Provider>
   );
