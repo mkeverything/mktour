@@ -1,3 +1,15 @@
+# [1.0.0-beta.4](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2026-02-25)
+
+
+### Features
+
+* links in club notifications ([e7221ba](https://github.com/mkeverything/mktour/commit/e7221bad068cd715fe4b569c09ce140cbcda039d))
+
+
+### Performance Improvements
+
+* minor fixes ([a5d92a1](https://github.com/mkeverything/mktour/commit/a5d92a196b8c17745aa9e7a21a39b07c4de7b9c0))
+
 # [1.0.0-beta.3](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-02-25)
 
 
