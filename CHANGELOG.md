@@ -1,3 +1,17 @@
+# [1.0.0-beta.1](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.7...v1.0.0-beta.1) (2026-02-25)
+
+
+### Features
+
+* bg-black for desktop table ([9ac99e1](https://github.com/mkeverything/mktour/commit/9ac99e1789484b4337d83b7191846a24d0dd0d25))
+* draft for desktop fullscreen mode in tournament dshbrd ([86b5852](https://github.com/mkeverything/mktour/commit/86b58523901555480d3d45a63ca2ef2aa56032ca))
+* reduced affiliations to be either pending or active ([4dd9148](https://github.com/mkeverything/mktour/commit/4dd91482be5136442190b7e4bd328468bdf7f162))
+
+
+### BREAKING CHANGES
+
+* all cancelled/rejected affiliations just get removed from now
+
 # [0.13.0-beta.7](https://github.com/mkeverything/mktour/compare/v0.13.0-beta.6...v0.13.0-beta.7) (2026-02-24)
 
 
