@@ -1,3 +1,10 @@
+# [1.0.0-beta.6](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.5...v1.0.0-beta.6) (2026-02-25)
+
+
+### Bug Fixes
+
+* ui for updating or rejecting affiliations in club inbox ([8450c97](https://github.com/mkeverything/mktour/commit/8450c97051569a57d8b305dafd4eb0b9c11a327e))
+
 # [1.0.0-beta.5](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2026-02-25)
 
 
