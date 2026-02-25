@@ -71,7 +71,7 @@ const TournamentTable: FC = ({}) => {
   return (
     <div className="mb-20 w-full">
       <Table className="pt-0">
-        <TableHeader>
+        <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
           <TableRow>
             <TableHeadStyled className="text-center">#</TableHeadStyled>
             <TableHeadStyled className="w-full p-0">
