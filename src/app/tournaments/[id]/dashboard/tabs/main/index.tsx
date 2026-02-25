@@ -41,7 +41,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
         >
           {title}
           <Button
-            className="ml-mk hidden md:flex"
+            className="ml-mk text-muted-foreground hover:text-primary hidden md:flex"
             variant="ghost"
             size="icon-sm"
             onClick={toggleFullscreen}
