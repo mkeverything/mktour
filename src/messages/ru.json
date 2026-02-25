@@ -166,10 +166,10 @@
         "affiliation": "заявка на аффиляцию игрока",
         "mark all as read": "отметить все как прочитанные",
         "Notification": {
-          "affiliation_request_approved": "игрок {player} был привязан к юзеру {user}",
-          "affiliation_request_rejected": "запрос {user} на привязку к {player} был отклонён",
-          "manager_left": "менеджер {user} покинул клуб",
-          "affiliation_cancelled": "юзер {user} отменил привязку к {player}"
+          "affiliation_request_approved": "игрок <playerLink>{player}</playerLink> был привязан к юзеру <userLink>{user}</userLink>",
+          "affiliation_request_rejected": "запрос <userLink>{user}</userLink> на привязку к <playerLink>{player}</playerLink> был отклонён",
+          "manager_left": "менеджер <userLink>{user}</userLink> покинул клуб",
+          "affiliation_cancelled": "юзер <userLink>{user}</userLink> отменил привязку к <playerLink>{player}</playerLink>"
         }
       }
     },

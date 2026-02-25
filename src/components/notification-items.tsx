@@ -185,7 +185,7 @@ export const NotificationItem: FC<
   <Card
     className={`mk-card ${is_seen && 'opacity-70'} ${className} flex items-center justify-between text-xs`}
   >
-    <div className="flex flex-col gap-2">{children}</div>
+    <span>{children}</span>
     {type === 'user' ? (
       <ToggleIsSeen notificationId={notificationId} isSeen={is_seen} />
     ) : (

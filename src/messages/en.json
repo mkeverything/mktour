@@ -168,10 +168,10 @@
         "affiliation": "link request",
         "mark all as read": "mark all as read",
         "Notification": {
-          "affiliation_request_approved": "player {player} is officially user {user}",
-          "affiliation_request_rejected": "{user}'s request to link with {player} was rejected",
-          "manager_left": "manager {user} has left the club",
-          "affiliation_cancelled": "{user} is no more linked to {player}"
+          "affiliation_request_approved": "player <playerLink>{player}</playerLink> is officially user <userLink>{user}</userLink>",
+          "affiliation_request_rejected": "<userLink>{user}</userLink>'s request to link with <playerLink>{player}</playerLink> was rejected",
+          "manager_left": "manager <userLink>{user}</userLink> has left the club",
+          "affiliation_cancelled": "<userLink>{user}</userLink> is no more linked to <playerLink>{player}</playerLink>"
         }
       }
     },
