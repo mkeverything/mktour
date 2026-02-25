@@ -181,11 +181,9 @@ export default function NewTournamentForm({
                       }}
                     >
                       <SelectGroup>
+                        <SelectItem value="swiss">{t('swiss')}</SelectItem>
                         <SelectItem value="round robin">
                           {t('round robin')}
-                        </SelectItem>
-                        <SelectItem value="swiss" disabled>
-                          {t('swiss')}
                         </SelectItem>
                         <SelectItem value="single elimination" disabled>
                           {t('single elimination')}
