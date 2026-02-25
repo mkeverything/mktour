@@ -1,3 +1,10 @@
+# [1.0.0-beta.7](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.6...v1.0.0-beta.7) (2026-02-25)
+
+
+### Bug Fixes
+
+* changelog version display ([6e7a46d](https://github.com/mkeverything/mktour/commit/6e7a46dd0ef988beca0712ff99a2c533699f1a01))
+
 # [1.0.0-beta.6](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.5...v1.0.0-beta.6) (2026-02-25)
 
 
