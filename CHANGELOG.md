@@ -1,3 +1,15 @@
+# [1.0.0-beta.5](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2026-02-25)
+
+
+### Bug Fixes
+
+* correct maximum rounds number in swiss ([29ef289](https://github.com/mkeverything/mktour/commit/29ef289e9904262726223144134eea4fd3754539))
+
+
+### Features
+
+* affiliation cancels for users and club-admins ([907390c](https://github.com/mkeverything/mktour/commit/907390ceb94c851e4653bce3c83b8f154d0ceac8))
+
 # [1.0.0-beta.4](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2026-02-25)
 
 
