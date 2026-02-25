@@ -32,7 +32,7 @@ const Profile: FC<{
   const t = useTranslations('Profile');
 
   return (
-    <div className="mk-container flex w-full flex-col gap-6">
+    <div className="mk-container gap-mk-2 flex w-full flex-col">
       <HalfCard className="gap-mk-2 p-mk-2 sm:p-mk-3 flex flex-col">
         <CardHeader className="p-0">
           <div className="flex items-start justify-between">
@@ -68,7 +68,7 @@ const Profile: FC<{
       </HalfCard>
 
       {isOwner && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="gap-mk grid grid-cols-2">
           <Button
             variant="outline"
             className="h-auto flex-col gap-2 py-4"
