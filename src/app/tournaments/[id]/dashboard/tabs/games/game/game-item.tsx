@@ -95,7 +95,7 @@ const GameItem: FC<GameProps> = ({
         onClick={() => setSelectedGameId(!selected ? id : null)}
       >
         <Card
-          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 h-12 w-full ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center border p-1 transition-all select-none ${!selected && 'pointer-events-none'}`}
+          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 h-12 w-full ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center border p-1 transition-all select-none ${!isActive && 'pointer-events-none'}`}
         >
           <Player
             isWinner={result === '1-0'}
@@ -107,7 +107,7 @@ const GameItem: FC<GameProps> = ({
           <Button
             variant="ghost"
             onClick={() => handleMutate('1/2-1/2')}
-            className={`mx-mk-2 gap-mk col-span-1 flex size-full ${!selected && 'max-w-10'} justify-self-center rounded-sm p-0 select-none ${isActive && draw && 'mk-link'}`}
+            className={`mx-mk-2 gap-mk col-span-1 flex size-full ${!isActive && 'max-w-10'} justify-self-center rounded-sm p-0 select-none ${isActive && draw && 'mk-link'}`}
           >
             <Result {...resultProps} selected={isActive} />
           </Button>
