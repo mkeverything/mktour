@@ -1,3 +1,4 @@
+import { turboPascal } from '@/app/fonts';
 import Loading from '@/app/loading';
 import { AffiliateButton } from '@/app/player/[id]/affiliate-button';
 import CancelAffiliationByClub from '@/app/player/[id]/cancel-affiliation-by-club';
@@ -115,7 +116,9 @@ const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
   <div className="p-mk">
     <div className="flex items-center justify-between">
       <div className="flex flex-col gap-1">
-        <CardTitle className="text-2xl">{player.nickname}</CardTitle>
+        <CardTitle className={`text-4xl font-light ${turboPascal.className}`}>
+          {player.nickname}
+        </CardTitle>
         {player.realname && (
           <span className="text-muted-foreground text-sm">
             {player.realname}

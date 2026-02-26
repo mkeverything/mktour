@@ -1,5 +1,6 @@
 'use client';
 
+import { turboPascal } from '@/app/fonts';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
 import { useUserClubs } from '@/components/hooks/query-hooks/use-user-clubs';
@@ -33,12 +34,16 @@ const Profile: FC<{
 
   return (
     <div className="mk-container gap-mk-2 flex w-full flex-col">
-      <HalfCard className="gap-mk-2 p-mk-2 sm:p-mk-3 flex flex-col">
+      <HalfCard className="gap-mk-2 p-mk-2 py-mk sm:p-mk-3 flex flex-col">
         <CardHeader className="p-0">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               <div className="flex flex-col gap-1">
-                <CardTitle className="text-xl">{user.name}</CardTitle>
+                <CardTitle
+                  className={`text-3xl font-light ${turboPascal.className}`}
+                >
+                  {user.name}
+                </CardTitle>
                 <CardDescription className="text-muted-foreground">
                   <Link href={`https://lichess.org/@/${user.username}`}>
                     @{user.username}
