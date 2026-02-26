@@ -5,16 +5,18 @@ import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-con
 import ActionButtons from '@/app/tournaments/[id]/dashboard/tabs/main/action-buttons';
 import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tournament-info';
 import Center from '@/components/center';
+import useTournamentEditTitle from '@/components/hooks/mutation-hooks/use-tournament-edit-title';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useDebounce } from '@/components/hooks/use-debounce';
+import { InputGhost } from '@/components/ui-custom/input-ghost';
 import { Button } from '@/components/ui/button';
-
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTournamentDisplayName } from '@/lib/tournament-display';
 import { Maximize2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FC, useContext } from 'react';
+import { FC, useCallback, useContext, useEffect, useState } from 'react';
 
 const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
@@ -22,36 +24,55 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const { status } = useContext(DashboardContext);
   const formatUtil = useFormatter();
   const t = useTranslations('MakeTournament');
-
-  if (isLoading) return <LoadingElement />;
-  if (!data) return <Center>no data</Center>;
-
   const tournamentDisplayName = getTournamentDisplayName(
     data?.tournament,
     t,
     formatUtil,
   );
-  const title = data.tournament.title || tournamentDisplayName;
+  const title = data?.tournament.title || '';
+  const [controlledTitle, setControlledTitle] = useState(title);
+  const debouncedTitle = useDebounce(controlledTitle, 1000);
+
+  const { mutate } = useTournamentEditTitle();
+
+  const handleTitleUpdate = useCallback(() => {
+    if (debouncedTitle !== title)
+      mutate({ tournamentId, title: debouncedTitle });
+  }, [debouncedTitle, mutate, title, tournamentId]);
+
+  useEffect(() => {
+    handleTitleUpdate();
+  }, [debouncedTitle, handleTitleUpdate]);
+
+  if (isLoading) return <LoadingElement />;
+  if (!data) return <Center>no data</Center>;
 
   return (
-    <div className="max-md:mk-container md:px-mk md:pl-mk-2 pt-mk md:flex md:justify-between">
+    <div className="max-md:mk-container md:px-mk md:pl-mk-2 items-center md:flex md:justify-between">
       <div>
         <div
-          className={`p-mk ${turboPascal.className} flex items-center truncate pt-0 pb-2 text-2xl leading-tight font-bold whitespace-break-spaces max-md:border-b md:pb-0`}
+          className={`p-mk flex items-center max-md:border-b max-md:pt-0 md:pb-0`}
         >
-          {title}
-          <Button
-            className="ml-mk text-muted-foreground hover:text-primary hidden md:flex"
-            variant="ghost"
-            size="icon-sm"
-            onClick={toggleFullscreen}
-          >
-            <Maximize2 className="size-4" />
-          </Button>
+          <InputGhost
+            placeholder={tournamentDisplayName}
+            value={controlledTitle}
+            onChange={(event) => setControlledTitle(event.target.value)}
+            className={`text-3xl ${turboPascal.className} truncate`}
+          />
         </div>
         <TournamentInfoList />
       </div>
-      <ActionButtons status={status} tournament={data.tournament} />
+      <div className="flex items-center">
+        <Button
+          className="ml-mk text-muted-foreground hover:text-primary hidden justify-self-end md:flex"
+          variant="ghost"
+          size="icon-sm"
+          onClick={toggleFullscreen}
+        >
+          <Maximize2 className="size-4" />
+        </Button>
+        <ActionButtons status={status} tournament={data.tournament} />
+      </div>
     </div>
   );
 };

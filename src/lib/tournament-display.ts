@@ -9,8 +9,6 @@ export const getTournamentDisplayName = (
 ) => {
   if (!tournament) return '';
 
-  if (tournament.title) return tournament.title;
-
   const formatText = t(tournament.format);
   const localizedDate = format.dateTime(new Date(tournament.date), {
     dateStyle: 'short',
