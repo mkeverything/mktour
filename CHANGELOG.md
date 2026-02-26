@@ -1,3 +1,21 @@
+# [1.0.0-beta.8](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.7...v1.0.0-beta.8) (2026-02-26)
+
+
+### Bug Fixes
+
+* canEditTitle check in tournament ([4cbfc64](https://github.com/mkeverything/mktour/commit/4cbfc64faec2f2429392a0166a9b0c1bb6dad475))
+* editing trnmnt title disabled after trnmnt started ([23d7c29](https://github.com/mkeverything/mktour/commit/23d7c2911b11498906439c21cb10d633e7759ad7))
+* proper logic operator ([f8738ce](https://github.com/mkeverything/mktour/commit/f8738cec587d91d15c76343877c38f8d0f8c6cf6))
+* undefined changed to '' in default title value ([ef5eca0](https://github.com/mkeverything/mktour/commit/ef5eca0617e0e5d785e0635a30c5ae99d09de2ac))
+
+
+### Features
+
+* backend for editing tournament title ([991e3c6](https://github.com/mkeverything/mktour/commit/991e3c6f2845eee1df443daccb1e0fb857f2a155))
+* edit tournament title ([dd62001](https://github.com/mkeverything/mktour/commit/dd62001913ecc74f74cfa7cc2143d3b8ad1c88d1))
+* turbopascal to player's nickname and user's username ([abf74b0](https://github.com/mkeverything/mktour/commit/abf74b06023e091b6ca59a9f271c7ef994eb900a))
+* user's players display ([a73a43e](https://github.com/mkeverything/mktour/commit/a73a43e1a078b0f95b2c10ef2e966b1977e8cda0))
+
 # [1.0.0-beta.7](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.6...v1.0.0-beta.7) (2026-02-25)
 
 
