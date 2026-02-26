@@ -22,8 +22,6 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   const t = useTranslations('Empty');
   const playersData = players.data?.pages.flatMap((page) => page.players) ?? [];
 
-  console.log(statusInClub);
-
   if (players.status === 'pending' || players.status === 'error')
     return <SkeletonList length={4} className="h-14 rounded-xl" />;
   if (!playersData.length) {
