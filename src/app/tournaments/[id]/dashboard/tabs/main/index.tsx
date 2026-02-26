@@ -26,6 +26,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const title = data?.tournament?.title || fallbackTitle;
   const [controlledTitle, setControlledTitle] = useState(title);
   const debouncedTitle = useDebounce(controlledTitle, 1000);
+  const canEditTitle = status === 'organizer' && !data?.tournament.startedAt;
 
   const { mutate } = useTournamentEditTitle();
 
@@ -48,7 +49,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
           className={`p-mk flex items-center max-md:border-b max-md:pt-0 md:pb-0`}
         >
           <InputGhost
-            disabled={!!data?.tournament.startedAt}
+            disabled={!canEditTitle}
             placeholder={fallbackTitle}
             value={controlledTitle}
             onChange={(event) => setControlledTitle(event.target.value)}
