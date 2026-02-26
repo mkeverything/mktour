@@ -22,8 +22,6 @@ const TournamentItem = ({ club, tournament }: Props) => {
     localizedDate,
   ];
 
-  console.log(title);
-
   const description = details.map((detail, i) => {
     const separator = i !== details.length - 1 && (
       <div className="relative inline max-h-4 w-4">
