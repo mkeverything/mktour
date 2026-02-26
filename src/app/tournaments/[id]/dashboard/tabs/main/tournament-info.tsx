@@ -75,7 +75,7 @@ const TournamentInfoList = () => {
         <div className="flex items-center gap-2">
           <Layers className="text-muted-foreground size-4" />
           <span>{t('number of rounds')}</span>
-          <SwissRoundsNumber className="-my-1" />
+          <SwissRoundsNumber />
         </div>
       )}
       <InfoItem
