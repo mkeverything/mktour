@@ -8,12 +8,12 @@ import Center from '@/components/center';
 import useTournamentEditTitle from '@/components/hooks/mutation-hooks/use-tournament-edit-title';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useDebounce } from '@/components/hooks/use-debounce';
+import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
 import { InputGhost } from '@/components/ui-custom/input-ghost';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getTournamentDisplayName } from '@/lib/tournament-display';
 import { Maximize2 } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FC, useCallback, useContext, useEffect, useState } from 'react';
@@ -22,14 +22,8 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data, isLoading } = useTournamentInfo(tournamentId);
   const { status } = useContext(DashboardContext);
-  const formatUtil = useFormatter();
-  const t = useTranslations('MakeTournament');
-  const tournamentDisplayName = getTournamentDisplayName(
-    data?.tournament,
-    t,
-    formatUtil,
-  );
-  const title = data?.tournament.title || '';
+  const fallbackTitle = useTournamentFallbackTitle(data?.tournament);
+  const title = data?.tournament?.title ?? fallbackTitle;
   const [controlledTitle, setControlledTitle] = useState(title);
   const debouncedTitle = useDebounce(controlledTitle, 1000);
 
@@ -55,7 +49,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
         >
           <InputGhost
             disabled={!!data?.tournament.startedAt}
-            placeholder={tournamentDisplayName}
+            placeholder={fallbackTitle}
             value={controlledTitle}
             onChange={(event) => setControlledTitle(event.target.value)}
             className={`text-3xl ${turboPascal.className} truncate`}

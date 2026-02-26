@@ -1,12 +1,12 @@
 import { TournamentModel } from '@/server/db/zod/tournaments';
+import { useFormatter, useTranslations } from 'next-intl';
 
-export const getTournamentDisplayName = (
+export const useTournamentFallbackTitle = (
   tournament: TournamentModel | null | undefined,
-  t: (key: string) => string,
-  format: {
-    dateTime: (date: Date, options: { dateStyle?: 'short' }) => string;
-  },
 ) => {
+  const format = useFormatter();
+  const t = useTranslations('MakeTournament');
+
   if (!tournament) return '';
 
   const formatText = t(tournament.format);

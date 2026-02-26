@@ -1,5 +1,5 @@
+import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
 import { Card, CardTitle } from '@/components/ui/card';
-import { getTournamentDisplayName } from '@/lib/tournament-display';
 import { ClubModel } from '@/server/db/zod/clubs';
 import { TournamentModel } from '@/server/db/zod/tournaments';
 import { Dot } from 'lucide-react';
@@ -10,11 +10,8 @@ const TournamentItem = ({ club, tournament }: Props) => {
   const { date, type, format, id } = tournament;
   const formatUtil = useFormatter();
   const t = useTranslations('MakeTournament');
-  const tournamentDisplayName = getTournamentDisplayName(
-    tournament,
-    t,
-    formatUtil,
-  );
+  const fallbackTitle = useTournamentFallbackTitle(tournament);
+  const title = tournament.title ?? fallbackTitle;
   const localizedDate = formatUtil.dateTime(new Date(date), {
     dateStyle: 'short',
   });
@@ -42,7 +39,7 @@ const TournamentItem = ({ club, tournament }: Props) => {
   return (
     <Link key={id} href={`/tournaments/${id}`}>
       <Card className="mk-card flex flex-col">
-        <CardTitle className="text-base">{tournamentDisplayName}</CardTitle>
+        <CardTitle className="text-base">{title}</CardTitle>
         {club && (
           <span className="text-muted-foreground text-xs">{club.name}</span>
         )}
