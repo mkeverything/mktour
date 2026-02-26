@@ -30,6 +30,7 @@
     overflow: auto;
     touch-action: pan-x pan-y;
     scrollbar-gutter: stable;
+    padding-top: env(safe-area-inset-top);
   }
 
   /* latin */
