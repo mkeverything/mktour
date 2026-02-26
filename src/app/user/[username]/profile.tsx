@@ -138,7 +138,7 @@ const ClubList: FC<ClubListProps> = ({ clubs, isPending }) => {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="gap-mk flex items-center text-base">
             <Users2 className="size-4" />
             {t('clubs')}
           </CardTitle>
@@ -150,7 +150,7 @@ const ClubList: FC<ClubListProps> = ({ clubs, isPending }) => {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className="gap-mk flex items-center text-base">
           <Users2 className="size-4" />
           {t('clubs')} ({clubs.length})
         </CardTitle>
@@ -184,13 +184,15 @@ const PlayerList: FC<PlayerListProps> = ({ players }) => {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle items-center gap- className="flex2 text-base">
+          <CardTitle className="gap-mk flex items-center text-base">
             <User className="size-4" />
             {t('players')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-muted-foreground text-sm">{t('noPlayers')}</p>
+        <CardContent>
+          <p className="text-muted-foreground text-center text-sm">
+            {t('noPlayers')}
+          </p>
         </CardContent>
       </Card>
     );
