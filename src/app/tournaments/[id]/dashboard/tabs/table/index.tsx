@@ -20,11 +20,13 @@ import {
 } from '@/components/ui/table';
 import { PlayerTournamentModel } from '@/server/db/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
-import { Scale, UserRoundX } from 'lucide-react';
+import { Scale, Trophy, UserRoundX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { FC, PropsWithChildren, useContext, useState } from 'react';
 import { toast } from 'sonner';
+
+import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 
 const TournamentTable: FC = ({}) => {
   const { id } = useParams<{ id: string }>();
@@ -43,16 +45,40 @@ const TournamentTable: FC = ({}) => {
     useState<PlayerTournamentModel | null>(null);
   const hasStarted = !!tournament.data?.tournament.startedAt;
   const hasEnded = !!tournament.data?.tournament.closedAt;
-  const stats =
-    tournament.data?.tournament.format === 'swiss' ? STATS_WITH_BERGER : STATS;
 
-  if (players.isLoading) return <TableLoading />;
+  const roundNumber = hasStarted
+    ? (tournament.data?.tournament.ongoingRound ?? 1)
+    : 0;
+  const roundGames = useTournamentRoundGames({
+    tournamentId: id,
+    roundNumber,
+  });
+
+  const getScore = (player: PlayerTournamentModel) => {
+    const sumOfResults =
+      (player.wins ?? 0) + (player.draws ?? 0) + (player.losses ?? 0);
+    const hasUnfinishedGame =
+      roundGames.data?.some(
+        (g) =>
+          (g.whiteId === player.id || g.blackId === player.id) &&
+          g.result === null,
+      ) ?? false;
+    const actualResultsTotal = sumOfResults + (hasUnfinishedGame ? 1 : 0);
+    const byes = Math.max(0, roundNumber - actualResultsTotal);
+    return (player.wins ?? 0) + byes + (player.draws ?? 0) * 0.5;
+  };
+
+  const stats = STATS;
+
+  if (players.isLoading || (hasStarted && roundGames.isLoading)) {
+    return <TableLoading stats={stats} />;
+  }
   if (players.isError) {
     toast.error(t('added players error'), {
       id: 'query-added-players',
       duration: 3000,
     });
-    return <TableLoading />;
+    return <TableLoading stats={stats} />;
   }
 
   const handleDelete = () => {
@@ -97,14 +123,15 @@ const TournamentTable: FC = ({}) => {
                   {player.nickname}
                 </Status>
               </TableCellStyled>
-              {/* FIXME this should be stats not STATS */}
-              {STATS.map((stat: (typeof STATS)[number]) => (
-                <Stat key={stat}>{player[stat]}</Stat>
+              {stats.map((stat) => (
+                <Stat key={stat}>
+                  {stat === 'wins' && player.wins}
+                  {stat === 'draws' && player.draws}
+                  {stat === 'losses' && player.losses}
+                  {stat === 'score' && getScore(player)}
+                  {stat === 'tiebreak' && mockBergerScore(player)}
+                </Stat>
               ))}
-              {/* FIXME: this should be iterated with stats.map(...) above, given that berger score comes from the PlayerModel */}
-              {tournament.data?.tournament.format === 'swiss' && (
-                <Stat>{mockBergerScore(player)}</Stat> // FIXME mock data
-              )}
             </TableRow>
           ))}
         </TableBody>
@@ -122,9 +149,7 @@ const TournamentTable: FC = ({}) => {
   );
 };
 
-const TableStatsHeads: FC<{ stats: typeof STATS_WITH_BERGER }> = ({
-  stats,
-}) => {
+const TableStatsHeads: FC<{ stats: string[] }> = ({ stats }) => {
   const { isMobile } = useContext(MediaQueryContext);
   const t = useTranslations(
     `Tournament.Table.Stats.${isMobile ? 'short' : 'full'}`,
@@ -134,14 +159,20 @@ const TableStatsHeads: FC<{ stats: typeof STATS_WITH_BERGER }> = ({
     <>
       {stats.map((stat) => (
         <TableHeadStyled key={stat} className="text-center">
-          {stat === 'berger' ? <Scale className="m-auto size-3.5" /> : t(stat)}
+          {stat === 'tiebreak' ? (
+            <Scale className="m-auto size-3.5" />
+          ) : stat === 'score' ? (
+            <Trophy className="m-auto size-3.5" />
+          ) : (
+            t(stat)
+          )}
         </TableHeadStyled>
       ))}
     </>
   );
 };
 
-const TableLoading = () => {
+const TableLoading: FC<{ stats: string[] }> = ({ stats }) => {
   const t = useTranslations('Tournament.Table');
   return (
     <div className="h-full w-full items-center justify-center">
@@ -156,7 +187,7 @@ const TableLoading = () => {
                 small: (chunks) => <small>{chunks}</small>,
               })}
             </TableHeadStyled>
-            <TableStatsHeads stats={STATS} />
+            <TableStatsHeads stats={stats} />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -170,7 +201,7 @@ const TableLoading = () => {
                 <TableCellStyled>
                   <div className="bg-muted h-4 w-40 animate-pulse rounded" />
                 </TableCellStyled>
-                {Array(3)
+                {Array(stats.length)
                   .fill(0)
                   .map((_, j) => (
                     <TableCellStyled key={j}>
@@ -243,11 +274,7 @@ function mockBergerScore(player: PlayerTournamentModel): number {
   );
 }
 
-const STATS: (keyof Partial<PlayerTournamentModel>)[] = [
-  'wins',
-  'draws',
-  'losses',
-];
-const STATS_WITH_BERGER = [...STATS, 'berger'];
+const STATS = ['wins', 'draws', 'losses', 'score'];
+const STATS_WITH_TIEBREAK = [...STATS, 'tiebreak'];
 
 export default TournamentTable;
