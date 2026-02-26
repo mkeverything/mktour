@@ -33,21 +33,6 @@ const TournamentInfoList = () => {
   }
   if (!data) return 'tournament info is `undefined` somehow';
 
-  // const formattedStartedAt = data.tournament.started_at?.toLocaleTimeString(
-  //   locale,
-  //   {
-  //     hour: '2-digit',
-  //     minute: '2-digit',
-  //   },
-  // );
-  // const formattedClosedAt = data.tournament.closed_at?.toLocaleTimeString(
-  //   locale,
-  //   {
-  //     hour: '2-digit',
-  //     minute: '2-digit',
-  //   },
-  // );
-
   const dateArr = data.tournament.date.split('-');
   const formattedDate = new Date(
     Number(dateArr[0]),
@@ -83,35 +68,9 @@ const TournamentInfoList = () => {
         value={data.tournament.rated ? t('rated') : t('unrated')}
       />
       <InfoItem icon={CalendarDays} value={decapitalizedWeekday} />
-      {/* {formattedStartedAt && (
-        <InfoItem
-          icon={getClockIcon(data.tournament.started_at!)}
-          value={`${t('started at')} ${formattedStartedAt}`}
-        />
-      )}
-      {formattedClosedAt && (
-        <InfoItem
-          icon={getClockIcon(data.tournament.closed_at!)}
-          value={`${t('ended at')} ${formattedClosedAt}`}
-        />
-      )} */}
       <Winners {...data} />
     </div>
   );
 };
-
-// const getClockIcon = (time: Date | null | undefined): FC => {
-//   if (!time) return Clock;
-
-//   let hour = time.getHours();
-//   const minutes = time.getMinutes();
-//   if (minutes >= 30) {
-//     hour = hour + 1;
-//   }
-//   hour = hour % 12;
-//   const clockIcon = `Clock${hour === 0 ? '12' : hour}` as keyof typeof icons;
-
-//   return icons[clockIcon];
-// };
 
 export default TournamentInfoList;

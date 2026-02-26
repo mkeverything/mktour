@@ -1,7 +1,9 @@
 /* eslint-disable */
 // FIXME eslint
 import { ClassValue, clsx } from 'clsx';
+import { Clock, icons } from 'lucide-react';
 import { customAlphabet } from 'nanoid';
+import { FC } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -93,6 +95,20 @@ export function debounce<T extends (..._args: any[]) => any>(
     if (callNow) func.apply(context, args);
   };
 }
+
+export const getClockIcon = (time: Date | null | undefined): FC => {
+  if (!time) return Clock;
+
+  let hour = time.getHours();
+  const minutes = time.getMinutes();
+  if (minutes >= 30) {
+    hour = hour + 1;
+  }
+  hour = hour % 12;
+  const clockIcon = `Clock${hour === 0 ? '12' : hour}` as keyof typeof icons;
+
+  return icons[clockIcon];
+};
 
 export function getSwissRecommendedRoundsNumber(players: number): number {
   if (players < 2) return 0;
