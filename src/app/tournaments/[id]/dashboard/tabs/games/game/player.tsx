@@ -12,7 +12,7 @@ const Player: FC<PlayerProps> = ({
   <Button
     variant="ghost"
     className={cn(
-      `text-2xs ${selected ? 'col-span-1' : 'col-span-2'} line-clamp-2 h-full w-full xl:text-xs ${!selected && position.text} w-full rounded-sm p-0 select-none ${selected && isWinner && 'mk-link'}`,
+      `text-2xs ${selected ? 'col-span-1' : 'col-span-2'} line-clamp-2 h-full w-full lg:text-xs ${!selected && position.text} w-full rounded-sm p-0 select-none ${selected && isWinner && 'mk-link'}`,
     )}
     onClick={handleMutate}
   >
