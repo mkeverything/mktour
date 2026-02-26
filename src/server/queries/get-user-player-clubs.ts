@@ -25,3 +25,5 @@ export async function getUserPlayerClubs({ userId }: { userId: string }) {
     },
   }));
 }
+
+export type UserPlayerClubs = Awaited<ReturnType<typeof getUserPlayerClubs>>;
