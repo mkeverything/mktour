@@ -11,7 +11,7 @@ const TournamentItem = ({ club, tournament }: Props) => {
   const formatUtil = useFormatter();
   const t = useTranslations('MakeTournament');
   const fallbackTitle = useTournamentFallbackTitle(tournament);
-  const title = tournament.title ?? fallbackTitle;
+  const title = tournament.title || fallbackTitle;
   const localizedDate = formatUtil.dateTime(new Date(date), {
     dateStyle: 'short',
   });
@@ -21,6 +21,8 @@ const TournamentItem = ({ club, tournament }: Props) => {
     t(`Types.${type}`),
     localizedDate,
   ];
+
+  console.log(title);
 
   const description = details.map((detail, i) => {
     const separator = i !== details.length - 1 && (

@@ -36,7 +36,7 @@ const LastTournaments: FC<{ tournaments: PlayerToTournamentModel[] }> = ({
 
 const TournamentLi = ({ tournament }: PlayerToTournamentModel) => {
   const fallbackTitle = useTournamentFallbackTitle(tournament);
-  const title = tournament.title ?? fallbackTitle;
+  const title = tournament.title || fallbackTitle;
 
   return (
     <Link

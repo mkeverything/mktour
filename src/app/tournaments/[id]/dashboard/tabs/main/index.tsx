@@ -23,7 +23,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const { data, isLoading } = useTournamentInfo(tournamentId);
   const { status } = useContext(DashboardContext);
   const fallbackTitle = useTournamentFallbackTitle(data?.tournament);
-  const title = data?.tournament?.title ?? fallbackTitle;
+  const title = data?.tournament?.title || fallbackTitle;
   const [controlledTitle, setControlledTitle] = useState(title);
   const debouncedTitle = useDebounce(controlledTitle, 1000);
 
