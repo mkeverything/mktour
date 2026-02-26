@@ -162,7 +162,7 @@ export default function NewTournamentForm({
             <FormField
               control={form.control}
               name="format"
-              defaultValue="round robin"
+              defaultValue="swiss"
               render={({ field }) => (
                 <FormItem>
                   <Select
