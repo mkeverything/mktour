@@ -1,3 +1,10 @@
+# [1.0.0-beta.9](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.8...v1.0.0-beta.9) (2026-02-26)
+
+
+### Bug Fixes
+
+* missing pwa splash screen; bg at the top ([8c029a7](https://github.com/mkeverything/mktour/commit/8c029a76431d3f3e25d92b227ba1769fb897fdf9))
+
 # [1.0.0-beta.8](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.7...v1.0.0-beta.8) (2026-02-26)
 
 
