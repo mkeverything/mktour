@@ -54,6 +54,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
           className={`p-mk flex items-center max-md:border-b max-md:pt-0 md:pb-0`}
         >
           <InputGhost
+            disabled={!!data?.tournament.startedAt}
             placeholder={tournamentDisplayName}
             value={controlledTitle}
             onChange={(event) => setControlledTitle(event.target.value)}
