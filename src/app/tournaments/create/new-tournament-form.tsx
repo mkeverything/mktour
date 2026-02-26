@@ -50,7 +50,7 @@ export default function NewTournamentForm({
   const form = useForm<NewTournamentFormType>({
     resolver: zodResolver(newTournamentFormSchema),
     defaultValues: {
-      title: undefined,
+      title: '',
       format: undefined,
       date: new Date(),
       timestamp: 0,
