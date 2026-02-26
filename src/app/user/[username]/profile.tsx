@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Settings, Star, Users2 } from 'lucide-react';
+import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
@@ -94,7 +94,10 @@ const Profile: FC<{
         </div>
       )}
 
-      <ClubList clubs={data} isPending={isPending} />
+      <div className="gap-mk grid w-full sm:grid-cols-2">
+        <ClubList clubs={data} isPending={isPending} />
+        <PlayerList players={user.userPlayers} />
+      </div>
     </div>
   );
 };
@@ -174,6 +177,64 @@ const ClubList: FC<ClubListProps> = ({ clubs, isPending }) => {
   );
 };
 
+const PlayerList: FC<PlayerListProps> = ({ players }) => {
+  const t = useTranslations('Profile');
+
+  if (!players || players.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle items-center gap- className="flex2 text-base">
+            <User className="size-4" />
+            {t('players')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-muted-foreground text-sm">{t('noPlayers')}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <User className="size-4" />
+          {t('players')} ({players.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <ul className="flex flex-col">
+          {players.map(({ club, player }, index) => (
+            <div key={player.id}>
+              {index > 0 && <Separator />}
+              <li className="py-1">
+                <Link
+                  href={`/clubs/${club.id}`}
+                  className="hover:bg-muted/50 gap-mk-2 -mx-2 flex items-center justify-between rounded-lg px-2 py-3 transition-colors"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">
+                      {player.nickname}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {club.name}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium">
+                    {player.rating ?? '—'}
+                  </span>
+                </Link>
+              </li>
+            </div>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+};
+
 type ClubListProps = {
   clubs:
     | {
@@ -182,6 +243,15 @@ type ClubListProps = {
       }[]
     | undefined;
   isPending: boolean;
+};
+
+type PlayerListProps = {
+  players:
+    | {
+        club: { id: string; name: string };
+        player: { id: string; nickname: string; rating: number | null };
+      }[]
+    | undefined;
 };
 
 export default Profile;

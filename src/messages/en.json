@@ -71,7 +71,9 @@
     "created": "joined mktour on",
     "clubs": "clubs",
     "myClubs": "my clubs",
-    "noClubs": "not a member of any club yet"
+    "noClubs": "not a member of any club yet",
+    "players": "players",
+    "noPlayers": "no players yet"
   },
   "Player": {
     "last seen": "last seen: ",
