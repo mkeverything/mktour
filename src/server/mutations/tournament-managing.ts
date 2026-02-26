@@ -967,3 +967,16 @@ export async function updateSwissRoundsNumber({
     .set({ roundsNumber })
     .where(eq(tournaments.id, tournamentId));
 }
+
+export async function editTournamentTitle({
+  tournamentId,
+  title,
+}: {
+  tournamentId: string;
+  title: string;
+}) {
+  await db
+    .update(tournaments)
+    .set({ title })
+    .where(eq(tournaments.id, tournamentId));
+}

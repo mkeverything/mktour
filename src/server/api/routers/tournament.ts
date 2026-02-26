@@ -26,6 +26,7 @@ import {
   addNewPlayer,
   createTournament,
   deleteTournament,
+  editTournamentTitle,
   finishTournament,
   getTournamentGames,
   getTournamentRoundGames,
@@ -281,5 +282,16 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await updateSwissRoundsNumber(input);
+    }),
+  editTournamentTitle: tournamentAdminProcedure
+    .input(
+      z.object({
+        tournamentId: z.string(),
+        title: z.string(),
+      }),
+    )
+    .mutation(async (opts) => {
+      const { input } = opts;
+      await editTournamentTitle(input);
     }),
 };

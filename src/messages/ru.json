@@ -228,7 +228,8 @@
     "affiliation denied": "заявка отклонена",
     "player deleted": "игрок удалён",
     "player has tournaments": "простите! нельзя удалять игрока, который участвовал в турнире. для этого придётся удалить турнир тоже",
-    "club updated": "клуб обновлён"
+    "club updated": "клуб обновлён",
+    "tournament renamed": "название турнира сохранено"
   },
   "UserSettings": {
     "header": "настройки",

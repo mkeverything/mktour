@@ -22,6 +22,7 @@ type DashboardMessage =
   | { event: 'finish-tournament'; closedAt: Date }
   | { event: 'delete-tournament' }
   | { event: 'swiss-new-rounds-number'; roundsNumber: number }
+  | { event: 'tournament-title-changed'; title: string }
   | ErrorMessage;
 
 type ErrorMessage = {
