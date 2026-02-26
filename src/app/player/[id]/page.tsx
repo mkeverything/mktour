@@ -90,7 +90,7 @@ async function PlayerPageContent(props: PlayerPageProps) {
         ) : (
           <Button variant="outline" className="gap-2" disabled>
             <UserX className="size-4" />
-            <span>{t('not linked')}</span>
+            <span className="text-2xs sm:text-xs">{t('not linked')}</span>
           </Button>
         )}
         {canAffiliate && <AffiliateButton player={player} />}
