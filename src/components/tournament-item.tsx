@@ -43,7 +43,11 @@ const TournamentItem = ({ club, tournament }: Props) => {
         {club && (
           <span className="text-muted-foreground text-xs">{club.name}</span>
         )}
-        <div className="text-muted-foreground flex text-xs">{description}</div>
+        <div
+          className={` ${club ? 'text-input' : 'text-muted-foreground'} flex text-xs`}
+        >
+          {description}
+        </div>
       </Card>
     </Link>
   );
