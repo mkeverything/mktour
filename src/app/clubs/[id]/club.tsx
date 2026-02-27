@@ -327,8 +327,8 @@ const ClubTournamentsSection: FC<{
   }, [clubId, queryClient, secondDebouncedSearch, trpc.search]);
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="flex max-h-[512px] flex-col">
+      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
         <CardTitle className="flex items-center gap-2 text-base">
           <Trophy className="size-4" />
           <FormattedMessage id="Menu.tournaments" />
@@ -346,7 +346,7 @@ const ClubTournamentsSection: FC<{
           />
         </div>
       </CardHeader>
-      <CardContent className="max-h-[400px] overflow-y-auto pt-0">
+      <CardContent className="overflow-y-auto pt-3">
         {!searchResults?.tournaments?.length && (
           <p className="text-muted-foreground py-4 text-center text-sm">
             {stats?.tournamentsCount !== 0
@@ -419,8 +419,8 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
   }, [clubId, queryClient, secondDebouncedSearch, trpc.search]);
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="flex max-h-[512px] flex-col">
+      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
         <CardTitle className="flex items-center gap-2 text-base">
           <Users2 className="size-4" />
           <FormattedMessage id="Club.Page.players" />
@@ -440,7 +440,7 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
           />
         </div>
       </CardHeader>
-      <CardContent className="max-h-[400px] overflow-y-auto pt-0">
+      <CardContent className="overflow-y-auto pt-3">
         {searchResults?.players?.length === 0 && (
           <p className="text-muted-foreground py-4 text-center text-sm">
             {playersCount !== 0
