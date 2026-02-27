@@ -10,11 +10,12 @@ import AddPlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/add-pla
 import FormattedMessage from '@/components/formatted-message';
 import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
 import Overlay from '@/components/overlay';
+import Fades from '@/components/ui-custom/fades';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Status } from '@/server/queries/get-status-in-tournament';
 import { useQueryClient } from '@tanstack/react-query';
-import { FC, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   currentTab,
@@ -105,19 +106,6 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
         </div>
       </div>
     </DashboardContext.Provider>
-  );
-};
-
-const Fades: FC<{ from: string; to: string }> = ({ from, to }) => {
-  return (
-    <>
-      <div
-        className={`h-mk-2 bg-red absolute top-0 w-full bg-linear-to-b to-transparent ${from}`}
-      />
-      <div
-        className={`h-mk-2 ${to} absolute bottom-0 w-full bg-linear-to-b from-transparent`}
-      />
-    </>
   );
 };
 
