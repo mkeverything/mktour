@@ -1,3 +1,11 @@
+# [1.0.0-beta.10](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.9...v1.0.0-beta.10) (2026-02-27)
+
+
+### Features
+
+* display total score in tournament table (with byes calculated on the go) ([4b7ac97](https://github.com/mkeverything/mktour/commit/4b7ac97b4ac813f7a1551c194379a71dadc215db))
+* implement PAB at the frontend + implement tiebreaks ([63a6db0](https://github.com/mkeverything/mktour/commit/63a6db04ef6ec3610a729c4bc503f8530c45cceb))
+
 # [1.0.0-beta.9](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.8...v1.0.0-beta.9) (2026-02-26)
 
 
