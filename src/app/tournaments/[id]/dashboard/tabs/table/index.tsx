@@ -23,10 +23,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Scale, Trophy, UserRoundX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, PropsWithChildren, useContext, useState } from 'react';
+import { FC, PropsWithChildren, useContext, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
+import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
+import {
+  type SortedPlayersResult,
+  sortPlayersByResultsWithMaps,
+} from '@/lib/tournament-results';
 
 const TournamentTable: FC = ({}) => {
   const { id } = useParams<{ id: string }>();
@@ -46,31 +50,29 @@ const TournamentTable: FC = ({}) => {
   const hasStarted = !!tournament.data?.tournament.startedAt;
   const hasEnded = !!tournament.data?.tournament.closedAt;
 
-  const roundNumber = hasStarted
-    ? (tournament.data?.tournament.ongoingRound ?? 1)
-    : 0;
-  const roundGames = useTournamentRoundGames({
-    tournamentId: id,
-    roundNumber,
-  });
+  const allGames = useTournamentGames(id);
 
-  const getScore = (player: PlayerTournamentModel) => {
-    const sumOfResults =
-      (player.wins ?? 0) + (player.draws ?? 0) + (player.losses ?? 0);
-    const hasUnfinishedGame =
-      roundGames.data?.some(
-        (g) =>
-          (g.whiteId === player.id || g.blackId === player.id) &&
-          g.result === null,
-      ) ?? false;
-    const actualResultsTotal = sumOfResults + (hasUnfinishedGame ? 1 : 0);
-    const byes = Math.max(0, roundNumber - actualResultsTotal);
-    return (player.wins ?? 0) + byes + (player.draws ?? 0) * 0.5;
-  };
+  const {
+    players: sortedPlayers,
+    playerScoresMap,
+    tiebreakScoresMap,
+  } = useMemo<SortedPlayersResult>(() => {
+    if (!players.data || !tournament.data)
+      return {
+        players: [],
+        playerScoresMap: new Map(),
+        tiebreakScoresMap: new Map(),
+      };
+    return sortPlayersByResultsWithMaps(
+      players.data,
+      tournament.data.tournament,
+      allGames.data ?? [],
+    );
+  }, [players.data, tournament.data, allGames.data]);
 
-  const stats = STATS;
+  const stats = STATS_WITH_TIEBREAK;
 
-  if (players.isLoading || (hasStarted && roundGames.isLoading)) {
+  if (players.isLoading || allGames.isLoading) {
     return <TableLoading stats={stats} />;
   }
   if (players.isError) {
@@ -111,7 +113,7 @@ const TournamentTable: FC = ({}) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {players.data?.map((player, i) => (
+          {sortedPlayers.map((player: PlayerTournamentModel, i: number) => (
             <TableRow key={player.id} onClick={() => setSelectedPlayer(player)}>
               <TableCellStyled className={`font-small w-10 text-center`}>
                 <Place player={player} hasEnded={hasEnded}>
@@ -119,17 +121,15 @@ const TournamentTable: FC = ({}) => {
                 </Place>
               </TableCellStyled>
               <TableCellStyled className="font-small flex gap-2 truncate pl-0">
-                <Status player={{ ...player, isOut: false }}>
-                  {player.nickname}
-                </Status>
+                <Status player={player}>{player.nickname}</Status>
               </TableCellStyled>
               {stats.map((stat) => (
                 <Stat key={stat}>
                   {stat === 'wins' && player.wins}
                   {stat === 'draws' && player.draws}
                   {stat === 'losses' && player.losses}
-                  {stat === 'score' && getScore(player)}
-                  {stat === 'tiebreak' && mockBergerScore(player)}
+                  {stat === 'score' && playerScoresMap.get(player.id)}
+                  {stat === 'tiebreak' && tiebreakScoresMap.get(player.id)}
                 </Stat>
               ))}
             </TableRow>
@@ -261,20 +261,6 @@ const Stat: FC<PropsWithChildren> = ({ children }) => (
   </TableCellStyled>
 );
 
-/**
- * Mock Berger tiebreak calculation.
- * Berger is typically sum of defeated opponents' scores + half of drawn opponents' scores.
- * Here, we just mock it as: wins * 3 + draws * 1 + losses * 0.5
- */
-function mockBergerScore(player: PlayerTournamentModel): number {
-  return (
-    (player.wins ?? 0) * 3 +
-    (player.draws ?? 0) * 1 +
-    (player.losses ?? 0) * 0.5
-  );
-}
-
-const STATS = ['wins', 'draws', 'losses', 'score'];
-const STATS_WITH_TIEBREAK = [...STATS, 'tiebreak'];
+const STATS_WITH_TIEBREAK = ['wins', 'draws', 'losses', 'score', 'tiebreak'];
 
 export default TournamentTable;

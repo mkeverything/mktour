@@ -1,6 +1,7 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
+import { buildScoreMaps, sortPlayersByResults } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { NewTournamentFormType } from '@/lib/zod/new-tournament-form';
 import { db } from '@/server/db';
@@ -65,13 +66,35 @@ export const createTournament = async (
 export async function getTournamentPlayers(
   id: string,
 ): Promise<Array<PlayerTournamentModel>> {
+  const [tournament] = await db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.id, id));
+
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
+  const [playerModels, allGames] = await Promise.all([
+    getRawTournamentPlayers(id),
+    getTournamentGames(id),
+  ]);
+
+  return sortPlayersByResults(playerModels, tournament, allGames);
+}
+
+/**
+ * Fetches raw player models without sorting or additional queries.
+ * Use this when the caller already has tournament/games data and will sort externally.
+ */
+async function getRawTournamentPlayers(
+  id: string,
+): Promise<Array<PlayerTournamentModel>> {
   const playersDb = await db
     .select()
     .from(players_to_tournaments)
     .where(eq(players_to_tournaments.tournamentId, id))
     .innerJoin(players, eq(players.id, players_to_tournaments.playerId));
 
-  const playerModels: PlayerTournamentModel[] = playersDb.map((each) => ({
+  return playersDb.map((each) => ({
     id: each.player.id,
     nickname: each.player.nickname,
     realname: each.player.realname,
@@ -84,10 +107,6 @@ export async function getTournamentPlayers(
     place: each.players_to_tournaments.place,
     pairingNumber: each.players_to_tournaments.pairingNumber,
   }));
-
-  return playerModels.sort(
-    (a, b) => b.wins + b.draws / 2 - (a.wins + a.draws / 2),
-  );
 }
 
 // decided to keep using server action for this one not to face problems with dates serialization
@@ -234,8 +253,8 @@ export async function getTournamentGames(
     })
     .from(games)
     .where(eq(games.tournamentId, tournamentId))
-    .innerJoin(whitePlayer, eq(games.blackId, whitePlayer.id))
-    .innerJoin(blackPlayer, eq(games.whiteId, blackPlayer.id));
+    .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
+    .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
 
   return gamesDb.sort((a, b) => a.gameNumber - b.gameNumber);
 }
@@ -829,25 +848,43 @@ export async function finishTournament({
       });
   }
 
-  //// NB following block is chatGPT generated and needs review:
-  const players = await getTournamentPlayers(tournamentId);
-  let counter = 1;
-  players.forEach((player, i) => {
-    const playerScore = player.wins + player.draws / 2;
+  const tournament = await db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .then((rows) => rows[0]);
+
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
+  const allGames = await getTournamentGames(tournamentId);
+  const playersUnsorted = await getRawTournamentPlayers(tournamentId);
+  const sortedPlayers = sortPlayersByResults(
+    playersUnsorted,
+    tournament,
+    allGames,
+  );
+  const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+    sortedPlayers,
+    tournament,
+    allGames,
+  );
+
+  sortedPlayers.forEach((player, i) => {
     if (i === 0) {
-      player.place = counter;
-      counter++;
+      player.place = 1;
     } else {
-      const prevPlayerScore = players[i - 1].wins + players[i - 1].draws / 2;
-      if (playerScore === prevPlayerScore) {
-        player.place = counter - 1;
-      } else {
-        player.place = counter;
-        counter++;
-      }
+      const prevPlayer = sortedPlayers[i - 1];
+      const score = playerScoresMap.get(player.id) ?? 0;
+      const prevScore = playerScoresMap.get(prevPlayer.id) ?? 0;
+      const tb = tiebreakScoresMap.get(player.id) ?? 0;
+      const prevTb = tiebreakScoresMap.get(prevPlayer.id) ?? 0;
+
+      player.place =
+        score === prevScore && tb === prevTb ? prevPlayer.place : i + 1;
     }
   });
-  const updates = players.map((player) =>
+
+  const updates = sortedPlayers.map((player) =>
     db
       .update(players_to_tournaments)
       .set({ place: player.place })
@@ -860,14 +897,7 @@ export async function finishTournament({
   );
   await Promise.all(updates);
 
-  // calculate and apply Glicko-2 ratings if tournament is rated
-  const tournament = await db
-    .select({ rated: tournaments.rated })
-    .from(tournaments)
-    .where(eq(tournaments.id, tournamentId))
-    .then((rows) => rows[0]);
-
-  if (tournament?.rated) {
+  if (tournament.rated) {
     await calculateAndApplyGlickoRatings(tournamentId);
   }
 }

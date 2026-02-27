@@ -15,11 +15,7 @@ import {
 } from '@/server/db/schema/tournaments';
 import { clubsSelectSchema } from '@/server/db/zod/clubs';
 import { gameResultEnum, TournamentFormat } from '@/server/db/zod/enums';
-import {
-  playerFormSchema,
-  playersSelectSchema,
-  PlayerTournamentModel,
-} from '@/server/db/zod/players';
+import { playerFormSchema, playersSelectSchema } from '@/server/db/zod/players';
 import { gameSchema, tournamentSchema } from '@/server/db/zod/tournaments';
 import {
   addExistingPlayer,
@@ -29,6 +25,7 @@ import {
   editTournamentTitle,
   finishTournament,
   getTournamentGames,
+  getTournamentPlayers,
   getTournamentRoundGames,
   removePlayer,
   resetTournament,
@@ -77,30 +74,7 @@ export const tournamentRouter = {
   playersIn: publicProcedure
     .input(z.object({ tournamentId: z.string() }))
     .query(async (opts) => {
-      const { input } = opts;
-      const playersDb = await db
-        .select()
-        .from(players_to_tournaments)
-        .where(eq(players_to_tournaments.tournamentId, input.tournamentId))
-        .innerJoin(players, eq(players.id, players_to_tournaments.playerId));
-
-      const playerModels: PlayerTournamentModel[] = playersDb.map((each) => ({
-        id: each.player.id,
-        nickname: each.player.nickname,
-        realname: each.player.realname,
-        rating: each.player.rating,
-        wins: each.players_to_tournaments.wins,
-        draws: each.players_to_tournaments.draws,
-        losses: each.players_to_tournaments.losses,
-        colorIndex: each.players_to_tournaments.colorIndex,
-        isOut: each.players_to_tournaments.isOut,
-        place: each.players_to_tournaments.place,
-        pairingNumber: each.players_to_tournaments.pairingNumber,
-      }));
-
-      return playerModels.sort(
-        (a, b) => b.wins + b.draws / 2 - (a.wins + a.draws / 2),
-      );
+      return await getTournamentPlayers(opts.input.tournamentId);
     }),
   playersOut: tournamentAdminProcedure
     .input(z.object({ tournamentId: z.string() }))
