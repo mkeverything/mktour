@@ -1,4 +1,5 @@
 import Loading from '@/app/loading';
+import JsonLd from '@/components/json-ld';
 import Navigation from '@/components/navigation';
 import ErrorFallback from '@/components/providers/error-boundary';
 import IntlProvider from '@/components/providers/intl-provider';
@@ -7,7 +8,7 @@ import ThemeProvider from '@/components/providers/theme-provider';
 import { GlobalWebSocketProvider } from '@/components/providers/websocket-provider';
 import { TRPCReactProvider } from '@/components/trpc/client';
 import { Toaster } from '@/components/ui/sonner';
-import JsonLd from '@/components/json-ld';
+import { BASE_URL } from '@/lib/config/urls';
 import '@/styles/globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -16,7 +17,6 @@ import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import Script from 'next/script';
 import { PropsWithChildren, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { BASE_URL } from '@/lib/config/urls';
 
 async function LayoutContent({ children }: PropsWithChildren) {
   const locale = await getLocale();
@@ -61,7 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: '%s | mktour',
     },
     description: t('homepage.description'),
-    authors: [{ url: 'https://mkcode.org' }],
+    authors: [{ url: 'https://mkeverything.ru' }],
     keywords: [
       'chess',
       'tournament',
