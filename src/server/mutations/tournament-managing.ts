@@ -375,7 +375,6 @@ export async function resetTournament({
         startedAt: null,
         ongoingRound: 1,
         closedAt: null,
-        roundsNumber: null,
       })
       .where(
         and(eq(tournaments.id, tournamentId), isNotNull(tournaments.startedAt)),

@@ -4,11 +4,7 @@ import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-con
 import useSaveRoundsNumberMutation from '@/components/hooks/mutation-hooks/use-tournament-update-swiss-rounds-number';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
-import {
-  cn,
-  getSwissMaxRoundsNumber,
-  getSwissMinRoundsNumber,
-} from '@/lib/utils';
+import { cn, getSwissMaxRoundsNumber } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useContext } from 'react';
@@ -30,7 +26,7 @@ export default function SwissRoundsNumber({
   const isOrganizer = status === 'organizer';
   const currentValue = data?.tournament.roundsNumber ?? 0;
   const playerCount = players?.length ?? 0;
-  const minValue = getSwissMinRoundsNumber(playerCount);
+  const minValue = 1;
   const maxValue = getSwissMaxRoundsNumber(playerCount);
 
   const canDecrement = currentValue > minValue;
