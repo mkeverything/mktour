@@ -7,7 +7,6 @@ import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tourn
 import Center from '@/components/center';
 import useTournamentEditTitle from '@/components/hooks/mutation-hooks/use-tournament-edit-title';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useDebounce } from '@/components/hooks/use-debounce';
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
 import { InputGhost } from '@/components/ui-custom/input-ghost';
 import { Button } from '@/components/ui/button';
@@ -16,28 +15,24 @@ import { Maximize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FC, useCallback, useContext, useEffect, useState } from 'react';
+import { FC, useCallback, useContext, useState } from 'react';
 
 const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data, isLoading } = useTournamentInfo(tournamentId);
   const { status } = useContext(DashboardContext);
+  const tournamentTitle = data?.tournament.title;
   const fallbackTitle = useTournamentFallbackTitle(data?.tournament);
-  const title = data?.tournament?.title || fallbackTitle;
+  const title = tournamentTitle || fallbackTitle;
   const [controlledTitle, setControlledTitle] = useState(title);
-  const debouncedTitle = useDebounce(controlledTitle, 1000);
   const canEditTitle = status === 'organizer' && !data?.tournament.startedAt;
 
   const { mutate } = useTournamentEditTitle();
 
   const handleTitleUpdate = useCallback(() => {
-    if (debouncedTitle !== title)
-      mutate({ tournamentId, title: debouncedTitle });
-  }, [debouncedTitle, mutate, title, tournamentId]);
-
-  useEffect(() => {
-    handleTitleUpdate();
-  }, [debouncedTitle, handleTitleUpdate]);
+    if (controlledTitle !== tournamentTitle)
+      mutate({ tournamentId, title: controlledTitle });
+  }, [controlledTitle, mutate, tournamentId, tournamentTitle]);
 
   if (isLoading) return <LoadingElement />;
   if (!data) return <Center>no data</Center>;
@@ -52,6 +47,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
             disabled={!canEditTitle}
             placeholder={fallbackTitle}
             value={controlledTitle}
+            onBlur={handleTitleUpdate}
             onChange={(event) => setControlledTitle(event.target.value)}
             className={`text-3xl ${turboPascal.className} truncate`}
           />
