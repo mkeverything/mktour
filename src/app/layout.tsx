@@ -1,4 +1,5 @@
 import Loading from '@/app/loading';
+import Countdown from '@/components/countdown';
 import Navigation from '@/components/navigation';
 import ErrorFallback from '@/components/providers/error-boundary';
 import IntlProvider from '@/components/providers/intl-provider';
@@ -51,7 +52,9 @@ export default function RootLayout({ children }: PropsWithChildren) {
             <MediaQueryProvider>
               <TRPCReactProvider>
                 <Suspense fallback={<Loading />}>
-                  <LayoutContent>{children}</LayoutContent>
+                  <Countdown>
+                    <LayoutContent>{children}</LayoutContent>
+                  </Countdown>
                 </Suspense>
               </TRPCReactProvider>
             </MediaQueryProvider>
