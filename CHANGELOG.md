@@ -1,3 +1,10 @@
+# [1.0.0-beta.12](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.11...v1.0.0-beta.12) (2026-02-27)
+
+
+### Bug Fixes
+
+* missing tournaments with no title in club/[id] ([a1a8ab8](https://github.com/mkeverything/mktour/commit/a1a8ab865bb5dd24f88d82ab62db39f34897082e))
+
 # [1.0.0-beta.11](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.10...v1.0.0-beta.11) (2026-02-27)
 
 
