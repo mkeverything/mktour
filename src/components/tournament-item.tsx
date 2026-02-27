@@ -44,7 +44,7 @@ const TournamentItem = ({ club, tournament }: Props) => {
           <span className="text-muted-foreground text-xs">{club.name}</span>
         )}
         <div
-          className={` ${club ? 'text-input' : 'text-muted-foreground'} flex text-xs`}
+          className={` ${club ? 'text-input' : 'text-muted-foreground'} flex flex-wrap text-xs`}
         >
           {description}
         </div>
