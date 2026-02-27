@@ -42,6 +42,14 @@ export async function globalSearch(params: SearchParamsModel) {
   }
   if (filter && filter.type === 'tournaments') {
     const { clubId } = filter;
+    if (!query) {
+      const tournamentsResult = await db
+        .select()
+        .from(tournaments)
+        .where(eq(tournaments.clubId, clubId))
+        .limit(15);
+      return { tournaments: tournamentsResult };
+    }
     const tournamentsResult = await db
       .select()
       .from(tournaments)
