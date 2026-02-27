@@ -339,16 +339,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function RootLayout({ children }: PropsWithChildren) {
-  let locale = 'en';
-  try {
-    locale = (await getLocale()) ?? 'en';
-  } catch {
-    locale = 'en';
-  }
-
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className="small-scrollbar">
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <ThemeProvider
