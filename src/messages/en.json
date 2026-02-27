@@ -62,10 +62,10 @@
       "about us": "about us"
     },
     "Descriptions": {
-      "club": "it is your chess club dashboard. here you can manage your players, events and other club settings",
+      "club": "your chess club dashboard. here you can manage your players, events and other club settings",
       "tournaments": "here are all the tournaments related to you. both, where you played and which were organized by your clubs",
       "about us": "mktour is an open-source project. here you can learn more about team and the app",
-      "profile": "it's your own page with all your clubs, stats and more"
+      "profile": "your page with clubs, stats and more"
     },
     "Subs": {
       "all clubs": "all clubs",
@@ -122,8 +122,8 @@
     "linkedTo": "linked to",
     "not linked": "not linked to account",
     "cancel affiliation": "disconnect",
-    "cancel affiliation by user description": "you are going to disconnect your account. this player won't be displayed at your profile, and you won't be able to set their game results yourself",
-    "cancel affiliation by club description": "you are going to remove this player's affiliation to the club. the user will be notified.",
+    "cancel affiliation by user description": "you'll disconnect your account from this player. they won't show on your profile, and you won't be able to set their results",
+    "cancel affiliation by club description": "you are going to remove this player's affiliation to the club.",
     "Stats": {
       "gamesPlayed": "games played",
       "winRate": "win rate",
@@ -189,7 +189,7 @@
         "leave club": "leave club",
         "delete club": "delete club",
         "add manager": "add manager",
-        "no affiliated users": "couldn't find users related to your club. start typing to search among all mktour users",
+        "no affiliated users": "no users linked to your club found. start typing to search all mktour users",
         "search users error": "an error happened while searching",
         "make admin": "make admin",
         "make co-owner": "make co-owner",
@@ -243,10 +243,10 @@
     "server error": "sorry! server error happened",
     "profile updated": "profile updated!",
     "ws success": "realtime updates enabled!",
-    "ws error": "live-server error. sorry! you will see no realtime updates",
+    "ws error": "live-server error. sorry! no realtime updates this time",
     "user deleted": "your profile has been deleted completely",
     "zero clubs error": "every user must have at least one club",
-    "round generated": "round genrated",
+    "round generated": "round generated",
     "result added": "result added",
     "started": "tournament has started!",
     "ended": "tournament is finished!",
@@ -257,7 +257,7 @@
     "affiliation requested": "request sent",
     "affiliation canceled": "request cancelled",
     "player deleted": "player deleted",
-    "player has tournaments": "sorry! the player, who is added to a tournament, cannot be deleted. otherwise you have to delete that tournament too",
+    "player has tournaments": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
     "club updated": "club updated",
     "tournament renamed": "tournament title has been updated"
   },
@@ -381,7 +381,7 @@
       "back": "back",
       "add new player": "add new player",
       "name": "name",
-      "estimated raiting": "estimated rating",
+      "estimated rating": "estimated rating",
       "save": "save",
       "search": "search",
       "possible players error": "error happened while loading club players",
@@ -453,12 +453,12 @@
   "About": {
     "title": "about mktour",
     "description": "open-source chess tournament management platform",
-    "intro": "mktour is a free, open-source platform designed to make organizing chess tournaments simple and efficient. built by chess enthusiasts, for chess enthusiasts.",
+    "intro": "mktour is a free, open-source platform designed to make organizing chess tournaments simple and efficient. fast, simple and clear.",
     "contact": {
       "title": "get in touch",
       "lichess": "lichess team",
       "lichess_desc": "there is a forum for your questions",
-      "email_desc": "contact us privately"
+      "email_desc": "or contact us privately"
     },
     "Changelog": {
       "title": "changelog",
