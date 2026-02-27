@@ -108,7 +108,7 @@ const AddNewPlayer = ({
           render={({ field: { value, onChange } }) => (
             <FormItem>
               <legend>
-                {t('estimated raiting')}: {value}
+                {t('estimated rating')}: {value}
               </legend>
               <FormControl>
                 <Slider
