@@ -1,5 +1,6 @@
 import { publicProcedure } from '@/server/api/trpc';
 import { globalSearch } from '@/server/queries/search';
+import meta from '@/server/api/meta';
 import z from 'zod';
 
 const searchSchema = z.object({
@@ -21,6 +22,7 @@ const searchSchema = z.object({
 export type SearchParamsModel = z.infer<typeof searchSchema>;
 
 export const search = publicProcedure
+  .meta(meta.search)
   .input(searchSchema)
   //   .output(
   // z.object({

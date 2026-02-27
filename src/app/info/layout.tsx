@@ -1,11 +1,5 @@
 import type { ReactNode } from 'react';
 
-export default async function AboutPageLayout({
-  children,
-}: ClubsPageLayoutProps) {
+export default function AboutPageLayout({ children }: { children: ReactNode }) {
   return <div>{children}</div>;
-}
-
-interface ClubsPageLayoutProps {
-  children: ReactNode;
 }

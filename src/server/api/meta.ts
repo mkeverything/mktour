@@ -521,6 +521,14 @@ const meta = {
       tags: ['players'],
     },
   },
+  search: {
+    openapi: {
+      method: 'GET',
+      path: '/search',
+      summary: 'global search across tournaments, clubs and players',
+      tags: ['search'],
+    },
+  },
 } as const satisfies Record<string, OpenApiMeta>;
 
 export default meta;

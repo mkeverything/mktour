@@ -1,5 +1,36 @@
 {
   "locale": "en",
+  "Seo": {
+    "siteName": "mktour",
+    "homepage": {
+      "title": "mktour - chess tournament management",
+      "description": "create and manage chess tournaments with swiss, round robin, single elimination and double elimination formats. free and open-source."
+    },
+    "clubs": {
+      "title": "chess clubs",
+      "description": "browse and join chess clubs on mktour"
+    },
+    "tournaments": {
+      "title": "chess tournaments",
+      "description": "find and follow chess tournaments on mktour"
+    },
+    "signIn": {
+      "title": "sign in",
+      "description": "sign in to mktour with your lichess account"
+    },
+    "about": {
+      "title": "about mktour",
+      "description": "open-source chess tournament management platform built by chess enthusiasts"
+    },
+    "faq": {
+      "title": "faq",
+      "description": "frequently asked questions about mktour chess tournament platform"
+    },
+    "contact": {
+      "title": "contact",
+      "description": "get in touch with the mktour team"
+    }
+  },
   "Common": {
     "back": "back",
     "cancel": "cancel",
