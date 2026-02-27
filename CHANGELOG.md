@@ -1,3 +1,10 @@
+# [1.0.0-beta.11](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.10...v1.0.0-beta.11) (2026-02-27)
+
+
+### Bug Fixes
+
+* rounds number not less that 1 ([4c36122](https://github.com/mkeverything/mktour/commit/4c3612207cb073d6bd9d2fe745bb88db2ca8dc10))
+
 # [1.0.0-beta.10](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.9...v1.0.0-beta.10) (2026-02-27)
 
 
