@@ -136,16 +136,18 @@ export const seedComprehensiveTestData = async () => {
     await Promise.all(playerUpdates);
 
     // cleanup invalid relations concurrently
-    const usersWithValidSelectedClub = db
-      .select({ id: schema.users.id })
-      .from(schema.users)
-      .innerJoin(
-        schema.clubs_to_users,
-        and(
-          eq(schema.users.id, schema.clubs_to_users.userId),
-          eq(schema.users.selectedClub, schema.clubs_to_users.clubId),
-        ),
-      );
+    const usersWithValidSelectedClub = (
+      await db
+        .select({ id: schema.users.id })
+        .from(schema.users)
+        .innerJoin(
+          schema.clubs_to_users,
+          and(
+            eq(schema.users.id, schema.clubs_to_users.userId),
+            eq(schema.users.selectedClub, schema.clubs_to_users.clubId),
+          ),
+        )
+    ).map((u) => u.id);
 
     await Promise.all([
       db
