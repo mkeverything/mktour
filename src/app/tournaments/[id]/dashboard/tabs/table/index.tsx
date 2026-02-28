@@ -9,7 +9,6 @@ import PlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/player-dra
 import { useTournamentRemovePlayer } from '@/components/hooks/mutation-hooks/use-tournament-remove-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
-import { MediaQueryContext } from '@/components/providers/media-query-context';
 import {
   Table,
   TableBody,
@@ -33,6 +32,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
+import FormattedMessage from '@/components/formatted-message';
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
 import {
   type SortedPlayersResult,
@@ -120,7 +120,7 @@ const TournamentTable: FC = ({}) => {
         <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
           <TableRow>
             <TableHeadStyled className="text-center">#</TableHeadStyled>
-            <TableHeadStyled className="w-full p-0">
+            <TableHeadStyled className="w-full min-w-10 p-0">
               {t.rich('name column', {
                 count: players.data?.length ?? 0,
                 small: (chunks) =>
@@ -161,30 +161,19 @@ const TournamentTable: FC = ({}) => {
   );
 };
 
-const TableStatsHeads: FC<{ stats: string[] }> = ({ stats }) => {
-  const { isMobile } = useContext(MediaQueryContext);
-  const t = useTranslations(
-    `Tournament.Table.Stats.${isMobile ? 'short' : 'full'}`,
-  );
-
+const TableStatsHeads: FC<{ stats: Stat[] }> = ({ stats }) => {
   return (
     <>
       {stats.map((stat) => (
         <TableHeadStyled key={stat} className="text-center">
-          {stat === 'tiebreak' ? (
-            <Scale className="m-auto size-3.5" />
-          ) : stat === 'score' ? (
-            <Trophy className="m-auto size-3.5" />
-          ) : (
-            t(stat)
-          )}
+          {statHeadRenderers[stat]}
         </TableHeadStyled>
       ))}
     </>
   );
 };
 
-const TableLoading: FC<{ stats: string[] }> = ({ stats }) => {
+const TableLoading: FC<{ stats: Stat[] }> = ({ stats }) => {
   const t = useTranslations('Tournament.Table');
   return (
     <div className="h-full w-full items-center justify-center">
@@ -272,6 +261,25 @@ const Stat: FC<PropsWithChildren> = ({ children }) => (
     {children}
   </TableCellStyled>
 );
+
+const renderTextHead = (stat: Exclude<Stat, 'score' | 'tiebreak'>) => (
+  <>
+    <div className="block sm:hidden md:block xl:hidden">
+      <FormattedMessage id={`Tournament.Table.Stats.short.${stat}`} />
+    </div>
+    <div className="hidden sm:block md:hidden xl:block">
+      <FormattedMessage id={`Tournament.Table.Stats.full.${stat}`} />
+    </div>
+  </>
+);
+
+const statHeadRenderers: Record<Stat, React.ReactNode> = {
+  wins: renderTextHead('wins'),
+  draws: renderTextHead('draws'),
+  losses: renderTextHead('losses'),
+  score: <Trophy className="m-auto size-3.5" />,
+  tiebreak: <Scale className="m-auto size-3.5" />,
+};
 
 const STATS_WITH_TIEBREAK: Stat[] = [
   'wins',
