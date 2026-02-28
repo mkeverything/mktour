@@ -148,5 +148,17 @@ export type PlayerInsertModel = z.infer<typeof playersInsertSchema>;
 export type PlayerUpdateModel = z.infer<typeof playersUpdateSchema>;
 export type PlayerEditModel = z.infer<typeof playerEditSchema>;
 
+export const userPlayerClubSchema = z.object({
+  club: z.object({ id: z.string(), name: z.string() }),
+  player: playersSelectSchema.pick({
+    id: true,
+    nickname: true,
+    rating: true,
+    ratingDeviation: true,
+    ratingPeak: true,
+  }),
+});
+
 export type PlayerStatsModel = z.infer<typeof playerStatsSchema>;
 export type PlayerAuthStatsModel = z.infer<typeof playerAuthStatsSchema>;
+export type UserPlayerClubModel = z.infer<typeof userPlayerClubSchema>;
