@@ -10,6 +10,20 @@
 ### Features
 
 * merge player with affiliated user ([4387b8d](https://github.com/mkeverything/mktour/commit/4387b8d0a2dd5946887b88ccac51fa77dc7503af))
+* user last touranaments ([36e7f8b](https://github.com/mkeverything/mktour/commit/36e7f8b58afc157cf671ef4d84212b6f746ebdb8))
+
+# [1.0.0-beta.15](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.14...v1.0.0-beta.15) (2026-02-28)
+
+
+### Bug Fixes
+
+* proper usage of user-players api ([e4cb1c7](https://github.com/mkeverything/mktour/commit/e4cb1c7aa0d3762e39d6f3be63426672f8a59377))
+* proper usage of user-players api ([206b472](https://github.com/mkeverything/mktour/commit/206b472c7c5881032df80f57cf9f05bb1739522f))
+
+
+### Features
+
+* merge player with affiliated user ([4387b8d](https://github.com/mkeverything/mktour/commit/4387b8d0a2dd5946887b88ccac51fa77dc7503af))
 
 # [1.0.0-beta.15](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.14...v1.0.0-beta.15) (2026-02-28)
 
