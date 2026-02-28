@@ -104,7 +104,12 @@
     "myClubs": "my clubs",
     "noClubs": "not a member of any club yet",
     "players": "players",
-    "noPlayers": "no players yet"
+    "noPlayers": "no players yet",
+    "clubProfiles": "club profiles",
+    "noClubProfiles": "user hasn't played anywhere yet",
+    "clubRating": "club rating",
+    "lastTournament": "last tournament",
+    "alsoManages": "admin in:"
   },
   "Player": {
     "last seen": "last seen: ",

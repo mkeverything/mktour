@@ -13,6 +13,7 @@ export async function getUserClubNames({ userId }: { userId: string }) {
     .select({
       id: clubs.id,
       name: clubs.name,
+      status: clubs_to_users.status,
     })
     .from(clubs_to_users)
     .where(eq(clubs_to_users.userId, userId))

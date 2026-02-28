@@ -1,21 +1,16 @@
 import { turboPascal } from '@/app/fonts';
 import Loading from '@/app/loading';
 import { AffiliateButton } from '@/app/player/[id]/affiliate-button';
-import CancelAffiliationByClub from '@/app/player/[id]/cancel-affiliation-by-club';
-import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
 import ClaimPlayer from '@/app/player/[id]/claim-button';
 import EditButton from '@/app/player/[id]/edit-button';
 import LastTournaments from '@/app/player/[id]/last-tournaments';
 import PlayerStats from '@/app/player/[id]/player-stats';
-import LichessLogo from '@/components/ui-custom/lichess-logo';
-import { Button } from '@/components/ui/button';
 import { CardTitle } from '@/components/ui/card';
 import { publicCaller } from '@/server/api';
 import { PlayerModel } from '@/server/db/zod/players';
-import { ChevronRight, User2, Users2, UserX } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+import { ChevronRight, Users2 } from 'lucide-react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { FC, Suspense } from 'react';
 import 'server-only';
 
@@ -34,8 +29,9 @@ async function PlayerPageContent(props: PlayerPageProps) {
     publicCaller.player.info({ playerId: id }),
   ]);
   if (!playerData) notFound();
+  if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
 
-  const { user: playerUser, club, ...player } = playerData;
+  const { club, ...player } = playerData;
   const [status, affiliation] = await Promise.all([
     publicCaller.club.authStatus({
       clubId: club.id,
@@ -46,11 +42,9 @@ async function PlayerPageContent(props: PlayerPageProps) {
     playerId: player.id,
   });
 
-  const isOwnPlayer = user && player.userId === user.id;
-  const canEdit = status !== null || isOwnPlayer;
+  const canEdit = status !== null;
   const canClaim = !status && user && !player.userId;
   const canAffiliate = status !== null && !player.userId && !affiliation;
-  const t = await getTranslations('Player');
 
   return (
     <div className="mk-container flex w-full flex-col gap-4">
@@ -68,41 +62,7 @@ async function PlayerPageContent(props: PlayerPageProps) {
       <PlayerHeader player={player} />
       {/* Action Toolbar */}
       <div className="flex justify-end gap-2">
-        {playerUser && (
-          <Button variant="outline" size="icon" className="gap-2" asChild>
-            <Link
-              href={`https://lichess.org/@/${playerUser.username}`}
-              target="_blank"
-            >
-              <div className="size-4">
-                <LichessLogo />
-              </div>
-            </Link>
-          </Button>
-        )}
-        {playerUser ? (
-          <Button variant="outline" className="max-w-3/5 gap-2" asChild>
-            <Link href={`/user/${playerUser.username}`}>
-              <User2 className="size-4" />
-              <span className="truncate">{playerUser.username}</span>
-            </Link>
-          </Button>
-        ) : (
-          <Button variant="outline" className="gap-2" disabled>
-            <UserX className="size-4" />
-            <span className="text-2xs sm:text-xs">{t('not linked')}</span>
-          </Button>
-        )}
         {canAffiliate && <AffiliateButton player={player} />}
-        {status !== null && player.userId ? (
-          <CancelAffiliationByClub
-            playerId={player.id}
-            clubId={club.id}
-            isOwnPlayer={!!isOwnPlayer}
-          />
-        ) : (
-          isOwnPlayer && <CancelAffiliationByUser playerId={player.id} />
-        )}
         {user && canEdit && <EditButton player={player} status={status} />}
         {canClaim && <ClaimPlayer userId={user.id} clubId={club.id} />}
       </div>

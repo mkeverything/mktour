@@ -68,7 +68,11 @@ const Notification: FC<{
         chunks
       ),
     playerLink: (chunks: ReactNode) =>
-      player ? (
+      user ? (
+        <Link href={`/user/${user.username}`} className="mk-link">
+          {chunks}
+        </Link>
+      ) : player ? (
         <Link href={`/player/${player.id}`} className="mk-link">
           {chunks}
         </Link>

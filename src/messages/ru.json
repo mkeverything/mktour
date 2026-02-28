@@ -105,7 +105,12 @@
     "myClubs": "мои клубы",
     "noClubs": "пока не состоите ни в одном клубе",
     "players": "игроки",
-    "noPlayers": "пока нет игроков"
+    "noPlayers": "пока нет игроков",
+    "clubProfiles": "профили в клубах",
+    "noClubProfiles": "пользователь пока нигде не играл",
+    "clubRating": "рейтинг в клубе",
+    "lastTournament": "последний турнир",
+    "alsoManages": "админ в:"
   },
   "Player": {
     "last seen": "были на сайте: ",
@@ -211,7 +216,7 @@
     "Page": {
       "no description": "без описания",
       "lichess team": "команда в личес",
-      "createdAt": "создана: {date}",
+      "createdAt": "создан: {date}",
       "tournaments": "турниры клуба:",
       "players": "игроки",
       "most active": "самые активные игроки"

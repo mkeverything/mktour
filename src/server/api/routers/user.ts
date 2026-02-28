@@ -2,7 +2,10 @@ import meta from '@/server/api/meta';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema/users';
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
+import {
+  clubsSelectSchema,
+  clubsToUsersSelectSchema,
+} from '@/server/db/zod/clubs';
 import { userPlayerClubSchema } from '@/server/db/zod/players';
 import {
   usersSelectPublicSchema,
@@ -53,7 +56,13 @@ export const userRouter = createTRPCRouter({
     }),
   clubs: publicProcedure
     .meta(meta.userClubs)
-    .output(z.array(clubsSelectSchema.pick({ id: true, name: true })))
+    .output(
+      z.array(
+        clubsSelectSchema
+          .pick({ id: true, name: true })
+          .extend({ status: clubsToUsersSelectSchema.shape.status }),
+      ),
+    )
     .input(z.object({ userId: z.string() }))
     .query(async (opts) => {
       const { input } = opts;
