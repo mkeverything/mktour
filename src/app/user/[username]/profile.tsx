@@ -5,8 +5,9 @@ import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-use
 import PlayerStats from '@/app/player/[id]/player-stats';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
-import LastTournaments from '@/components/last-tournaments';
 import { useUserClubs } from '@/components/hooks/query-hooks/use-user-clubs';
+import LastTournaments from '@/components/last-tournaments';
+import CarouselDots from '@/components/ui-custom/carousel-dots';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import CarouselDots from '@/components/ui-custom/carousel-dots';
 import {
   Carousel,
   CarouselContent,
@@ -216,7 +216,7 @@ const ClubProfilesCarousel: FC<{
         ))}
       </CarouselContent>
       <CarouselDots count={userPlayers.length} className="sm:hidden" />
-      <CarouselPrevious className="max-sm:hidden" />
+      <CarouselPrevious className={`max-sm:hidden`} />
       <CarouselNext className="max-sm:hidden" />
     </Carousel>
   );
@@ -231,7 +231,7 @@ const ClubPlayerCard: FC<
   const formattedPlayerRating = !player.rating
     ? '—'
     : player.ratingDeviation > GLICKO2_CONSTANTS.STABLE_RD_THRESHOLD
-      ? `${player.rating} (?)`
+      ? `${player.rating}?`
       : player.rating;
 
   return (
