@@ -149,10 +149,11 @@ export const editPlayer = async ({
   values: PlayerEditModel;
   user: User;
 }) => {
+  const { id, ...updates } = values;
   const [player] = await db
     .select({ clubId: players.clubId, userId: players.userId })
     .from(players)
-    .where(eq(players.id, values.id));
+    .where(eq(players.id, id));
 
   const isAffiliated = player.userId === user.id;
   const isClubAdmin = await getStatusInClub({
@@ -161,15 +162,31 @@ export const editPlayer = async ({
   });
 
   if (!isAffiliated && !isClubAdmin) throw new Error('NOT_AUTHORIZED');
+  if (!isClubAdmin && updates.realname !== undefined) {
+    throw new Error('NOT_AUTHORIZED');
+  }
+
+  const payload = isClubAdmin
+    ? updates
+    : {
+        nickname: updates.nickname,
+      };
+  const hasAtLeastOneField = Object.values(payload).some(
+    (value) => value !== undefined,
+  );
+  if (!hasAtLeastOneField) {
+    const [currentPlayer] = await db
+      .select()
+      .from(players)
+      .where(eq(players.id, id));
+    if (!currentPlayer) throw new Error('PLAYER_NOT_EDITED');
+    return currentPlayer;
+  }
 
   const result = (
-    await db
-      .update(players)
-      .set(values)
-      .where(eq(players.id, values.id))
-      .returning()
+    await db.update(players).set(payload).where(eq(players.id, id)).returning()
   ).at(0);
-  revalidatePath(`/player/${values.id}`);
+  revalidatePath(`/player/${id}`);
 
   if (!result) throw new Error('PLAYER_NOT_EDITED');
   return result;

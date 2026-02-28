@@ -2,9 +2,11 @@
 
 import { turboPascal } from '@/app/fonts';
 import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
+import EditButton from '@/app/player/[id]/edit-button';
 import PlayerStats from '@/components/ui-custom/player-stats';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
+import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useUserClubs } from '@/components/hooks/query-hooks/use-user-clubs';
 import LastTournaments from '@/components/last-tournaments';
 import CarouselDots from '@/components/ui-custom/carousel-dots';
@@ -37,7 +39,9 @@ const Profile: FC<{
   user: UserWithPlayers;
   isOwner: boolean;
 }> = ({ user, isOwner }) => {
+  const { data: authUser } = useAuth();
   const { data: managedClubs, isPending } = useUserClubs(user.id);
+  const { data: viewerClubs } = useUserClubs(authUser?.id);
   const format = useFormatter();
   const preparedCreatedAt = user.createdAt
     ? format.dateTime(user.createdAt, { dateStyle: 'long' })
@@ -52,6 +56,17 @@ const Profile: FC<{
   const clubStatusMap = useMemo(
     () => new Map(managedClubs?.map((c) => [c.id, c.status]) ?? []),
     [managedClubs],
+  );
+  const viewerManagedClubIds = useMemo(
+    () =>
+      new Set(
+        viewerClubs
+          ?.filter(
+            (club) => club.status === 'admin' || club.status === 'co-owner',
+          )
+          .map((club) => club.id) ?? [],
+      ),
+    [viewerClubs],
   );
 
   const managedOnlyClubs = useMemo(
@@ -135,6 +150,7 @@ const Profile: FC<{
         userPlayers={user.userPlayers}
         isOwner={isOwner}
         clubStatusMap={clubStatusMap}
+        viewerManagedClubIds={viewerManagedClubIds}
       />
 
       {/* Managed-only clubs mention */}
@@ -168,7 +184,8 @@ const ClubProfilesCarousel: FC<{
   userPlayers: UserWithPlayers['userPlayers'];
   isOwner: boolean;
   clubStatusMap: Map<string, StatusInClub>;
-}> = ({ userPlayers, isOwner, clubStatusMap }) => {
+  viewerManagedClubIds: Set<string>;
+}> = ({ userPlayers, isOwner, clubStatusMap, viewerManagedClubIds }) => {
   const t = useTranslations('Profile');
 
   if (!userPlayers || userPlayers.length === 0) {
@@ -197,6 +214,8 @@ const ClubProfilesCarousel: FC<{
         player={player}
         isOwner={isOwner}
         status={clubStatusMap.get(club.id) ?? null}
+        canEdit={isOwner || viewerManagedClubIds.has(club.id)}
+        canEditRealname={viewerManagedClubIds.has(club.id)}
       />
     );
   }
@@ -211,6 +230,8 @@ const ClubProfilesCarousel: FC<{
               player={player}
               isOwner={isOwner}
               status={clubStatusMap.get(club.id) ?? null}
+              canEdit={isOwner || viewerManagedClubIds.has(club.id)}
+              canEditRealname={viewerManagedClubIds.has(club.id)}
             />
           </CarouselItem>
         ))}
@@ -223,8 +244,13 @@ const ClubProfilesCarousel: FC<{
 };
 
 const ClubPlayerCard: FC<
-  UserPlayerClubModel & { isOwner: boolean; status: StatusInClub | null }
-> = ({ club, player, isOwner, status }) => {
+  UserPlayerClubModel & {
+    isOwner: boolean;
+    status: StatusInClub | null;
+    canEdit: boolean;
+    canEditRealname: boolean;
+  }
+> = ({ club, player, isOwner, status, canEdit, canEditRealname }) => {
   const t = useTranslations('Profile');
   const format = useFormatter();
   const tStatus = useTranslations('Status');
@@ -253,7 +279,16 @@ const ClubPlayerCard: FC<
               )}
             </CardDescription>
           </div>
-          {isOwner && <CancelAffiliationByUser playerId={player.id} />}
+          <div className="flex items-center gap-1">
+            {canEdit && (
+              <EditButton
+                player={{ ...player, clubId: club.id }}
+                status={null}
+                canEditRealname={canEditRealname}
+              />
+            )}
+            {isOwner && <CancelAffiliationByUser playerId={player.id} />}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

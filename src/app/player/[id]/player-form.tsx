@@ -25,7 +25,14 @@ const EditPlayerForm: FC<{
   player: PlayerEditModel;
   status: StatusInClub | null | undefined;
   setOpen: Dispatch<SetStateAction<boolean>>;
-}> = ({ player: { id, nickname, realname }, clubId, status, setOpen }) => {
+  canEditRealname?: boolean;
+}> = ({
+  player: { id, nickname, realname },
+  clubId,
+  status,
+  setOpen,
+  canEditRealname = true,
+}) => {
   const editPlayerMutation = useEditPlayerMutation();
   const router = useRouter();
   const form = useForm<PlayerEditModel>({
@@ -37,7 +44,11 @@ const EditPlayerForm: FC<{
   });
 
   const onSubmit = (values: PlayerEditModel) => {
-    editPlayerMutation.mutate(values, {
+    const payload: PlayerEditModel = { id };
+    if (form.formState.dirtyFields.nickname) payload.nickname = values.nickname;
+    if (form.formState.dirtyFields.realname) payload.realname = values.realname;
+
+    editPlayerMutation.mutate(payload, {
       onSuccess: () => {
         setOpen(false);
         router.refresh();
@@ -52,7 +63,9 @@ const EditPlayerForm: FC<{
         className="gap-mk pb-mk flex flex-col"
       >
         <Field name="nickname" placeholder={nickname} form={form} />
-        <Field name="realname" placeholder={realname || ''} form={form} />
+        {canEditRealname && (
+          <Field name="realname" placeholder={realname || ''} form={form} />
+        )}
         <div className="gap-mk mt-mk flex flex-col">
           <Button
             type="submit"
