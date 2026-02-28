@@ -10,7 +10,11 @@ import { Percent, Swords, TrendingUp, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 
-export default function PlayerStats({ player }: { player: PlayerModel }) {
+export default function PlayerStats({
+  player,
+}: {
+  player: Pick<PlayerModel, 'id' | 'nickname' | 'ratingPeak'>;
+}) {
   const { data: stats, isPending } = usePlayerStats(player.id);
   const t = useTranslations('Player.Stats');
 
@@ -43,7 +47,7 @@ export default function PlayerStats({ player }: { player: PlayerModel }) {
             <StatItem
               icon={TrendingUp}
               label={t('ratingPeak')}
-              value={player.ratingPeak ?? '?'}
+              value={player.ratingPeak ?? '—'}
               rank={stats?.ratingPeakRank}
               isLoading={isPending}
             />

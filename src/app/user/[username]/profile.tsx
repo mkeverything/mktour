@@ -1,10 +1,11 @@
 'use client';
 
 import { turboPascal } from '@/app/fonts';
+import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
+import PlayerStats from '@/app/player/[id]/player-stats';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
 import { useUserClubs } from '@/components/hooks/query-hooks/use-user-clubs';
-import SkeletonList from '@/components/skeleton-list';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,23 +15,58 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import CarouselDots from '@/components/ui-custom/carousel-dots';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
+import { StatusInClub } from '@/server/db/zod/enums';
+import { UserPlayerClubModel } from '@/server/db/zod/players';
+import {
+  CalendarDays,
+  Settings,
+  Star,
+  Trophy,
+  User,
+  Users2,
+} from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 
 const Profile: FC<{
   user: UserWithPlayers;
   isOwner: boolean;
 }> = ({ user, isOwner }) => {
-  const { data, isPending } = useUserClubs(user.id);
+  const { data: managedClubs, isPending } = useUserClubs(user.id);
   const format = useFormatter();
   const preparedCreatedAt = user.createdAt
     ? format.dateTime(user.createdAt, { dateStyle: 'long' })
     : null;
   const t = useTranslations('Profile');
+
+  const playerClubIds = useMemo(
+    () => new Set(user.userPlayers.map((up) => up.club.id)),
+    [user.userPlayers],
+  );
+
+  const clubStatusMap = useMemo(
+    () => new Map(managedClubs?.map((c) => [c.id, c.status]) ?? []),
+    [managedClubs],
+  );
+
+  const managedOnlyClubs = useMemo(
+    () =>
+      managedClubs?.filter(
+        (club) => !playerClubIds.has(club.id) && club.hasFinishedTournaments,
+      ) ?? [],
+    [managedClubs, playerClubIds],
+  );
 
   return (
     <div className="mk-container gap-mk-2 flex w-full flex-col">
@@ -72,6 +108,7 @@ const Profile: FC<{
         </CardContent>
       </HalfCard>
 
+      {/* Owner actions */}
       {isOwner && (
         <div className="gap-mk grid grid-cols-2">
           <Button
@@ -99,10 +136,20 @@ const Profile: FC<{
         </div>
       )}
 
-      <div className="gap-mk grid w-full sm:grid-cols-2">
-        <ClubList clubs={data} isPending={isPending} />
-        <PlayerList players={user.userPlayers} />
-      </div>
+      {/* Club profiles carousel */}
+      <ClubProfilesCarousel
+        userPlayers={user.userPlayers}
+        isOwner={isOwner}
+        clubStatusMap={clubStatusMap}
+      />
+
+      {/* Managed-only clubs mention */}
+      {!isPending && managedOnlyClubs.length > 0 && (
+        <ManagedOnlyClubsMention clubs={managedOnlyClubs} />
+      )}
+
+      {/* Last tournaments — placeholder */}
+      <LastTournamentsPlaceholder />
     </div>
   );
 };
@@ -123,142 +170,150 @@ const StatItem: FC<{
   </div>
 );
 
-const ClubList: FC<ClubListProps> = ({ clubs, isPending }) => {
+const ClubProfilesCarousel: FC<{
+  userPlayers: UserWithPlayers['userPlayers'];
+  isOwner: boolean;
+  clubStatusMap: Map<string, StatusInClub>;
+}> = ({ userPlayers, isOwner, clubStatusMap }) => {
   const t = useTranslations('Profile');
 
-  if (!clubs && isPending) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <Skeleton className="h-5 w-24" />
-        </CardHeader>
-        <CardContent className="pt-0">
-          <SkeletonList />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!clubs || clubs.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="gap-mk flex items-center text-base">
-            <Users2 className="size-4" />
-            {t('clubs')}
-          </CardTitle>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="gap-mk flex items-center text-base">
-          <Users2 className="size-4" />
-          {t('clubs')} ({clubs.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <ul className="flex flex-col">
-          {clubs.map((club, index) => (
-            <div key={club.id}>
-              {index > 0 && <Separator />}
-              <li className="py-1">
-                <Link
-                  href={`/clubs/${club.id}`}
-                  className="hover:bg-muted/50 -mx-2 flex items-center justify-between rounded-lg px-2 py-3 transition-colors"
-                >
-                  <span className="text-sm font-medium">{club.name}</span>
-                  {/* <ChevronRight className="text-muted-foreground size-4" /> */}
-                </Link>
-              </li>
-            </div>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-};
-
-const PlayerList: FC<PlayerListProps> = ({ players }) => {
-  const t = useTranslations('Profile');
-
-  if (!players || players.length === 0) {
+  if (!userPlayers || userPlayers.length === 0) {
     return (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="gap-mk flex items-center text-base">
             <User className="size-4" />
-            {t('players')}
+            {t('clubProfiles')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center text-sm">
-            {t('noPlayers')}
+            {t('noClubProfiles')}
           </p>
         </CardContent>
       </Card>
     );
   }
 
+  if (userPlayers.length === 1) {
+    const { club, player } = userPlayers[0];
+    return (
+      <ClubPlayerCard
+        club={club}
+        player={player}
+        isOwner={isOwner}
+        status={clubStatusMap.get(club.id) ?? null}
+      />
+    );
+  }
+
+  return (
+    <Carousel>
+      <CarouselContent>
+        {userPlayers.map(({ club, player }) => (
+          <CarouselItem key={club.id}>
+            <ClubPlayerCard
+              club={club}
+              player={player}
+              isOwner={isOwner}
+              status={clubStatusMap.get(club.id) ?? null}
+            />
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselDots count={userPlayers.length} className="sm:hidden" />
+      <CarouselPrevious className="max-sm:hidden" />
+      <CarouselNext className="max-sm:hidden" />
+    </Carousel>
+  );
+};
+
+const ClubPlayerCard: FC<
+  UserPlayerClubModel & { isOwner: boolean; status: StatusInClub | null }
+> = ({ club, player, isOwner, status }) => {
+  const t = useTranslations('Profile');
+  const tStatus = useTranslations('Status');
+  const formattedPlayerRating = !player.rating
+    ? '—'
+    : player.ratingDeviation > GLICKO2_CONSTANTS.STABLE_RD_THRESHOLD
+      ? `${player.rating} (estimated)`
+      : player.rating;
+
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <User className="size-4" />
-          {t('players')} ({players.length})
-        </CardTitle>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-base">
+              <Link href={`/clubs/${club.id}`} className="hover:underline">
+                {club.name}
+              </Link>
+            </CardTitle>
+            <CardDescription className="flex items-center gap-2">
+              {player.nickname}
+              {status && (
+                <span className="bg-primary/10 text-primary text-3xs rounded-md px-1.5 py-0.5 font-medium">
+                  {tStatus(status)}
+                </span>
+              )}
+            </CardDescription>
+          </div>
+          {isOwner && <CancelAffiliationByUser playerId={player.id} />}
+        </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <ul className="flex flex-col">
-          {players.map(({ club, player }, index) => (
-            <div key={player.id}>
-              {index > 0 && <Separator />}
-              <li className="py-1">
-                <Link
-                  href={`/clubs/${club.id}`}
-                  className="hover:bg-muted/50 gap-mk-2 -mx-2 flex items-center justify-between rounded-lg px-2 py-3 transition-colors"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">
-                      {player.nickname}
-                    </span>
-                    <span className="text-muted-foreground text-xs">
-                      {club.name}
-                    </span>
-                  </div>
-                  <span className="text-sm font-medium">
-                    {player.rating ?? '—'}
-                  </span>
-                </Link>
-              </li>
-            </div>
-          ))}
-        </ul>
+      <CardContent className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          <StatItem
+            icon={Star}
+            label={t('clubRating')}
+            value={formattedPlayerRating}
+          />
+          <StatItem icon={CalendarDays} label={t('lastTournament')} value="—" />
+        </div>
+        <PlayerStats player={player} />
       </CardContent>
     </Card>
   );
 };
 
-type ClubListProps = {
-  clubs:
-    | {
-        id: string;
-        name: string;
-      }[]
-    | undefined;
-  isPending: boolean;
+const ManagedOnlyClubsMention: FC<{
+  clubs: { id: string; name: string }[];
+}> = ({ clubs }) => {
+  const t = useTranslations('Profile');
+
+  return (
+    <p className="text-muted-foreground text-sm">
+      {t('alsoManages')}{' '}
+      {clubs.map((club, i) => (
+        <span key={club.id}>
+          {i > 0 && ', '}
+          <Link href={`/clubs/${club.id}`} className="hover:underline">
+            {club.name}
+          </Link>
+        </span>
+      ))}
+    </p>
+  );
 };
 
-type PlayerListProps = {
-  players:
-    | {
-        club: { id: string; name: string };
-        player: { id: string; nickname: string; rating: number | null };
-      }[]
-    | undefined;
+const LastTournamentsPlaceholder: FC = () => {
+  const t = useTranslations('Profile');
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Trophy className="size-4" />
+          <FormattedMessage id="Player.last tournaments" />
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground text-center text-sm">
+          {t('noClubProfiles')}
+        </p>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default Profile;
