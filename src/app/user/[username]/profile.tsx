@@ -2,7 +2,7 @@
 
 import { turboPascal } from '@/app/fonts';
 import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
-import PlayerStats from '@/app/player/[id]/player-stats';
+import PlayerStats from '@/components/ui-custom/player-stats';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
 import { useUserClubs } from '@/components/hooks/query-hooks/use-user-clubs';
@@ -273,7 +273,7 @@ const ClubPlayerCard: FC<
             }
           />
         </div>
-        <PlayerStats player={player} />
+        <PlayerStats player={player} wrapper="none" />
       </CardContent>
     </Card>
   );
