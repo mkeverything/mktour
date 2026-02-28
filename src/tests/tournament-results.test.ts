@@ -3,6 +3,7 @@ import {
   calculateBerger,
   calculateBuchholzCut1,
   calculatePlayerScore,
+  hasSameStanding,
   sortPlayersByResults,
   sortPlayersByResultsWithMaps,
 } from '@/lib/tournament-results';
@@ -397,5 +398,80 @@ describe('buildScoreMaps', () => {
     expect(tiebreakScoresMap.get('p1')).toBe(0);
     // Berger for p2: lost → 0
     expect(tiebreakScoresMap.get('p2')).toBe(0);
+  });
+});
+
+describe('hasSameStanding', () => {
+  it('should return false when wins differ despite same score and tiebreak', () => {
+    const players = [
+      makePlayer({ id: 'p1', nickname: 'Alice', wins: 3, draws: 0, losses: 0 }),
+      makePlayer({ id: 'p2', nickname: 'Bob', wins: 2, draws: 2, losses: 0 }),
+      makePlayer({ id: 'p3', nickname: 'Carol', wins: 0, draws: 1, losses: 3 }),
+      makePlayer({ id: 'p4', nickname: 'Dan', wins: 0, draws: 1, losses: 3 }),
+    ];
+
+    const games = [
+      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
+      makeGame({
+        whiteId: 'p2',
+        blackId: 'p1',
+        roundNumber: 2,
+        result: '1/2-1/2',
+      }),
+      makeGame({
+        whiteId: 'p1',
+        blackId: 'p2',
+        roundNumber: 3,
+        result: '1/2-1/2',
+      }),
+      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 4, result: '1-0' }),
+      makeGame({ whiteId: 'p2', blackId: 'p3', roundNumber: 4, result: '1-0' }),
+      makeGame({ whiteId: 'p1', blackId: 'p4', roundNumber: 5, result: '1-0' }),
+      makeGame({ whiteId: 'p2', blackId: 'p4', roundNumber: 5, result: '1-0' }),
+    ];
+
+    const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+      players,
+      { format: 'swiss', ongoingRound: 5 },
+      games,
+    );
+
+    expect(
+      hasSameStanding(
+        players[0],
+        players[1],
+        playerScoresMap,
+        tiebreakScoresMap,
+      ),
+    ).toBe(false);
+  });
+
+  it('should return true when score, tiebreak, and wins all match', () => {
+    const players = [
+      makePlayer({ id: 'p1', nickname: 'Alice', wins: 1, draws: 0, losses: 0 }),
+      makePlayer({ id: 'p2', nickname: 'Bob', wins: 1, draws: 0, losses: 0 }),
+      makePlayer({ id: 'p3', nickname: 'Carol', wins: 0, draws: 0, losses: 1 }),
+      makePlayer({ id: 'p4', nickname: 'Dan', wins: 0, draws: 0, losses: 1 }),
+    ];
+
+    const games = [
+      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 1, result: '1-0' }),
+      makeGame({ whiteId: 'p2', blackId: 'p4', roundNumber: 1, result: '1-0' }),
+    ];
+
+    const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+      players,
+      { format: 'swiss', ongoingRound: 1 },
+      games,
+    );
+
+    expect(
+      hasSameStanding(
+        players[0],
+        players[1],
+        playerScoresMap,
+        tiebreakScoresMap,
+      ),
+    ).toBe(true);
   });
 });

@@ -1,7 +1,11 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
-import { buildScoreMaps, sortPlayersByResults } from '@/lib/tournament-results';
+import {
+  buildScoreMaps,
+  hasSameStanding,
+  sortPlayersByResults,
+} from '@/lib/tournament-results';
 import {
   getSwissMaxRoundsNumber,
   getSwissRecommendedRoundsNumber,
@@ -893,13 +897,14 @@ export async function finishTournament({
       player.place = 1;
     } else {
       const prevPlayer = sortedPlayers[i - 1];
-      const score = playerScoresMap.get(player.id) ?? 0;
-      const prevScore = playerScoresMap.get(prevPlayer.id) ?? 0;
-      const tb = tiebreakScoresMap.get(player.id) ?? 0;
-      const prevTb = tiebreakScoresMap.get(prevPlayer.id) ?? 0;
-
-      player.place =
-        score === prevScore && tb === prevTb ? prevPlayer.place : i + 1;
+      player.place = hasSameStanding(
+        player,
+        prevPlayer,
+        playerScoresMap,
+        tiebreakScoresMap,
+      )
+        ? prevPlayer.place
+        : i + 1;
     }
   });
 

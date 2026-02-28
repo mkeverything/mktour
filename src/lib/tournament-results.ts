@@ -7,6 +7,23 @@ export interface SortedPlayersResult {
   tiebreakScoresMap: Map<string, number>;
 }
 
+export const hasSameStanding = (
+  player: PlayerTournamentModel,
+  previousPlayer: PlayerTournamentModel,
+  playerScoresMap: Map<string, number>,
+  tiebreakScoresMap: Map<string, number>,
+): boolean => {
+  const score = playerScoresMap.get(player.id) ?? 0;
+  const previousScore = playerScoresMap.get(previousPlayer.id) ?? 0;
+  if (score !== previousScore) return false;
+
+  const tiebreakScore = tiebreakScoresMap.get(player.id) ?? 0;
+  const previousTiebreakScore = tiebreakScoresMap.get(previousPlayer.id) ?? 0;
+  if (tiebreakScore !== previousTiebreakScore) return false;
+
+  return player.wins === previousPlayer.wins;
+};
+
 export const calculatePlayerScore = (
   player: PlayerTournamentModel,
   roundNumber: number,
