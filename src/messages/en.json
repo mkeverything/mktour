@@ -480,7 +480,8 @@
       "affiliation cancelled": "affiliation removed",
       "became club manager": "you became club manager",
       "tournament won": "you won the tournament!",
-      "removed from club managers": "you were removed from club managers"
+      "removed from club managers": "you were removed from club managers",
+      "from": "from"
     },
     "Club": {
       "affiliation requested": "request sent"

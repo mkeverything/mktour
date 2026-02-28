@@ -118,7 +118,7 @@ export const UserNotificationLi: FC<AnyUserNotificationExtended> = (props) => {
       is_seen={notification.isSeen}
       type="user"
     >
-      <p className="text-muted-foreground flex items-center gap-1 text-xs">
+      <p className="text-muted-foreground mb-mk flex items-center gap-1 text-xs">
         <Icon size={16} />
         <FormattedMessage id={`Notifications.User.${messageId}`} />
       </p>
@@ -140,7 +140,7 @@ const NotificationContent: FC<AnyUserNotificationExtended> = (notification) => {
       <Link href={`/player/${player?.id}`} className="mk-link">
         {player?.nickname}
       </Link>
-      from
+      <FormattedMessage id="Notifications.User.from" />
       <Link href={`/clubs/${club?.id}`} className="mk-link">
         {club?.name}
       </Link>

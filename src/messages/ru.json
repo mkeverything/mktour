@@ -481,7 +481,8 @@
       "affiliation cancelled": "привязка удалена",
       "became club manager": "вас сделали админом клуба",
       "tournament won": "вы выиграли турнир!",
-      "removed from club managers": "вас удалили из админов клуба"
+      "removed from club managers": "вас удалили из админов клуба",
+      "from": "в"
     },
     "Club": {
       "affiliation requested": "заявка отправлена"

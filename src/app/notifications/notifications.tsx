@@ -23,14 +23,6 @@ const UserNotifications = () => {
     isFetchingNextPage,
   } = useUserNotifications();
 
-  // FIXME mock data
-  // const notifications = [
-  //   mockApproveNotification,
-  //   mockRejectNotification,
-  //   mockMngrNotification,
-  //   mockTnmtNotification,
-  // ];
-
   const ref = useOnReach(fetchNextPage);
 
   const { mutate } = useMarkAllNotificationAsSeenMutation();
