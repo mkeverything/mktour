@@ -5,7 +5,10 @@ import { usePlayerStats } from '@/components/hooks/query-hooks/use-player-stats'
 import HalfCard from '@/components/ui-custom/half-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlayerModel } from '@/server/db/zod/players';
+import type {
+  PlayerAuthStatsModel,
+  PlayerModel,
+} from '@/server/db/zod/players';
 import { Percent, Swords, TrendingUp, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
@@ -13,11 +16,21 @@ import { FC } from 'react';
 interface PlayerStatsProps {
   player: Pick<PlayerModel, 'id' | 'nickname' | 'ratingPeak'>;
   wrapper?: 'card' | 'half-card' | 'none';
+  clubName: string;
+  renderAuthStatsCard?: boolean;
+  authStats?: PlayerAuthStatsModel | null;
+  isAuthStatsPending?: boolean;
+  showAuthStatsWhenEmpty?: boolean;
 }
 
 export default function PlayerStats({
   player,
   wrapper = 'half-card',
+  clubName,
+  renderAuthStatsCard = true,
+  authStats,
+  isAuthStatsPending,
+  showAuthStatsWhenEmpty = true,
 }: PlayerStatsProps) {
   const { data: stats, isPending } = usePlayerStats(player.id);
   const t = useTranslations('Player.Stats');
@@ -54,7 +67,16 @@ export default function PlayerStats({
           isLoading={isPending}
         />
       </div>
-      <AuthStatsCard playerId={player.id} playerNickname={player.nickname} />
+      {renderAuthStatsCard && (
+        <AuthStatsCard
+          playerId={player.id}
+          playerNickname={player.nickname}
+          clubName={clubName}
+          authStats={authStats}
+          isPending={isAuthStatsPending}
+          showWhenEmpty={showAuthStatsWhenEmpty}
+        />
+      )}
     </>
   );
 

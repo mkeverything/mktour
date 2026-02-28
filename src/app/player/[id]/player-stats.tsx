@@ -3,8 +3,12 @@ import { PlayerModel } from '@/server/db/zod/players';
 
 export default function PlayerStatsWrapper({
   player,
+  clubName,
 }: {
+  clubName: string;
   player: Pick<PlayerModel, 'id' | 'nickname' | 'ratingPeak'>;
 }) {
-  return <PlayerStats player={player} wrapper="half-card" />;
+  return (
+    <PlayerStats clubName={clubName} player={player} wrapper="half-card" />
+  );
 }

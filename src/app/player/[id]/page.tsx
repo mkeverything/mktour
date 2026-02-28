@@ -3,8 +3,8 @@ import Loading from '@/app/loading';
 import { AffiliateButton } from '@/app/player/[id]/affiliate-button';
 import ClaimPlayer from '@/app/player/[id]/claim-button';
 import EditButton from '@/app/player/[id]/edit-button';
-import LastTournaments from '@/components/last-tournaments';
 import PlayerStats from '@/app/player/[id]/player-stats';
+import LastTournaments from '@/components/last-tournaments';
 import { CardTitle } from '@/components/ui/card';
 import { publicCaller } from '@/server/api';
 import { PlayerModel } from '@/server/db/zod/players';
@@ -66,7 +66,7 @@ async function PlayerPageContent(props: PlayerPageProps) {
         {user && canEdit && <EditButton player={player} status={status} />}
         {canClaim && <ClaimPlayer userId={user.id} clubId={club.id} />}
       </div>
-      <PlayerStats player={player} />
+      <PlayerStats clubName={club.name} player={player} />
       <LastTournaments tournaments={playerLastTournaments} />
     </div>
   );

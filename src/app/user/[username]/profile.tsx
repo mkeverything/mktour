@@ -9,6 +9,7 @@ import FormattedMessage from '@/components/formatted-message';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useUserClubs } from '@/components/hooks/query-hooks/use-user-clubs';
 import LastTournaments from '@/components/last-tournaments';
+import { useTRPC } from '@/components/trpc/client';
 import CarouselDots from '@/components/ui-custom/carousel-dots';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
@@ -29,8 +30,12 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { StatusInClub } from '@/server/db/zod/enums';
-import { UserPlayerClubModel } from '@/server/db/zod/players';
+import type {
+  PlayerAuthStatsModel,
+  UserPlayerClubModel,
+} from '@/server/db/zod/players';
 import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
+import { useQueries } from '@tanstack/react-query';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, useMemo } from 'react';
@@ -187,6 +192,41 @@ const ClubProfilesCarousel: FC<{
   viewerManagedClubIds: Set<string>;
 }> = ({ userPlayers, isOwner, clubStatusMap, viewerManagedClubIds }) => {
   const t = useTranslations('Profile');
+  const trpc = useTRPC();
+
+  const authStatsQueries = useQueries({
+    queries: userPlayers.map(({ player }) =>
+      trpc.player.stats.auth.queryOptions({ playerId: player.id }),
+    ),
+  });
+  const authStatsByPlayerId = useMemo(
+    () =>
+      new Map(
+        userPlayers.map(({ player }, index) => [
+          player.id,
+          authStatsQueries[index]?.data ?? null,
+        ]),
+      ),
+    [userPlayers, authStatsQueries],
+  );
+  const authStatsPendingByPlayerId = useMemo(
+    () =>
+      new Map(
+        userPlayers.map(({ player }, index) => [
+          player.id,
+          authStatsQueries[index]?.isPending ?? false,
+        ]),
+      ),
+    [userPlayers, authStatsQueries],
+  );
+  const areAuthStatsResolved = authStatsQueries.every(
+    (query) => !query.isPending,
+  );
+  const hasAnyHeadToHead = authStatsQueries.some((query) =>
+    Boolean(query.data),
+  );
+  const shouldRenderAuthStatsCard = hasAnyHeadToHead || areAuthStatsResolved;
+  const shouldShowEmptyHeadToHead = hasAnyHeadToHead;
 
   if (!userPlayers || userPlayers.length === 0) {
     return (
@@ -216,6 +256,14 @@ const ClubProfilesCarousel: FC<{
         status={clubStatusMap.get(club.id) ?? null}
         canEdit={isOwner || viewerManagedClubIds.has(club.id)}
         canEditRealname={viewerManagedClubIds.has(club.id)}
+        authStats={authStatsByPlayerId.get(player.id) ?? null}
+        isAuthStatsPending={
+          shouldRenderAuthStatsCard
+            ? (authStatsPendingByPlayerId.get(player.id) ?? false)
+            : false
+        }
+        renderAuthStatsCard={shouldRenderAuthStatsCard}
+        showAuthStatsWhenEmpty={shouldShowEmptyHeadToHead}
       />
     );
   }
@@ -232,6 +280,14 @@ const ClubProfilesCarousel: FC<{
               status={clubStatusMap.get(club.id) ?? null}
               canEdit={isOwner || viewerManagedClubIds.has(club.id)}
               canEditRealname={viewerManagedClubIds.has(club.id)}
+              authStats={authStatsByPlayerId.get(player.id) ?? null}
+              isAuthStatsPending={
+                shouldRenderAuthStatsCard
+                  ? (authStatsPendingByPlayerId.get(player.id) ?? false)
+                  : false
+              }
+              renderAuthStatsCard={shouldRenderAuthStatsCard}
+              showAuthStatsWhenEmpty={shouldShowEmptyHeadToHead}
             />
           </CarouselItem>
         ))}
@@ -249,8 +305,23 @@ const ClubPlayerCard: FC<
     status: StatusInClub | null;
     canEdit: boolean;
     canEditRealname: boolean;
+    authStats: PlayerAuthStatsModel | null;
+    isAuthStatsPending: boolean;
+    renderAuthStatsCard: boolean;
+    showAuthStatsWhenEmpty: boolean;
   }
-> = ({ club, player, isOwner, status, canEdit, canEditRealname }) => {
+> = ({
+  club,
+  player,
+  isOwner,
+  status,
+  canEdit,
+  canEditRealname,
+  authStats,
+  isAuthStatsPending,
+  renderAuthStatsCard,
+  showAuthStatsWhenEmpty,
+}) => {
   const t = useTranslations('Profile');
   const format = useFormatter();
   const tStatus = useTranslations('Status');
@@ -308,7 +379,15 @@ const ClubPlayerCard: FC<
             }
           />
         </div>
-        <PlayerStats player={player} wrapper="none" />
+        <PlayerStats
+          player={player}
+          clubName={club.name}
+          wrapper="none"
+          renderAuthStatsCard={renderAuthStatsCard}
+          authStats={authStats}
+          isAuthStatsPending={isAuthStatsPending}
+          showAuthStatsWhenEmpty={showAuthStatsWhenEmpty}
+        />
       </CardContent>
     </Card>
   );
