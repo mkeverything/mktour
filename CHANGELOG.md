@@ -1,3 +1,16 @@
+# [1.0.0-beta.18](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.17...v1.0.0-beta.18) (2026-02-28)
+
+
+### Bug Fixes
+
+* amount of wins tie break ([67a01f2](https://github.com/mkeverything/mktour/commit/67a01f28f9eb56844470c9ce77181a64d8e2d689))
+* multiple issues with setting quantity of rounds ([5bcde74](https://github.com/mkeverything/mktour/commit/5bcde7455b2614ba20bf2ab2c36b525bd8c5c6fd))
+
+
+### Features
+
+* edit affiliated player button ([503dfac](https://github.com/mkeverything/mktour/commit/503dfac4d61e4d3ed7e5eb9fb8181c00eb0c0f4a))
+
 # [1.0.0-beta.17](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.16...v1.0.0-beta.17) (2026-02-28)
 
 
