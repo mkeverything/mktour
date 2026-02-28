@@ -883,7 +883,7 @@ export async function finishTournament({
     }
   });
 
-  const updates = sortedPlayers.map((player) =>
+  const pttUpdates = sortedPlayers.map((player) =>
     db
       .update(players_to_tournaments)
       .set({ place: player.place })
@@ -894,6 +894,15 @@ export async function finishTournament({
         ),
       ),
   );
+
+  const playersUpdates = sortedPlayers.map((player) =>
+    db
+      .update(players)
+      .set({ lastSeenAt: closedAt })
+      .where(eq(players.id, player.id)),
+  );
+
+  const updates = [...pttUpdates, ...playersUpdates];
   await Promise.all(updates);
 
   if (tournament.rated) {

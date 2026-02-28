@@ -5,6 +5,7 @@ import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-use
 import PlayerStats from '@/app/player/[id]/player-stats';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
+import LastTournaments from '@/components/last-tournaments';
 import { useUserClubs } from '@/components/hooks/query-hooks/use-user-clubs';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
@@ -27,14 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { StatusInClub } from '@/server/db/zod/enums';
 import { UserPlayerClubModel } from '@/server/db/zod/players';
-import {
-  CalendarDays,
-  Settings,
-  Star,
-  Trophy,
-  User,
-  Users2,
-} from 'lucide-react';
+import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, useMemo } from 'react';
@@ -148,8 +142,8 @@ const Profile: FC<{
         <ManagedOnlyClubsMention clubs={managedOnlyClubs} />
       )}
 
-      {/* Last tournaments — placeholder */}
-      <LastTournamentsPlaceholder />
+      {/* Last tournaments */}
+      <LastTournaments tournaments={user.lastTournaments} />
     </div>
   );
 };
@@ -236,7 +230,7 @@ const ClubPlayerCard: FC<
   const formattedPlayerRating = !player.rating
     ? '—'
     : player.ratingDeviation > GLICKO2_CONSTANTS.STABLE_RD_THRESHOLD
-      ? `${player.rating} (estimated)`
+      ? `${player.rating} (?)`
       : player.rating;
 
   return (
@@ -293,26 +287,6 @@ const ManagedOnlyClubsMention: FC<{
         </span>
       ))}
     </p>
-  );
-};
-
-const LastTournamentsPlaceholder: FC = () => {
-  const t = useTranslations('Profile');
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Trophy className="size-4" />
-          <FormattedMessage id="Player.last tournaments" />
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground text-center text-sm">
-          {t('noClubProfiles')}
-        </p>
-      </CardContent>
-    </Card>
   );
 };
 

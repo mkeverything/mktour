@@ -3,7 +3,7 @@ import Loading from '@/app/loading';
 import { AffiliateButton } from '@/app/player/[id]/affiliate-button';
 import ClaimPlayer from '@/app/player/[id]/claim-button';
 import EditButton from '@/app/player/[id]/edit-button';
-import LastTournaments from '@/app/player/[id]/last-tournaments';
+import LastTournaments from '@/components/last-tournaments';
 import PlayerStats from '@/app/player/[id]/player-stats';
 import { CardTitle } from '@/components/ui/card';
 import { publicCaller } from '@/server/api';

@@ -7,6 +7,7 @@ import {
   clubsToUsersSelectSchema,
 } from '@/server/db/zod/clubs';
 import { userPlayerClubSchema } from '@/server/db/zod/players';
+import { playerToTournamentSchema } from '@/server/db/zod/tournaments';
 import {
   usersSelectPublicSchema,
   usersSelectSchema,
@@ -14,6 +15,7 @@ import {
 import { getUserClubNames } from '@/server/queries/get-user-clubs';
 import { getUserInfoByUsername } from '@/server/queries/get-user-data';
 import { getUserPlayerClubs } from '@/server/queries/get-user-player-clubs';
+import { getUserLastTournaments } from '@/server/queries/user';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -78,5 +80,13 @@ export const userRouter = createTRPCRouter({
       const { input } = opts;
       const playerClubs = await getUserPlayerClubs(input);
       return playerClubs;
+    }),
+  lastTournaments: publicProcedure
+    .meta(meta.usersTournaments)
+    .input(z.object({ userId: z.string() }))
+    .output(z.array(playerToTournamentSchema))
+    .query(async (opts) => {
+      const { input } = opts;
+      return await getUserLastTournaments(input.userId);
     }),
 });
