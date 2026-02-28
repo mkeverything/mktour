@@ -1,5 +1,5 @@
-import { getLocale, getTranslations } from 'next-intl/server';
 import { BASE_URL } from '@/lib/config/urls';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 export async function getOrganizationSchema() {
   const locale = await getLocale();
@@ -20,7 +20,7 @@ export async function getOrganizationSchema() {
     description: t('homepage.description'),
     sameAs: [
       'https://lichess.org/team/mktour',
-      'https://github.com/sukalov/mktour',
+      'https://github.com/mkeverything/mktour',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
@@ -46,5 +46,33 @@ export async function getWebsiteSchema() {
       },
       'query-input': 'required name=search_term_string',
     },
+  };
+}
+
+export async function getSoftwareApplicationSchema() {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'Seo' });
+  const baseUrl = BASE_URL || 'https://mktour.org';
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'mktour',
+    url: baseUrl,
+    applicationCategory: 'SportsApplication',
+    operatingSystem: 'Web',
+    offers: {
+      '@type': 'Offer',
+      price: '0.00',
+      priceCurrency: 'USD',
+    },
+    description: t('homepage.description'),
+    featureList: [
+      'Chess Tournament Management',
+      'Automatic Rating Calculation',
+      'Swiss System, Round-Robin, Single & Double Elimination',
+      'Free Open API',
+      'Made by Chess Players and Organizers',
+    ],
   };
 }

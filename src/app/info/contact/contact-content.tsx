@@ -45,6 +45,6 @@ const links: Record<
   github: {
     title: 'github',
     logo: GithubLogo,
-    url: 'https://github.com/sukalov/mktour',
+    url: 'https://github.com/mkeverything/mktour',
   },
 };

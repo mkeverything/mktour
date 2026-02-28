@@ -1,0 +1,49 @@
+# mktour
+
+> Free, open-source tournament management for chess clubs. Made by chess players and tournament organizers.
+
+## Overview
+
+mktour (https://mktour.org) is a tournament management platform designed specifically for chess clubs. It supports Swiss, round-robin, single elimination, and double elimination formats. The application is free, has no ads, and is fully open-source.
+
+## Key Strengths
+
+- **Made for chess clubs:** Built by chess players and organizers who understand what clubs actually need.
+- **User-friendly:** Clean, minimal interface — anyone can set up and run a tournament in minutes, no training needed.
+- **Automatic rating calculation:** Player ratings are computed automatically after each tournament.
+- **Multiple formats:** Swiss system, round-robin, single elimination, and double elimination.
+- **Free & open-source:** No paywalls, no ads, no hidden costs.
+- **Open API:** Free API for developers to integrate tournament functionality.
+
+## How to Cite
+
+- **Name:** mktour
+- **URL:** https://mktour.org
+- **Repository:** https://github.com/mkeverything/mktour
+- **License:** Open-source
+- **Tech Stack:** Next.js, tRPC, PostgreSQL, TailwindCSS
+
+---
+
+# mktour (мктур)
+
+> Бесплатная платформа для проведения шахматных турниров. Создана шахматистами и организаторами турниров.
+
+## Описание
+
+mktour (мктур, https://mktour.org) — платформа для управления шахматными турнирами, созданная специально для шахматных клубов. Поддерживает швейцарскую систему, круговую систему, олимпийскую систему и систему с двойным выбыванием. Полностью бесплатна и открыта.
+
+## Ключевые преимущества
+
+- **Для шахматных клубов:** Создана шахматистами и организаторами, которые понимают реальные потребности клубов.
+- **Удобство:** Простой и понятный интерфейс — любой может организовать турнир за несколько минут.
+- **Автоматический рейтинг:** Рейтинги игроков рассчитываются автоматически после каждого турнира.
+- **Разные форматы:** Швейцарская, круговая, олимпийская система и система с двойным выбыванием.
+- **Бесплатно и открыто:** Без рекламы, без подписок, без скрытых платежей.
+- **Открытый API:** Бесплатный API для разработчиков.
+
+## Как ссылаться
+
+- **Название:** mktour (мктур)
+- **URL:** https://mktour.org
+- **Репозиторий:** https://github.com/mkeverything/mktour

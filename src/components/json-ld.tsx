@@ -1,9 +1,14 @@
-import { getOrganizationSchema, getWebsiteSchema } from './seo-json-ld';
+import {
+  getOrganizationSchema,
+  getSoftwareApplicationSchema,
+  getWebsiteSchema,
+} from './seo-json-ld';
 
 export default async function JsonLd() {
-  const [organization, website] = await Promise.all([
+  const [organization, website, software] = await Promise.all([
     getOrganizationSchema(),
     getWebsiteSchema(),
+    getSoftwareApplicationSchema(),
   ]);
 
   return (
@@ -15,6 +20,10 @@ export default async function JsonLd() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(software) }}
       />
     </>
   );
