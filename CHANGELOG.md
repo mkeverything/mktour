@@ -1,3 +1,17 @@
+# [1.0.0-beta.13](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.12...v1.0.0-beta.13) (2026-02-28)
+
+
+### Bug Fixes
+
+* openapi search specification and leaking user emails in search ([1fdf603](https://github.com/mkeverything/mktour/commit/1fdf603b77e55bbfe8d08fae4d97226f26527ca9))
+* returned synchronous root layout ([20ae4d4](https://github.com/mkeverything/mktour/commit/20ae4d437a8b19ad9a6de37edc6ba4da7f822a94))
+* using onBlur on trnmt title editing instead of debounced value ([80aea4f](https://github.com/mkeverything/mktour/commit/80aea4fcf75d3f7adb9078176d942526b7ea6199))
+
+
+### Features
+
+* comprehensive SEO setup — metadata, sitemap, robots, structured data ([ea2dbe7](https://github.com/mkeverything/mktour/commit/ea2dbe77c8cc416092fb631d872fdbe1e24cdbc5))
+
 # [1.0.0-beta.12](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.11...v1.0.0-beta.12) (2026-02-27)
 
 
