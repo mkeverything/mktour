@@ -2,7 +2,11 @@
 
 import { validateRequest } from '@/lib/auth/lucia';
 import { buildScoreMaps, sortPlayersByResults } from '@/lib/tournament-results';
-import { newid } from '@/lib/utils';
+import {
+  getSwissMaxRoundsNumber,
+  getSwissRecommendedRoundsNumber,
+  newid,
+} from '@/lib/utils';
 import { NewTournamentFormType } from '@/lib/zod/new-tournament-form';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
@@ -36,6 +40,7 @@ import {
   isNull,
   ne,
   notInArray,
+  or,
   sql,
 } from 'drizzle-orm';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
@@ -54,7 +59,7 @@ export const createTournament = async (
     createdAt: new Date(),
     closedAt: null,
     startedAt: null,
-    roundsNumber: null,
+    roundsNumber: values.format === 'swiss' ? 1 : null,
     ongoingRound: 1,
   });
 
@@ -156,6 +161,9 @@ export async function removePlayer({
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
 
   await db
     .delete(players_to_tournaments)
@@ -165,6 +173,7 @@ export async function removePlayer({
         eq(players_to_tournaments.tournamentId, tournamentId),
       ),
     );
+  await normalizeSwissRoundsNumber(tournamentId);
 }
 
 export async function addNewPlayer({
@@ -174,6 +183,10 @@ export async function addNewPlayer({
   tournamentId: string;
   player: PlayerFormModel & { id?: string };
 }) {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+
   const playerId = player.id ?? newid();
   await db
     .insert(players)
@@ -194,6 +207,7 @@ export async function addNewPlayer({
     volatilityChange: null,
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
+  await normalizeSwissRoundsNumber(tournamentId);
 }
 
 // moved to API endpoint
@@ -209,6 +223,9 @@ export async function addExistingPlayer({
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
 
@@ -228,6 +245,7 @@ export async function addExistingPlayer({
     volatilityChange: null,
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
+  await normalizeSwissRoundsNumber(tournamentId);
 }
 
 export async function getTournamentGames(
@@ -341,9 +359,11 @@ export async function startTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new Error('NOT_ADMIN');
 
-  const finalRoundsNumber = !roundsNumber
-    ? await getRoundsNumber(tournamentId, format)
-    : roundsNumber;
+  const finalRoundsNumber = await resolveTournamentRoundsNumber({
+    tournamentId,
+    format,
+    roundsNumber,
+  });
 
   await Promise.all([
     db
@@ -978,21 +998,6 @@ async function updatePairingNumbers(tournamentId: string) {
   await Promise.all(promises);
 }
 
-async function getRoundsNumber(
-  tournamentId: string,
-  tournamentFormat: TournamentFormat,
-) {
-  console.log({ tournamentFormat });
-  if (tournamentFormat === 'round robin') {
-    const players = await getTournamentPlayers(tournamentId);
-    console.log(
-      { players, rounds: players.length - 1 },
-      'tournament is round robin',
-    );
-    return players.length - 1;
-  }
-}
-
 export async function updateSwissRoundsNumber({
   tournamentId,
   roundsNumber,
@@ -1000,10 +1005,96 @@ export async function updateSwissRoundsNumber({
   tournamentId: string;
   roundsNumber: number;
 }) {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
+
+  const playerCount = await getTournamentPlayersCount(tournamentId);
+  const maxRounds = getSwissMaxRoundsNumber(playerCount);
+  const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
+  if (roundsNumber < minRounds) throw new Error('INVALID_ROUNDS_NUMBER');
+  if (roundsNumber > maxRounds) throw new Error('INVALID_ROUNDS_NUMBER');
+
   await db
     .update(tournaments)
     .set({ roundsNumber })
     .where(eq(tournaments.id, tournamentId));
+}
+
+async function getTournamentById(tournamentId: string) {
+  return (
+    await db.select().from(tournaments).where(eq(tournaments.id, tournamentId))
+  ).at(0);
+}
+
+async function getTournamentPlayersCount(
+  tournamentId: string,
+): Promise<number> {
+  const [result] = await db
+    .select({ playersCount: sql<number>`count(*)` })
+    .from(players_to_tournaments)
+    .where(eq(players_to_tournaments.tournamentId, tournamentId));
+
+  return Number(result?.playersCount ?? 0);
+}
+
+async function normalizeSwissRoundsNumber(tournamentId: string) {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament || tournament.format !== 'swiss') return;
+
+  const playerCount = await getTournamentPlayersCount(tournamentId);
+  const maxRounds = getSwissMaxRoundsNumber(playerCount);
+  const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
+  if (minRounds > maxRounds) throw new Error('INVALID_SWISS_ROUNDS_BOUNDS');
+
+  const normalizedRounds = Math.min(
+    Math.max(tournament.roundsNumber ?? minRounds, minRounds),
+    maxRounds,
+  );
+
+  await db
+    .update(tournaments)
+    .set({ roundsNumber: normalizedRounds })
+    .where(
+      and(
+        eq(tournaments.id, tournamentId),
+        or(
+          isNull(tournaments.roundsNumber),
+          ne(tournaments.roundsNumber, normalizedRounds),
+        ),
+      ),
+    );
+}
+
+async function resolveTournamentRoundsNumber({
+  tournamentId,
+  format,
+  roundsNumber,
+}: {
+  tournamentId: string;
+  format: TournamentFormat;
+  roundsNumber: number | null;
+}) {
+  if (format === 'swiss') {
+    const playerCount = await getTournamentPlayersCount(tournamentId);
+    if (playerCount < 2) throw new Error('NOT_ENOUGH_PLAYERS');
+
+    const maxRounds = getSwissMaxRoundsNumber(playerCount);
+    const resolvedRounds =
+      roundsNumber ?? getSwissRecommendedRoundsNumber(playerCount);
+
+    if (resolvedRounds < 1 || resolvedRounds > maxRounds) {
+      throw new Error('INVALID_ROUNDS_NUMBER');
+    }
+
+    return resolvedRounds;
+  }
+  if (format === 'round robin') {
+    const players = await getTournamentPlayers(tournamentId);
+    if (players.length < 2) throw new Error('NOT_ENOUGH_PLAYERS');
+    return players.length % 2 === 0 ? players.length : players.length - 1;
+  }
+  throw new Error('UNSUPPORTED_TOURNAMENT_FORMAT');
 }
 
 export async function editTournamentTitle({

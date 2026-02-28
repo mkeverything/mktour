@@ -24,26 +24,32 @@ export default function SwissRoundsNumber({
   const { mutate } = useSaveRoundsNumberMutation(queryClient, sendJsonMessage);
 
   const isOrganizer = status === 'organizer';
-  const currentValue = data?.tournament.roundsNumber ?? 0;
+  const currentValue = data?.tournament.roundsNumber ?? 1;
   const playerCount = players?.length ?? 0;
   const minValue = 1;
   const maxValue = getSwissMaxRoundsNumber(playerCount);
+  const boundedCurrentValue = Math.min(
+    Math.max(currentValue, minValue),
+    maxValue,
+  );
 
-  const canDecrement = currentValue > minValue;
-  const canIncrement = currentValue < maxValue;
+  const canDecrement = boundedCurrentValue > minValue;
+  const canIncrement = boundedCurrentValue < maxValue;
 
   const handleIncrement = () => {
-    const newValue = currentValue + 1;
+    if (!canIncrement) return;
+    const newValue = boundedCurrentValue + 1;
     mutate({ tournamentId, roundsNumber: newValue });
   };
 
   const handleDecrement = () => {
-    const newValue = currentValue - 1;
+    if (!canDecrement) return;
+    const newValue = boundedCurrentValue - 1;
     mutate({ tournamentId, roundsNumber: newValue });
   };
 
   if (!isOrganizer) {
-    return <span className={className}>{currentValue}</span>;
+    return <span className={className}>{boundedCurrentValue}</span>;
   }
 
   return (
@@ -67,7 +73,7 @@ export default function SwissRoundsNumber({
           'border-input bg-background flex size-8 items-center justify-center rounded border text-center',
         )}
       >
-        {currentValue}
+        {boundedCurrentValue}
       </div>
       <button
         type="button"

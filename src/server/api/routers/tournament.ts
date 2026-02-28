@@ -69,6 +69,17 @@ export const tournamentRouter = {
         .where(eq(tournaments.id, input.tournamentId))
         .innerJoin(clubs, eq(tournaments.clubId, clubs.id));
       if (!tournamentInfo) throw new Error('TOURNAMENT NOT FOUND');
+      if (
+        // FIXME looks like weird shit but useful not to make decision rn about making roundsNUmber notNull() in the db lines 48-57
+        tournamentInfo.tournament.format === 'swiss' &&
+        tournamentInfo.tournament.roundsNumber === null
+      ) {
+        await db
+          .update(tournaments)
+          .set({ roundsNumber: 1 })
+          .where(eq(tournaments.id, input.tournamentId));
+        tournamentInfo.tournament.roundsNumber = 1;
+      }
       return tournamentInfo;
     }),
   playersIn: publicProcedure
@@ -190,7 +201,7 @@ export const tournamentRouter = {
         tournamentId: z.string(),
         startedAt: z.date(),
         format: z.custom<TournamentFormat>(),
-        roundsNumber: z.number().nullable(),
+        roundsNumber: z.number().int().min(1).nullable(),
       }),
     )
     .mutation(async (opts) => {
@@ -250,7 +261,7 @@ export const tournamentRouter = {
     .input(
       z.object({
         tournamentId: z.string(),
-        roundsNumber: z.number(),
+        roundsNumber: z.number().int().min(1),
       }),
     )
     .mutation(async (opts) => {

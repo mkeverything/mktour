@@ -80,6 +80,9 @@ export const useTournamentRemovePlayer = (
           queryClient.invalidateQueries({
             queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
           });
+          queryClient.invalidateQueries({
+            queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+          });
         }
       },
       onSuccess: (_err, data) => {

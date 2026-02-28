@@ -56,6 +56,9 @@ export const handleSocketMessage = (
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
       });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+      });
       break;
     case 'remove-player':
       queryClient.cancelQueries({

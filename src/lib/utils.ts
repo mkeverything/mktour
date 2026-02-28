@@ -111,13 +111,13 @@ export const getClockIcon = (time: Date | null | undefined): FC => {
 };
 
 export function getSwissRecommendedRoundsNumber(players: number): number {
-  if (players < 2) return 0;
+  if (players < 2) return 1;
   if (players === 2) return 1;
   if (players < 7) return Math.floor(Math.log2(players - 1)) + 2;
   return Math.floor(Math.log2(players - 1)) + 3;
 }
 
 export function getSwissMaxRoundsNumber(players: number): number {
-  if (players <= 4) return players - 1;
-  return players % 2 === 0 ? players - 3 : players - 2;
+  if (players <= 4) return Math.max(1, players - 1);
+  return Math.max(1, players % 2 === 0 ? players - 3 : players - 2);
 }
