@@ -61,7 +61,10 @@ const Profile: FC<{
   );
 
   const managedOnlyClubs = useMemo(
-    () => managedClubs?.filter((club) => !playerClubIds.has(club.id)) ?? [],
+    () =>
+      managedClubs?.filter(
+        (club) => !playerClubIds.has(club.id) && club.hasFinishedTournaments,
+      ) ?? [],
     [managedClubs, playerClubIds],
   );
 
