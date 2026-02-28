@@ -5,7 +5,7 @@ import { FC } from 'react';
 
 const Desktop: FC = () => {
   return (
-    <div className="flex w-full items-center justify-end align-middle">
+    <div className="gap-mk flex w-full items-center justify-end align-middle">
       <GlobalSearch />
       <NavigationMenuContainer />
       <AuthButton />
