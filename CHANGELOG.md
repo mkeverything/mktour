@@ -1,3 +1,10 @@
+# [1.0.0-beta.14](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.13...v1.0.0-beta.14) (2026-02-28)
+
+
+### Bug Fixes
+
+* navigation items overflow ([97041c9](https://github.com/mkeverything/mktour/commit/97041c9cc99f69ba87d20ec1f28e2437d7802892))
+
 # [1.0.0-beta.13](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.12...v1.0.0-beta.13) (2026-02-28)
 
 
