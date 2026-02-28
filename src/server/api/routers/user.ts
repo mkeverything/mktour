@@ -3,7 +3,7 @@ import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema/users';
 import { clubsSelectSchema } from '@/server/db/zod/clubs';
-import { playersSelectSchema } from '@/server/db/zod/players';
+import { userPlayerClubSchema } from '@/server/db/zod/players';
 import {
   usersSelectPublicSchema,
   usersSelectSchema,
@@ -62,18 +62,7 @@ export const userRouter = createTRPCRouter({
     }),
   playerClubs: publicProcedure
     .meta(meta.userPlayerClubs)
-    .output(
-      z.array(
-        z.object({
-          club: clubsSelectSchema.pick({ id: true, name: true }),
-          player: playersSelectSchema.pick({
-            id: true,
-            nickname: true,
-            rating: true,
-          }),
-        }),
-      ),
-    )
+    .output(z.array(userPlayerClubSchema))
     .input(z.object({ userId: z.string() }))
     .query(async (opts) => {
       const { input } = opts;

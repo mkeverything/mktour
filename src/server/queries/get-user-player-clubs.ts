@@ -4,7 +4,7 @@ import { players } from '@/server/db/schema/players';
 import { eq } from 'drizzle-orm';
 
 export async function getUserPlayerClubs({ userId }: { userId: string }) {
-  const result = await db
+  return await db
     .selectDistinct({
       club: clubs,
       player: players,
@@ -12,18 +12,4 @@ export async function getUserPlayerClubs({ userId }: { userId: string }) {
     .from(players)
     .innerJoin(clubs, eq(players.clubId, clubs.id))
     .where(eq(players.userId, userId));
-
-  return result.map(({ club, player }) => ({
-    club: {
-      id: club.id,
-      name: club.name,
-    },
-    player: {
-      id: player.id,
-      nickname: player.nickname,
-      rating: player.rating,
-    },
-  }));
 }
-
-export type UserPlayerClubs = Awaited<ReturnType<typeof getUserPlayerClubs>>;
