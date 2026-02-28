@@ -23,7 +23,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Scale, Trophy, UserRoundX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, PropsWithChildren, useContext, useMemo, useState } from 'react';
+import {
+  FC,
+  PropsWithChildren,
+  ReactNode,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
 
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
@@ -70,7 +77,7 @@ const TournamentTable: FC = ({}) => {
     );
   }, [players.data, tournament.data, allGames.data]);
 
-  const stats = STATS_WITH_TIEBREAK;
+  const stats: Stat[] = STATS_WITH_TIEBREAK;
 
   if (players.isLoading || allGames.isLoading) {
     return <TableLoading stats={stats} />;
@@ -94,6 +101,17 @@ const TournamentTable: FC = ({}) => {
         { onSuccess: () => setSelectedPlayer(null) },
       );
     }
+  };
+
+  const statRenderers: Record<
+    Stat,
+    (player: PlayerTournamentModel) => ReactNode
+  > = {
+    wins: (p) => p.wins,
+    draws: (p) => p.draws,
+    losses: (p) => p.losses,
+    score: (p) => playerScoresMap.get(p.id),
+    tiebreak: (p) => tiebreakScoresMap.get(p.id),
   };
 
   return (
@@ -124,13 +142,7 @@ const TournamentTable: FC = ({}) => {
                 <Status player={player}>{player.nickname}</Status>
               </TableCellStyled>
               {stats.map((stat) => (
-                <Stat key={stat}>
-                  {stat === 'wins' && player.wins}
-                  {stat === 'draws' && player.draws}
-                  {stat === 'losses' && player.losses}
-                  {stat === 'score' && playerScoresMap.get(player.id)}
-                  {stat === 'tiebreak' && tiebreakScoresMap.get(player.id)}
-                </Stat>
+                <Stat key={stat}>{statRenderers[stat](player)}</Stat>
               ))}
             </TableRow>
           ))}
@@ -261,6 +273,17 @@ const Stat: FC<PropsWithChildren> = ({ children }) => (
   </TableCellStyled>
 );
 
-const STATS_WITH_TIEBREAK = ['wins', 'draws', 'losses', 'score', 'tiebreak'];
+const STATS_WITH_TIEBREAK: Stat[] = [
+  'wins',
+  'draws',
+  'losses',
+  'score',
+  'tiebreak',
+];
+
+type Stat =
+  | keyof Pick<PlayerTournamentModel, 'wins' | 'draws' | 'losses'>
+  | 'score'
+  | 'tiebreak';
 
 export default TournamentTable;
