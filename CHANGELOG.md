@@ -1,3 +1,10 @@
+# [1.0.0-beta.17](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.16...v1.0.0-beta.17) (2026-02-28)
+
+
+### Bug Fixes
+
+* lichess api endpoint teams/of/{username} has become protected ([8a149e8](https://github.com/mkeverything/mktour/commit/8a149e8d69d84c7c885d5ea11c1bf3d3dca8f646))
+
 # [1.0.0-beta.16](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.15...v1.0.0-beta.16) (2026-02-28)
 
 
