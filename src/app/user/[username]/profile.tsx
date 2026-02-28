@@ -226,6 +226,7 @@ const ClubPlayerCard: FC<
   UserPlayerClubModel & { isOwner: boolean; status: StatusInClub | null }
 > = ({ club, player, isOwner, status }) => {
   const t = useTranslations('Profile');
+  const format = useFormatter();
   const tStatus = useTranslations('Status');
   const formattedPlayerRating = !player.rating
     ? '—'
@@ -262,7 +263,15 @@ const ClubPlayerCard: FC<
             label={t('clubRating')}
             value={formattedPlayerRating}
           />
-          <StatItem icon={CalendarDays} label={t('lastTournament')} value="—" />
+          <StatItem
+            icon={CalendarDays}
+            label={t('lastTournament')}
+            value={
+              player.lastSeenAt
+                ? format.dateTime(player.lastSeenAt, { dateStyle: 'medium' })
+                : '—'
+            }
+          />
         </div>
         <PlayerStats player={player} />
       </CardContent>

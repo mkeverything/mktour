@@ -156,6 +156,7 @@ export const userPlayerClubSchema = z.object({
     rating: true,
     ratingDeviation: true,
     ratingPeak: true,
+    lastSeenAt: true,
   }),
 });
 
