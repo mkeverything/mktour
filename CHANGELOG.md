@@ -1,3 +1,10 @@
+# [1.0.0-beta.16](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.15...v1.0.0-beta.16) (2026-02-28)
+
+
+### Bug Fixes
+
+* missing asset src ([ebebc8d](https://github.com/mkeverything/mktour/commit/ebebc8dcbace5478c4d165448d62b78cc1543025))
+
 # [1.0.0-beta.15](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.14...v1.0.0-beta.15) (2026-02-28)
 
 
