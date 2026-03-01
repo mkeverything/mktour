@@ -42,8 +42,10 @@ export default function AuthButton() {
             <span className="hidden sm:block">{t('Profile.login')}</span>
           </Link>
         </Button>
-        <LocaleSwitcher />
-        <ModeToggler />
+        <div className="hidden items-center md:flex">
+          <LocaleSwitcher />
+          <ModeToggler />
+        </div>
       </div>
     );
   }
