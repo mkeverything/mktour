@@ -79,7 +79,7 @@ const TournamentTable: FC = ({}) => {
 
   const stats: Stat[] = STATS_WITH_TIEBREAK;
 
-  if (players.isLoading || allGames.isLoading) {
+  if (players.isLoading || allGames.isLoading || 1) {
     return <TableLoading stats={stats} />;
   }
   if (players.isError) {
@@ -174,19 +174,17 @@ const TableStatsHeads: FC<{ stats: Stat[] }> = ({ stats }) => {
 };
 
 const TableLoading: FC<{ stats: Stat[] }> = ({ stats }) => {
-  const t = useTranslations('Tournament.Table');
   return (
-    <div className="h-full w-full items-center justify-center">
-      <span className="sr-only">{t('loading')}</span>
+    <div className="h-full w-full items-center justify-center overflow-hidden">
+      <span className="sr-only">
+        <FormattedMessage id="Tournament.Table.loading" />
+      </span>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHeadStyled className="p-mk text-center">#</TableHeadStyled>
-            <TableHeadStyled className="p-0">
-              {t.rich('name column', {
-                count: 0,
-                small: (chunks) => <small>{chunks}</small>,
-              })}
+            <TableHeadStyled className="min-w-10 p-0">
+              <FormattedMessage id="Player.name" />
             </TableHeadStyled>
             <TableStatsHeads stats={stats} />
           </TableRow>
@@ -196,17 +194,17 @@ const TableLoading: FC<{ stats: Stat[] }> = ({ stats }) => {
             .fill(0)
             .map((_, i) => (
               <TableRow key={i}>
-                <TableCellStyled className="h-11">
+                <TableCellStyled className="h-11 p-0">
                   <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
                 </TableCellStyled>
-                <TableCellStyled>
+                <TableCellStyled className="p-0">
                   <div className="bg-muted h-4 w-40 animate-pulse rounded" />
                 </TableCellStyled>
                 {Array(stats.length)
                   .fill(0)
                   .map((_, j) => (
-                    <TableCellStyled key={j}>
-                      <div className="bg-muted mx-auto h-4 w-8 animate-pulse rounded" />
+                    <TableCellStyled key={j} className="max-w-fit p-0">
+                      <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
                     </TableCellStyled>
                   ))}
               </TableRow>

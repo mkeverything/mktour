@@ -116,6 +116,7 @@
     "never": "never",
     "delete": "delete player",
     "nickname": "username",
+    "name": "name",
     "rating": "rating",
     "realname": "real name",
     "lichess": "lichess",
