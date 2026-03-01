@@ -79,7 +79,11 @@ export function TeamSelector({ teams, form }: TeamSelectorProps) {
                   className="h-[30px] w-full justify-start pl-8"
                   variant="ghost"
                   onClick={() => {
-                    form.resetField('lichessTeam');
+                    form.setValue('lichessTeam', null, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    });
                     setState(!state);
                   }}
                   style={{ pointerEvents: 'auto' }}

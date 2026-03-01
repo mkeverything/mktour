@@ -1,6 +1,7 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
+import { getUserLichessTeams } from '@/lib/api/lichess';
 import { newid, timeout } from '@/lib/utils';
 import meta from '@/server/api/meta';
 import {
@@ -120,6 +121,15 @@ export const authRouter = {
     .query(async ({ input }) => {
       const club = await getClubByLichessTeam(input);
       return club ?? null;
+    }),
+  lichessTeams: protectedProcedure
+    .output(z.array(z.object({ label: z.string(), value: z.string() })))
+    .query(async ({ ctx }) => {
+      const teams = await getUserLichessTeams(ctx.user.username);
+      return teams.map((team) => ({
+        label: team.name.toLowerCase(),
+        value: team.id,
+      }));
     }),
   selectClub: protectedProcedure
     .meta(meta.authSelectClub)
