@@ -1,3 +1,10 @@
+# [1.0.0-beta.27](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.26...v1.0.0-beta.27) (2026-03-01)
+
+
+### Bug Fixes
+
+* apple icons ([1626f01](https://github.com/mkeverything/mktour/commit/1626f015085635f9d556ac511afaccde3b06d840))
+
 # [1.0.0-beta.26](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.25...v1.0.0-beta.26) (2026-03-01)
 
 
