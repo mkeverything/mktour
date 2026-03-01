@@ -13,7 +13,7 @@ const SkeletonList: FC<{
       <div className="from-background absolute inset-0 w-full bg-linear-to-t" />
       <div className="-z-10 flex flex-col gap-2">
         {list.map((_, i) => (
-          <Skeleton key={i} className={cn(`h-18 w-full`, className)} />
+          <Skeleton key={i} className={cn(`h-12 w-full`, className)} />
         ))}
       </div>
     </div>
