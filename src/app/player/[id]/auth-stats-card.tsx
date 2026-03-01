@@ -36,7 +36,7 @@ const AuthStatsCard: FC<AuthStatsCardProps> = ({
   if (!isPending && !authStats && !showWhenEmpty) return null;
 
   return (
-    <Card className="bg-muted/30 border-dashed">
+    <Card className="bg-muted/30 mt-3 border-dashed">
       <CardHeader className="pb-2">
         <CardTitle className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
           <Target className="size-4" />
