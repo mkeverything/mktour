@@ -56,8 +56,11 @@ export const playerToTournamentSchema = playerTournamentSelectSchema
 
 export const tournamentInfoSchema = z.object({
   tournament: tournamentSchema,
-  club: clubsSelectSchema,
-  allowPlayersSetResults: z.boolean(),
+  club: clubsSelectSchema.pick({
+    allowPlayersSetResults: true,
+    id: true,
+    name: true,
+  }),
 });
 export const tournamentWithClubSchema = z.object({
   tournament: tournamentSchema,

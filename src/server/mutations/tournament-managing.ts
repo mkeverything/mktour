@@ -137,10 +137,7 @@ export async function getTournamentInfo(
   ).at(0);
   if (!tournamentInfo) throw new Error('TOURNAMENT NOT FOUND');
   if (!tournamentInfo.club) throw new Error('ORGANIZER CLUB NOT FOUND');
-  return {
-    ...tournamentInfo,
-    allowPlayersSetResults: tournamentInfo.club.allowPlayersSetResults,
-  };
+  return tournamentInfo;
 }
 
 // moved to API endpoint

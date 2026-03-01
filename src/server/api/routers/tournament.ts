@@ -92,10 +92,7 @@ export const tournamentRouter = {
           .where(eq(tournaments.id, input.tournamentId));
         tournamentInfo.tournament.roundsNumber = 1;
       }
-      return {
-        ...tournamentInfo,
-        allowPlayersSetResults: tournamentInfo.club.allowPlayersSetResults,
-      };
+      return tournamentInfo;
     }),
   playersIn: publicProcedure
     .input(tournamentIdInputSchema)

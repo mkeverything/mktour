@@ -47,7 +47,7 @@ const GameItem: FC<GameProps> = ({
   const isActive = selected && hasStarted;
   const muted = result && !selected;
   const isClosed = !!data?.tournament.closedAt;
-  const allowPlayersSetResults = !!data?.allowPlayersSetResults;
+  const allowPlayersSetResults = !!data?.club.allowPlayersSetResults;
   // players can only edit their own games, and only after tournament has started
   const isPlayerInGame =
     playerId === playerLeft.whiteId || playerId === playerRight.blackId;
