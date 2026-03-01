@@ -1,6 +1,6 @@
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
-import { PlayerModel } from '@/server/db/zod/players';
+import { PlayerModel } from '@/server/zod/players';
 import { eq } from 'drizzle-orm';
 
 export default async function getAllClubPlayersQuery(

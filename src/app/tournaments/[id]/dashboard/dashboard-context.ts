@@ -1,4 +1,4 @@
-import { TournamentAuthStatus } from '@/server/db/zod/enums';
+import { TournamentAuthStatus } from '@/server/zod/enums';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { createContext, Dispatch, SetStateAction } from 'react';
 

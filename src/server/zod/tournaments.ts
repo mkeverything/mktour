@@ -3,13 +3,13 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
+import { clubsSelectSchema } from '@/server/zod/clubs';
 import {
   gameResultEnum,
   roundNameEnum,
   tournamentFormatEnum,
   tournamentTypeEnum,
-} from '@/server/db/zod/enums';
+} from '@/server/zod/enums';
 import {
   createInsertSchema,
   createSelectSchema,

@@ -6,7 +6,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { UserPublicModel } from '@/server/db/zod/users';
+import { UserPublicModel } from '@/server/zod/users';
 import { VariantProps } from 'class-variance-authority';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren, useState } from 'react';

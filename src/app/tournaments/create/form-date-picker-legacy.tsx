@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { NewTournamentFormModel } from '@/server/db/zod/tournaments';
+import { NewTournamentFormModel } from '@/server/zod/tournaments';
 import { format } from 'date-fns';
 import { enUS, Locale, ru } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';

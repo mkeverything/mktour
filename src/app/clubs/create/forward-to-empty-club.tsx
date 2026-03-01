@@ -5,7 +5,7 @@ import RichText from '@/components/rich-text';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import { ClubModel } from '@/server/db/zod/clubs';
+import { ClubModel } from '@/server/zod/clubs';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';

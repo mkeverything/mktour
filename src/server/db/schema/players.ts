@@ -1,7 +1,7 @@
 import { clubs } from '@/server/db/schema/clubs';
 import { players_to_tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
-import { AffiliationStatus } from '@/server/db/zod/enums';
+import { AffiliationStatus } from '@/server/zod/enums';
 import { relations } from 'drizzle-orm';
 import {
   integer,

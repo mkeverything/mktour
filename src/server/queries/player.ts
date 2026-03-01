@@ -5,10 +5,7 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import {
-  PlayerAuthStatsModel,
-  PlayerStatsModel,
-} from '@/server/db/zod/players';
+import { PlayerAuthStatsModel, PlayerStatsModel } from '@/server/zod/players';
 import {
   and,
   count,

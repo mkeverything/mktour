@@ -3,7 +3,6 @@
 import { turboPascal } from '@/app/fonts';
 import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
 import EditButton from '@/app/player/[id]/edit-button';
-import PlayerStats from '@/components/ui-custom/player-stats';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
@@ -12,6 +11,7 @@ import LastTournaments from '@/components/last-tournaments';
 import { useTRPC } from '@/components/trpc/client';
 import CarouselDots from '@/components/ui-custom/carousel-dots';
 import HalfCard from '@/components/ui-custom/half-card';
+import PlayerStats from '@/components/ui-custom/player-stats';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -29,14 +29,14 @@ import {
 } from '@/components/ui/carousel';
 import { Separator } from '@/components/ui/separator';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { StatusInClub } from '@/server/db/zod/enums';
+import { ClubModel } from '@/server/zod/clubs';
+import { StatusInClub } from '@/server/zod/enums';
 import type {
   PlayerAuthStatsModel,
   UserPlayerClubModel,
-} from '@/server/db/zod/players';
-import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
+} from '@/server/zod/players';
 import { useQueries } from '@tanstack/react-query';
+import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, useMemo } from 'react';

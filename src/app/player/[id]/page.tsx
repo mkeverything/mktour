@@ -7,7 +7,7 @@ import PlayerStats from '@/app/player/[id]/player-stats';
 import LastTournaments from '@/components/last-tournaments';
 import { CardTitle } from '@/components/ui/card';
 import { publicCaller } from '@/server/api';
-import { PlayerModel } from '@/server/db/zod/players';
+import { PlayerModel } from '@/server/zod/players';
 import { ChevronRight, Users2 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';

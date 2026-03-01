@@ -4,7 +4,7 @@ import { CACHE_TAGS } from '@/lib/cache-tags';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { tournaments } from '@/server/db/schema/tournaments';
-import { StatusInClub } from '@/server/db/zod/enums';
+import { StatusInClub } from '@/server/zod/enums';
 import { and, eq, exists, isNotNull, sql } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';

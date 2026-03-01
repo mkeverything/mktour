@@ -1,5 +1,5 @@
-import { PlayerTournamentModel } from '@/server/db/zod/players';
-import { GameModel, TournamentModel } from '@/server/db/zod/tournaments';
+import { PlayerTournamentModel } from '@/server/zod/players';
+import { GameModel, TournamentModel } from '@/server/zod/tournaments';
 
 export interface SortedPlayersResult {
   players: PlayerTournamentModel[];

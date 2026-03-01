@@ -1,7 +1,7 @@
 import { validateLichessTeam } from '@/lib/zod/new-club-validation-action';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
-import { statusInClubEnum } from '@/server/db/zod/enums';
-import { usersSelectMinimalSchema } from '@/server/db/zod/users';
+import { statusInClubEnum } from '@/server/zod/enums';
+import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import z from 'zod';
 

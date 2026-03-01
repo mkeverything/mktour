@@ -1,6 +1,6 @@
 import { LoadingSpinner } from '@/app/loading';
 import { Card } from '@/components/ui/card';
-import { GameResult } from '@/server/db/zod/enums';
+import { GameResult } from '@/server/zod/enums';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 

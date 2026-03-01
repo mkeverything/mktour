@@ -10,7 +10,7 @@ import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import useScrollableContainer from '@/components/hooks/use-scrollable-container';
 import SwipeHandlerProvider from '@/components/swipe-handler-provider';
 import FabProvider from '@/components/ui-custom/fab-provider';
-import { StatusInClub } from '@/server/db/zod/enums';
+import { StatusInClub } from '@/server/zod/enums';
 import { useTranslations } from 'next-intl';
 import { Dispatch, FC, ReactNode, SetStateAction, useState } from 'react';
 

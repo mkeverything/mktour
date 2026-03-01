@@ -6,22 +6,6 @@ import {
   publicProcedure,
 } from '@/server/api/trpc';
 import {
-  clubIdInputSchema,
-  notificationIdInputSchema,
-  playerIdInputSchema,
-  userIdInputSchema,
-} from '@/server/db/zod/common';
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
-import {
-  playerAuthStatsSchema,
-  playerEditSchema,
-  playerFormSchema,
-  playersSelectSchema,
-  playerStatsSchema,
-} from '@/server/db/zod/players';
-import { playerToTournamentSchema } from '@/server/db/zod/tournaments';
-import { usersSelectMinimalSchema } from '@/server/db/zod/users';
-import {
   createPlayer,
   deletePlayer,
   editPlayer,
@@ -30,9 +14,9 @@ import {
   abortAffiliationRequest,
   acceptAffiliationByClub,
   affiliateUser,
+  cancelAffiliationByClub,
   cancelAffiliationByUser,
   rejectAffiliation,
-  cancelAffiliationByClub,
   requestAffiliation,
 } from '@/server/mutations/player-affiliation';
 import getPlayer from '@/server/queries/get-player';
@@ -42,6 +26,22 @@ import {
   getPlayerStats,
   getPlayersTournaments,
 } from '@/server/queries/player';
+import { clubsSelectSchema } from '@/server/zod/clubs';
+import {
+  clubIdInputSchema,
+  notificationIdInputSchema,
+  playerIdInputSchema,
+  userIdInputSchema,
+} from '@/server/zod/common';
+import {
+  playerAuthStatsSchema,
+  playerEditSchema,
+  playerFormSchema,
+  playersSelectSchema,
+  playerStatsSchema,
+} from '@/server/zod/players';
+import { playerToTournamentSchema } from '@/server/zod/tournaments';
+import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 

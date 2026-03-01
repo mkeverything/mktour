@@ -19,13 +19,14 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { GameResult, TournamentFormat } from '@/server/db/zod/enums';
+import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import { GameResult, TournamentFormat } from '@/server/zod/enums';
 import {
   PlayerFormModel,
   PlayerInsertModel,
   PlayerModel,
   PlayerTournamentModel,
-} from '@/server/db/zod/players';
+} from '@/server/zod/players';
 import {
   GameModel,
   NewTournamentFormModel,
@@ -33,8 +34,7 @@ import {
   TournamentInfoModel,
   TournamentModel,
   tournamentsInsertSchema,
-} from '@/server/db/zod/tournaments';
-import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+} from '@/server/zod/tournaments';
 import {
   aliasedTable,
   and,

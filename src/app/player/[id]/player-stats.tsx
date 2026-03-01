@@ -1,5 +1,5 @@
 import PlayerStats from '@/components/ui-custom/player-stats';
-import { PlayerModel } from '@/server/db/zod/players';
+import { PlayerModel } from '@/server/zod/players';
 
 export default function PlayerStatsWrapper({
   player,

@@ -12,8 +12,8 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { sessions, user_preferences, users } from '@/server/db/schema/users';
-import { EditProfileFormModel } from '@/server/db/zod/users';
 import { deleteClubFunction } from '@/server/mutations/club-managing';
+import { EditProfileFormModel } from '@/server/zod/users';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 

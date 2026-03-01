@@ -1,4 +1,4 @@
-import { TournamentAuthStatus } from '@/server/db/zod/enums';
+import { TournamentAuthStatus } from '@/server/zod/enums';
 import { FC, PropsWithChildren, ReactNode } from 'react';
 
 const FabProvider: FC<FabProviderProps> = ({

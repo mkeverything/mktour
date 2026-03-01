@@ -1,6 +1,6 @@
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
-import { ClubModel } from '@/server/db/zod/clubs';
+import { ClubModel } from '@/server/zod/clubs';
 import { eq } from 'drizzle-orm';
 
 export async function getClubByLichessTeam({

@@ -13,7 +13,7 @@ import Overlay from '@/components/overlay';
 import Fades from '@/components/ui-custom/fades';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { TournamentAuthStatus } from '@/server/db/zod/enums';
+import { TournamentAuthStatus } from '@/server/zod/enums';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 

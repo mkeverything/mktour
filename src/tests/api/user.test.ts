@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { publicCaller } from '@/server/api/index';
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
-import { playersSelectSchema } from '@/server/db/zod/players';
-import {
-  usersSelectPublicSchema,
-  usersSelectSchema,
-} from '@/server/db/zod/users';
+import { clubsSelectSchema } from '@/server/zod/clubs';
+import { playersSelectSchema } from '@/server/zod/players';
+import { usersSelectPublicSchema, usersSelectSchema } from '@/server/zod/users';
 import { beforeAll, describe, expect, it } from 'bun:test';
 
 import { getSeededTestData } from '../setup/utils';

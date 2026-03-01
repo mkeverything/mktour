@@ -1,4 +1,4 @@
-import { TournamentModel } from '@/server/db/zod/tournaments';
+import { TournamentModel } from '@/server/zod/tournaments';
 import { useFormatter, useTranslations } from 'next-intl';
 
 export const useTournamentFallbackTitle = (

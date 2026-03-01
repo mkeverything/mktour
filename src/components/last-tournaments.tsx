@@ -2,7 +2,7 @@ import FormattedMessage from '@/components/formatted-message';
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { PlayerToTournamentModel } from '@/server/db/zod/tournaments';
+import { PlayerToTournamentModel } from '@/server/zod/tournaments';
 import { ChevronRight, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { FC } from 'react';

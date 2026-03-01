@@ -25,7 +25,7 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClubManagerModel } from '@/server/db/zod/clubs';
+import { ClubManagerModel } from '@/server/zod/clubs';
 import { Trash2, User2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';

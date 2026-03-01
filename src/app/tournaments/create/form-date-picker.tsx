@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { NewTournamentFormModel } from '@/server/db/zod/tournaments';
+import { NewTournamentFormModel } from '@/server/zod/tournaments';
 import { CalendarIcon } from 'lucide-react';
 import * as React from 'react';
 

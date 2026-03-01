@@ -3,7 +3,7 @@
 import { usePlayerAuthStats } from '@/components/hooks/query-hooks/use-player-stats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { PlayerAuthStatsModel } from '@/server/db/zod/players';
+import type { PlayerAuthStatsModel } from '@/server/zod/players';
 import { Target } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';

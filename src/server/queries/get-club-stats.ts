@@ -4,7 +4,7 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { ClubStatsModel } from '@/server/db/zod/clubs';
+import { ClubStatsModel } from '@/server/zod/clubs';
 import { count, desc, eq, sql } from 'drizzle-orm';
 
 export async function getClubStats(clubId: string): Promise<ClubStatsModel> {

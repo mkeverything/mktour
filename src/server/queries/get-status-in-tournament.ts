@@ -5,7 +5,7 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { TournamentAuthStatusModel } from '@/server/db/zod/tournaments';
+import { TournamentAuthStatusModel } from '@/server/zod/tournaments';
 import { and, eq } from 'drizzle-orm';
 import { cache } from 'react';
 

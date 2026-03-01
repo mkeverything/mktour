@@ -5,7 +5,7 @@ import Fab from '@/components/fab';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
-import { PlayerFormModel } from '@/server/db/zod/players';
+import { PlayerFormModel } from '@/server/zod/players';
 import { ArrowLeft, Plus, UserPlus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';

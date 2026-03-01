@@ -1,11 +1,11 @@
 import meta from '@/server/api/meta';
 import { publicProcedure } from '@/server/api/trpc';
+import { globalSearch } from '@/server/queries/search';
 import {
   searchOpenApiSchema,
   searchOutputSchema,
   searchSchema,
-} from '@/server/db/zod/search';
-import { globalSearch } from '@/server/queries/search';
+} from '@/server/zod/search';
 
 export const search = publicProcedure
   .input(searchSchema)

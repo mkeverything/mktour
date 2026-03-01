@@ -5,7 +5,7 @@ import {
   RoundName,
   TournamentFormat,
   TournamentType,
-} from '@/server/db/zod/enums';
+} from '@/server/zod/enums';
 import { relations } from 'drizzle-orm';
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 

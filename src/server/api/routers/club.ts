@@ -7,25 +7,6 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
-import {
-  clubIdInputSchema,
-  notificationIdInputSchema,
-  userIdInputSchema,
-} from '@/server/db/zod/common';
-import {
-  clubStatsSchema,
-  clubManagersSchema,
-  clubsEditSchema,
-  clubsInsertSchema,
-  clubsSelectSchema,
-} from '@/server/db/zod/clubs';
-import { clubNotificationExtendedSchema } from '@/server/db/zod/notifications';
-import {
-  affiliationExtendedSchema,
-  playersSelectSchema,
-} from '@/server/db/zod/players';
-import { tournamentSchema } from '@/server/db/zod/tournaments';
-import { usersSelectMinimalSchema } from '@/server/db/zod/users';
 import getAllClubManagers, {
   addClubManager,
   changeClubNotificationStatus,
@@ -43,6 +24,25 @@ import { getClubStats } from '@/server/queries/get-club-stats';
 import { getClubTournaments } from '@/server/queries/get-club-tournaments';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { getUserClubAffiliation } from '@/server/queries/get-user-club-affiliation';
+import {
+  clubManagersSchema,
+  clubsEditSchema,
+  clubsInsertSchema,
+  clubsSelectSchema,
+  clubStatsSchema,
+} from '@/server/zod/clubs';
+import {
+  clubIdInputSchema,
+  notificationIdInputSchema,
+  userIdInputSchema,
+} from '@/server/zod/common';
+import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
+import {
+  affiliationExtendedSchema,
+  playersSelectSchema,
+} from '@/server/zod/players';
+import { tournamentSchema } from '@/server/zod/tournaments';
+import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 

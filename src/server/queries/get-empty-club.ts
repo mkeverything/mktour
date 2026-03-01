@@ -1,7 +1,7 @@
 import { db } from '@/server/db';
 import { tournaments } from '@/server/db/schema/tournaments';
-import { ClubModel } from '@/server/db/zod/clubs';
 import { getUserClubs } from '@/server/queries/get-user-clubs';
+import { ClubModel } from '@/server/zod/clubs';
 import { and, eq, isNotNull } from 'drizzle-orm';
 
 export const getEmptyClub = async ({

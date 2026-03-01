@@ -2,21 +2,18 @@ import meta from '@/server/api/meta';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema/users';
-import { userIdInputSchema } from '@/server/db/zod/common';
-import {
-  clubsSelectSchema,
-  clubsToUsersSelectSchema,
-} from '@/server/db/zod/clubs';
-import { userPlayerClubSchema } from '@/server/db/zod/players';
-import { playerToTournamentSchema } from '@/server/db/zod/tournaments';
-import {
-  usersSelectPublicSchema,
-  usersSelectSchema,
-} from '@/server/db/zod/users';
 import { getUserClubNames } from '@/server/queries/get-user-clubs';
 import { getUserInfoByUsername } from '@/server/queries/get-user-data';
 import { getUserPlayerClubs } from '@/server/queries/get-user-player-clubs';
 import { getUserLastTournaments } from '@/server/queries/user';
+import {
+  clubsSelectSchema,
+  clubsToUsersSelectSchema,
+} from '@/server/zod/clubs';
+import { userIdInputSchema } from '@/server/zod/common';
+import { userPlayerClubSchema } from '@/server/zod/players';
+import { playerToTournamentSchema } from '@/server/zod/tournaments';
+import { usersSelectPublicSchema, usersSelectSchema } from '@/server/zod/users';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';

@@ -1,5 +1,5 @@
 import { useTRPC } from '@/components/trpc/client';
-import { SearchParamsModel } from '@/server/db/zod/search';
+import { SearchParamsModel } from '@/server/zod/search';
 import { useQuery } from '@tanstack/react-query';
 
 export const useSearchQuery = (params: SearchParamsModel) => {

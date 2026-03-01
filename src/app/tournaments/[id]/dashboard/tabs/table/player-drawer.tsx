@@ -13,7 +13,7 @@ import {
   Title,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
+import { PlayerTournamentModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { Dispatch, FC, SetStateAction, useContext } from 'react';

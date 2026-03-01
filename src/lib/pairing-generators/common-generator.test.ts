@@ -2,11 +2,11 @@ import { mock } from 'bun:test';
 
 import { countPlayerResults } from '@/lib/pairing-generators/common-generator';
 import { newid } from '@/lib/utils';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { GameResult } from '@/server/db/zod/enums';
-import type { PlayerTournamentModel } from '@/server/db/zod/players';
-import { GameModel, TournamentModel } from '@/server/db/zod/tournaments';
-import { UserModel } from '@/server/db/zod/users';
+import { ClubModel } from '@/server/zod/clubs';
+import { GameResult } from '@/server/zod/enums';
+import type { PlayerTournamentModel } from '@/server/zod/players';
+import { GameModel, TournamentModel } from '@/server/zod/tournaments';
+import { UserModel } from '@/server/zod/users';
 import { faker } from '@faker-js/faker';
 import assert from 'assert';
 

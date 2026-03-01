@@ -24,9 +24,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { StatusInClub } from '@/server/db/zod/enums';
-import { PlayerModel } from '@/server/db/zod/players';
+import { ClubModel } from '@/server/zod/clubs';
+import { StatusInClub } from '@/server/zod/enums';
+import { PlayerModel } from '@/server/zod/players';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Home, Search, Trophy, Users2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';

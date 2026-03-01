@@ -1,7 +1,7 @@
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
-import { playersSelectSchema } from '@/server/db/zod/players';
-import { tournamentSchema } from '@/server/db/zod/tournaments';
-import { usersSelectPublicSchema } from '@/server/db/zod/users';
+import { clubsSelectSchema } from '@/server/zod/clubs';
+import { playersSelectSchema } from '@/server/zod/players';
+import { tournamentSchema } from '@/server/zod/tournaments';
+import { usersSelectPublicSchema } from '@/server/zod/users';
 import z from 'zod';
 
 export const searchSchema = z.object({

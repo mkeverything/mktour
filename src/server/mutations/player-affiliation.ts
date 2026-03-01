@@ -11,8 +11,8 @@ import { affiliations, players } from '@/server/db/schema/players';
 import {
   ClubNotificationInsertModel,
   UserNotificationInsertModel,
-} from '@/server/db/zod/notifications';
-import { AffiliationInsertModel } from '@/server/db/zod/players';
+} from '@/server/zod/notifications';
+import { AffiliationInsertModel } from '@/server/zod/players';
 import { TRPCError } from '@trpc/server';
 import { and, eq, sql } from 'drizzle-orm';
 import { User } from 'lucia';

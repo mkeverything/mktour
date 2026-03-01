@@ -1,12 +1,12 @@
 'use client';
 
-import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import { TeamSelector } from '@/app/clubs/create/team-selector';
+import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import { LoadingSpinner } from '@/app/loading';
 import useEditClubMutation from '@/components/hooks/mutation-hooks/use-club-edit';
 import { useClubInfo } from '@/components/hooks/query-hooks/use-club-info';
-import { useTRPC } from '@/components/trpc/client';
 import SkeletonList from '@/components/skeleton-list';
+import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -20,10 +20,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { shallowEqual } from '@/lib/utils';
-import { ClubFormModel, clubsInsertSchema } from '@/server/db/zod/clubs';
+import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren } from 'react';

@@ -5,7 +5,7 @@ import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { user_preferences, users } from '@/server/db/schema/users';
-import { UserModel } from '@/server/db/zod/users';
+import { UserModel } from '@/server/zod/users';
 import { LichessUser } from '@/types/lichess-api';
 import { ArcticFetchError, OAuth2RequestError } from 'arctic';
 import { eq } from 'drizzle-orm';

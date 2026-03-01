@@ -9,11 +9,11 @@ production: https://mktour.org
 this section overrides all other local conventions when there is any conflict.
 
 - all product/domain data operations must go through tRPC procedures. do not add alternative rpc paths for domain features.
-- `src/server/db/zod/` is the only canonical source for domain schemas and domain types.
-- client-side domain types must be inferred or imported from canonical zod schemas in `src/server/db/zod/`; no manual re-declaration of domain shapes.
-- tRPC `.input()` and `.output()` contracts must use canonical schemas from `src/server/db/zod/`.
+- `src/server/zod/` is the only canonical source for domain schemas and domain types.
+- client-side domain types must be inferred or imported from canonical zod schemas in `src/server/zod/`; no manual re-declaration of domain shapes.
+- tRPC `.input()` and `.output()` contracts must use canonical schemas from `src/server/zod/`.
 - zod schemas should be derived from drizzle db schemas where possible.
-- form-level or ui-level adapter schemas may exist outside `src/server/db/zod/`, but they must derive from canonical server schemas and must not redefine domain contracts.
+- form-level or ui-level adapter schemas may exist outside `src/server/zod/`, but they must derive from canonical server schemas and must not redefine domain contracts.
 
 allowed infra exceptions (non-domain): oauth callbacks/login routes, cron/migration routes, websocket transport.
 
@@ -44,7 +44,7 @@ clubs → tournaments → players → games
 - **games**: belong to a tournament round, white/black player ids, result (1-0, 0-1, 1/2-1/2)
 - **notifications**: club-level and user-level event notifications
 
-schema source of truth: `src/server/db/schema/` — zod models in `src/server/db/zod/`
+schema source of truth: `src/server/db/schema/` — zod models in `src/server/zod/`
 
 ### player-user relationships
 
@@ -85,9 +85,9 @@ src/
 │   │   └── routers/       # auth, club, player, search, tournament, user
 │   ├── db/
 │   │   ├── schema/        # drizzle table definitions (clubs, users, tournaments, players, notifications)
-│   │   ├── zod/           # zod models inferred from schema + enums
 │   │   ├── migrations/    # drizzle migration files
 │   │   └── seed.ts        # test data seeding
+│   ├── zod/               # zod models inferred from schema + enums
 │   ├── mutations/         # server-side mutation logic by domain
 │   └── queries/           # server-side query logic by domain
 ├── tests/
@@ -169,8 +169,8 @@ always run `bun check` before pushing. use single-file test when validating chan
 ## typescript & types
 
 - strict typing; schema is the single source of truth
-- types prefixed with `Database` (e.g. `DatabaseUser`) live in `src/server/db/zod/`
-- enums defined via zod in `src/server/db/zod/enums.ts`, inferred as typescript types
+- types prefixed with `Database` (e.g. `DatabaseUser`) live in `src/server/zod/`
+- enums defined via zod in `src/server/zod/enums.ts`, inferred as typescript types
 - use zod for all api input/output validation
 - avoid ad-hoc types outside canonical folders
 

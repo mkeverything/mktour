@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
+import { PlayerTournamentModel } from '@/server/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
 import { Scale, Trophy, UserRoundX } from 'lucide-react';
 import { useTranslations } from 'next-intl';

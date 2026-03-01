@@ -1,7 +1,7 @@
+import { getUserLichessTeams } from '@/lib/api/lichess';
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
-import { getUserLichessTeams } from '@/lib/api/lichess';
 import { newid, timeout } from '@/lib/utils';
 import meta from '@/server/api/meta';
 import {
@@ -11,21 +11,6 @@ import {
 } from '@/server/api/trpc';
 import { players } from '@/server/db/schema/players';
 import { apiTokens } from '@/server/db/schema/users';
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
-import { playersSelectSchema } from '@/server/db/zod/players';
-import {
-  apiTokenIdInputSchema,
-  clubIdInputSchema,
-  notificationIdInputSchema,
-  paginatedInputSchema,
-  userIdInputSchema,
-} from '@/server/db/zod/common';
-import {
-  apiToken,
-  editProfileFormSchema,
-  usersSelectPublicSchema,
-  usersSelectSchema,
-} from '@/server/db/zod/users';
 import selectClub from '@/server/mutations/club-select';
 import { logout } from '@/server/mutations/logout';
 import {
@@ -42,7 +27,22 @@ import {
   getNotificationsCounter,
 } from '@/server/queries/get-user-notifications';
 import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
-import { tournamentWithClubSchema } from '@/server/db/zod/tournaments';
+import { clubsSelectSchema } from '@/server/zod/clubs';
+import {
+  apiTokenIdInputSchema,
+  clubIdInputSchema,
+  notificationIdInputSchema,
+  paginatedInputSchema,
+  userIdInputSchema,
+} from '@/server/zod/common';
+import { playersSelectSchema } from '@/server/zod/players';
+import { tournamentWithClubSchema } from '@/server/zod/tournaments';
+import {
+  apiToken,
+  editProfileFormSchema,
+  usersSelectPublicSchema,
+  usersSelectSchema,
+} from '@/server/zod/users';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import { and, eq } from 'drizzle-orm';

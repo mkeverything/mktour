@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { newid } from '@/lib/utils';
-import { PlayerFormModel, playerFormSchema } from '@/server/db/zod/players';
+import { PlayerFormModel, playerFormSchema } from '@/server/zod/players';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';

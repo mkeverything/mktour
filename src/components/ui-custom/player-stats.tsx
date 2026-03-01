@@ -5,10 +5,7 @@ import { usePlayerStats } from '@/components/hooks/query-hooks/use-player-stats'
 import HalfCard from '@/components/ui-custom/half-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type {
-  PlayerAuthStatsModel,
-  PlayerModel,
-} from '@/server/db/zod/players';
+import type { PlayerAuthStatsModel, PlayerModel } from '@/server/zod/players';
 import { Percent, Swords, TrendingUp, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';

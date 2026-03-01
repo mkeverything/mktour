@@ -10,8 +10,8 @@ import {
   updatePlayerScores,
 } from '@/lib/pairing-generators/common-generator.test';
 import { generateWeightedSwissRound } from '@/lib/pairing-generators/swiss-generator';
-import type { PlayerTournamentModel } from '@/server/db/zod/players';
-import { GameModel } from '@/server/db/zod/tournaments';
+import type { PlayerTournamentModel } from '@/server/zod/players';
+import { GameModel } from '@/server/zod/tournaments';
 
 /** Starting seed for testing */
 const BASE_SEED = 14;

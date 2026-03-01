@@ -5,7 +5,7 @@ import { useTRPC } from '@/components/trpc/client';
 import {
   PlayerTournamentModel,
   PlayerWithUsernameModel,
-} from '@/server/db/zod/players';
+} from '@/server/zod/players';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';

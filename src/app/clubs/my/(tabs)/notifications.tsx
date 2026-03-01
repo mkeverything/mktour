@@ -8,7 +8,7 @@ import {
   NotificationItem,
 } from '@/components/notification-items';
 import SkeletonList from '@/components/skeleton-list';
-import { ClubNotificationExtendedModel } from '@/server/db/zod/notifications';
+import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
 import { RichTagsFunction, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, ReactNode } from 'react';

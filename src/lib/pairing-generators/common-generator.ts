@@ -3,8 +3,8 @@ import type {
   FloatType,
 } from '@/lib/pairing-generators/swiss-generator/types';
 import { newid } from '@/lib/utils';
-import type { PlayerTournamentModel } from '@/server/db/zod/players';
-import { GameModel } from '@/server/db/zod/tournaments';
+import type { PlayerTournamentModel } from '@/server/zod/players';
+import { GameModel } from '@/server/zod/tournaments';
 
 // default set of round properties, may be changed internally
 export interface RoundProps {

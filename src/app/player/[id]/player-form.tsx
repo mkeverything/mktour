@@ -12,8 +12,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { StatusInClub } from '@/server/db/zod/enums';
-import { PlayerEditModel } from '@/server/db/zod/players';
+import { StatusInClub } from '@/server/zod/enums';
+import { PlayerEditModel } from '@/server/zod/players';
 import { Save } from 'lucide-react';
 import { MessageKeys, NestedKeyOf } from 'next-intl';
 import { useRouter } from 'next/navigation';

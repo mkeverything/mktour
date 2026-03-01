@@ -2,10 +2,7 @@ import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-
 import { useTRPC } from '@/components/trpc/client';
 import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
 import { newid } from '@/lib/utils';
-import {
-  PlayerFormModel,
-  PlayerTournamentModel,
-} from '@/server/db/zod/players';
+import { PlayerFormModel, PlayerTournamentModel } from '@/server/zod/players';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';

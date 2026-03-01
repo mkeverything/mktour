@@ -1,6 +1,6 @@
 import TournamentItemIteratee from '@/components/tournament-item';
 import { publicCaller } from '@/server/api';
-import { TournamentWithClubModel } from '@/server/db/zod/tournaments';
+import { TournamentWithClubModel } from '@/server/zod/tournaments';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';

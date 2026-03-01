@@ -1,7 +1,7 @@
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { tournaments } from '@/server/db/schema/tournaments';
-import { TournamentWithClubModel } from '@/server/db/zod/tournaments';
+import { TournamentWithClubModel } from '@/server/zod/tournaments';
 import { eq, inArray } from 'drizzle-orm';
 
 export default async function getTournamentsToUserClubsQuery({

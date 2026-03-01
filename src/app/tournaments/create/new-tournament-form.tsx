@@ -27,13 +27,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { ClubModel } from '@/server/zod/clubs';
 import {
   dateToLocalDateString,
   NewTournamentFormModel,
   newTournamentFormSchema,
-} from '@/server/db/zod/tournaments';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { UserModel } from '@/server/db/zod/users';
+} from '@/server/zod/tournaments';
+import { UserModel } from '@/server/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';

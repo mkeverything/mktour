@@ -1,8 +1,8 @@
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { PlayerModel } from '@/server/db/zod/players';
+import { ClubModel } from '@/server/zod/clubs';
+import { PlayerModel } from '@/server/zod/players';
 import { desc, eq } from 'drizzle-orm';
 
 export const getClubInfo = async (id: ClubModel['id']) => {

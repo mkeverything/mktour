@@ -1,18 +1,18 @@
-import { ClubModel } from '@/server/db/zod/clubs';
+import { ClubModel } from '@/server/zod/clubs';
 import type {
   ClubNotificationEvent,
   UserNotificationEvent,
-} from '@/server/db/zod/enums';
+} from '@/server/zod/enums';
 import type {
   ClubNotificationExtendedModel,
   ClubNotificationMetadataMap,
   UserNotificationMetadataMap,
-} from '@/server/db/zod/notifications';
+} from '@/server/zod/notifications';
 import {
   ClubNotificationModel,
   UserNotificationModel,
-} from '@/server/db/zod/notifications';
-import { AffiliationModel, PlayerModel } from '@/server/db/zod/players';
+} from '@/server/zod/notifications';
+import { AffiliationModel, PlayerModel } from '@/server/zod/players';
 
 // typed notifications (database + typed metadata)
 type UserNotification<T extends UserNotificationEvent> = Omit<

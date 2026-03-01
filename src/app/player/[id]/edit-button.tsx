@@ -10,8 +10,8 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { StatusInClub } from '@/server/db/zod/enums';
-import { PlayerEditModel, PlayerModel } from '@/server/db/zod/players';
+import { StatusInClub } from '@/server/zod/enums';
+import { PlayerEditModel, PlayerModel } from '@/server/zod/players';
 import { Pencil } from 'lucide-react';
 import { FC, useState } from 'react';
 

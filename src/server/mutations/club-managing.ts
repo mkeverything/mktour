@@ -16,17 +16,17 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
+import { getClubByLichessTeam } from '@/server/queries/get-club-by-lichess-team';
+import { getEmptyClub } from '@/server/queries/get-empty-club';
+import getStatusInClub from '@/server/queries/get-status-in-club';
 import {
   ClubEditModel,
   ClubFormModel,
   ClubToUserModel,
-} from '@/server/db/zod/clubs';
-import { UserNotificationInsertModel } from '@/server/db/zod/notifications';
-import { PlayerEditModel, PlayerFormModel } from '@/server/db/zod/players';
-import { UserModel } from '@/server/db/zod/users';
-import { getClubByLichessTeam } from '@/server/queries/get-club-by-lichess-team';
-import { getEmptyClub } from '@/server/queries/get-empty-club';
-import getStatusInClub from '@/server/queries/get-status-in-club';
+} from '@/server/zod/clubs';
+import { UserNotificationInsertModel } from '@/server/zod/notifications';
+import { PlayerEditModel, PlayerFormModel } from '@/server/zod/players';
+import { UserModel } from '@/server/zod/users';
 import { and, eq, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';

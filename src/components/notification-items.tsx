@@ -11,8 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ItemActions } from '@/components/ui/item';
-import { UserNotificationEvent } from '@/server/db/zod/enums';
-import { ClubNotificationExtendedModel } from '@/server/db/zod/notifications';
+import { UserNotificationEvent } from '@/server/zod/enums';
+import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
 import {
   AnyUserNotificationExtended,
   UserNotificationExtended,

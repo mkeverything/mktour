@@ -5,12 +5,12 @@ import {
 import {
   clubNotificationEventEnum,
   userNotificationEventEnum,
-} from '@/server/db/zod/enums';
+} from '@/server/zod/enums';
 import {
   affiliationMinimalSchema,
   playersMinimalSchema,
-} from '@/server/db/zod/players';
-import { usersSelectMinimalSchema } from '@/server/db/zod/users';
+} from '@/server/zod/players';
+import { usersSelectMinimalSchema } from '@/server/zod/users';
 import {
   createInsertSchema,
   createSelectSchema,

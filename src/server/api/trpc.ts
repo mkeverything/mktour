@@ -10,14 +10,14 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { db } from '@/server/db';
 import { apiTokens, users } from '@/server/db/schema/users';
+import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import { getUserClubIds } from '@/server/queries/get-user-clubs';
 import {
   clubIdInputSchema,
   tournamentIdInputSchema,
-} from '@/server/db/zod/common';
-import { StatusInClub } from '@/server/db/zod/enums';
-import { UserModel } from '@/server/db/zod/users';
-import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
-import { getUserClubIds } from '@/server/queries/get-user-clubs';
+} from '@/server/zod/common';
+import { StatusInClub } from '@/server/zod/enums';
+import { UserModel } from '@/server/zod/users';
 import { initTRPC, TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';

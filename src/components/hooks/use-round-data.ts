@@ -1,5 +1,5 @@
-import { PlayerTournamentModel } from '@/server/db/zod/players';
-import { GameModel } from '@/server/db/zod/tournaments';
+import { PlayerTournamentModel } from '@/server/zod/players';
+import { GameModel } from '@/server/zod/tournaments';
 import { useMemo } from 'react';
 
 export const useRoundData = (

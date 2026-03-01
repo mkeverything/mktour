@@ -7,8 +7,8 @@ import {
   sortPlayersByResults,
   sortPlayersByResultsWithMaps,
 } from '@/lib/tournament-results';
-import type { PlayerTournamentModel } from '@/server/db/zod/players';
-import type { GameModel } from '@/server/db/zod/tournaments';
+import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { GameModel } from '@/server/zod/tournaments';
 import { describe, expect, it } from 'bun:test';
 
 // Helper to create a minimal player

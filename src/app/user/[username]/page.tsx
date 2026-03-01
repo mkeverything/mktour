@@ -1,8 +1,8 @@
 import Profile from '@/app/user/[username]/profile';
 import { publicCaller } from '@/server/api';
-import { PlayerToTournamentModel } from '@/server/db/zod/tournaments';
-import { UserPlayerClubModel } from '@/server/db/zod/players';
-import { UserPublicModel } from '@/server/db/zod/users';
+import { UserPlayerClubModel } from '@/server/zod/players';
+import { PlayerToTournamentModel } from '@/server/zod/tournaments';
+import { UserPublicModel } from '@/server/zod/users';
 import { TRPCError } from '@trpc/server';
 import { notFound } from 'next/navigation';
 

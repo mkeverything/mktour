@@ -14,24 +14,6 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import {
-  playerIdInputSchema,
-  tournamentIdInputSchema,
-} from '@/server/db/zod/common';
-import { gameResultEnum, TournamentFormat } from '@/server/db/zod/enums';
-import {
-  playerFormSchema,
-  playersSelectSchema,
-  playersWithUsernameSchema,
-  playerTournamentSchema,
-} from '@/server/db/zod/players';
-import {
-  gameSchema,
-  tournamentAuthStatusSchema,
-  tournamentCreateInputSchema,
-  tournamentInfoSchema,
-  tournamentWithClubSchema,
-} from '@/server/db/zod/tournaments';
-import {
   addExistingPlayer,
   addNewPlayer,
   createTournament,
@@ -51,6 +33,24 @@ import {
 } from '@/server/mutations/tournament-managing';
 import getAllTournaments from '@/server/queries/get-all-tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import {
+  playerIdInputSchema,
+  tournamentIdInputSchema,
+} from '@/server/zod/common';
+import { gameResultEnum, TournamentFormat } from '@/server/zod/enums';
+import {
+  playerFormSchema,
+  playersSelectSchema,
+  playersWithUsernameSchema,
+  playerTournamentSchema,
+} from '@/server/zod/players';
+import {
+  gameSchema,
+  tournamentAuthStatusSchema,
+  tournamentCreateInputSchema,
+  tournamentInfoSchema,
+  tournamentWithClubSchema,
+} from '@/server/zod/tournaments';
 import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';

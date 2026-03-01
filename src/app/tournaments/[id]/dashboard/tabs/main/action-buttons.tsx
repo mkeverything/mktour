@@ -3,8 +3,8 @@ import DeleteTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/d
 import ResetTournamentPButton from '@/app/tournaments/[id]/dashboard/tabs/main/reset-players-button';
 import ResetTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/reset-tournament-button';
 import StartTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/start-tournament-button';
-import { TournamentModel } from '@/server/db/zod/tournaments';
-import { TournamentAuthStatus } from '@/server/db/zod/enums';
+import { TournamentAuthStatus } from '@/server/zod/enums';
+import { TournamentModel } from '@/server/zod/tournaments';
 import { FC } from 'react';
 
 const ActionButtonsRoot: FC<{
