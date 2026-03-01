@@ -1,3 +1,20 @@
+# [1.0.0-beta.20](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.19...v1.0.0-beta.20) (2026-03-01)
+
+
+### Bug Fixes
+
+* playerWithUsername schema and type (dc3761ee6aa53d3852392ae1336301cb6c328c0f) ([b9b6bfa](https://github.com/mkeverything/mktour/commit/b9b6bfa842db46cf429836b44c94f4a6030a0a34))
+
+
+### Features
+
+* user reference in possible tournament players list ([dc3761e](https://github.com/mkeverything/mktour/commit/dc3761ee6aa53d3852392ae1336301cb6c328c0f))
+
+
+### Performance Improvements
+
+* dev memory optimization flag ([79f61cd](https://github.com/mkeverything/mktour/commit/79f61cd832d98852f5d95bc8b73133a0d94fdc72))
+
 # [1.0.0-beta.19](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.18...v1.0.0-beta.19) (2026-03-01)
 
 
