@@ -3,6 +3,7 @@ import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-con
 import { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/use-tournament-add-new-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -34,6 +35,7 @@ const AddNewPlayer = ({
   const { id } = useParams<{ id: string }>();
   const tournament = useTournamentInfo(id);
   const queryClient = useQueryClient();
+  const trpc = useTRPC();
   const { sendJsonMessage } = useContext(DashboardContext);
   const { mutate } = useTournamentAddNewPlayer(
     id,
@@ -60,7 +62,20 @@ const AddNewPlayer = ({
     setValue(nickname);
   }, [nickname, setValue]);
 
-  function onSubmit(player: PlayerFormModel) {
+  async function onSubmit(player: PlayerFormModel) {
+    const validation = await queryClient.fetchQuery(
+      trpc.auth.validatePlayerNickname.queryOptions({
+        nickname: player.nickname,
+        clubId: player.clubId,
+      }),
+    );
+    if (!validation.valid) {
+      form.setError('nickname', {
+        type: 'manual',
+        message: t('player exists error'),
+      });
+      return;
+    }
     const playerWithId = { ...player, id: newid() };
     setValue('');
     form.reset();

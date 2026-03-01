@@ -1,8 +1,6 @@
 import TournamentItemIteratee from '@/components/tournament-item';
 import { publicCaller } from '@/server/api';
-import getTournamentsToUserClubsQuery, {
-  TournamentWithClubModel,
-} from '@/server/queries/get-tournaments-to-user-clubs-query';
+import { TournamentWithClubModel } from '@/server/db/zod/tournaments';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -12,7 +10,7 @@ export default async function MyTournaments() {
   const user = await publicCaller.auth.info();
   if (!user) redirect('/sign-in?from=/tournaments/my');
   const t = await getTranslations('Tournaments');
-  const tournaments = await getTournamentsToUserClubsQuery({ user });
+  const tournaments = await publicCaller.auth.myTournaments();
 
   if (!tournaments.length) {
     return (

@@ -1,4 +1,4 @@
-import { Status } from '@/server/queries/get-status-in-tournament';
+import { TournamentAuthStatus } from '@/server/db/zod/enums';
 import { FC, PropsWithChildren, ReactNode } from 'react';
 
 const FabProvider: FC<FabProviderProps> = ({
@@ -18,7 +18,7 @@ const FabProvider: FC<FabProviderProps> = ({
 };
 
 type FabProviderProps = PropsWithChildren & {
-  status: Status;
+  status: TournamentAuthStatus;
   fabContent: ReactNode;
   scrolling?: boolean;
 };

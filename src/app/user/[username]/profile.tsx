@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/carousel';
 import { Separator } from '@/components/ui/separator';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
+import { ClubModel } from '@/server/db/zod/clubs';
 import { StatusInClub } from '@/server/db/zod/enums';
 import type {
   PlayerAuthStatsModel,
@@ -394,7 +395,7 @@ const ClubPlayerCard: FC<
 };
 
 const ManagedOnlyClubsMention: FC<{
-  clubs: { id: string; name: string }[];
+  clubs: Array<Pick<ClubModel, 'id' | 'name'>>;
 }> = ({ clubs }) => {
   const t = useTranslations('Profile');
 

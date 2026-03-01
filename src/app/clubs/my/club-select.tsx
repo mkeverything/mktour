@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ClubModel } from '@/server/db/zod/clubs';
 import { UserModel } from '@/server/db/zod/users';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -83,6 +84,6 @@ const SelectSkeleton = () => (
   </div>
 );
 
-type ClubSelectProps = { id: string; name: string };
+type ClubSelectProps = Pick<ClubModel, 'id' | 'name'>;
 
 export default ClubSelect;

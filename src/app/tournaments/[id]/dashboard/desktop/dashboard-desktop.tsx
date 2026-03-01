@@ -13,7 +13,7 @@ import Overlay from '@/components/overlay';
 import Fades from '@/components/ui-custom/fades';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Status } from '@/server/queries/get-status-in-tournament';
+import { TournamentAuthStatus } from '@/server/db/zod/enums';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
@@ -112,7 +112,7 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
 interface DashboardDesktopProps extends TabProps {
   session: string | null;
   id: string;
-  status: Status;
+  status: TournamentAuthStatus;
   playerId: string | null;
   userId: string | undefined;
   currentRound: number | null;

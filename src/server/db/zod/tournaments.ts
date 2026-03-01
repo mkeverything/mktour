@@ -58,11 +58,69 @@ export const tournamentInfoSchema = z.object({
   tournament: tournamentSchema,
   club: clubsSelectSchema,
 });
+export const tournamentWithClubSchema = z.object({
+  tournament: tournamentSchema,
+  club: clubsSelectSchema,
+});
+
+export const tournamentAuthStatusSchema = z.union([
+  z.object({ status: z.literal('organizer') }),
+  z.object({ status: z.literal('viewer') }),
+  z.object({ status: z.literal('player'), playerId: z.string() }),
+]);
+
+const getTodayDateString = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const dateToLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const newTournamentFormSchemaConfig = {
+  title: z.string().optional(),
+  date: z.date().refine(
+    (date) => {
+      const dateString = dateToLocalDateString(date);
+      const todayString = getTodayDateString();
+      return dateString >= todayString;
+    },
+    {
+      message: 'time travel',
+    },
+  ),
+  format: tournamentFormatEnum,
+  type: tournamentTypeEnum,
+  timestamp: z.number(),
+  clubId: z.string(),
+  rated: z.boolean(),
+};
+
+export const newTournamentFormSchema = z.object(newTournamentFormSchemaConfig);
+export const tournamentCreateInputSchema = z.object({
+  ...newTournamentFormSchemaConfig,
+  date: z.string(),
+});
 
 export type TournamentInfoModel = z.infer<typeof tournamentInfoSchema>;
+export type TournamentWithClubModel = z.infer<typeof tournamentWithClubSchema>;
+export type TournamentAuthStatusModel = z.infer<
+  typeof tournamentAuthStatusSchema
+>;
 export type TournamentModel = z.infer<typeof tournamentSchema>;
 export type TournamentInsertModel = z.infer<typeof tournamentsInsertSchema>;
 export type TournamentUpdateModel = z.infer<typeof tournamentsUpdateSchema>;
+export type NewTournamentFormModel = z.infer<typeof newTournamentFormSchema>;
+export type TournamentCreateInputModel = z.infer<
+  typeof tournamentCreateInputSchema
+>;
 
 export type GameModel = z.infer<typeof gameSchema>;
 export type GameInsertModel = z.infer<typeof gamesInsertSchema>;

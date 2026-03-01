@@ -29,9 +29,9 @@ import {
 import { Switch } from '@/components/ui/switch';
 import {
   dateToLocalDateString,
+  NewTournamentFormModel,
   newTournamentFormSchema,
-  NewTournamentFormType,
-} from '@/lib/zod/new-tournament-form';
+} from '@/server/db/zod/tournaments';
 import { ClubModel } from '@/server/db/zod/clubs';
 import { UserModel } from '@/server/db/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,7 +47,7 @@ export default function NewTournamentForm({
   clubs,
   user,
 }: NewTournamentFormProps) {
-  const form = useForm<NewTournamentFormType>({
+  const form = useForm<NewTournamentFormModel>({
     resolver: zodResolver(newTournamentFormSchema),
     defaultValues: {
       title: '',
@@ -64,7 +64,7 @@ export default function NewTournamentForm({
   const router = useRouter();
   const isPending = isMutating || isNavigating;
 
-  const handleSubmit = (data: NewTournamentFormType) => {
+  const handleSubmit = (data: NewTournamentFormModel) => {
     mutate(
       {
         ...data,

@@ -10,6 +10,10 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { db } from '@/server/db';
 import { apiTokens, users } from '@/server/db/schema/users';
+import {
+  clubIdInputSchema,
+  tournamentIdInputSchema,
+} from '@/server/db/zod/common';
 import { StatusInClub } from '@/server/db/zod/enums';
 import { UserModel } from '@/server/db/zod/users';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
@@ -21,7 +25,7 @@ import { Session } from 'lucia';
 import { NextRequest } from 'next/server';
 import superjson from 'superjson';
 import { OpenApiMeta } from 'trpc-to-openapi';
-import { z, ZodError } from 'zod';
+import { ZodError } from 'zod';
 
 /**
  * 1. CONTEXT
@@ -180,7 +184,7 @@ export const authProcedure = t.procedure.use(async ({ ctx, next }) => {
 });
 
 export const clubAdminProcedure = protectedProcedure
-  .input(z.object({ clubId: z.string() }))
+  .input(clubIdInputSchema)
   .use(async (opts) => {
     const clubs = await getUserClubIds({ userId: opts.ctx.user.id });
     const isAdmin = Object.keys(clubs).find(
@@ -200,7 +204,7 @@ export const clubAdminProcedure = protectedProcedure
   });
 
 export const tournamentAdminProcedure = protectedProcedure
-  .input(z.object({ tournamentId: z.string() }))
+  .input(tournamentIdInputSchema)
   .use(async (opts) => {
     const { status } = await getStatusInTournament(
       opts.ctx.user.id,

@@ -1,42 +1,18 @@
 import { ClubModel } from '@/server/db/zod/clubs';
 import type {
   ClubNotificationEvent,
-  StatusInClub,
   UserNotificationEvent,
 } from '@/server/db/zod/enums';
-import type { ClubNotificationExtendedModel } from '@/server/db/zod/notifications';
+import type {
+  ClubNotificationExtendedModel,
+  ClubNotificationMetadataMap,
+  UserNotificationMetadataMap,
+} from '@/server/db/zod/notifications';
 import {
   ClubNotificationModel,
   UserNotificationModel,
 } from '@/server/db/zod/notifications';
 import { AffiliationModel, PlayerModel } from '@/server/db/zod/players';
-
-type UserNotificationMetadata = {
-  affiliation_approved: { clubId: string; affiliationId: string };
-  affiliation_rejected: { clubId: string; affiliationId: string };
-  tournament_won: { tournamentId: string; name: string };
-  became_club_manager: { clubId: string; role: StatusInClub };
-  removed_from_club_managers: { clubId: string };
-};
-
-type ClubNotificationMetadata = {
-  affiliation_request: {
-    userId: string;
-    playerId: string;
-    affiliationId: string;
-  };
-  manager_left: { userId: string };
-  affiliation_request_approved: {
-    userId: string;
-    playerId: string;
-    affiliationId: string;
-  };
-  affiliation_request_rejected: {
-    userId: string;
-    playerId: string;
-  };
-  affiliation_cancelled: { userId: string; playerId: string };
-};
 
 // typed notifications (database + typed metadata)
 type UserNotification<T extends UserNotificationEvent> = Omit<
@@ -44,7 +20,7 @@ type UserNotification<T extends UserNotificationEvent> = Omit<
   'event' | 'metadata'
 > & {
   event: T;
-  metadata: UserNotificationMetadata[T];
+  metadata: UserNotificationMetadataMap[T];
 };
 
 type ClubNotification<T extends ClubNotificationEvent> = Omit<
@@ -52,7 +28,7 @@ type ClubNotification<T extends ClubNotificationEvent> = Omit<
   'event' | 'metadata'
 > & {
   event: T;
-  metadata: ClubNotificationMetadata[T];
+  metadata: ClubNotificationMetadataMap[T];
 };
 
 // union of all typed notifications
@@ -69,7 +45,7 @@ type AnyNotification = AnyUserNotification | AnyClubNotification;
 export type UserNotificationExtended<T extends UserNotificationEvent> = {
   event: T;
   notification: UserNotification<T>;
-  metadata: UserNotificationMetadata[T];
+  metadata: UserNotificationMetadataMap[T];
   affiliation: AffiliationModel | null;
   player: Pick<PlayerModel, 'id' | 'nickname'> | null;
   club: ClubModel | null;
@@ -85,7 +61,7 @@ type ClubNotificationExtendedTyped<T extends ClubNotificationEvent> = Omit<
   'event' | 'metadata'
 > & {
   event: T;
-  metadata: ClubNotificationMetadata[T];
+  metadata: ClubNotificationMetadataMap[T];
 };
 
 export type AnyClubNotificationExtended = {

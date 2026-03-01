@@ -3,14 +3,13 @@ import { tournaments } from '@/server/db/schema/tournaments';
 import { ClubModel } from '@/server/db/zod/clubs';
 import { getUserClubs } from '@/server/queries/get-user-clubs';
 import { and, eq, isNotNull } from 'drizzle-orm';
-import { User } from 'lucia';
 
-export const emptyClubCheck = async ({
-  user,
+export const getEmptyClub = async ({
+  userId,
 }: {
-  user: User;
+  userId: string;
 }): Promise<ClubModel | null> => {
-  const clubsList = await getUserClubs({ userId: user.id });
+  const clubsList = await getUserClubs({ userId });
   for (const club in clubsList) {
     const finishedClubTournament = (
       await db

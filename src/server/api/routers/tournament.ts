@@ -1,6 +1,5 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
-import { newTournamentFormSchemaConfig } from '@/lib/zod/new-tournament-form';
 import {
   protectedProcedure,
   publicProcedure,
@@ -13,10 +12,20 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
+import {
+  playerIdInputSchema,
+  tournamentIdInputSchema,
+} from '@/server/db/zod/common';
 import { gameResultEnum, TournamentFormat } from '@/server/db/zod/enums';
 import { playerFormSchema, playersSelectSchema } from '@/server/db/zod/players';
-import { gameSchema, tournamentSchema } from '@/server/db/zod/tournaments';
+import {
+  gameSchema,
+  tournamentWithClubSchema,
+  tournamentAuthStatusSchema,
+  tournamentCreateInputSchema,
+  tournamentInfoSchema,
+} from '@/server/db/zod/tournaments';
+import { playerTournamentSchema } from '@/server/db/zod/players';
 import {
   addExistingPlayer,
   addNewPlayer,
@@ -43,24 +52,22 @@ import { z } from 'zod';
 
 export const tournamentRouter = {
   create: protectedProcedure
-    .input(z.object({ ...newTournamentFormSchemaConfig, date: z.string() }))
+    .input(tournamentCreateInputSchema)
+    .output(z.object({ id: z.string() }))
     .mutation(async (opts) => {
       const { input } = opts;
       const result = await createTournament(input);
       revalidateTag(CACHE_TAGS.ALL_TOURNAMENTS, 'max');
       return result;
     }),
-  all: publicProcedure.query(async () => {
-    return await getAllTournaments();
-  }),
+  all: publicProcedure
+    .output(z.array(tournamentWithClubSchema))
+    .query(async () => {
+      return await getAllTournaments();
+    }),
   info: publicProcedure
-    .input(z.object({ tournamentId: z.string() }))
-    .output(
-      z.object({
-        tournament: tournamentSchema,
-        club: clubsSelectSchema,
-      }),
-    )
+    .input(tournamentIdInputSchema)
+    .output(tournamentInfoSchema)
     .query(async (opts) => {
       const { input } = opts;
       const [tournamentInfo] = await db
@@ -83,12 +90,13 @@ export const tournamentRouter = {
       return tournamentInfo;
     }),
   playersIn: publicProcedure
-    .input(z.object({ tournamentId: z.string() }))
+    .input(tournamentIdInputSchema)
+    .output(z.array(playerTournamentSchema))
     .query(async (opts) => {
       return await getTournamentPlayers(opts.input.tournamentId);
     }),
   playersOut: tournamentAdminProcedure
-    .input(z.object({ tournamentId: z.string() }))
+    .input(tournamentIdInputSchema)
     .output(z.array(playersSelectSchema))
     .query(async (opts) => {
       const { input } = opts;
@@ -115,18 +123,19 @@ export const tournamentRouter = {
     }),
   roundGames: publicProcedure
     .input(
-      z.object({
-        tournamentId: z.string(),
+      tournamentIdInputSchema.extend({
         roundNumber: z.number(),
       }),
     )
+    .output(z.array(gameSchema))
     .query(async (opts) => {
       const { input } = opts;
       const result = await getTournamentRoundGames(input);
       return result;
     }),
   allGames: publicProcedure
-    .input(z.object({ tournamentId: z.string() }))
+    .input(tournamentIdInputSchema)
+    .output(z.array(gameSchema))
     .query(async (opts) => {
       const { input } = opts;
       const result = await getTournamentGames(input.tournamentId);
@@ -134,12 +143,12 @@ export const tournamentRouter = {
     }),
   addExistingPlayer: tournamentAdminProcedure
     .input(
-      z.object({
-        tournamentId: z.string(),
+      tournamentIdInputSchema.extend({
         player: playersSelectSchema,
         userId: z.string(),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await addExistingPlayer(input);
@@ -150,18 +159,19 @@ export const tournamentRouter = {
         player: playerFormSchema.and(z.object({ id: z.string().optional() })),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await addNewPlayer(input);
     }),
   removePlayer: tournamentAdminProcedure
     .input(
-      z.object({
-        tournamentId: z.string(),
-        playerId: z.string(),
+      tournamentIdInputSchema.extend({
+        playerId: playerIdInputSchema.shape.playerId,
         userId: z.string(),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await removePlayer(input);
@@ -179,79 +189,72 @@ export const tournamentRouter = {
         tournamentId: z.string(),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await setTournamentGameResult(input);
     }),
   saveRound: protectedProcedure
     .input(
-      z.object({
-        tournamentId: z.string(),
+      tournamentIdInputSchema.extend({
         roundNumber: z.number(),
         newGames: z.array(gameSchema),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await saveRound(input);
     }),
   start: tournamentAdminProcedure
     .input(
-      z.object({
-        tournamentId: z.string(),
+      tournamentIdInputSchema.extend({
         startedAt: z.date(),
         format: z.custom<TournamentFormat>(),
         roundsNumber: z.number().int().min(1).nullable(),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await startTournament(input);
     }),
   reset: tournamentAdminProcedure
-    .input(
-      z.object({
-        tournamentId: z.string(),
-      }),
-    )
+    .input(tournamentIdInputSchema)
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await resetTournament(input);
     }),
   resetPlayers: tournamentAdminProcedure
-    .input(
-      z.object({
-        tournamentId: z.string(),
-      }),
-    )
+    .input(tournamentIdInputSchema)
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await resetTournamentPlayers(input);
     }),
   finish: tournamentAdminProcedure
     .input(
-      z.object({
-        tournamentId: z.string(),
+      tournamentIdInputSchema.extend({
         closedAt: z.date(),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await finishTournament(input);
     }),
   delete: tournamentAdminProcedure
-    .input(
-      z.object({
-        tournamentId: z.string(),
-      }),
-    )
+    .input(tournamentIdInputSchema)
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await deleteTournament(input);
       revalidateTag(CACHE_TAGS.ALL_TOURNAMENTS, 'max');
     }),
   authStatus: publicProcedure
-    .input(z.object({ tournamentId: z.string() }))
+    .input(tournamentIdInputSchema)
+    .output(tournamentAuthStatusSchema)
     .query(async (opts) => {
       const { user } = await validateRequest();
       if (!user) return { status: 'viewer' as const };
@@ -259,22 +262,22 @@ export const tournamentRouter = {
     }),
   updateSwissRoundsNumber: tournamentAdminProcedure
     .input(
-      z.object({
-        tournamentId: z.string(),
+      tournamentIdInputSchema.extend({
         roundsNumber: z.number().int().min(1),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await updateSwissRoundsNumber(input);
     }),
   editTournamentTitle: tournamentAdminProcedure
     .input(
-      z.object({
-        tournamentId: z.string(),
+      tournamentIdInputSchema.extend({
         title: z.string(),
       }),
     )
+    .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await editTournamentTitle(input);

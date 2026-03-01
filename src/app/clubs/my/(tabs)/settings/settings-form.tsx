@@ -61,12 +61,12 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
         <Card className="bg-background sm:bg-card border-none shadow-none sm:border-solid sm:shadow">
           <CardContent className="p-0 sm:p-6">
             <form
-              onSubmit={form.handleSubmit((data) =>
+              onSubmit={form.handleSubmit((data) => {
                 clubSettingsMutation.mutate({
                   clubId: selectedClub,
                   values: data,
-                }),
-              )}
+                });
+              })}
               className="flex flex-col gap-2"
               name="edit-club-form"
             >

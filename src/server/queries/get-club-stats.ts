@@ -4,20 +4,10 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
+import { ClubStatsModel } from '@/server/db/zod/clubs';
 import { count, desc, eq, sql } from 'drizzle-orm';
 
-export interface ClubStats {
-  playersCount: number;
-  tournamentsCount: number;
-  mostActivePlayers: Array<{
-    id: string;
-    nickname: string;
-    rating: number;
-    tournamentsPlayed: number;
-  }>;
-}
-
-export async function getClubStats(clubId: string): Promise<ClubStats> {
+export async function getClubStats(clubId: string): Promise<ClubStatsModel> {
   const [playersCountResult, tournamentsCountResult, mostActivePlayersResult] =
     await Promise.all([
       db

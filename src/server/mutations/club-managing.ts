@@ -1,10 +1,8 @@
 'use server';
 
-import { emptyClubCheck } from '@/app/clubs/create/empty-club-check';
 import { getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { newid } from '@/lib/utils';
-import { validateLichessTeam } from '@/lib/zod/new-club-validation-action';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
@@ -26,14 +24,22 @@ import {
 import { UserNotificationInsertModel } from '@/server/db/zod/notifications';
 import { PlayerEditModel, PlayerFormModel } from '@/server/db/zod/players';
 import { UserModel } from '@/server/db/zod/users';
+import { getClubByLichessTeam } from '@/server/queries/get-club-by-lichess-team';
+import { getEmptyClub } from '@/server/queries/get-empty-club';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { and, eq, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
 export const createClub = async (user: User, values: ClubFormModel) => {
-  const emptyClub = await emptyClubCheck({ user });
+  const emptyClub = await getEmptyClub({ userId: user.id });
   if (emptyClub) throw new Error('EMPTY_CLUB_EXISTS');
+  if (values.lichessTeam) {
+    const existingClub = await getClubByLichessTeam({
+      lichessTeam: values.lichessTeam,
+    });
+    if (existingClub) throw new Error('LICHESS_TEAM_ALREADY_LINKED');
+  }
 
   const id = newid();
   const createdAt = new Date();
@@ -78,7 +84,7 @@ export const editClub = async ({
     const isTeamAdmin = userTeams.find((t) => t.id === values.lichessTeam);
     if (!isTeamAdmin) throw new Error('NOT_LICHESS_TEAM_ADMIN');
 
-    const existingClub = await validateLichessTeam({
+    const existingClub = await getClubByLichessTeam({
       lichessTeam: values.lichessTeam,
     });
     if (existingClub && existingClub.id !== clubId)

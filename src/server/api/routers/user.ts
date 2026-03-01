@@ -2,6 +2,7 @@ import meta from '@/server/api/meta';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema/users';
+import { userIdInputSchema } from '@/server/db/zod/common';
 import {
   clubsSelectSchema,
   clubsToUsersSelectSchema,
@@ -32,7 +33,7 @@ export const userRouter = createTRPCRouter({
     }),
   info: publicProcedure
     .meta(meta.usersInfo)
-    .input(z.object({ userId: z.string() }))
+    .input(userIdInputSchema)
     .output(
       usersSelectSchema
         .pick({ username: true, name: true, rating: true })
@@ -66,7 +67,7 @@ export const userRouter = createTRPCRouter({
         }),
       ),
     )
-    .input(z.object({ userId: z.string() }))
+    .input(userIdInputSchema)
     .query(async (opts) => {
       const { input } = opts;
       const userClubs = await getUserClubNames(input);
@@ -75,7 +76,7 @@ export const userRouter = createTRPCRouter({
   playerClubs: publicProcedure
     .meta(meta.userPlayerClubs)
     .output(z.array(userPlayerClubSchema))
-    .input(z.object({ userId: z.string() }))
+    .input(userIdInputSchema)
     .query(async (opts) => {
       const { input } = opts;
       const playerClubs = await getUserPlayerClubs(input);
@@ -83,7 +84,7 @@ export const userRouter = createTRPCRouter({
     }),
   lastTournaments: publicProcedure
     .meta(meta.usersTournaments)
-    .input(z.object({ userId: z.string() }))
+    .input(userIdInputSchema)
     .output(z.array(playerToTournamentSchema))
     .query(async (opts) => {
       const { input } = opts;

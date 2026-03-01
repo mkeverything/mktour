@@ -1,4 +1,4 @@
-import { SearchParamsModel } from '@/server/api/routers/search';
+import { SearchParamsModel } from '@/server/db/zod/search';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';

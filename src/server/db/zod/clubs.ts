@@ -39,9 +39,23 @@ export const clubManagersSchema = z.object({
   clubs_to_users: clubsToUsersSelectSchema,
 });
 
+export const clubStatsSchema = z.object({
+  playersCount: z.number(),
+  tournamentsCount: z.number(),
+  mostActivePlayers: z.array(
+    z.object({
+      id: z.string(),
+      nickname: z.string(),
+      rating: z.number(),
+      tournamentsPlayed: z.number(),
+    }),
+  ),
+});
+
 export type ClubManagerModel = z.infer<typeof clubManagersSchema>;
 export type ClubEditModel = z.infer<typeof clubsEditSchema>;
 export type ClubFormModel = z.infer<typeof clubsInsertSchema>;
+export type ClubStatsModel = z.infer<typeof clubStatsSchema>;
 
 export type ClubModel = z.infer<typeof clubsSelectSchema>;
 export type ClubUpdateModel = z.infer<typeof clubsEditSchema>;

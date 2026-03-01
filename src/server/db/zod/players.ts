@@ -1,4 +1,3 @@
-import { validateNewPlayer } from '@/lib/zod/new-player-validation-action';
 import { affiliations, players } from '@/server/db/schema/players';
 import { players_to_tournaments } from '@/server/db/schema/tournaments';
 import { affiliationStatusEnum } from '@/server/db/zod/enums';
@@ -62,19 +61,12 @@ export const playersMinimalSchema = playersSelectSchema.omit({
   clubId: true,
 });
 
-export const playerFormSchema = playersInsertSchema
-  .omit({
-    id: true,
-    lastSeenAt: true,
-    userId: true,
-    ratingPeak: true,
-  })
-  .refine(
-    async (data) => {
-      return await validateNewPlayer(data);
-    },
-    { error: 'player exists error', path: ['nickname'] },
-  );
+export const playerFormSchema = playersInsertSchema.omit({
+  id: true,
+  lastSeenAt: true,
+  userId: true,
+  ratingPeak: true,
+});
 
 export const playerEditSchema = playersUpdateSchema
   .pick({ nickname: true, realname: true })

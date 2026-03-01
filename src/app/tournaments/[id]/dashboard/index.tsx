@@ -4,7 +4,7 @@ import { DashboardContextType } from '@/app/tournaments/[id]/dashboard/dashboard
 import DashboardDesktop from '@/app/tournaments/[id]/dashboard/desktop/dashboard-desktop';
 import DashboardMobile from '@/app/tournaments/[id]/dashboard/mobile/dashboard-mobile';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
-import { Status } from '@/server/queries/get-status-in-tournament';
+import { TournamentAuthStatus } from '@/server/db/zod/enums';
 import { Dispatch, FC, SetStateAction, useContext, useState } from 'react';
 
 const Dashboard: FC<TournamentPageContentProps> = ({
@@ -48,7 +48,7 @@ export type TabType = {
 interface TournamentPageContentProps {
   session: string | null;
   id: string;
-  status: Status;
+  status: TournamentAuthStatus;
   playerId: string | null;
   userId: string | undefined;
   currentRound: number | null;

@@ -11,7 +11,6 @@ import {
   getSwissRecommendedRoundsNumber,
   newid,
 } from '@/lib/utils';
-import { NewTournamentFormType } from '@/lib/zod/new-tournament-form';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
@@ -29,6 +28,7 @@ import {
 } from '@/server/db/zod/players';
 import {
   GameModel,
+  NewTournamentFormModel,
   PlayerToTournamentInsertModel,
   TournamentInfoModel,
   TournamentModel,
@@ -50,7 +50,7 @@ import {
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
 
 export const createTournament = async (
-  values: Omit<NewTournamentFormType, 'date'> & {
+  values: Omit<NewTournamentFormModel, 'date'> & {
     date: string;
   },
 ) => {

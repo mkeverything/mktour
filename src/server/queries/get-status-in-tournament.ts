@@ -5,21 +5,15 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
+import { TournamentAuthStatusModel } from '@/server/db/zod/tournaments';
 import { and, eq } from 'drizzle-orm';
 import { cache } from 'react';
-
-export type Status = 'organizer' | 'player' | 'viewer';
-
-export type TournamentAuthStatus =
-  | { status: 'organizer' }
-  | { status: 'player'; playerId: string }
-  | { status: 'viewer' };
 
 export const getStatusInTournament = cache(
   async (
     userId: string | null,
     tournamentId: string,
-  ): Promise<TournamentAuthStatus> => {
+  ): Promise<TournamentAuthStatusModel> => {
     if (!userId) return { status: 'viewer' };
     const clubId = (
       await db

@@ -10,6 +10,7 @@ import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GameResult } from '@/server/db/zod/enums';
+import { GameModel } from '@/server/db/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useParams } from 'next/navigation';
@@ -127,8 +128,8 @@ const GameItem: FC<GameProps> = ({
 type GameProps = {
   id: string;
   result: GameResult | null;
-  playerLeft: Record<'whiteId' | 'whiteNickname', string>;
-  playerRight: Record<'blackId' | 'blackNickname', string>;
+  playerLeft: Pick<GameModel, 'whiteId' | 'whiteNickname'>;
+  playerRight: Pick<GameModel, 'blackId' | 'blackNickname'>;
   roundNumber: number;
 };
 

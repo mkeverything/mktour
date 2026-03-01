@@ -4,6 +4,21 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 
 production: https://mktour.org
 
+## architecture contract (highest priority)
+
+this section overrides all other local conventions when there is any conflict.
+
+- all product/domain data operations must go through tRPC procedures. do not add alternative rpc paths for domain features.
+- `src/server/db/zod/` is the only canonical source for domain schemas and domain types.
+- client-side domain types must be inferred or imported from canonical zod schemas in `src/server/db/zod/`; no manual re-declaration of domain shapes.
+- tRPC `.input()` and `.output()` contracts must use canonical schemas from `src/server/db/zod/`.
+- zod schemas should be derived from drizzle db schemas where possible.
+- form-level or ui-level adapter schemas may exist outside `src/server/db/zod/`, but they must derive from canonical server schemas and must not redefine domain contracts.
+
+allowed infra exceptions (non-domain): oauth callbacks/login routes, cron/migration routes, websocket transport.
+
+see `docs/architecture/type-contracts.md` for migration rules and enforcement checklist.
+
 ## architecture
 
 - next.js 16 app router with react 19, bun runtime

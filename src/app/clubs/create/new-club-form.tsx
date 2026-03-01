@@ -41,7 +41,7 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
   const [isNavigating, startNavigation] = useTransition();
   const isPending = isMutating || isNavigating || form.formState.isSubmitting;
 
-  const handleSubmit = (data: ClubFormModel) => {
+  const handleSubmit = async (data: ClubFormModel) => {
     const dataWithDate = {
       ...data,
       createdAt: new Date(),

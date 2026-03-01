@@ -1,18 +1,16 @@
-'use server';
-
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import { and, eq, sql } from 'drizzle-orm';
 
-export async function validateNewPlayer({
+export async function playerExistsInClub({
   nickname,
   clubId,
 }: {
   nickname: string;
   clubId: string;
 }) {
-  const isValid = await db
-    .select()
+  return await db
+    .select({ id: players.id })
     .from(players)
     .where(
       and(
@@ -21,6 +19,4 @@ export async function validateNewPlayer({
       ),
     )
     .get();
-
-  return isValid === undefined;
 }
