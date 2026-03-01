@@ -1,6 +1,7 @@
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPlugins from 'next-compose-plugins';
 import createNextIntlPlugin from 'next-intl/plugin';
+import nextPWA from 'next-pwa';
 import ReactComponentName from 'react-scan/react-component-name/webpack';
 
 /** @type {import('next').NextConfig} */
@@ -13,6 +14,7 @@ const nextConfig = {
   experimental: {
     useCache: true,
     turbopackFileSystemCacheForDev: true,
+    webpackMemoryOptimizations: process.env.VERCEL_ENV === 'development',
   },
   logging: {
     fetches: {
@@ -23,7 +25,6 @@ const nextConfig = {
 
 const withNextIntl = createNextIntlPlugin('./src/components/i18n.ts');
 
-import nextPWA from 'next-pwa';
 const withPWA = nextPWA({
   dest: 'public',
   mode: process.env.VERCEL_ENV,
