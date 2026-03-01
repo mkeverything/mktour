@@ -1,3 +1,10 @@
+# [1.0.0-beta.23](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.22...v1.0.0-beta.23) (2026-03-01)
+
+
+### Bug Fixes
+
+* fab display only to organizer; minor styling ([9b8c8a7](https://github.com/mkeverything/mktour/commit/9b8c8a713b2caeb8d30e14bfbb5c1822387536a0))
+
 # [1.0.0-beta.22](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.21...v1.0.0-beta.22) (2026-03-01)
 
 
