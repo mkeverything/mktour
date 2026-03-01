@@ -79,7 +79,7 @@ const TournamentTable: FC = ({}) => {
 
   const stats: Stat[] = STATS_WITH_TIEBREAK;
 
-  if (players.isLoading || allGames.isLoading || 1) {
+  if (players.isLoading || allGames.isLoading) {
     return <TableLoading stats={stats} />;
   }
   if (players.isError) {
@@ -182,8 +182,8 @@ const TableLoading: FC<{ stats: Stat[] }> = ({ stats }) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHeadStyled className="p-mk text-center">#</TableHeadStyled>
-            <TableHeadStyled className="min-w-10 p-0">
+            <TableHeadStyled className="text-center">#</TableHeadStyled>
+            <TableHeadStyled className="w-full min-w-10 p-0">
               <FormattedMessage id="Player.name" />
             </TableHeadStyled>
             <TableStatsHeads stats={stats} />
@@ -194,16 +194,19 @@ const TableLoading: FC<{ stats: Stat[] }> = ({ stats }) => {
             .fill(0)
             .map((_, i) => (
               <TableRow key={i}>
-                <TableCellStyled className="h-11 p-0">
+                <TableCellStyled className="font-small w-10 text-center">
                   <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
                 </TableCellStyled>
-                <TableCellStyled className="p-0">
+                <TableCellStyled className="font-small flex gap-2 truncate pl-0">
                   <div className="bg-muted h-4 w-40 animate-pulse rounded" />
                 </TableCellStyled>
                 {Array(stats.length)
                   .fill(0)
                   .map((_, j) => (
-                    <TableCellStyled key={j} className="max-w-fit p-0">
+                    <TableCellStyled
+                      key={j}
+                      className="min-w-8 text-center font-medium"
+                    >
                       <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
                     </TableCellStyled>
                   ))}
