@@ -1,3 +1,10 @@
+# [1.0.0-beta.25](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.24...v1.0.0-beta.25) (2026-03-01)
+
+
+### Bug Fixes
+
+* reduce tournamentInfo schema ([cedd60c](https://github.com/mkeverything/mktour/commit/cedd60c7c28a7129e9066f576ed5efe965069334))
+
 # [1.0.0-beta.24](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.23...v1.0.0-beta.24) (2026-03-01)
 
 
