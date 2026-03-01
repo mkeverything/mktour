@@ -1,3 +1,11 @@
+# [1.0.0-beta.22](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.21...v1.0.0-beta.22) (2026-03-01)
+
+
+### Bug Fixes
+
+* rm makeTournament button from unauthorized route ([01e1c18](https://github.com/mkeverything/mktour/commit/01e1c1859e826d0ed5c855c7ab40348a0ea5a41d))
+* skeleton in auth-button ([9fc9076](https://github.com/mkeverything/mktour/commit/9fc90765ce28c6e0f021449c35c01eb5c0128458))
+
 # [1.0.0-beta.21](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.20...v1.0.0-beta.21) (2026-03-01)
 
 
