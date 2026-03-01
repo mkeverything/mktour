@@ -1,3 +1,10 @@
+# [1.0.0-beta.26](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.25...v1.0.0-beta.26) (2026-03-01)
+
+
+### Bug Fixes
+
+* harden game result transitions and rollbacks ([d6499f5](https://github.com/mkeverything/mktour/commit/d6499f59d58131612b070aafb8ec1ab8188a4be0))
+
 # [1.0.0-beta.25](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.24...v1.0.0-beta.25) (2026-03-01)
 
 
