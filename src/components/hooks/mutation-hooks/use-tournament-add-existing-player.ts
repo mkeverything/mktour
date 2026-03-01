@@ -44,6 +44,7 @@ export const useTournamentAddExistingPlayer = (
           place: null,
           isOut: null,
           pairingNumber: null,
+          username: null,
         };
 
         queryClient.setQueryData(
