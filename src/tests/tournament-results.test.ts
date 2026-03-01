@@ -25,6 +25,7 @@ function makePlayer(
     isOut: null,
     place: null,
     pairingNumber: null,
+    username: null,
     ...overrides,
   };
 }
