@@ -14,7 +14,6 @@ const nextConfig = {
   experimental: {
     useCache: true,
     turbopackFileSystemCacheForDev: true,
-    webpackMemoryOptimizations: process.env.VERCEL_ENV === 'development',
   },
   logging: {
     fetches: {
