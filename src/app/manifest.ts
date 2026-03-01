@@ -13,6 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
         src: 'app-icon.png',
         sizes: '512x512',
         type: 'image/png',
+        purpose: 'any',
       },
     ],
     shortcuts: [
@@ -24,6 +25,7 @@ export default function manifest(): MetadataRoute.Manifest {
             src: 'app-icon.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any',
           },
         ],
       },
