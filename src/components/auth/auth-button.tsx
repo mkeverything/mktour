@@ -31,14 +31,7 @@ export default function AuthButton() {
   const { data: notificationsCounter } = useUserNotificationsCounter();
 
   if (isLoading)
-    return (
-      <Button className={`flex-row gap-2 p-2`} variant="ghost" asChild disabled>
-        <Link href="/login/lichess" prefetch={false}>
-          <LichessLogo />
-          <Skeleton className="hidden h-4 w-16 sm:block" />
-        </Link>
-      </Button>
-    );
+    return <Skeleton className="p-mk my-auto hidden h-4 w-24 sm:block" />;
 
   if (!user) {
     return (
