@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { shallowEqual } from '@/lib/utils';
 import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,12 +51,14 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     name: '',
     description: null,
     lichessTeam: null,
+    allowPlayersSetResults: true,
   };
   const initialValues = data
     ? {
         name: data.name,
         description: data.description,
         lichessTeam: data.lichessTeam,
+        allowPlayersSetResults: data.allowPlayersSetResults,
       }
     : defaultValues;
 
@@ -117,6 +121,30 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
               ) : (
                 <TeamSelector teams={teams} form={form} />
               )}
+              <FormField
+                control={form.control}
+                name="allowPlayersSetResults"
+                render={({ field }) => (
+                  <FormItem className="rounded-md border p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <FormLabel>{t('allow players set results')}</FormLabel>
+                        <FormDescription>
+                          {t('allow players set results description')}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isFetching || isFetchingLichessTeams}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button
                 type="submit"
                 disabled={

@@ -13,8 +13,10 @@ import { GameResult } from '@/server/zod/enums';
 import { GameModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { FC, useContext, useRef } from 'react';
+import { toast } from 'sonner';
 
 const GameItem: FC<GameProps> = ({
   id,
@@ -24,6 +26,7 @@ const GameItem: FC<GameProps> = ({
   roundNumber,
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
+  const t = useTranslations('Toasts');
   const {
     selectedGameId,
     setSelectedGameId,
@@ -44,6 +47,7 @@ const GameItem: FC<GameProps> = ({
   const isActive = selected && hasStarted;
   const muted = result && !selected;
   const isClosed = !!data?.tournament.closedAt;
+  const allowPlayersSetResults = !!data?.allowPlayersSetResults;
   // players can only edit their own games, and only after tournament has started
   const isPlayerInGame =
     playerId === playerLeft.whiteId || playerId === playerRight.blackId;
@@ -52,6 +56,23 @@ const GameItem: FC<GameProps> = ({
     (status === 'player' && isPlayerInGame && hasStarted);
   const disabled = !canEdit || isClosed;
   const draw = result === '1/2-1/2';
+
+  const handleOpenGame = () => {
+    if (selected) {
+      setSelectedGameId(null);
+      return;
+    }
+    const playerBlockedByClubSetting =
+      status === 'player' &&
+      isPlayerInGame &&
+      hasStarted &&
+      !allowPlayersSetResults;
+    if (playerBlockedByClubSetting) {
+      toast.warning(t('player result setting disabled'));
+      return;
+    }
+    setSelectedGameId(id);
+  };
 
   const handleMutate = (newResult: GameResult) => {
     if (!userId) return;
@@ -93,7 +114,7 @@ const GameItem: FC<GameProps> = ({
         exit={{ scale: 1, y: 0 }}
         animate={isActive ? { scale: 1.05, y: -10 } : { scale: 1, y: 0 }}
         transition={{ type: 'spring', bounce: 0.4 }}
-        onClick={() => setSelectedGameId(!selected ? id : null)}
+        onClick={handleOpenGame}
       >
         <Card
           className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'}`}

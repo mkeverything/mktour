@@ -61,6 +61,7 @@ const generateRandomClubModel = mock<() => ClubModel>(() => {
     description: randomDescription,
     createdAt: randomCreatedAt,
     lichessTeam: randomLichessTeam,
+    allowPlayersSetResults: true,
   };
   return randomClub;
 });

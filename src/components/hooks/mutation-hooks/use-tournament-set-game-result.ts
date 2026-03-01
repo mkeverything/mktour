@@ -156,6 +156,10 @@ export default function useTournamentSetGameResult(
         });
       },
       onError: (error) => {
+        if (error.message === 'PLAYER_RESULT_SETTING_DISABLED') {
+          toast.error(t('player result setting disabled'));
+          return;
+        }
         toast.error(t('server error'));
         console.log(error);
       },

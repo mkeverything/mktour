@@ -1,0 +1,1 @@
+ALTER TABLE `club` ADD `allow_players_set_results` integer DEFAULT true NOT NULL;

@@ -20,8 +20,8 @@ export const newid = customAlphabet(
 );
 
 export function shallowEqual(
-  object1: { [key: string]: string | number | undefined | null },
-  object2: { [key: string]: string | number | undefined | null },
+  object1: { [key: string]: string | number | boolean | undefined | null },
+  object2: { [key: string]: string | number | boolean | undefined | null },
 ) {
   const keys1 = Object.keys(object1);
   const keys2 = Object.keys(object2);

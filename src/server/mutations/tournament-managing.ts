@@ -127,14 +127,20 @@ export async function getTournamentInfo(
 ): Promise<TournamentInfoModel> {
   const tournamentInfo = (
     await db
-      .select()
+      .select({
+        tournament: getTableColumns(tournaments),
+        club: getTableColumns(clubs),
+      })
       .from(tournaments)
       .where(eq(tournaments.id, id))
       .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
   ).at(0);
   if (!tournamentInfo) throw new Error('TOURNAMENT NOT FOUND');
   if (!tournamentInfo.club) throw new Error('ORGANIZER CLUB NOT FOUND');
-  return tournamentInfo;
+  return {
+    ...tournamentInfo,
+    allowPlayersSetResults: tournamentInfo.club.allowPlayersSetResults,
+  };
 }
 
 // moved to API endpoint
@@ -453,16 +459,27 @@ export async function setTournamentGameResult({
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   const authStatus = await getStatusInTournament(user.id, tournamentId);
   if (authStatus.status === 'viewer') throw new Error('NOT_AUTHORIZED');
+  const tournamentWithClub = (
+    await db
+      .select({
+        startedAt: tournaments.startedAt,
+        allowPlayersSetResults: clubs.allowPlayersSetResults,
+      })
+      .from(tournaments)
+      .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
+      .where(eq(tournaments.id, tournamentId))
+  ).at(0);
+  if (!tournamentWithClub) throw new Error('TOURNAMENT NOT FOUND');
   // players can only set results for their own games
   if (authStatus.status === 'player') {
+    if (!tournamentWithClub.allowPlayersSetResults) {
+      throw new Error('PLAYER_RESULT_SETTING_DISABLED');
+    }
     const isPlayerInGame =
       authStatus.playerId === whiteId || authStatus.playerId === blackId;
     if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
   }
-  const tournament = (
-    await db.select().from(tournaments).where(eq(tournaments.id, tournamentId))
-  ).at(0);
-  if (tournament?.startedAt === null) return 'TOURNAMENT_NOT_STARTED';
+  if (tournamentWithClub.startedAt === null) return 'TOURNAMENT_NOT_STARTED';
   if (result === prevResult) {
     await Promise.all([
       handleResultReset(whiteId, blackId, tournamentId, prevResult),
