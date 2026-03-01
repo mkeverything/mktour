@@ -33,6 +33,7 @@ export const players = sqliteTable(
     lastSeenAt: integer('last_seen_at', { mode: 'timestamp' })
       .$default(() => new Date())
       .notNull(), // equals closed_at() last tournament they participated
+    username: text('username'),
   },
   (table) => [
     uniqueIndex('player_nickname_club_unique_idx').on(

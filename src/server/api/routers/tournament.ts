@@ -6,6 +6,7 @@ import {
   tournamentAdminProcedure,
 } from '@/server/api/trpc';
 import { db } from '@/server/db';
+import { users } from '@/server/db/schema';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import {
@@ -17,15 +18,18 @@ import {
   tournamentIdInputSchema,
 } from '@/server/db/zod/common';
 import { gameResultEnum, TournamentFormat } from '@/server/db/zod/enums';
-import { playerFormSchema, playersSelectSchema } from '@/server/db/zod/players';
+import {
+  playerFormSchema,
+  playersSelectSchema,
+  playerTournamentSchema,
+} from '@/server/db/zod/players';
 import {
   gameSchema,
-  tournamentWithClubSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
   tournamentInfoSchema,
+  tournamentWithClubSchema,
 } from '@/server/db/zod/tournaments';
-import { playerTournamentSchema } from '@/server/db/zod/players';
 import {
   addExistingPlayer,
   addNewPlayer,
@@ -101,7 +105,7 @@ export const tournamentRouter = {
     .query(async (opts) => {
       const { input } = opts;
       const result = await db
-        .select(getTableColumns(players))
+        .select({ ...getTableColumns(players), username: users.username })
         .from(players)
         .innerJoin(
           tournaments,
@@ -117,6 +121,7 @@ export const tournamentRouter = {
             eq(players_to_tournaments.tournamentId, input.tournamentId),
           ),
         )
+        .leftJoin(users, eq(users.id, players.userId))
         .where(isNull(players_to_tournaments.playerId));
 
       return result;
