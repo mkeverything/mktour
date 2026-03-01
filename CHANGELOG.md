@@ -1,3 +1,16 @@
+# [1.0.0-beta.21](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.20...v1.0.0-beta.21) (2026-03-01)
+
+
+### Bug Fixes
+
+* missing fab in clubs/my ([beb4422](https://github.com/mkeverything/mktour/commit/beb44223d0e6103b7ccfad714ebe49f328f6ebf3))
+* missing username in hook ([8a3784d](https://github.com/mkeverything/mktour/commit/8a3784d1fad6ff805d04c912666538d39f848643))
+
+
+### Features
+
+* username in player drawer ([b745db7](https://github.com/mkeverything/mktour/commit/b745db7a05098fde6b532bcc8d1a20d50ac0efa3))
+
 # [1.0.0-beta.20](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.19...v1.0.0-beta.20) (2026-03-01)
 
 
