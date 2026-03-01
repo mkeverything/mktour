@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#000000',
     icons: [
       {
-        src: '/app-icon.png',
+        src: 'app-icon.png',
         sizes: '512x512',
         type: 'image/png',
       },
@@ -21,7 +21,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: '/tournaments/create',
         icons: [
           {
-            src: '/app-icon.png',
+            src: 'app-icon.png',
             sizes: '512x512',
             type: 'image/png',
           },
@@ -30,13 +30,13 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     screenshots: [
       {
-        src: '/app-icon.png',
+        src: 'app-icon.png',
         form_factor: 'narrow',
         sizes: '512x512',
         type: 'image/png',
       },
       {
-        src: '/app-icon.png',
+        src: 'app-icon.png',
         form_factor: 'wide',
         sizes: '512x512',
         type: 'image/png',
