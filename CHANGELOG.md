@@ -1,3 +1,10 @@
+# [1.0.0-beta.24](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.23...v1.0.0-beta.24) (2026-03-01)
+
+
+### Features
+
+* disable feature, that affiliated users can set their own game results ([c4786ba](https://github.com/mkeverything/mktour/commit/c4786ba555af22222dca2321129f847666ce8319))
+
 # [1.0.0-beta.23](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.22...v1.0.0-beta.23) (2026-03-01)
 
 
