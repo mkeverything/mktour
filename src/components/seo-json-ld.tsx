@@ -13,9 +13,9 @@ export async function getOrganizationSchema() {
     url: baseUrl,
     logo: {
       '@type': 'ImageObject',
-      url: `${baseUrl}/logo-square.png`,
-      width: 1024,
-      height: 1024,
+      url: `${baseUrl}/app-icon.png`,
+      width: 512,
+      height: 512,
     },
     description: t('homepage.description'),
     sameAs: [
