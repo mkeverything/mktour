@@ -19,7 +19,7 @@ const ShuffleFab = () => {
   const games = useTournamentRoundGames({ tournamentId, roundNumber: 1 });
   const { userId } = useContext(DashboardContext);
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
+  const { sendJsonMessage, status } = useContext(DashboardContext);
   const { isPending, mutate } = useSaveRound({
     queryClient,
     sendJsonMessage,
@@ -27,7 +27,13 @@ const ShuffleFab = () => {
   });
   const { isDesktop } = useContext(MediaQueryContext);
 
-  if (data?.tournament.startedAt || !games.data || !players.data || !userId)
+  if (
+    data?.tournament.startedAt ||
+    !games.data ||
+    !players.data ||
+    !userId ||
+    status !== 'organizer'
+  )
     return null;
 
   if (players.data && players.data.length < 3)

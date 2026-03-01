@@ -1,3 +1,4 @@
+import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import AddFakerPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-fake-player';
 import AddNewPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-new-player';
 import AddPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player';
@@ -9,7 +10,7 @@ import { PlayerFormModel } from '@/server/zod/players';
 import { ArrowLeft, Plus, UserPlus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useContext, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
 const AddPlayerDrawer = () => {
@@ -19,6 +20,7 @@ const AddPlayerDrawer = () => {
   const [addingNewPlayer, setAddingNewPlayer] = useState(false);
   const t = useTranslations('Tournament.AddPlayer');
   const [isAnimating, setIsAnimating] = useState(false);
+  const { status } = useContext(DashboardContext);
 
   useHotkeys(
     'shift+equal',
@@ -53,7 +55,12 @@ const AddPlayerDrawer = () => {
   };
 
   const { data: tournamentInfo } = useTournamentInfo(tournamentId);
-  if (!tournamentInfo || tournamentInfo.tournament.startedAt) return null;
+  if (
+    !tournamentInfo ||
+    tournamentInfo.tournament.startedAt ||
+    status !== 'organizer'
+  )
+    return null;
 
   return (
     <>
