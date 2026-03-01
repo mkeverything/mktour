@@ -1,3 +1,10 @@
+# [1.0.0-beta.19](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.18...v1.0.0-beta.19) (2026-03-01)
+
+
+### Features
+
+* add and remove lichess team in club settings ([9de786d](https://github.com/mkeverything/mktour/commit/9de786d44e3c7b195f705d9956be06b295998f71))
+
 # [1.0.0-beta.18](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.17...v1.0.0-beta.18) (2026-02-28)
 
 
