@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { PlayerModel } from '@/server/db/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -27,7 +26,7 @@ const AddPlayer = ({ value, setValue, handleClose }: DrawerProps) => {
   );
   const t = useTranslations('Tournament.AddPlayer');
   const filteredPlayers =
-    possiblePlayers.data?.filter((player: PlayerModel) => {
+    possiblePlayers.data?.filter((player) => {
       if (!value) return true;
 
       const search = value.toLowerCase();

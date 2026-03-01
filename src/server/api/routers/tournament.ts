@@ -21,6 +21,7 @@ import { gameResultEnum, TournamentFormat } from '@/server/db/zod/enums';
 import {
   playerFormSchema,
   playersSelectSchema,
+  playersWithUsernameSchema,
   playerTournamentSchema,
 } from '@/server/db/zod/players';
 import {
@@ -101,7 +102,7 @@ export const tournamentRouter = {
     }),
   playersOut: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
-    .output(z.array(playersSelectSchema))
+    .output(z.array(playersWithUsernameSchema))
     .query(async (opts) => {
       const { input } = opts;
       const result = await db

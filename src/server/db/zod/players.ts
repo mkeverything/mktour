@@ -10,6 +10,9 @@ import {
 import z from 'zod';
 
 export const playersSelectSchema = createSelectSchema(players);
+export const playersWithUsernameSchema = createSelectSchema(players).extend({
+  username: z.string().nullable(),
+});
 export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
@@ -134,6 +137,7 @@ export type AffiliationExtendedModel = z.infer<
 >;
 export type AffiliationMinimalModel = z.infer<typeof affiliationMinimalSchema>;
 export type PlayerModel = z.infer<typeof playersSelectSchema>;
+export type PlayerWithUsernameModel = z.infer<typeof playersWithUsernameSchema>;
 export type PlayerMinimalModel = z.infer<typeof playersMinimalSchema>;
 export type PlayerFormModel = z.infer<typeof playerFormSchema>;
 export type PlayerInsertModel = z.infer<typeof playersInsertSchema>;

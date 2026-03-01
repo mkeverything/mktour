@@ -2,7 +2,10 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
-import { PlayerModel, PlayerTournamentModel } from '@/server/db/zod/players';
+import {
+  PlayerTournamentModel,
+  PlayerWithUsernameModel,
+} from '@/server/db/zod/players';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';
@@ -77,7 +80,7 @@ export const handleSocketMessage = (
         (cache) => cache && cache.filter((player) => player.id !== message.id),
       );
       if (removedPlayer) {
-        const removedPlayerDb: PlayerModel = {
+        const removedPlayerDb: PlayerWithUsernameModel = {
           id: removedPlayer.id,
           nickname: removedPlayer.nickname,
           realname: removedPlayer.realname ?? null,
@@ -89,6 +92,7 @@ export const handleSocketMessage = (
           ratingDeviation: 0,
           ratingVolatility: 0,
           ratingLastUpdateAt: new Date(),
+          username: null,
         };
         queryClient.setQueryData(
           trpc.tournament.playersOut.queryKey({ tournamentId }),
