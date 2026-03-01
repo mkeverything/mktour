@@ -62,8 +62,8 @@ const Games: FC = () => {
           currentRound={1}
           currentTab={currentTab}
         />
-        <div className="px-4 pt-2">
-          <SkeletonList length={8} />
+        <div className="p-mk md:px-mk-2">
+          <SkeletonList length={8} className="h-12 rounded-lg" />
         </div>
       </div>
     );

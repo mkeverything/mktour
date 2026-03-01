@@ -9,7 +9,7 @@ const SkeletonList: FC<{
   const list = new Array(length || 5).fill('');
 
   return (
-    <div className="mk-list relative h-full max-h-[60dvh] overflow-hidden">
+    <div className="mk-list relative z-10 h-full max-h-[60dvh] overflow-hidden">
       <div className="from-background absolute inset-0 w-full bg-linear-to-t" />
       <div className="-z-10 flex flex-col gap-2">
         {list.map((_, i) => (
