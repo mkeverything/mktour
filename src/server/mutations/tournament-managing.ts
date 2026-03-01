@@ -12,6 +12,7 @@ import {
   newid,
 } from '@/lib/utils';
 import { db } from '@/server/db';
+import { users } from '@/server/db/schema';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import {
@@ -101,7 +102,8 @@ async function getRawTournamentPlayers(
     .select()
     .from(players_to_tournaments)
     .where(eq(players_to_tournaments.tournamentId, id))
-    .innerJoin(players, eq(players.id, players_to_tournaments.playerId));
+    .innerJoin(players, eq(players.id, players_to_tournaments.playerId))
+    .leftJoin(users, eq(users.id, players.userId));
 
   return playersDb.map((each) => ({
     id: each.player.id,
@@ -115,6 +117,7 @@ async function getRawTournamentPlayers(
     isOut: each.players_to_tournaments.isOut,
     place: each.players_to_tournaments.place,
     pairingNumber: each.players_to_tournaments.pairingNumber,
+    username: each.user?.username ?? null,
   }));
 }
 

@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { Dispatch, FC, SetStateAction, useContext } from 'react';
 
 const PlayerDrawer: FC<{
-  player: PlayerTournamentModel | null;
+  player: PlayerTournamentModel;
   setSelectedPlayer: (_arg: null) => void;
   handleDelete: () => void;
   hasEnded: boolean;
@@ -37,36 +37,39 @@ const PlayerDrawer: FC<{
     >
       <Content>
         <Header>
-          <Title>{player?.nickname}</Title>
-          <Description hidden />
+          <Title>{player.nickname}</Title>
+          <Description>{player?.username}</Description>
         </Header>
+        <>
+          <Button className="flex w-full gap-2" size="lg" asChild>
+            <Link
+              href={
+                player.username
+                  ? `/user/${player.username}`
+                  : `/player/${player.id}`
+              }
+            >
+              <UserRound />
+              <FormattedMessage id="Tournament.Table.Player.profile" />
+            </Link>
+          </Button>
 
-        {player && (
-          <>
-            <Button className="flex w-full gap-2" size="lg" asChild>
-              <Link href={`/player/${player.id}`}>
-                <UserRound />
-                <FormattedMessage id="Tournament.Table.Player.profile" />
-              </Link>
+          {status === 'organizer' && (
+            <DestructiveButton
+              hasEnded={hasEnded}
+              hasStarted={hasStarted}
+              player={player}
+              handleDelete={handleDelete}
+              setOpen={() => setSelectedPlayer(null)}
+            />
+          )}
+
+          <Close asChild>
+            <Button size="lg" variant="outline">
+              <FormattedMessage id="Common.close" />
             </Button>
-
-            {status === 'organizer' && (
-              <DestructiveButton
-                hasEnded={hasEnded}
-                hasStarted={hasStarted}
-                player={player}
-                handleDelete={handleDelete}
-                setOpen={() => setSelectedPlayer(null)}
-              />
-            )}
-
-            <Close asChild>
-              <Button size="lg" variant="outline">
-                <FormattedMessage id="Common.close" />
-              </Button>
-            </Close>
-          </>
-        )}
+          </Close>
+        </>
       </Content>
     </Root>
   );

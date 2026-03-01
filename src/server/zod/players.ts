@@ -102,6 +102,7 @@ export const playerTournamentSchema = playersToTournamentsSelectSchema
     nickname: playersSelectSchema.shape.nickname,
     realname: playersSelectSchema.shape.realname,
     rating: playersSelectSchema.shape.rating,
+    username: playersWithUsernameSchema.shape.username,
   });
 
 export const playerStatsSchema = z.object({

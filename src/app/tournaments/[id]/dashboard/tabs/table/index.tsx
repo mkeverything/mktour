@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { PlayerTournamentModel } from '@/server/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
-import { Scale, Trophy, UserRoundX } from 'lucide-react';
+import { Flag, Scale, Trophy, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import {
@@ -235,11 +235,15 @@ const Status: FC<{ player: PlayerTournamentModel } & PropsWithChildren> = ({
   player,
   children,
 }) => {
-  if (!player.isOut) return children;
   return (
-    <div className="flex items-center gap-2 opacity-50">
-      <UserRoundX className="size-4 min-w-fit" />
+    <div
+      className={`gap-mk flex items-center ${player.isOut && 'text-muted-foreground'}`}
+    >
       {children}
+      {player.username && (
+        <UserRound className="text-muted-foreground size-4" />
+      )}
+      {player.isOut && <Flag className="size-4" />}
     </div>
   );
 };
