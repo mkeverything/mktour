@@ -1,3 +1,10 @@
+# [1.0.0-beta.28](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.27...v1.0.0-beta.28) (2026-03-02)
+
+
+### Bug Fixes
+
+* missing opengraph image ([2c740f1](https://github.com/mkeverything/mktour/commit/2c740f16d7bbbde8ca838ea9c91a805b026d543d))
+
 # [1.0.0-beta.27](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.26...v1.0.0-beta.27) (2026-03-01)
 
 
