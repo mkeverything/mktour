@@ -45,11 +45,11 @@ async function LayoutContent({ children }: PropsWithChildren) {
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = BASE_URL || 'https://mktour.org';
 
-  let locale = 'en';
+  let locale = 'ru';
   try {
-    locale = (await getLocale()) ?? 'en';
+    locale = (await getLocale()) ?? 'ru';
   } catch {
-    locale = 'en';
+    locale = 'ru';
   }
 
   const t = await getTranslations({ locale, namespace: 'Seo' });
@@ -341,7 +341,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning>
       <body className="small-scrollbar">
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <ThemeProvider
