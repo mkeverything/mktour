@@ -46,8 +46,7 @@ export default function CountdownGate({ children }: CountdownGateProps) {
 
 let mounted = false;
 
-// 20:00 local time (UTC+3) → 17:00 UTC
-const RELEASE_DATE = new Date(Date.UTC(2026, 2, 2, 17, 0, 0));
+const RELEASE_DATE = new Date(2026, 2, 2, 20); // March 2, 2026 20:00
 
 function getTimeLeft(releaseDate: Date) {
   const now = Date.now();
