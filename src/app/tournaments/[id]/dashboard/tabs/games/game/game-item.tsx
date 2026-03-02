@@ -117,7 +117,7 @@ const GameItem: FC<GameProps> = ({
         onClick={handleOpenGame}
       >
         <Card
-          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerInGame && 'ring-border border-border border-2 ring-2'}`}
+          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerInGame && 'border-3'}`}
         >
           <Player
             isWinner={result === '1-0'}
