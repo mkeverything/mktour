@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/mkeverything/mktour/compare/v1.0.0...v1.0.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* **swiss:** disable C3 hard constraint to prevent CardinalityValidationError ([4870085](https://github.com/mkeverything/mktour/commit/4870085b4547b21a77a2d46f8b40aac46bb7994c))
+
 # [1.0.0](https://github.com/mkeverything/mktour/compare/v0.12.7...v1.0.0) (2026-03-02)
 
 
