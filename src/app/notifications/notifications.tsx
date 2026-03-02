@@ -23,8 +23,6 @@ const UserNotifications = () => {
     isFetchingNextPage,
   } = useUserNotifications();
 
-  console.log(notifications);
-
   const ref = useOnReach(fetchNextPage);
 
   const { mutate } = useMarkAllNotificationAsSeenMutation();
