@@ -2,7 +2,7 @@ import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { TournamentWithClubModel } from '@/server/zod/tournaments';
-import { eq, inArray } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 
 export default async function getTournamentsToUserClubsQuery({
   userId,
@@ -27,7 +27,8 @@ export default async function getTournamentsToUserClubsQuery({
     })
     .from(tournaments)
     .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
-    .where(inArray(tournaments.clubId, clubIds));
+    .where(inArray(tournaments.clubId, clubIds))
+    .orderBy(desc(tournaments.createdAt));
 
   return tournamentsFromUserClubs as TournamentWithClubModel[];
 }

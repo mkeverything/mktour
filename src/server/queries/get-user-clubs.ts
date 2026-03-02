@@ -5,7 +5,7 @@ import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { StatusInClub } from '@/server/zod/enums';
-import { and, eq, exists, isNotNull, sql } from 'drizzle-orm';
+import { and, desc, eq, exists, isNotNull, sql } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';
 
@@ -40,6 +40,7 @@ export async function getUserClubs({ userId }: { userId: string }) {
       .from(clubs_to_users)
       .where(eq(clubs_to_users.userId, userId))
       .innerJoin(clubs, eq(clubs_to_users.clubId, clubs.id))
+      .orderBy(desc(clubs.createdAt))
   ).map((el) => el.club);
 }
 
