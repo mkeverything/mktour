@@ -246,7 +246,7 @@ const Status: FC<
     player: PlayerTournamentModel;
     user: UserModel | null | undefined;
   } & PropsWithChildren
-> = ({ player, user, children }) => {
+> = ({ player, children }) => {
   return (
     <div
       className={`gap-mk flex items-center ${player.isOut && 'text-muted-foreground'}`}
