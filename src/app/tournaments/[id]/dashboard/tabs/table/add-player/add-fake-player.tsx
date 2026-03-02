@@ -3,7 +3,7 @@ import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/use
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { Button } from '@/components/ui/button';
 import { newid } from '@/lib/utils';
-import { PlayerFormModel } from '@/server/db/zod/players';
+import { PlayerFormModel } from '@/server/zod/players';
 import { faker } from '@faker-js/faker';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';

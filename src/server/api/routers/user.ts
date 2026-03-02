@@ -2,13 +2,18 @@ import meta from '@/server/api/meta';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema/users';
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
-import {
-  usersSelectPublicSchema,
-  usersSelectSchema,
-} from '@/server/db/zod/users';
 import { getUserClubNames } from '@/server/queries/get-user-clubs';
 import { getUserInfoByUsername } from '@/server/queries/get-user-data';
+import { getUserPlayerClubs } from '@/server/queries/get-user-player-clubs';
+import { getUserLastTournaments } from '@/server/queries/user';
+import {
+  clubsSelectSchema,
+  clubsToUsersSelectSchema,
+} from '@/server/zod/clubs';
+import { userIdInputSchema } from '@/server/zod/common';
+import { userPlayerClubSchema } from '@/server/zod/players';
+import { playerToTournamentSchema } from '@/server/zod/tournaments';
+import { usersSelectPublicSchema, usersSelectSchema } from '@/server/zod/users';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -25,7 +30,7 @@ export const userRouter = createTRPCRouter({
     }),
   info: publicProcedure
     .meta(meta.usersInfo)
-    .input(z.object({ userId: z.string() }))
+    .input(userIdInputSchema)
     .output(
       usersSelectSchema
         .pick({ username: true, name: true, rating: true })
@@ -51,11 +56,35 @@ export const userRouter = createTRPCRouter({
     }),
   clubs: publicProcedure
     .meta(meta.userClubs)
-    .output(z.array(clubsSelectSchema.pick({ id: true, name: true })))
-    .input(z.object({ userId: z.string() }))
+    .output(
+      z.array(
+        clubsSelectSchema.pick({ id: true, name: true }).extend({
+          status: clubsToUsersSelectSchema.shape.status,
+          hasFinishedTournaments: z.boolean(),
+        }),
+      ),
+    )
+    .input(userIdInputSchema)
     .query(async (opts) => {
       const { input } = opts;
       const userClubs = await getUserClubNames(input);
       return userClubs;
+    }),
+  playerClubs: publicProcedure
+    .meta(meta.userPlayerClubs)
+    .output(z.array(userPlayerClubSchema))
+    .input(userIdInputSchema)
+    .query(async (opts) => {
+      const { input } = opts;
+      const playerClubs = await getUserPlayerClubs(input);
+      return playerClubs;
+    }),
+  lastTournaments: publicProcedure
+    .meta(meta.usersTournaments)
+    .input(userIdInputSchema)
+    .output(z.array(playerToTournamentSchema))
+    .query(async (opts) => {
+      const { input } = opts;
+      return await getUserLastTournaments(input.userId);
     }),
 });

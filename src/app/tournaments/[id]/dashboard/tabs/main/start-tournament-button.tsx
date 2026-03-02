@@ -41,7 +41,7 @@ export default function StartTournamentButton() {
 
   return (
     <Button
-      className="isolate-touch"
+      className="isolate-touch md:col-span-2"
       disabled={
         !players || players?.length < 2 || startTournamentMutation.isPending
       }

@@ -1,8 +1,8 @@
 'use client';
 
 import FormattedMessage from '@/components/formatted-message';
-import { PlayerModel } from '@/server/db/zod/players';
-import { UserMinimalModel } from '@/server/db/zod/users';
+import { PlayerModel } from '@/server/zod/players';
+import { UserMinimalModel } from '@/server/zod/users';
 
 const FullName = ({
   player,

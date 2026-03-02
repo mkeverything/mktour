@@ -1,5 +1,6 @@
 'use client';
 
+import AffiliatedPlayerCard from '@/app/clubs/[id]/affiliated-player-card';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
@@ -24,27 +25,28 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { StatusInClub } from '@/server/db/zod/enums';
-import { PlayerModel } from '@/server/db/zod/players';
+import { ClubModel } from '@/server/zod/clubs';
+import { StatusInClub } from '@/server/zod/enums';
+import { PlayerModel } from '@/server/zod/players';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Home, Search, Trophy, Users2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC, useEffect, useState } from 'react';
+import { FC, ReactNode, useEffect, useState } from 'react';
 
 const ClubPage: FC<{
   club: ClubModel;
   statusInClub: StatusInClub | null;
   userId: string;
-}> = ({ club, statusInClub }) => {
+}> = ({ club, statusInClub, userId }) => {
   return (
-    <div className="mk-container flex flex-col gap-6">
+    <div className="mk-container gap-mk-2 flex flex-col">
       <ClubHeader club={club} statusInClub={statusInClub} />
       <ClubStats clubId={club.id} />
+      <AffiliatedPlayerCard clubId={club.id} userId={userId} />
       <MostActivePlayers clubId={club.id} />
 
-      <div className="hidden gap-4 md:grid md:grid-cols-2">
+      <div className="gap-mk hidden md:grid md:grid-cols-2">
         <ClubTournamentsSection clubId={club.id} statusInClub={statusInClub} />
         <ClubPlayersSection clubId={club.id} />
       </div>
@@ -91,8 +93,8 @@ const ClubHeader: FC<{
 
   return (
     <HalfCard>
-      <CardHeader className="pb-4 max-sm:p-4 max-sm:pt-2">
-        <div className="flex items-start justify-between gap-4">
+      <CardHeader className="max-sm:p-4 max-sm:pt-0">
+        <div className="gap-mk-2 flex items-start justify-between">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
               <CardTitle className="text-2xl">{club.name}</CardTitle>
@@ -112,7 +114,7 @@ const ClubHeader: FC<{
               </span>
             )}
             {managers && managers.length > 0 && (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-muted-foreground text-xs">
                   {t('managers list')}:
                 </span>
@@ -168,7 +170,7 @@ const ClubStats: FC<{ clubId: string }> = ({ clubId }) => {
   const t = useTranslations('Club.Stats');
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="gap-mk grid grid-cols-2">
       <StatCard
         icon={Trophy}
         label={t('tournaments', { count: stats?.tournamentsCount ?? 0 })}
@@ -188,7 +190,7 @@ const ClubStats: FC<{ clubId: string }> = ({ clubId }) => {
 const StatCard: FC<{
   icon: FC<{ className?: string }>;
   label: string;
-  value?: number;
+  value?: ReactNode;
   isLoading?: boolean;
 }> = ({ icon: Icon, label, value, isLoading }) => (
   <div className="bg-primary/5 border-primary/10 flex items-center gap-4 rounded-xl border p-4">
@@ -327,8 +329,8 @@ const ClubTournamentsSection: FC<{
   }, [clubId, queryClient, secondDebouncedSearch, trpc.search]);
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="flex max-h-[512px] flex-col">
+      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
         <CardTitle className="flex items-center gap-2 text-base">
           <Trophy className="size-4" />
           <FormattedMessage id="Menu.tournaments" />
@@ -346,7 +348,7 @@ const ClubTournamentsSection: FC<{
           />
         </div>
       </CardHeader>
-      <CardContent className="max-h-[400px] overflow-y-auto pt-0">
+      <CardContent className="overflow-y-auto pt-3">
         {!searchResults?.tournaments?.length && (
           <p className="text-muted-foreground py-4 text-center text-sm">
             {stats?.tournamentsCount !== 0
@@ -419,8 +421,8 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
   }, [clubId, queryClient, secondDebouncedSearch, trpc.search]);
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="flex max-h-[512px] flex-col">
+      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
         <CardTitle className="flex items-center gap-2 text-base">
           <Users2 className="size-4" />
           <FormattedMessage id="Club.Page.players" />
@@ -440,7 +442,7 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
           />
         </div>
       </CardHeader>
-      <CardContent className="max-h-[400px] overflow-y-auto pt-0">
+      <CardContent className="overflow-y-auto pt-3">
         {searchResults?.players?.length === 0 && (
           <p className="text-muted-foreground py-4 text-center text-sm">
             {playersCount !== 0

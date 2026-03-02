@@ -1,6 +1,6 @@
 import { LoadingSpinner } from '@/app/loading';
 import { Card } from '@/components/ui/card';
-import { GameResult } from '@/server/db/zod/enums';
+import { GameResult } from '@/server/zod/enums';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 
@@ -18,7 +18,7 @@ const Result: FC<ResultProps> = ({ isPending, result, selected }) => {
 
   if (!result)
     return (
-      <Card className="relative grid h-full w-24 min-w-16 grid-cols-2 select-none">
+      <Card className="relative grid h-full w-24 min-w-16 grid-cols-2 rounded-md select-none">
         <div className="flex w-full items-center justify-center" />
         <div className="border-l-muted flex w-full items-center justify-center border-l" />
       </Card>
@@ -29,7 +29,7 @@ const Result: FC<ResultProps> = ({ isPending, result, selected }) => {
   const right = parsedResult?.at(1) === '1/2' ? '½' : parsedResult?.at(1);
 
   return (
-    <Card className="grid h-full w-24 min-w-16 grid-cols-2 select-none">
+    <Card className="grid h-full w-24 min-w-16 grid-cols-2 rounded-md select-none">
       <div className="flex w-full items-center justify-center opacity-60">
         {left ?? ''}
       </div>

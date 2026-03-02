@@ -1,6 +1,6 @@
 import LichessLogo from '@/components/ui-custom/lichess-logo';
 import { Card, CardTitle } from '@/components/ui/card';
-import { ClubModel } from '@/server/db/zod/clubs';
+import { ClubModel } from '@/server/zod/clubs';
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { FC } from 'react';

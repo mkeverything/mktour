@@ -1,5 +1,5 @@
 import ClubCard from '@/app/clubs/club-card';
-import { ClubModel } from '@/server/db/zod/clubs';
+import { ClubModel } from '@/server/zod/clubs';
 import { FC } from 'react';
 
 const ClubsIteratee: FC<{ clubs: ClubModel[] }> = ({ clubs }) =>

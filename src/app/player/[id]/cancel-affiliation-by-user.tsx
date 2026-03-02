@@ -1,9 +1,9 @@
 'use client';
 
 import { LoadingSpinner } from '@/app/loading';
-import { ClaimActionButton } from '@/app/player/[id]/claim-button';
+import { IconOnlyButton } from '@/app/player/[id]/claim-button';
 import FormattedMessage from '@/components/formatted-message';
-import { useAffiliationCancelByUserMutation } from '@/components/hooks/mutation-hooks/use-affiliation-cancel-by-user';
+import { useAffiliationCancelByUserMutation } from '@/components/hooks/mutation-hooks/use-affiliation-cancel';
 import {
   Close,
   Content,
@@ -43,10 +43,10 @@ const CancelAffiliationByUser: FC<{
   return (
     <Root open={open} onOpenChange={setOpen}>
       <Trigger asChild>
-        <ClaimActionButton
+        <IconOnlyButton
           disabled={isPending}
           icon={isPending ? LoadingSpinner : UserX2}
-          messageId="Player.cancel affiliation"
+          title={t('Player.cancel affiliation')}
         />
       </Trigger>
       <Content>
@@ -55,7 +55,7 @@ const CancelAffiliationByUser: FC<{
             <FormattedMessage id="Common.confirm" />
           </Title>
           <Description>
-            <FormattedMessage id="Player.cancel affiliation description" />
+            <FormattedMessage id="Player.cancel affiliation by user description" />
           </Description>
         </Header>
         <Button

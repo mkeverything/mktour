@@ -14,6 +14,7 @@ export default async function getClubNotifications({
   cursor: number;
   limit: number;
 }) {
+  // always read userId and playerId from metadata for consistency
   const result = (await db
     .select({
       ...getTableColumns(club_notifications),
@@ -27,8 +28,20 @@ export default async function getClubNotifications({
       affiliations,
       sql`json_extract(${club_notifications.metadata}, '$.affiliationId') = ${affiliations.id}`,
     )
-    .leftJoin(users, eq(users.id, affiliations.userId))
-    .leftJoin(players, eq(players.id, affiliations.playerId))
+    .leftJoin(
+      users,
+      eq(
+        users.id,
+        sql`json_extract(${club_notifications.metadata}, '$.userId')`,
+      ),
+    )
+    .leftJoin(
+      players,
+      eq(
+        players.id,
+        sql`json_extract(${club_notifications.metadata}, '$.playerId')`,
+      ),
+    )
     .orderBy(desc(club_notifications.createdAt))
     .limit(limit + 1)
     .offset(cursor)) as unknown as AnyClubNotificationExtended[];

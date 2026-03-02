@@ -9,7 +9,6 @@ import PlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/player-dra
 import { useTournamentRemovePlayer } from '@/components/hooks/mutation-hooks/use-tournament-remove-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
-import { MediaQueryContext } from '@/components/providers/media-query-context';
 import {
   Table,
   TableBody,
@@ -18,13 +17,29 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
+import { PlayerTournamentModel } from '@/server/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
-import { Scale, UserRoundX } from 'lucide-react';
+import { Flag, Scale, Trophy, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, PropsWithChildren, useContext, useState } from 'react';
+import {
+  FC,
+  PropsWithChildren,
+  ReactNode,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
+
+import FormattedMessage from '@/components/formatted-message';
+import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
+import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import {
+  type SortedPlayersResult,
+  sortPlayersByResultsWithMaps,
+} from '@/lib/tournament-results';
+import { UserModel } from '@/server/zod/users';
 
 const TournamentTable: FC = ({}) => {
   const { id } = useParams<{ id: string }>();
@@ -43,16 +58,39 @@ const TournamentTable: FC = ({}) => {
     useState<PlayerTournamentModel | null>(null);
   const hasStarted = !!tournament.data?.tournament.startedAt;
   const hasEnded = !!tournament.data?.tournament.closedAt;
-  const stats =
-    tournament.data?.tournament.format === 'swiss' ? STATS_WITH_BERGER : STATS;
+  const { data: user } = useAuth();
 
-  if (players.isLoading) return <TableLoading />;
+  const allGames = useTournamentGames(id);
+
+  const {
+    players: sortedPlayers,
+    playerScoresMap,
+    tiebreakScoresMap,
+  } = useMemo<SortedPlayersResult>(() => {
+    if (!players.data || !tournament.data)
+      return {
+        players: [],
+        playerScoresMap: new Map(),
+        tiebreakScoresMap: new Map(),
+      };
+    return sortPlayersByResultsWithMaps(
+      players.data,
+      tournament.data.tournament,
+      allGames.data ?? [],
+    );
+  }, [players.data, tournament.data, allGames.data]);
+
+  const stats: Stat[] = STATS_WITH_TIEBREAK;
+
+  if (players.isLoading || allGames.isLoading) {
+    return <TableLoading stats={stats} />;
+  }
   if (players.isError) {
     toast.error(t('added players error'), {
       id: 'query-added-players',
       duration: 3000,
     });
-    return <TableLoading />;
+    return <TableLoading stats={stats} />;
   }
 
   const handleDelete = () => {
@@ -68,13 +106,24 @@ const TournamentTable: FC = ({}) => {
     }
   };
 
+  const statRenderers: Record<
+    Stat,
+    (player: PlayerTournamentModel) => ReactNode
+  > = {
+    wins: (p) => p.wins,
+    draws: (p) => p.draws,
+    losses: (p) => p.losses,
+    score: (p) => playerScoresMap.get(p.id),
+    tiebreak: (p) => tiebreakScoresMap.get(p.id),
+  };
+
   return (
-    <div className="mb-20 md:m-auto md:max-w-1/2">
+    <div className="mb-20 w-full">
       <Table className="pt-0">
-        <TableHeader>
+        <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
           <TableRow>
             <TableHeadStyled className="text-center">#</TableHeadStyled>
-            <TableHeadStyled className="w-full p-0">
+            <TableHeadStyled className="w-full min-w-10 p-0">
               {t.rich('name column', {
                 count: players.data?.length ?? 0,
                 small: (chunks) =>
@@ -85,26 +134,25 @@ const TournamentTable: FC = ({}) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {players.data?.map((player, i) => (
-            <TableRow key={player.id} onClick={() => setSelectedPlayer(player)}>
+          {sortedPlayers.map((player: PlayerTournamentModel, i: number) => (
+            <TableRow
+              key={player.id}
+              onClick={() => setSelectedPlayer(player)}
+              className={`${player.username === user?.username && 'bg-card/50 font-bold'}`}
+            >
               <TableCellStyled className={`font-small w-10 text-center`}>
                 <Place player={player} hasEnded={hasEnded}>
                   {i + 1}
                 </Place>
               </TableCellStyled>
               <TableCellStyled className="font-small flex gap-2 truncate pl-0">
-                <Status player={{ ...player, isOut: false }}>
+                <Status player={player} user={user}>
                   {player.nickname}
                 </Status>
               </TableCellStyled>
-              {/* FIXME this should be stats not STATS */}
-              {STATS.map((stat: (typeof STATS)[number]) => (
-                <Stat key={stat}>{player[stat]}</Stat>
+              {stats.map((stat) => (
+                <Stat key={stat}>{statRenderers[stat](player)}</Stat>
               ))}
-              {/* FIXME: this should be iterated with stats.map(...) above, given that berger score comes from the PlayerModel */}
-              {tournament.data?.tournament.format === 'swiss' && (
-                <Stat>{mockBergerScore(player)}</Stat> // FIXME mock data
-              )}
             </TableRow>
           ))}
         </TableBody>
@@ -122,41 +170,32 @@ const TournamentTable: FC = ({}) => {
   );
 };
 
-const TableStatsHeads: FC<{ stats: typeof STATS_WITH_BERGER }> = ({
-  stats,
-}) => {
-  const { isMobile } = useContext(MediaQueryContext);
-  const t = useTranslations(
-    `Tournament.Table.Stats.${isMobile ? 'short' : 'full'}`,
-  );
-
+const TableStatsHeads: FC<{ stats: Stat[] }> = ({ stats }) => {
   return (
     <>
       {stats.map((stat) => (
         <TableHeadStyled key={stat} className="text-center">
-          {stat === 'berger' ? <Scale className="m-auto size-3.5" /> : t(stat)}
+          {statHeadRenderers[stat]}
         </TableHeadStyled>
       ))}
     </>
   );
 };
 
-const TableLoading = () => {
-  const t = useTranslations('Tournament.Table');
+const TableLoading: FC<{ stats: Stat[] }> = ({ stats }) => {
   return (
-    <div className="h-full w-full items-center justify-center">
-      <span className="sr-only">{t('loading')}</span>
+    <div className="h-full w-full items-center justify-center overflow-hidden">
+      <span className="sr-only">
+        <FormattedMessage id="Tournament.Table.loading" />
+      </span>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHeadStyled className="p-mk text-center">#</TableHeadStyled>
-            <TableHeadStyled className="p-0">
-              {t.rich('name column', {
-                count: 0,
-                small: (chunks) => <small>{chunks}</small>,
-              })}
+            <TableHeadStyled className="text-center">#</TableHeadStyled>
+            <TableHeadStyled className="w-full min-w-10 p-0">
+              <FormattedMessage id="Player.name" />
             </TableHeadStyled>
-            <TableStatsHeads stats={STATS} />
+            <TableStatsHeads stats={stats} />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -164,17 +203,20 @@ const TableLoading = () => {
             .fill(0)
             .map((_, i) => (
               <TableRow key={i}>
-                <TableCellStyled className="h-11">
+                <TableCellStyled className="font-small w-10 text-center">
                   <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
                 </TableCellStyled>
-                <TableCellStyled>
+                <TableCellStyled className="font-small flex gap-2 truncate pl-0">
                   <div className="bg-muted h-4 w-40 animate-pulse rounded" />
                 </TableCellStyled>
-                {Array(3)
+                {Array(stats.length)
                   .fill(0)
                   .map((_, j) => (
-                    <TableCellStyled key={j}>
-                      <div className="bg-muted mx-auto h-4 w-8 animate-pulse rounded" />
+                    <TableCellStyled
+                      key={j}
+                      className="min-w-8 text-center font-medium"
+                    >
+                      <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
                     </TableCellStyled>
                   ))}
               </TableRow>
@@ -199,15 +241,21 @@ const Place: FC<
   );
 };
 
-const Status: FC<{ player: PlayerTournamentModel } & PropsWithChildren> = ({
-  player,
-  children,
-}) => {
-  if (!player.isOut) return children;
+const Status: FC<
+  {
+    player: PlayerTournamentModel;
+    user: UserModel | null | undefined;
+  } & PropsWithChildren
+> = ({ player, children }) => {
   return (
-    <div className="flex items-center gap-2 opacity-50">
-      <UserRoundX className="size-4 min-w-fit" />
+    <div
+      className={`gap-mk flex items-center ${player.isOut && 'text-muted-foreground'}`}
+    >
       {children}
+      {player.username && (
+        <UserRound className="text-muted-foreground size-4" />
+      )}
+      {player.isOut && <Flag className="size-4" />}
     </div>
   );
 };
@@ -230,24 +278,36 @@ const Stat: FC<PropsWithChildren> = ({ children }) => (
   </TableCellStyled>
 );
 
-/**
- * Mock Berger tiebreak calculation.
- * Berger is typically sum of defeated opponents' scores + half of drawn opponents' scores.
- * Here, we just mock it as: wins * 3 + draws * 1 + losses * 0.5
- */
-function mockBergerScore(player: PlayerTournamentModel): number {
-  return (
-    (player.wins ?? 0) * 3 +
-    (player.draws ?? 0) * 1 +
-    (player.losses ?? 0) * 0.5
-  );
-}
+const renderTextHead = (stat: Exclude<Stat, 'score' | 'tiebreak'>) => (
+  <>
+    <div className="block sm:hidden md:block xl:hidden">
+      <FormattedMessage id={`Tournament.Table.Stats.short.${stat}`} />
+    </div>
+    <div className="hidden sm:block md:hidden xl:block">
+      <FormattedMessage id={`Tournament.Table.Stats.full.${stat}`} />
+    </div>
+  </>
+);
 
-const STATS: (keyof Partial<PlayerTournamentModel>)[] = [
+const statHeadRenderers: Record<Stat, React.ReactNode> = {
+  wins: renderTextHead('wins'),
+  draws: renderTextHead('draws'),
+  losses: renderTextHead('losses'),
+  score: <Trophy className="m-auto size-3.5" />,
+  tiebreak: <Scale className="m-auto size-3.5" />,
+};
+
+const STATS_WITH_TIEBREAK: Stat[] = [
   'wins',
   'draws',
   'losses',
+  'score',
+  'tiebreak',
 ];
-const STATS_WITH_BERGER = [...STATS, 'berger'];
+
+type Stat =
+  | keyof Pick<PlayerTournamentModel, 'wins' | 'draws' | 'losses'>
+  | 'score'
+  | 'tiebreak';
 
 export default TournamentTable;

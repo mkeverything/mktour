@@ -30,6 +30,7 @@
     overflow: auto;
     touch-action: pan-x pan-y;
     scrollbar-gutter: stable;
+    padding-top: env(safe-area-inset-top);
   }
 
   /* latin */
@@ -71,7 +72,10 @@ button {
   --spacing-mk: calc(var(--spacing) * 2);
   --spacing-mk-2: calc(var(--spacing-mk) * 2);
   --spacing-mk-3: calc(var(--spacing-mk) * 3);
+  --spacing-mk-4: calc(var(--spacing-mk) * 4);
   --spacing-mk-card-height: calc(var(--spacing-mk) * 4);
+  --spacing-mk-navbar-height: calc(var(--spacing) * 14);
+  --spacing-mk-content-height: calc(100dvh - (var(--spacing-mk-navbar-height)));
 }
 
 @utility mk-container {
@@ -103,10 +107,6 @@ button {
   flex-direction: column;
   gap: var(--spacing-mk);
   padding-bottom: 10dvh;
-
-  @media screen and (min-width: 768px) {
-    gap: var(--spacing-mk-2);
-  }
 }
 
 @utility mk-link {

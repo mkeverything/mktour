@@ -1,7 +1,7 @@
 'use client';
 
 import { useTRPC } from '@/components/trpc/client';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
+import { PlayerTournamentModel } from '@/server/zod/players';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -156,6 +156,10 @@ export default function useTournamentSetGameResult(
         });
       },
       onError: (error) => {
+        if (error.message === 'PLAYER_RESULT_SETTING_DISABLED') {
+          toast.error(t('player result setting disabled'));
+          return;
+        }
         toast.error(t('server error'));
         console.log(error);
       },

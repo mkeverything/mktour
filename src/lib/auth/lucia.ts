@@ -2,7 +2,7 @@ import { CACHE_TAGS } from '@/lib/cache-tags';
 import { BASE_URL } from '@/lib/config/urls';
 import { adapter } from '@/server/db/lucia-adapter';
 
-import { UserModel } from '@/server/db/zod/users';
+import { UserModel } from '@/server/zod/users';
 import { Lichess } from 'arctic';
 import type { Session, User } from 'lucia';
 import { Lucia } from 'lucia';

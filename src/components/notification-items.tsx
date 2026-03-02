@@ -11,8 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ItemActions } from '@/components/ui/item';
-import { UserNotificationEvent } from '@/server/db/zod/enums';
-import { ClubNotificationExtendedModel } from '@/server/db/zod/notifications';
+import { UserNotificationEvent } from '@/server/zod/enums';
+import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
 import {
   AnyUserNotificationExtended,
   UserNotificationExtended,
@@ -51,8 +51,6 @@ export const AffiliationNotificationLi = ({
       queryClient,
     });
 
-  const isPending = pendingAccept || pendingReject;
-
   if (!user || !affiliation) return null;
 
   const variables = {
@@ -60,13 +58,6 @@ export const AffiliationNotificationLi = ({
     affiliationId: affiliation.id,
     notificationId: id,
   };
-
-  const handleAccept = (accept: boolean) => {
-    const fn = accept ? acceptAffiliation : rejectMutation;
-    fn(variables);
-  };
-
-  if (!affiliation) return null;
 
   return (
     <Card
@@ -86,32 +77,30 @@ export const AffiliationNotificationLi = ({
               </div>
               <div className="flex items-center">
                 <CornerDownRightIcon className="text-muted-foreground mx-2 size-4" />
-                <Link href={`/player/${player?.id}`}>{player?.nickname}</Link>
+                <Link href={`/user/${user?.username}`}>{player?.nickname}</Link>
               </div>
             </div>
           </div>
         </div>
         <ItemActions>
-          {isPending ? (
-            <LoadingSpinner />
-          ) : (
-            <div className="ml-3 flex gap-2">
-              <Button
-                size="icon-lg"
-                onClick={() => handleAccept(true)}
-                variant="secondary"
-              >
-                <Check />{' '}
-              </Button>
-              <Button
-                size="icon-lg"
-                onClick={() => handleAccept(false)}
-                variant="destructive"
-              >
-                <X />{' '}
-              </Button>
-            </div>
-          )}
+          <div className="ml-3 flex gap-2">
+            <Button
+              size="icon-lg"
+              onClick={() => acceptAffiliation(variables)}
+              variant="secondary"
+              disabled={pendingAccept || pendingReject}
+            >
+              {pendingAccept ? <LoadingSpinner /> : <Check />}
+            </Button>
+            <Button
+              size="icon-lg"
+              onClick={() => rejectMutation(variables)}
+              variant="destructive"
+              disabled={pendingAccept || pendingReject}
+            >
+              {pendingReject ? <LoadingSpinner /> : <X />}
+            </Button>
+          </div>
         </ItemActions>
       </div>
     </Card>
@@ -129,7 +118,7 @@ export const UserNotificationLi: FC<AnyUserNotificationExtended> = (props) => {
       is_seen={notification.isSeen}
       type="user"
     >
-      <p className="text-muted-foreground flex items-center gap-1 text-xs">
+      <p className="text-muted-foreground mb-mk flex items-center gap-1 text-xs">
         <Icon size={16} />
         <FormattedMessage id={`Notifications.User.${messageId}`} />
       </p>
@@ -151,7 +140,7 @@ const NotificationContent: FC<AnyUserNotificationExtended> = (notification) => {
       <Link href={`/player/${player?.id}`} className="mk-link">
         {player?.nickname}
       </Link>
-      from
+      <FormattedMessage id="Notifications.User.from" />
       <Link href={`/clubs/${club?.id}`} className="mk-link">
         {club?.name}
       </Link>
@@ -185,7 +174,7 @@ export const NotificationItem: FC<
   <Card
     className={`mk-card ${is_seen && 'opacity-70'} ${className} flex items-center justify-between text-xs`}
   >
-    <div className="flex flex-col gap-2">{children}</div>
+    <span>{children}</span>
     {type === 'user' ? (
       <ToggleIsSeen notificationId={notificationId} isSeen={is_seen} />
     ) : (
@@ -236,6 +225,7 @@ const messageIdMap: Record<
 > = {
   affiliation_approved: 'affiliation approved',
   affiliation_rejected: 'affiliation rejected',
+  affiliation_cancelled: 'affiliation cancelled',
   became_club_manager: 'became club manager',
   tournament_won: 'tournament won',
   removed_from_club_managers: 'removed from club managers',
@@ -244,6 +234,7 @@ const messageIdMap: Record<
 const iconMap: Record<UserNotificationEvent, LucideIcon> = {
   affiliation_approved: Check,
   affiliation_rejected: X,
+  affiliation_cancelled: X,
   became_club_manager: ShieldUser,
   tournament_won: Medal,
   removed_from_club_managers: Skull,

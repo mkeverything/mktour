@@ -8,10 +8,13 @@ export default async function ClubInfo() {
   const user = await publicCaller.auth.info();
   if (!user) redirect('/sign-in?from=/clubs/my');
   clubQueryPrefetch(user.selectedClub);
+  const statusInClub = await publicCaller.club.authStatus({
+    clubId: user.selectedClub || '',
+  });
 
   return (
     <HydrateClient>
-      <Dashboard userId={user.id} />
+      <Dashboard userId={user.id} statusInClub={statusInClub} />
     </HydrateClient>
   );
 }

@@ -28,6 +28,15 @@ const meta = {
     },
   },
 
+  userPlayerClubs: {
+    openapi: {
+      method: 'GET',
+      path: '/users/{userId}/player-clubs',
+      summary: 'get clubs where user has players',
+      tags: ['users'],
+    },
+  },
+
   usersInfoByUsername: {
     openapi: {
       method: 'GET',
@@ -235,6 +244,15 @@ const meta = {
       method: 'GET',
       path: '/clubs/{clubId}/auth-affiliation',
       summary: 'get auth user affiliation',
+      tags: ['clubs'],
+    },
+  },
+
+  clubAuthPlayer: {
+    openapi: {
+      method: 'GET',
+      path: '/clubs/{clubId}/auth-player',
+      summary: 'get auth user player in club',
       tags: ['clubs'],
     },
   },
@@ -510,6 +528,14 @@ const meta = {
       path: '/players/{id}',
       summary: 'edit player',
       tags: ['players'],
+    },
+  },
+  search: {
+    openapi: {
+      method: 'GET',
+      path: '/search',
+      summary: 'global search across tournaments, clubs and players',
+      tags: ['search'],
     },
   },
 } as const satisfies Record<string, OpenApiMeta>;

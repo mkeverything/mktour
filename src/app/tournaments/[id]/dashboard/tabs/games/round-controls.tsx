@@ -22,7 +22,7 @@ const RoundControls: FC<RoundControlProps> = ({
 
   return (
     <div
-      className={`px-mk sticky top-0 z-10 grid h-10 w-full grid-cols-3 items-center justify-between p-1 backdrop-blur-md`}
+      className={`px-mk bg-background/50 sticky top-0 z-10 grid h-10 w-full grid-cols-3 items-center justify-between p-1 backdrop-blur-md`}
     >
       <Button
         style={{ visibility: roundInView === 1 ? 'hidden' : 'visible' }}

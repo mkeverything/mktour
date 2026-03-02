@@ -1,8 +1,7 @@
-import { validateNewPlayer } from '@/lib/zod/new-player-validation-action';
 import { affiliations, players } from '@/server/db/schema/players';
 import { players_to_tournaments } from '@/server/db/schema/tournaments';
-import { affiliationStatusEnum } from '@/server/db/zod/enums';
-import { tournamentSchema } from '@/server/db/zod/tournaments';
+import { affiliationStatusEnum } from '@/server/zod/enums';
+import { tournamentSchema } from '@/server/zod/tournaments';
 import {
   createInsertSchema,
   createSelectSchema,
@@ -11,6 +10,9 @@ import {
 import z from 'zod';
 
 export const playersSelectSchema = createSelectSchema(players);
+export const playersWithUsernameSchema = createSelectSchema(players).extend({
+  username: z.string().nullable(),
+});
 export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
@@ -62,56 +64,23 @@ export const playersMinimalSchema = playersSelectSchema.omit({
   clubId: true,
 });
 
-export const playerFormSchema = playersInsertSchema
-  .omit({
-    id: true,
-    lastSeenAt: true,
-    userId: true,
-    ratingPeak: true,
-  })
-  .refine(
-    async (data) => {
-      return await validateNewPlayer(data);
-    },
-    { error: 'player exists error', path: ['nickname'] },
-  );
+export const playerFormSchema = playersInsertSchema.omit({
+  id: true,
+  lastSeenAt: true,
+  userId: true,
+  ratingPeak: true,
+});
 
 export const playerEditSchema = playersUpdateSchema
+  .pick({ nickname: true, realname: true })
   .extend({
     id: z.string(),
-    clubId: z.string(),
     nickname: z
       .string()
-      .min(3, {
-        error: 'min nickname length',
-      })
-      .max(30, {
-        error: 'max nickname length',
-      })
+      .min(2, { error: 'min nickname length' })
+      .max(30, { error: 'max nickname length' })
       .optional(),
-    rating: z
-      .number()
-      .min(0, {
-        error: 'min rating',
-      })
-      .max(3000, {
-        error: 'max rating',
-      })
-      .optional(),
-    ratingPeak: z
-      .number()
-      .min(0, {
-        error: 'min peak rating',
-      })
-      .max(3000, {
-        error: 'max peak rating',
-      })
-      .optional(),
-  })
-  .omit({
-    lastSeenAt: true,
-    ratingPeak: true,
-    ratingLastUpdateAt: true,
+    realname: z.string().max(50).nullable().optional(),
   });
 
 export const playersToTournamentsSelectSchema = createSelectSchema(
@@ -133,6 +102,7 @@ export const playerTournamentSchema = playersToTournamentsSelectSchema
     nickname: playersSelectSchema.shape.nickname,
     realname: playersSelectSchema.shape.realname,
     rating: playersSelectSchema.shape.rating,
+    username: playersWithUsernameSchema.shape.username,
   });
 
 export const playerStatsSchema = z.object({
@@ -168,11 +138,25 @@ export type AffiliationExtendedModel = z.infer<
 >;
 export type AffiliationMinimalModel = z.infer<typeof affiliationMinimalSchema>;
 export type PlayerModel = z.infer<typeof playersSelectSchema>;
+export type PlayerWithUsernameModel = z.infer<typeof playersWithUsernameSchema>;
 export type PlayerMinimalModel = z.infer<typeof playersMinimalSchema>;
 export type PlayerFormModel = z.infer<typeof playerFormSchema>;
 export type PlayerInsertModel = z.infer<typeof playersInsertSchema>;
 export type PlayerUpdateModel = z.infer<typeof playersUpdateSchema>;
 export type PlayerEditModel = z.infer<typeof playerEditSchema>;
 
+export const userPlayerClubSchema = z.object({
+  club: z.object({ id: z.string(), name: z.string() }),
+  player: playersSelectSchema.pick({
+    id: true,
+    nickname: true,
+    rating: true,
+    ratingDeviation: true,
+    ratingPeak: true,
+    lastSeenAt: true,
+  }),
+});
+
 export type PlayerStatsModel = z.infer<typeof playerStatsSchema>;
 export type PlayerAuthStatsModel = z.infer<typeof playerAuthStatsSchema>;
+export type UserPlayerClubModel = z.infer<typeof userPlayerClubSchema>;

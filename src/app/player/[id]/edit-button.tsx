@@ -10,15 +10,16 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { StatusInClub } from '@/server/db/zod/enums';
-import { PlayerModel } from '@/server/db/zod/players';
+import { StatusInClub } from '@/server/zod/enums';
+import { PlayerEditModel, PlayerModel } from '@/server/zod/players';
 import { Pencil } from 'lucide-react';
 import { FC, useState } from 'react';
 
 const EditButton: FC<{
-  player: PlayerModel;
+  player: Pick<PlayerModel, 'clubId'> & PlayerEditModel;
   status: StatusInClub | null;
-}> = ({ player, status }) => {
+  canEditRealname?: boolean;
+}> = ({ player, status, canEditRealname = true }) => {
   const [open, setOpen] = useState(false);
   return (
     <Root open={open} onOpenChange={setOpen}>
@@ -35,7 +36,13 @@ const EditButton: FC<{
           <Description hidden />
         </Header>
         <EditPlayerForm
-          {...{ player, clubId: player.clubId, status, setOpen }}
+          {...{
+            player,
+            clubId: player.clubId,
+            status,
+            setOpen,
+            canEditRealname,
+          }}
         />
       </Content>
     </Root>

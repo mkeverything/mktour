@@ -10,8 +10,8 @@ import {
   generateRandomDatabaseTournament,
 } from '@/lib/pairing-generators/common-generator.test';
 import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
-import type { PlayerTournamentModel } from '@/server/db/zod/players';
-import { GameModel } from '@/server/db/zod/tournaments';
+import type { PlayerTournamentModel } from '@/server/zod/players';
+import { GameModel } from '@/server/zod/tournaments';
 import { faker } from '@faker-js/faker';
 
 describe('pure matching generation test', () => {

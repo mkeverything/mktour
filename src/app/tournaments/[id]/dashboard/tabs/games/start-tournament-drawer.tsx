@@ -17,13 +17,13 @@ import { FC, useContext } from 'react';
 const StartTournamentDrawer: FC<{
   startedAt: number | undefined;
 }> = ({ startedAt }) => {
-  const { selectedGameId } = useContext(DashboardContext);
-  const open = !startedAt && !!selectedGameId;
+  const { selectedGameId, status } = useContext(DashboardContext);
+  const open = !startedAt && !!selectedGameId && status === 'organizer';
 
   return (
     <Root open={open}>
-      <Content>
-        <Header>
+      <Content className="flex flex-col">
+        <Header className="mb-mk">
           <Title>
             <FormattedMessage id="Tournament.Round.start tournament.title" />
           </Title>

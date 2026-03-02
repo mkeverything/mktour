@@ -39,7 +39,7 @@ const ClaimPlayer: FC<{
 
   const hasClaimed =
     userAffiliation &&
-    userAffiliation.status === 'requested' &&
+    userAffiliation.status === 'requested_by_user' &&
     id === userAffiliation.player.id;
 
   if (hasClaimed)
@@ -98,14 +98,33 @@ export const ClaimActionButton: FC<ClaimActionButtonProps> = ({
 }) => (
   <Button
     variant="outline"
-    className="flex gap-2 text-nowrap max-sm:size-9"
+    className="flex gap-2 text-nowrap"
     disabled={disabled}
     {...props}
   >
     <Icon />
-    <span className="hidden text-xs md:block">
+    <span className="text-xs">
       <FormattedMessage id={messageId} />
     </span>
+  </Button>
+);
+
+export const IconOnlyButton: FC<
+  {
+    icon: FC;
+    disabled?: boolean;
+    title?: string;
+  } & React.ComponentProps<'button'>
+> = ({ icon: Icon, disabled, title, ...props }) => (
+  <Button
+    variant="outline"
+    className="size-9"
+    size="icon"
+    disabled={disabled}
+    title={title}
+    {...props}
+  >
+    <Icon />
   </Button>
 );
 

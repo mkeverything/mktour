@@ -33,7 +33,7 @@ export async function getChangelog(limit = 3): Promise<ChangelogVersion[]> {
   let currentCategory: keyof ChangelogVersion['categories'] = 'others';
 
   const versionRegex =
-    /^(?:#|##)\s+(?:\[?(\d+\.\d+\.\d+)\]?.*)\s+\((\d{4}-\d{2}-\d{2})\)/;
+    /^(?:#|##)\s+(?:\[?(\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?)\]?.*)\s+\((\d{4}-\d{2}-\d{2})\)/;
 
   for (const line of lines) {
     const match = line.match(versionRegex);

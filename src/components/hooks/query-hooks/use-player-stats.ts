@@ -6,7 +6,12 @@ export const usePlayerStats = (playerId: string) => {
   return useQuery(trpc.player.stats.public.queryOptions({ playerId }));
 };
 
-export const usePlayerAuthStats = (playerId: string) => {
+export const usePlayerAuthStats = (
+  playerId: string,
+  enabled: boolean = true,
+) => {
   const trpc = useTRPC();
-  return useQuery(trpc.player.stats.auth.queryOptions({ playerId }));
+  return useQuery(
+    trpc.player.stats.auth.queryOptions({ playerId }, { enabled }),
+  );
 };

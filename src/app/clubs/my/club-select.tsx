@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { UserModel } from '@/server/db/zod/users';
+import { ClubModel } from '@/server/zod/clubs';
+import { UserModel } from '@/server/zod/users';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
@@ -37,8 +38,8 @@ const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
 
   if (clubs.length === 1)
     return (
-      <div className="p-mk m-auto w-full lg:max-w-lg lg:px-0">
-        <Card className="bg-primary/5 border-primary/10 w-full rounded-lg px-3 py-2 text-sm">
+      <div className="p-mk to-background m-auto w-full bg-linear-to-t from-transparent to-50% pb-0 lg:px-[20%]">
+        <Card className="bg-card border-primary/10 shadow-background/50 w-full rounded-lg px-3 py-2 text-sm shadow-md">
           {placeholder}
         </Card>
       </div>
@@ -52,9 +53,8 @@ const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
         })
       }
     >
-      <div className="p-mk w-full lg:max-w-lg lg:px-0">
-        {/* <SelectTrigger className="placeholder:text-muted-foreground border-box focus:ring-ring flex w-full max-w-3xl items-center justify-between rounded-md border-0 py-0 px-mk text-sm shadow-none backdrop-blur-md focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:mx-auto"> */}
-        <SelectTrigger className="bg-primary/5 border-primary/10 w-full">
+      <div className="p-mk m-auto w-full lg:px-[20%]">
+        <SelectTrigger className="bg-card border-primary/10 shadow-background/50 w-full shadow-md">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
       </div>
@@ -84,6 +84,6 @@ const SelectSkeleton = () => (
   </div>
 );
 
-type ClubSelectProps = { id: string; name: string };
+type ClubSelectProps = Pick<ClubModel, 'id' | 'name'>;
 
 export default ClubSelect;

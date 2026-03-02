@@ -1,7 +1,9 @@
 /* eslint-disable */
 // FIXME eslint
 import { ClassValue, clsx } from 'clsx';
+import { Clock, icons } from 'lucide-react';
 import { customAlphabet } from 'nanoid';
+import { FC } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -18,8 +20,8 @@ export const newid = customAlphabet(
 );
 
 export function shallowEqual(
-  object1: { [key: string]: string | number | undefined | null },
-  object2: { [key: string]: string | number | undefined | null },
+  object1: { [key: string]: string | number | boolean | undefined | null },
+  object2: { [key: string]: string | number | boolean | undefined | null },
 ) {
   const keys1 = Object.keys(object1);
   const keys2 = Object.keys(object2);
@@ -94,19 +96,28 @@ export function debounce<T extends (..._args: any[]) => any>(
   };
 }
 
+export const getClockIcon = (time: Date | null | undefined): FC => {
+  if (!time) return Clock;
+
+  let hour = time.getHours();
+  const minutes = time.getMinutes();
+  if (minutes >= 30) {
+    hour = hour + 1;
+  }
+  hour = hour % 12;
+  const clockIcon = `Clock${hour === 0 ? '12' : hour}` as keyof typeof icons;
+
+  return icons[clockIcon];
+};
+
 export function getSwissRecommendedRoundsNumber(players: number): number {
-  if (players < 2) return 0;
+  if (players < 2) return 1;
   if (players === 2) return 1;
   if (players < 7) return Math.floor(Math.log2(players - 1)) + 2;
   return Math.floor(Math.log2(players - 1)) + 3;
 }
 
-export function getSwissMinRoundsNumber(players: number): number {
-  if (players < 2) return 0;
-  return 1;
-}
-
 export function getSwissMaxRoundsNumber(players: number): number {
-  if (players < 4) return players;
-  return players % 2 === 0 ? players - 3 : players - 2;
+  if (players <= 4) return Math.max(1, players - 1);
+  return Math.max(1, players % 2 === 0 ? players - 3 : players - 2);
 }

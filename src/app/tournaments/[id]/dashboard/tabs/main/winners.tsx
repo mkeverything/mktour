@@ -1,8 +1,8 @@
 'use client';
 
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
-import { TournamentInfoModel } from '@/server/db/zod/tournaments';
+import { PlayerTournamentModel } from '@/server/zod/players';
+import { TournamentInfoModel } from '@/server/zod/tournaments';
 import Link from 'next/link';
 import { FC } from 'react';
 
@@ -12,7 +12,7 @@ const Winners: FC<TournamentInfoModel> = ({ tournament }) => {
 
   if (!winners || !tournament.closedAt) return null;
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:hidden">
       {Object.entries(winners).map(([place, players]) => (
         <MedalGroup key={place} place={place} players={players} />
       ))}

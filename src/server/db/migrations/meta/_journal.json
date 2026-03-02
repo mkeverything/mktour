@@ -15,6 +15,13 @@
       "when": 1769053285946,
       "tag": "0001_gorgeous_skin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772387034216,
+      "tag": "0002_ancient_shadow_king",
+      "breakpoints": true
     }
   ]
 }

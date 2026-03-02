@@ -5,16 +5,6 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
-import { clubsSelectSchema } from '@/server/db/zod/clubs';
-import {
-  playerAuthStatsSchema,
-  playerEditSchema,
-  playerFormSchema,
-  playersSelectSchema,
-  playerStatsSchema,
-} from '@/server/db/zod/players';
-import { playerToTournamentSchema } from '@/server/db/zod/tournaments';
-import { usersSelectMinimalSchema } from '@/server/db/zod/users';
 import {
   createPlayer,
   deletePlayer,
@@ -22,8 +12,9 @@ import {
 } from '@/server/mutations/club-managing';
 import {
   abortAffiliationRequest,
-  acceptAffiliation,
+  acceptAffiliationByClub,
   affiliateUser,
+  cancelAffiliationByClub,
   cancelAffiliationByUser,
   rejectAffiliation,
   requestAffiliation,
@@ -35,13 +26,29 @@ import {
   getPlayerStats,
   getPlayersTournaments,
 } from '@/server/queries/player';
+import { clubsSelectSchema } from '@/server/zod/clubs';
+import {
+  clubIdInputSchema,
+  notificationIdInputSchema,
+  playerIdInputSchema,
+  userIdInputSchema,
+} from '@/server/zod/common';
+import {
+  playerAuthStatsSchema,
+  playerEditSchema,
+  playerFormSchema,
+  playersSelectSchema,
+  playerStatsSchema,
+} from '@/server/zod/players';
+import { playerToTournamentSchema } from '@/server/zod/tournaments';
+import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 export const playerRouter = {
   info: publicProcedure
     .meta(meta.playerInfo)
-    .input(z.object({ playerId: z.string() }))
+    .input(playerIdInputSchema)
     .output(
       playersSelectSchema
         .extend({
@@ -64,7 +71,7 @@ export const playerRouter = {
     }),
   lastTournaments: publicProcedure
     .meta(meta.playersLastTournaments)
-    .input(z.object({ playerId: z.string() }))
+    .input(playerIdInputSchema)
     .output(z.array(playerToTournamentSchema))
     .query(async (opts) => {
       const { input } = opts;
@@ -73,35 +80,32 @@ export const playerRouter = {
   affiliation: {
     request: protectedProcedure
       .input(
-        z.object({
-          playerId: z.string(),
-          userId: z.string(),
-          clubId: z.string(),
+        playerIdInputSchema.extend({
+          userId: userIdInputSchema.shape.userId,
+          clubId: clubIdInputSchema.shape.clubId,
         }),
       )
       .mutation(async (opts) => {
         const { input } = opts;
         await requestAffiliation(input);
       }),
-    accept: clubAdminProcedure
+    acceptByClub: clubAdminProcedure
       .input(
-        z.object({
-          clubId: z.string(),
+        clubIdInputSchema.extend({
           affiliationId: z.string(),
-          notificationId: z.string(),
+          notificationId: notificationIdInputSchema.shape.notificationId,
         }),
       )
       .mutation(async (opts) => {
         const { input } = opts;
         const { affiliationId, notificationId } = input;
-        await acceptAffiliation({ affiliationId, notificationId });
+        await acceptAffiliationByClub({ affiliationId, notificationId });
       }),
     reject: clubAdminProcedure
       .input(
-        z.object({
-          clubId: z.string(),
+        clubIdInputSchema.extend({
           affiliationId: z.string(),
-          notificationId: z.string(),
+          notificationId: notificationIdInputSchema.shape.notificationId,
         }),
       )
       .mutation(async (opts) => {
@@ -111,10 +115,9 @@ export const playerRouter = {
       }),
     abortRequest: protectedProcedure
       .input(
-        z.object({
-          userId: z.string(),
+        userIdInputSchema.extend({
           affiliationId: z.string(),
-          playerId: z.string(),
+          playerId: playerIdInputSchema.shape.playerId,
         }),
       )
       .mutation(async (opts) => {
@@ -122,11 +125,7 @@ export const playerRouter = {
         await abortAffiliationRequest(input);
       }),
     affiliateAuth: clubAdminProcedure
-      .input(
-        z.object({
-          playerId: z.string(),
-        }),
-      )
+      .input(playerIdInputSchema)
       .mutation(async (opts) => {
         const {
           input,
@@ -136,23 +135,26 @@ export const playerRouter = {
         await affiliateUser({ playerId, user, clubId });
       }),
     cancelByUser: protectedProcedure
-      .input(
-        z.object({
-          playerId: z.string(),
-        }),
-      )
+      .input(playerIdInputSchema)
       .mutation(async (opts) => {
         const { input } = opts;
         await cancelAffiliationByUser({ userId: opts.ctx.user.id, ...input });
       }),
+    cancelByClub: clubAdminProcedure
+      .input(
+        playerIdInputSchema.extend({
+          clubId: clubIdInputSchema.shape.clubId,
+          skipNotification: z.boolean().optional(),
+        }),
+      )
+      .mutation(async (opts) => {
+        const { input } = opts;
+        await cancelAffiliationByClub(input);
+      }),
   },
   delete: protectedProcedure
     .meta(meta.playersDelete)
-    .input(
-      z.object({
-        playerId: z.string(),
-      }),
-    )
+    .input(playerIdInputSchema)
     .output(z.void())
     .mutation(async ({ input, ctx }) => {
       const clubs = await getUserClubIds({ userId: ctx.user.id });
@@ -163,7 +165,7 @@ export const playerRouter = {
       if (!isAdmin) throw new TRPCError({ code: 'UNAUTHORIZED' });
       await deletePlayer(input);
     }),
-  edit: clubAdminProcedure
+  edit: protectedProcedure
     .meta(meta.playersEdit)
     .input(playerEditSchema)
     .output(playersSelectSchema)
@@ -174,7 +176,7 @@ export const playerRouter = {
   stats: {
     public: publicProcedure
       .meta(meta.playersPublicStats)
-      .input(z.object({ playerId: z.string() }))
+      .input(playerIdInputSchema)
       .output(playerStatsSchema)
       .query(async (opts) => {
         const { input } = opts;
@@ -182,7 +184,7 @@ export const playerRouter = {
       }),
     auth: authProcedure
       .meta(meta.playersAuthStats)
-      .input(z.object({ playerId: z.string() }))
+      .input(playerIdInputSchema)
       .output(playerAuthStatsSchema.nullable())
       .query(async ({ input, ctx }) => {
         if (!ctx.user) return null;

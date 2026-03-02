@@ -12,8 +12,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { StatusInClub } from '@/server/db/zod/enums';
-import { PlayerEditModel } from '@/server/db/zod/players';
+import { StatusInClub } from '@/server/zod/enums';
+import { PlayerEditModel } from '@/server/zod/players';
 import { Save } from 'lucide-react';
 import { MessageKeys, NestedKeyOf } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -23,13 +23,15 @@ import { ControllerRenderProps, useForm, UseFormReturn } from 'react-hook-form';
 const EditPlayerForm: FC<{
   clubId: string;
   player: PlayerEditModel;
-  status: StatusInClub | null;
+  status: StatusInClub | null | undefined;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  canEditRealname?: boolean;
 }> = ({
-  player: { id, nickname, realname, rating },
+  player: { id, nickname, realname },
   clubId,
   status,
   setOpen,
+  canEditRealname = true,
 }) => {
   const editPlayerMutation = useEditPlayerMutation();
   const router = useRouter();
@@ -38,20 +40,20 @@ const EditPlayerForm: FC<{
       id,
       nickname,
       realname,
-      rating,
     },
   });
 
   const onSubmit = (values: PlayerEditModel) => {
-    editPlayerMutation.mutate(
-      { ...values, clubId },
-      {
-        onSuccess: () => {
-          setOpen(false);
-          router.refresh();
-        },
+    const payload: PlayerEditModel = { id };
+    if (form.formState.dirtyFields.nickname) payload.nickname = values.nickname;
+    if (form.formState.dirtyFields.realname) payload.realname = values.realname;
+
+    editPlayerMutation.mutate(payload, {
+      onSuccess: () => {
+        setOpen(false);
+        router.refresh();
       },
-    );
+    });
   };
 
   return (
@@ -61,7 +63,9 @@ const EditPlayerForm: FC<{
         className="gap-mk pb-mk flex flex-col"
       >
         <Field name="nickname" placeholder={nickname} form={form} />
-        <Field name="realname" placeholder={realname || ''} form={form} />
+        {canEditRealname && (
+          <Field name="realname" placeholder={realname || ''} form={form} />
+        )}
         <div className="gap-mk mt-mk flex flex-col">
           <Button
             type="submit"

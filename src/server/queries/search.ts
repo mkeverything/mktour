@@ -1,9 +1,9 @@
-import { SearchParamsModel } from '@/server/api/routers/search';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
+import { SearchParamsModel } from '@/server/zod/search';
 import { and, eq, or, sql } from 'drizzle-orm';
 
 export async function globalSearch(params: SearchParamsModel) {
@@ -42,6 +42,14 @@ export async function globalSearch(params: SearchParamsModel) {
   }
   if (filter && filter.type === 'tournaments') {
     const { clubId } = filter;
+    if (!query) {
+      const tournamentsResult = await db
+        .select()
+        .from(tournaments)
+        .where(eq(tournaments.clubId, clubId))
+        .limit(15);
+      return { tournaments: tournamentsResult };
+    }
     const tournamentsResult = await db
       .select()
       .from(tournaments)

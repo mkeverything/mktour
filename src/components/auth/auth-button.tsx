@@ -3,6 +3,8 @@
 import { useSignOutMutation } from '@/components/hooks/mutation-hooks/use-sign-out';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useUserNotificationsCounter } from '@/components/hooks/query-hooks/use-user-notifications';
+import LocaleSwitcher from '@/components/locale-switcher';
+import ModeToggler from '@/components/navigation/mode-toggler';
 import Badge, { BadgeWithCount } from '@/components/ui-custom/badge';
 import {
   DropdownMenu,
@@ -29,25 +31,22 @@ export default function AuthButton() {
   const { data: notificationsCounter } = useUserNotificationsCounter();
 
   if (isLoading)
-    return (
-      <Button className={`flex-row gap-2 p-2`} variant="ghost" asChild disabled>
-        <Link href="/login/lichess" prefetch={false}>
-          <LichessLogo />
-          <Skeleton className="hidden h-4 w-16 sm:block" />
-        </Link>
-      </Button>
-    );
+    return <Skeleton className="p-mk my-auto hidden h-4 w-24 sm:block" />;
 
   if (!user) {
     return (
-      <>
+      <div className="flex items-center">
         <Button className={`flex-row gap-2 p-2`} variant="ghost" asChild>
           <Link href="/login/lichess" prefetch={false}>
             <LichessLogo />
             <span className="hidden sm:block">{t('Profile.login')}</span>
           </Link>
         </Button>
-      </>
+        <div className="hidden items-center md:flex">
+          <LocaleSwitcher />
+          <ModeToggler />
+        </div>
+      </div>
     );
   }
 
@@ -63,7 +62,7 @@ export default function AuthButton() {
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="-translate-x-2 translate-y-1">
+        <DropdownMenuContent>
           {menuItems.map(({ path, title }) => (
             <Link href={path} key={title}>
               <StyledItem className="w-full">
@@ -85,6 +84,10 @@ export default function AuthButton() {
           >
             {t('Profile.logout')}
           </StyledItem>
+          <div className="p-mk mx-mk mt-mk hidden items-center justify-evenly border-t md:flex">
+            <LocaleSwitcher />
+            <ModeToggler />
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </>

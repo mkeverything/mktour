@@ -1,18 +1,17 @@
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { tournaments } from '@/server/db/schema/tournaments';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { TournamentModel } from '@/server/db/zod/tournaments';
+import { TournamentWithClubModel } from '@/server/zod/tournaments';
 import { eq, inArray } from 'drizzle-orm';
 
 export default async function getTournamentsToUserClubsQuery({
-  user,
-}: Pick<UserClubsQueryProps, 'user'>) {
+  userId,
+}: UserClubsQueryProps) {
   // Get the club IDs the user is associated with
   const userClubs = await db
     .select()
     .from(clubs_to_users)
-    .where(eq(clubs_to_users.userId, user.id));
+    .where(eq(clubs_to_users.userId, userId));
 
   const clubIds = userClubs.map((club) => club.clubId);
 
@@ -34,10 +33,5 @@ export default async function getTournamentsToUserClubsQuery({
 }
 
 interface UserClubsQueryProps {
-  user: { id: string };
-}
-
-export interface TournamentWithClubModel {
-  tournament: TournamentModel;
-  club: ClubModel;
+  userId: string;
 }

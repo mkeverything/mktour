@@ -11,8 +11,10 @@ import { useContext } from 'react';
 
 export default function FinishTournamentButton({
   lastRoundNumber,
+  className,
 }: {
   lastRoundNumber: number;
+  className?: string;
 }) {
   const queryClient = useQueryClient();
   const { id: tournamentId } = useParams<{ id: string }>();
@@ -39,9 +41,9 @@ export default function FinishTournamentButton({
 
   return (
     <Button
-      className="w-full"
       onClick={() => mutate({ tournamentId, closedAt: new Date() })}
       disabled={isPending}
+      className={`max-md:w-full ${className}`}
     >
       {isPending ? <LoadingSpinner /> : <Save />}
       {t('finish tournament')}

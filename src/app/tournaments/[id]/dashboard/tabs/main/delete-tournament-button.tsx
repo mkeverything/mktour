@@ -34,10 +34,19 @@ export default function DeleteTournamentButton() {
   return (
     <Root open={open} onOpenChange={setOpen}>
       <Trigger asChild>
-        <Button variant="destructive">
-          <CircleX />
-          {t('Delete.title')}
-        </Button>
+        <div>
+          <Button
+            variant="destructive"
+            size="icon-lg"
+            className="max-md:hidden"
+          >
+            <CircleX />
+          </Button>
+          <Button variant="destructive" className="w-full md:hidden">
+            <CircleX />
+            {t('Delete.title')}
+          </Button>
+        </div>
       </Trigger>
       <Content>
         <Header>

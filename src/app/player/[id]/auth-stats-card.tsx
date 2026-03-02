@@ -3,6 +3,7 @@
 import { usePlayerAuthStats } from '@/components/hooks/query-hooks/use-player-stats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { PlayerAuthStatsModel } from '@/server/zod/players';
 import { Target } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
@@ -10,26 +11,39 @@ import { FC } from 'react';
 interface AuthStatsCardProps {
   playerId: string;
   playerNickname: string;
+  clubName: string;
+  authStats?: PlayerAuthStatsModel | null;
+  isPending?: boolean;
+  showWhenEmpty?: boolean;
 }
 
 const AuthStatsCard: FC<AuthStatsCardProps> = ({
   playerId,
   playerNickname,
+  clubName,
+  authStats: providedAuthStats,
+  isPending: providedIsPending,
+  showWhenEmpty = true,
 }) => {
-  const { data: authStats, isPending } = usePlayerAuthStats(playerId);
+  const hasProvidedState =
+    providedAuthStats !== undefined && providedIsPending !== undefined;
+  const { data: queriedAuthStats, isPending: queriedIsPending } =
+    usePlayerAuthStats(playerId, !hasProvidedState);
+  const authStats = hasProvidedState ? providedAuthStats : queriedAuthStats;
+  const isPending = hasProvidedState ? providedIsPending : queriedIsPending;
   const t = useTranslations('Player.Stats');
 
-  if (!isPending && !authStats) return null;
+  if (!isPending && !authStats && !showWhenEmpty) return null;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+    <Card className="bg-muted/30 mt-3 border-dashed">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
           <Target className="size-4" />
-          {t('h2h')}
+          {t('yourScore')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 pb-2">
         {isPending ? (
           <H2HSkeleton />
         ) : authStats ? (
@@ -41,7 +55,11 @@ const AuthStatsCard: FC<AuthStatsCardProps> = ({
             draws={authStats.draws}
           />
         ) : (
-          <p className="text-muted-foreground text-sm">{t('h2hEmpty')}</p>
+          <div className="flex min-h-12 items-center justify-center">
+            <p className="text-muted-foreground text-center text-xs leading-relaxed">
+              {t('h2hEmptyForClub', { player: playerNickname, club: clubName })}
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -69,38 +87,34 @@ const H2HDisplay: FC<H2HDisplayProps> = ({
   const opponentScore = opponentWins + draws * 0.5;
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-start justify-center gap-4">
-        <span className="text-muted-foreground flex-1 pt-1 text-right text-sm">
-          {playerNickname}
-        </span>
-        <div className="flex flex-col items-center">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{playerScore}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-2xl font-bold">{opponentScore}</span>
-          </div>
-          <span className="text-muted-foreground text-xs">
-            ({playerWins}-{draws}-{opponentWins})
-          </span>
+    <div className="grid min-h-12 w-full grid-cols-3 items-center gap-2">
+      <span className="text-muted-foreground truncate text-center text-xs">
+        {playerNickname}
+      </span>
+      <div className="flex flex-col items-center justify-center leading-none">
+        <div className="flex items-baseline justify-center gap-1">
+          <span className="text-base font-semibold">{playerScore}</span>
+          <span className="text-muted-foreground text-xs">:</span>
+          <span className="text-base font-semibold">{opponentScore}</span>
         </div>
-        <span className="text-muted-foreground flex-1 pt-1 text-left text-sm">
-          {opponentNickname}
+        <span className="text-muted-foreground text-3xs">
+          ({playerWins}-{draws}-{opponentWins})
         </span>
       </div>
+      <span className="text-muted-foreground truncate text-center text-xs">
+        {opponentNickname}
+      </span>
     </div>
   );
 };
 
 const H2HSkeleton: FC = () => (
-  <div className="flex flex-col gap-2">
-    <div className="flex items-start justify-center gap-4">
-      <Skeleton className="h-4 w-20 flex-1" />
-      <div className="flex flex-col items-center gap-1">
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-3 w-16" />
-      </div>
-      <Skeleton className="h-4 w-20 flex-1" />
+  <div className="grid min-h-12 w-full grid-cols-3 items-center gap-2">
+    <Skeleton className="h-3 w-full" />
+    <div className="flex flex-col items-center gap-1">
+      <Skeleton className="h-5 w-16" />
+      <Skeleton className="h-2 w-12" />
     </div>
+    <Skeleton className="h-3 w-full" />
   </div>
 );

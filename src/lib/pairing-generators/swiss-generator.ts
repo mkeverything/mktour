@@ -36,8 +36,8 @@ import {
   isHeteroBracket,
 } from '@/lib/pairing-generators/swiss-generator/types';
 import { generateWeightedPairing } from '@/lib/pairing-generators/swiss-generator/weighted-pairing';
-import type { PlayerTournamentModel } from '@/server/db/zod/players';
-import { GameModel } from '@/server/db/zod/tournaments';
+import type { PlayerTournamentModel } from '@/server/zod/players';
+import { GameModel } from '@/server/zod/tournaments';
 
 /*
  * This function generates the bracket round for the Swiss tournament. It gets the

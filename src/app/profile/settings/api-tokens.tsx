@@ -27,7 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ApiTokenModel } from '@/server/db/zod/users';
+import { ApiTokenModel } from '@/server/zod/users';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Eye, EyeOff, Info, Plus, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';

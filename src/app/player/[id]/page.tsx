@@ -1,19 +1,16 @@
+import { turboPascal } from '@/app/fonts';
 import Loading from '@/app/loading';
 import { AffiliateButton } from '@/app/player/[id]/affiliate-button';
-import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
 import ClaimPlayer from '@/app/player/[id]/claim-button';
 import EditButton from '@/app/player/[id]/edit-button';
-import LastTournaments from '@/app/player/[id]/last-tournaments';
 import PlayerStats from '@/app/player/[id]/player-stats';
-import LichessLogo from '@/components/ui-custom/lichess-logo';
-import { Button } from '@/components/ui/button';
+import LastTournaments from '@/components/last-tournaments';
 import { CardTitle } from '@/components/ui/card';
 import { publicCaller } from '@/server/api';
-import { PlayerModel } from '@/server/db/zod/players';
-import { ChevronRight, User2, Users2, UserX } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+import { PlayerModel } from '@/server/zod/players';
+import { ChevronRight, Users2 } from 'lucide-react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { FC, Suspense } from 'react';
 import 'server-only';
 
@@ -32,8 +29,9 @@ async function PlayerPageContent(props: PlayerPageProps) {
     publicCaller.player.info({ playerId: id }),
   ]);
   if (!playerData) notFound();
+  if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
 
-  const { user: playerUser, club, ...player } = playerData;
+  const { club, ...player } = playerData;
   const [status, affiliation] = await Promise.all([
     publicCaller.club.authStatus({
       clubId: club.id,
@@ -44,11 +42,9 @@ async function PlayerPageContent(props: PlayerPageProps) {
     playerId: player.id,
   });
 
-  const isOwnPlayer = user && player.userId === user.id;
-  const canEdit = status !== null || isOwnPlayer;
+  const canEdit = status !== null;
   const canClaim = !status && user && !player.userId;
   const canAffiliate = status !== null && !player.userId && !affiliation;
-  const t = await getTranslations('Player');
 
   return (
     <div className="mk-container flex w-full flex-col gap-4">
@@ -66,39 +62,11 @@ async function PlayerPageContent(props: PlayerPageProps) {
       <PlayerHeader player={player} />
       {/* Action Toolbar */}
       <div className="flex justify-end gap-2">
-        {playerUser ? (
-          <Button variant="outline" className="max-w-3/5 gap-2" asChild>
-            <Link href={`/user/${playerUser.username}`}>
-              <User2 className="size-4" />
-              <span className="truncate">{playerUser.username}</span>
-            </Link>
-          </Button>
-        ) : (
-          <Button variant="outline" className="gap-2" disabled>
-            <UserX className="size-4" />
-            <span>{t('not linked')}</span>
-          </Button>
-        )}
-        {playerUser && (
-          <Button variant="outline" size="icon" className="gap-2" asChild>
-            <Link
-              href={`https://lichess.org/@/${playerUser.username}`}
-              target="_blank"
-            >
-              <div className="size-4">
-                <LichessLogo />
-              </div>
-            </Link>
-          </Button>
-        )}
         {canAffiliate && <AffiliateButton player={player} />}
-        {isOwnPlayer && status && (
-          <CancelAffiliationByUser playerId={player.id} />
-        )}
         {user && canEdit && <EditButton player={player} status={status} />}
         {canClaim && <ClaimPlayer userId={user.id} clubId={club.id} />}
       </div>
-      <PlayerStats player={player} />
+      <PlayerStats clubName={club.name} player={player} />
       <LastTournaments tournaments={playerLastTournaments} />
     </div>
   );
@@ -108,7 +76,9 @@ const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
   <div className="p-mk">
     <div className="flex items-center justify-between">
       <div className="flex flex-col gap-1">
-        <CardTitle className="text-2xl">{player.nickname}</CardTitle>
+        <CardTitle className={`text-4xl font-light ${turboPascal.className}`}>
+          {player.nickname}
+        </CardTitle>
         {player.realname && (
           <span className="text-muted-foreground text-sm">
             {player.realname}

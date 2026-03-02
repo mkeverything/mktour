@@ -9,11 +9,14 @@ import useOutsideClick from '@/components/hooks/use-outside-click';
 import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { GameResult } from '@/server/db/zod/enums';
+import { GameResult } from '@/server/zod/enums';
+import { GameModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { FC, useContext, useRef } from 'react';
+import { toast } from 'sonner';
 
 const GameItem: FC<GameProps> = ({
   id,
@@ -23,21 +26,53 @@ const GameItem: FC<GameProps> = ({
   roundNumber,
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
-  const { selectedGameId, setSelectedGameId, sendJsonMessage, status } =
-    useContext(DashboardContext);
+  const t = useTranslations('Toasts');
+  const {
+    selectedGameId,
+    setSelectedGameId,
+    sendJsonMessage,
+    status,
+    playerId,
+    userId,
+  } = useContext(DashboardContext);
   const queryClient = useQueryClient();
   const mutation = useTournamentSetGameResult(queryClient, {
     tournamentId,
     sendJsonMessage,
   });
   const { data } = useTournamentInfo(tournamentId);
-  const { userId } = useContext(DashboardContext);
   const ref = useRef<HTMLDivElement>(null);
-  const selected = selectedGameId === id;
-  const muted = result && !selected;
   const hasStarted = !!data?.tournament.startedAt;
-  const disabled = status !== 'organizer' || !!data?.tournament.closedAt;
+  const selected = selectedGameId === id;
+  const isActive = selected && hasStarted;
+  const muted = result && !selected;
+  const isClosed = !!data?.tournament.closedAt;
+  const allowPlayersSetResults = !!data?.club.allowPlayersSetResults;
+  // players can only edit their own games, and only after tournament has started
+  const isPlayerInGame =
+    playerId === playerLeft.whiteId || playerId === playerRight.blackId;
+  const canEdit =
+    status === 'organizer' ||
+    (status === 'player' && isPlayerInGame && hasStarted);
+  const disabled = !canEdit || isClosed;
   const draw = result === '1/2-1/2';
+
+  const handleOpenGame = () => {
+    if (selected) {
+      setSelectedGameId(null);
+      return;
+    }
+    const playerBlockedByClubSetting =
+      status === 'player' &&
+      isPlayerInGame &&
+      hasStarted &&
+      !allowPlayersSetResults;
+    if (playerBlockedByClubSetting) {
+      toast.warning(t('player result setting disabled'));
+      return;
+    }
+    setSelectedGameId(id);
+  };
 
   const handleMutate = (newResult: GameResult) => {
     if (!userId) return;
@@ -61,13 +96,6 @@ const GameItem: FC<GameProps> = ({
     selected,
   };
 
-  // deprecated to allow multiple mutations in parallel (without flickering)
-  // useEffect(() => {
-  //   if (mutation.isSuccess) {
-  //     setSelectedGameId(null);
-  //   }
-  // }, [mutation.isSuccess, setSelectedGameId]);
-
   useOutsideClick(() => {
     if (selected) {
       setSelectedGameId(null);
@@ -75,42 +103,44 @@ const GameItem: FC<GameProps> = ({
   }, ref);
 
   return (
-    <PortalWrapper portalled={selected}>
+    <PortalWrapper portalled={isActive}>
       <motion.div
         key={id}
         ref={ref}
-        className={`${disabled && 'pointer-events-none'} cursor-pointer rounded-lg shadow-md ${
-          selected ? 'z-50' : 'z-0'
+        className={`${disabled && 'pointer-events-none'} cursor-pointer ${
+          isActive ? 'z-50' : 'z-0'
         }`}
         initial={{ scale: 1, y: 0 }}
         exit={{ scale: 1, y: 0 }}
-        animate={selected ? { scale: 1.05, y: -10 } : { scale: 1, y: 0 }}
+        animate={isActive ? { scale: 1.05, y: -10 } : { scale: 1, y: 0 }}
         transition={{ type: 'spring', bounce: 0.4 }}
-        onClick={() => setSelectedGameId(!selected ? id : null)}
+        onClick={handleOpenGame}
       >
         <Card
-          className={`grid ${muted && 'opacity-50'} h-16 w-full grid-cols-3 items-center gap-2 border p-2 text-sm transition-all select-none ${!selected && 'pointer-events-none'}`}
+          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerInGame && 'border-3'}`}
         >
           <Player
             isWinner={result === '1-0'}
             handleMutate={() => handleMutate('1-0')}
-            selected={selected}
+            selected={isActive}
             nickname={playerLeft.whiteNickname}
             position={{ justify: 'justify-self-start', text: 'text-left' }}
+            className={`${playerId === playerLeft.whiteId && 'font-bold'}`}
           />
           <Button
             variant="ghost"
             onClick={() => handleMutate('1/2-1/2')}
-            className={`mx-4 flex h-full w-full min-w-16 grow gap-2 justify-self-center rounded-sm p-1 px-2 select-none ${selected && draw && 'mk-link'}`}
+            className={`mx-mk-2 gap-mk col-span-1 flex size-full ${!isActive && 'max-w-10'} justify-self-center rounded-sm p-0 select-none ${isActive && draw && 'mk-link'}`}
           >
-            <Result {...resultProps} />
+            <Result {...resultProps} selected={isActive} />
           </Button>
           <Player
             isWinner={result === '0-1'}
             handleMutate={() => handleMutate('0-1')}
-            selected={selected}
+            selected={isActive}
             nickname={playerRight.blackNickname}
             position={{ justify: 'justify-self-end', text: 'text-right' }}
+            className={`${playerId === playerRight.blackId && 'font-bold'}`}
           />
         </Card>
       </motion.div>
@@ -121,8 +151,8 @@ const GameItem: FC<GameProps> = ({
 type GameProps = {
   id: string;
   result: GameResult | null;
-  playerLeft: Record<'whiteId' | 'whiteNickname', string>;
-  playerRight: Record<'blackId' | 'blackNickname', string>;
+  playerLeft: Pick<GameModel, 'whiteId' | 'whiteNickname'>;
+  playerRight: Pick<GameModel, 'blackId' | 'blackNickname'>;
   roundNumber: number;
 };
 

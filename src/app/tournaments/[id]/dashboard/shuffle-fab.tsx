@@ -5,6 +5,7 @@ import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
+import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Shuffle } from 'lucide-react';
@@ -17,18 +18,26 @@ const ShuffleFab = () => {
   const players = useTournamentPlayers(tournamentId);
   const games = useTournamentRoundGames({ tournamentId, roundNumber: 1 });
   const { userId } = useContext(DashboardContext);
-  if (!userId) throw new Error('USERID_NOT_FOUND_IN_CONTEXT');
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
+  const { sendJsonMessage, status } = useContext(DashboardContext);
   const { isPending, mutate } = useSaveRound({
     queryClient,
     sendJsonMessage,
     isTournamentGoing: false,
   });
+  const { isDesktop } = useContext(MediaQueryContext);
 
-  if (data?.tournament.startedAt || !games.data || !players.data) return null;
+  if (
+    data?.tournament.startedAt ||
+    !games.data ||
+    !players.data ||
+    !userId ||
+    status !== 'organizer'
+  )
+    return null;
 
-  if (players.data && players.data.length < 3) return <AddPlayerDrawer />;
+  if (players.data && players.data.length < 3)
+    return isDesktop ? null : <AddPlayerDrawer />;
 
   const handleClick = () => {
     const newGames = generateRandomRoundGames({

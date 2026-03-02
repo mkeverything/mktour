@@ -1,3 +1,4 @@
+import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import AddFakerPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-fake-player';
 import AddNewPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-new-player';
 import AddPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player';
@@ -5,11 +6,11 @@ import Fab from '@/components/fab';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
-import { PlayerFormModel } from '@/server/db/zod/players';
+import { PlayerFormModel } from '@/server/zod/players';
 import { ArrowLeft, Plus, UserPlus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useContext, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
 const AddPlayerDrawer = () => {
@@ -19,6 +20,7 @@ const AddPlayerDrawer = () => {
   const [addingNewPlayer, setAddingNewPlayer] = useState(false);
   const t = useTranslations('Tournament.AddPlayer');
   const [isAnimating, setIsAnimating] = useState(false);
+  const { status } = useContext(DashboardContext);
 
   useHotkeys(
     'shift+equal',
@@ -53,13 +55,18 @@ const AddPlayerDrawer = () => {
   };
 
   const { data: tournamentInfo } = useTournamentInfo(tournamentId);
-  if (!tournamentInfo || tournamentInfo.tournament.startedAt) return null;
+  if (
+    !tournamentInfo ||
+    tournamentInfo.tournament.startedAt ||
+    status !== 'organizer'
+  )
+    return null;
 
   return (
     <>
       <Fab
         container={open || isAnimating ? document.body : undefined}
-        className={`${(open || isAnimating) && 'z-60'}`}
+        className={`${(open || isAnimating) && 'z-60 md:hidden'}`}
         onClick={() => handleChange(!open)}
         icon={open ? X : UserPlus}
       />

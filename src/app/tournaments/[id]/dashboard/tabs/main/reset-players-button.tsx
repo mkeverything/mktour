@@ -34,10 +34,15 @@ export default function ResetTournamentPButton() {
   return (
     <Root open={open} onOpenChange={setOpen}>
       <Trigger asChild>
-        <Button variant="outline">
-          <RotateCcw />
-          {t('reset players')}
-        </Button>
+        <div>
+          <Button variant="outline" size="icon-lg" className="max-md:hidden">
+            <RotateCcw />
+          </Button>
+          <Button variant="outline" className="w-full md:hidden">
+            <RotateCcw />
+            {t('reset players')}
+          </Button>
+        </div>
       </Trigger>
       <Content>
         <Header>

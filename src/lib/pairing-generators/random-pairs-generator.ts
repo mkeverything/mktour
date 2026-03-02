@@ -1,4 +1,5 @@
 import { shuffle } from '@/lib/utils';
+import { GameModel } from '@/server/zod/tournaments';
 import {
   convertPlayerToEntity,
   generateRoundPairs,
@@ -9,7 +10,6 @@ import {
   NumberPair,
   RoundProps,
 } from './common-generator';
-import { GameModel } from '@/server/db/zod/tournaments';
 
 /**
  * This function generates random round by shuffling players and assembling them to pairs.

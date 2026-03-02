@@ -20,7 +20,7 @@ import { shallowEqual } from '@/lib/utils';
 import {
   EditProfileFormModel,
   editProfileFormSchema,
-} from '@/server/db/zod/users';
+} from '@/server/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';

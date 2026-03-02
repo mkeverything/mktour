@@ -2,6 +2,7 @@ import { LoadingSpinner } from '@/app/loading';
 import Fab from '@/components/fab';
 import { usePlayerAddMutation } from '@/components/hooks/mutation-hooks/use-player-add';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { useTRPC } from '@/components/trpc/client';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +14,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { PlayerFormModel, playerFormSchema } from '@/server/db/zod/players';
+import { PlayerFormModel, playerFormSchema } from '@/server/zod/players';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Save, UserPlus, X } from 'lucide-react';
@@ -53,7 +54,7 @@ const AddPlayerDrawer = () => {
     <>
       <Fab
         container={open || isAnimating ? document.body : undefined}
-        className={`${(open || isAnimating) && 'fixed z-100'}`}
+        className={`${(open || isAnimating) && 'z-100'} fixed right-4 bottom-4`}
         onClick={() => handleChange(!open)}
         icon={open ? X : UserPlus}
       />
@@ -71,6 +72,7 @@ const AddPlayerDrawer = () => {
 const AddNewPlayer = () => {
   const user = useAuth();
   const queryClient = useQueryClient();
+  const trpc = useTRPC();
   const { mutate } = usePlayerAddMutation(queryClient);
   const t = useTranslations('Tournament.AddPlayer');
 
@@ -84,7 +86,20 @@ const AddNewPlayer = () => {
     reValidateMode: 'onSubmit',
   });
 
-  function onSubmit(data: PlayerFormModel) {
+  async function onSubmit(data: PlayerFormModel) {
+    const validation = await queryClient.fetchQuery(
+      trpc.auth.validatePlayerNickname.queryOptions({
+        nickname: data.nickname,
+        clubId: data.clubId,
+      }),
+    );
+    if (!validation.valid) {
+      form.setError('nickname', {
+        type: 'manual',
+        message: t('player exists error'),
+      });
+      return;
+    }
     mutate(data, {
       onSuccess: () => {
         form.reset();
@@ -121,7 +136,7 @@ const AddNewPlayer = () => {
           render={({ field: { value, onChange } }) => (
             <FormItem>
               <legend>
-                {t('estimated raiting')}: {value}
+                {t('estimated rating')}: {value}
               </legend>
               <FormControl>
                 <Slider

@@ -10,13 +10,14 @@ import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { PlayerModel } from '@/server/db/zod/players';
+import { StatusInClub } from '@/server/zod/enums';
+import { PlayerModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
 
-const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub }) => {
+const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   const { fetchNextPage, ...players } = useClubPlayers(selectedClub);
   const t = useTranslations('Empty');
   const playersData = players.data?.pages.flatMap((page) => page.players) ?? [];
@@ -29,7 +30,15 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub }) => {
 
   return (
     <div className="mk-list">
-      <div className="mk-list">{playersData.map(PlayerItemIteratee)}</div>
+      <div className="mk-list">
+        {playersData.map((player) => (
+          <PlayerItemIteratee
+            key={player.id}
+            player={player}
+            statusInClub={statusInClub}
+          />
+        ))}
+      </div>
       <Paginator
         hasNextPage={players.hasNextPage}
         isFetchingNextPage={players.isFetchingNextPage}
@@ -39,18 +48,23 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub }) => {
   );
 };
 
-const PlayerItemIteratee = (player: PlayerModel) => {
-  return <PlayerItem player={player} key={player.id} />;
+const PlayerItemIteratee = ({
+  player,
+  statusInClub,
+}: {
+  player: PlayerModel;
+  statusInClub: StatusInClub | null | undefined;
+}) => {
+  return (
+    <PlayerItem player={player} key={player.id} statusInClub={statusInClub} />
+  );
 };
 
-const PlayerItem: FC<{ player: PlayerModel }> = ({ player }) => {
-  // const t = useTranslations();
-  // const formatter = useFormatter();
+const PlayerItem: FC<{
+  player: PlayerModel;
+  statusInClub: StatusInClub | null | undefined;
+}> = ({ player, statusInClub }) => {
   const { id, nickname, rating } = player;
-  // const lastSeenAt =
-  //   last_seen && last_seen > 0
-  //     ? formatter.relativeTime(last_seen)
-  //     : t('Player.never');
 
   return (
     <ComboModal.Root>
@@ -64,8 +78,8 @@ const PlayerItem: FC<{ player: PlayerModel }> = ({ player }) => {
         </Card>
       </ComboModal.Trigger>
       <ComboModal.Content>
-        <ComboModal.Title className="gap-mk flex items-center justify-between pl-2">
-          {nickname}
+        <ComboModal.Title className="gap-mk-2 flex items-center pl-2">
+          <span>{nickname}</span>
           <Link href={`/player/${player?.id}`}>
             <Button variant="outline" className="">
               <UserRound />
@@ -76,7 +90,7 @@ const PlayerItem: FC<{ player: PlayerModel }> = ({ player }) => {
         <EditPlayerForm
           clubId={player.clubId}
           player={player}
-          status={'admin'} // FIXME bad practice
+          status={statusInClub}
           setOpen={() => null}
         />
       </ComboModal.Content>

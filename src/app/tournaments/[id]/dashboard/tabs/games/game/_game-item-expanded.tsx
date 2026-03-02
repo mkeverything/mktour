@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { GameResult } from '@/server/db/zod/enums';
+import { GameResult } from '@/server/zod/enums';
 import { FC } from 'react';
 
 const GameItemExpanded: FC<GameProps> = ({ result, player1, player2 }) => {

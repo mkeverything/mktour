@@ -1,10 +1,9 @@
 import z from 'zod';
 
 export const affiliationStatusEnum = z.enum([
-  'requested',
+  'requested_by_user',
+  'requested_by_club',
   'active',
-  'cancelled_by_club',
-  'cancelled_by_user',
 ]);
 
 export const statusInClubEnum = z.enum(['admin', 'co-owner']);
@@ -20,6 +19,7 @@ export const clubNotificationEventEnum = z.enum([
 export const userNotificationEventEnum = z.enum([
   'affiliation_approved',
   'affiliation_rejected',
+  'affiliation_cancelled',
   'tournament_won',
   'became_club_manager',
   'removed_from_club_managers',
@@ -30,6 +30,12 @@ export const tournamentFormatEnum = z.enum([
   'round robin',
   'single elimination',
   'double elimination',
+]);
+
+export const tournamentAuthStatusEnum = z.enum([
+  'organizer',
+  'player',
+  'viewer',
 ]);
 
 export const tournamentTypeEnum = z.enum(['solo', 'doubles', 'team']);
@@ -53,6 +59,7 @@ export type StatusInClub = z.infer<typeof statusInClubEnum>;
 export type ClubNotificationEvent = z.infer<typeof clubNotificationEventEnum>;
 export type UserNotificationEvent = z.infer<typeof userNotificationEventEnum>;
 export type TournamentFormat = z.infer<typeof tournamentFormatEnum>;
+export type TournamentAuthStatus = z.infer<typeof tournamentAuthStatusEnum>;
 export type TournamentType = z.infer<typeof tournamentTypeEnum>;
 export type GameResult = z.infer<typeof gameResultEnum>;
 export type RoundName = z.infer<typeof roundNameEnum>;

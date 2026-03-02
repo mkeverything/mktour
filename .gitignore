@@ -50,5 +50,7 @@ next-env.d.ts
 .million
 .archive
 
-# PWA service workers
-public
+# PWA generated artifacts (service workers + device splash screens)
+/public/sw.js
+/public/workbox-*.js
+/public/splash_screens/

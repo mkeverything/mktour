@@ -3,8 +3,9 @@
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
-import { StatusInClub } from '@/server/db/zod/enums';
-import { eq } from 'drizzle-orm';
+import { tournaments } from '@/server/db/schema/tournaments';
+import { StatusInClub } from '@/server/zod/enums';
+import { and, eq, exists, isNotNull, sql } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { cache } from 'react';
 
@@ -13,6 +14,19 @@ export async function getUserClubNames({ userId }: { userId: string }) {
     .select({
       id: clubs.id,
       name: clubs.name,
+      status: clubs_to_users.status,
+      hasFinishedTournaments: exists(
+        db
+          .select({ one: sql`1` })
+          .from(tournaments)
+          .where(
+            and(
+              eq(tournaments.clubId, clubs.id),
+              isNotNull(tournaments.closedAt),
+            ),
+          )
+          .limit(1),
+      ).mapWith(Boolean),
     })
     .from(clubs_to_users)
     .where(eq(clubs_to_users.userId, userId))

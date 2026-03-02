@@ -8,7 +8,7 @@ import { Suspense } from 'react';
 export default function NotFound() {
   return (
     <div
-      className={`${turboPascal.className} flex h-[calc(100svh-3.5rem)] flex-auto items-center justify-center align-middle`}
+      className={`${turboPascal.className} h-mk-content-height flex flex-auto items-center justify-center align-middle`}
     >
       <main className="w-64">
         <h1 className="text-3xl font-semibold">error 404</h1>

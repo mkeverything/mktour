@@ -12,9 +12,9 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { sessions, user_preferences, users } from '@/server/db/schema/users';
-import { EditProfileFormModel } from '@/server/db/zod/users';
 import { deleteClubFunction } from '@/server/mutations/club-managing';
-import { and, asc, count, eq, sql } from 'drizzle-orm';
+import { EditProfileFormModel } from '@/server/zod/users';
+import { and, asc, count, eq, inArray, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 export const editUser = async (
@@ -153,26 +153,20 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
 
   await db.transaction(async (tx) => {
     if (userClubs.includes(clubId)) {
+      const selectedClubTournamentIds = tx
+        .select({ id: tournaments.id })
+        .from(tournaments)
+        .where(eq(tournaments.clubId, clubId));
+
       await tx
         .delete(games)
-        .where(
-          eq(
-            games.tournamentId,
-            tx
-              .select({ id: tournaments.id })
-              .from(tournaments)
-              .where(eq(tournaments.clubId, clubId)),
-          ),
-        );
+        .where(inArray(games.tournamentId, selectedClubTournamentIds));
       await tx
         .delete(players_to_tournaments)
         .where(
-          eq(
+          inArray(
             players_to_tournaments.tournamentId,
-            tx
-              .select({ id: tournaments.id })
-              .from(tournaments)
-              .where(eq(tournaments.clubId, clubId)),
+            selectedClubTournamentIds,
           ),
         );
       await tx.delete(players).where(eq(players.clubId, clubId));

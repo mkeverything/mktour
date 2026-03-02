@@ -5,7 +5,7 @@ import ClubInbox from '@/app/clubs/my/(tabs)/notifications';
 import ClubSettings from '@/app/clubs/my/(tabs)/settings';
 import ClubPlayersList from '@/app/clubs/players';
 import ClubDashboardTournaments from '@/app/clubs/tournaments';
-import { StatusInClub } from '@/server/db/zod/enums';
+import { StatusInClub } from '@/server/zod/enums';
 import { FC } from 'react';
 
 export const tabMap: Record<ClubDashboardTab, FC<ClubTabProps>> = {

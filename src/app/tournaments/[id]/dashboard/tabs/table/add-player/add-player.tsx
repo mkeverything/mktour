@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { PlayerModel } from '@/server/db/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
+import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useContext } from 'react';
@@ -26,10 +26,15 @@ const AddPlayer = ({ value, setValue, handleClose }: DrawerProps) => {
   );
   const t = useTranslations('Tournament.AddPlayer');
   const filteredPlayers =
-    possiblePlayers.data?.filter((player: PlayerModel) => {
-      const regex = new RegExp(value, 'i');
-      if (value === '') return player;
-      return regex.test(player.nickname);
+    possiblePlayers.data?.filter((player) => {
+      if (!value) return true;
+
+      const search = value.toLowerCase();
+
+      return (
+        player.nickname.toLowerCase().includes(search) ||
+        player.username?.toLowerCase().includes(search)
+      );
     }) ?? [];
 
   useHotkeys('escape', () => handleClose, { enableOnFormTags: true });
@@ -113,7 +118,12 @@ const AddPlayer = ({ value, setValue, handleClose }: DrawerProps) => {
               >
                 <TableCell>
                   <p className="line-clamp-2 break-all">{player.nickname}</p>{' '}
-                  {/* FIXME This wraps real names badly */}
+                  {player.username && (
+                    <small className="text-2xs text-muted-foreground flex items-center gap-1">
+                      <UserRound size={12} />
+                      <span>{player.username}</span>
+                    </small>
+                  )}
                 </TableCell>
                 <TableCell>{player.rating}</TableCell>
               </TableRow>

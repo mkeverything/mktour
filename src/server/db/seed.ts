@@ -81,34 +81,83 @@ export const seedComprehensiveTestData = async () => {
       },
     }));
 
-    const clubUserRelations = await db.select().from(schema.clubs_to_users);
+    // run all post-seed updates concurrently
+    const [clubUserRelations, users, players] = await Promise.all([
+      db.select().from(schema.clubs_to_users),
+      db.select().from(schema.users).limit(5),
+      db.select().from(schema.players).limit(10),
+    ]);
 
-    for (const relation of clubUserRelations) {
-      await db
-        .update(schema.users)
-        .set({ selectedClub: relation.clubId })
-        .where(eq(schema.users.id, relation.userId));
+    // batch update selectedClub for all users
+    await Promise.all(
+      clubUserRelations.map((relation) =>
+        db
+          .update(schema.users)
+          .set({ selectedClub: relation.clubId })
+          .where(eq(schema.users.id, relation.userId)),
+      ),
+    );
+
+    // batch link players to users
+    const playerUpdates = [];
+    if (users[0] && players[0]) {
+      playerUpdates.push(
+        db
+          .update(schema.players)
+          .set({ userId: users[0].id })
+          .where(eq(schema.players.id, players[0].id)),
+      );
+    }
+    if (users[0] && players[1]) {
+      playerUpdates.push(
+        db
+          .update(schema.players)
+          .set({ userId: users[0].id })
+          .where(eq(schema.players.id, players[1].id)),
+      );
+    }
+    if (users[0] && players[2]) {
+      playerUpdates.push(
+        db
+          .update(schema.players)
+          .set({ userId: users[0].id })
+          .where(eq(schema.players.id, players[2].id)),
+      );
+    }
+    if (users[1] && players[3]) {
+      playerUpdates.push(
+        db
+          .update(schema.players)
+          .set({ userId: users[1].id })
+          .where(eq(schema.players.id, players[3].id)),
+      );
     }
 
-    const usersWithValidSelectedClub = db
-      .select({ id: schema.users.id })
-      .from(schema.users)
-      .innerJoin(
-        schema.clubs_to_users,
-        and(
-          eq(schema.users.id, schema.clubs_to_users.userId),
-          eq(schema.users.selectedClub, schema.clubs_to_users.clubId),
+    await Promise.all(playerUpdates);
+
+    // cleanup invalid relations concurrently
+    const usersWithValidSelectedClub = (
+      await db
+        .select({ id: schema.users.id })
+        .from(schema.users)
+        .innerJoin(
+          schema.clubs_to_users,
+          and(
+            eq(schema.users.id, schema.clubs_to_users.userId),
+            eq(schema.users.selectedClub, schema.clubs_to_users.clubId),
+          ),
+        )
+    ).map((u) => u.id);
+
+    await Promise.all([
+      db
+        .delete(schema.clubs_to_users)
+        .where(
+          notInArray(schema.clubs_to_users.userId, usersWithValidSelectedClub),
         ),
-      );
-
-    await db
-      .delete(schema.clubs_to_users)
-      .where(
-        notInArray(schema.clubs_to_users.userId, usersWithValidSelectedClub),
-      );
-
-    await db
-      .delete(schema.users)
-      .where(notInArray(schema.users.id, usersWithValidSelectedClub));
+      db
+        .delete(schema.users)
+        .where(notInArray(schema.users.id, usersWithValidSelectedClub)),
+    ]);
   }
 };

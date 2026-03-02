@@ -23,14 +23,6 @@ const UserNotifications = () => {
     isFetchingNextPage,
   } = useUserNotifications();
 
-  // FIXME mock data
-  // const notifications = [
-  //   mockApproveNotification,
-  //   mockRejectNotification,
-  //   mockMngrNotification,
-  //   mockTnmtNotification,
-  // ];
-
   const ref = useOnReach(fetchNextPage);
 
   const { mutate } = useMarkAllNotificationAsSeenMutation();
@@ -77,6 +69,7 @@ const UserNotifications = () => {
 };
 
 const NotificationItemIteratee = (data: AnyUserNotificationExtended) => {
+  if (data.event.startsWith('affiliation') && !data.affiliation) return null; // FIXME
   return <UserNotificationLi key={data.notification.id} {...data} />;
 };
 

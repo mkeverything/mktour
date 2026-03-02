@@ -10,7 +10,7 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import type { GameResult as DbGameResult } from '@/server/db/zod/enums';
+import type { GameResult as DbGameResult } from '@/server/zod/enums';
 import { and, eq } from 'drizzle-orm';
 
 /**

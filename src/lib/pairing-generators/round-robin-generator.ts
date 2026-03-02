@@ -7,7 +7,7 @@ import {
   makeNumberPairs,
   RoundProps,
 } from '@/lib/pairing-generators/common-generator';
-import { GameModel } from '@/server/db/zod/tournaments';
+import { GameModel } from '@/server/zod/tournaments';
 
 const INITIAL_ROUND_NUMBER = 1;
 

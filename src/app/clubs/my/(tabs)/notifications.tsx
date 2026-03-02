@@ -8,9 +8,10 @@ import {
   NotificationItem,
 } from '@/components/notification-items';
 import SkeletonList from '@/components/skeleton-list';
-import { ClubNotificationExtendedModel } from '@/server/db/zod/notifications';
-import { useTranslations } from 'next-intl';
-import { FC } from 'react';
+import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
+import { RichTagsFunction, useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { FC, ReactNode } from 'react';
 
 const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
   const t = useTranslations('Club.Dashboard.Notifications');
@@ -39,7 +40,7 @@ const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
         <Notification
           key={event.id}
           data={event}
-          t={(value, values) => t(`Notification.${value}`, values)}
+          t={(value, values) => t.rich(`Notification.${value}`, values)}
         />
       ))}
       {isFetchingNextPage && <SkeletonList />}
@@ -52,6 +53,34 @@ const Notification: FC<{
   data: ClubNotificationExtendedModel;
   t: NotificationTranslator;
 }> = ({ data, t }) => {
+  const user = data.user;
+  const player = data.player;
+
+  const richValues = {
+    user: user?.username ?? '',
+    player: player?.nickname ?? '',
+    userLink: (chunks: ReactNode) =>
+      user ? (
+        <Link href={`/user/${user.username}`} className="mk-link">
+          {chunks}
+        </Link>
+      ) : (
+        chunks
+      ),
+    playerLink: (chunks: ReactNode) =>
+      user ? (
+        <Link href={`/user/${user.username}`} className="mk-link">
+          {chunks}
+        </Link>
+      ) : player ? (
+        <Link href={`/player/${player.id}`} className="mk-link">
+          {chunks}
+        </Link>
+      ) : (
+        chunks
+      ),
+  };
+
   switch (data.event) {
     case 'affiliation_request':
       return <AffiliationNotificationLi key={data.id} {...data} />;
@@ -64,10 +93,7 @@ const Notification: FC<{
           type="club"
           clubId={data.clubId}
         >
-          {t(data.event, {
-            player: data.player?.nickname || '',
-            user: data.user?.username || '',
-          })}
+          <span>{t(data.event, richValues)}</span>
         </NotificationItem>
       );
     case 'affiliation_request_rejected':
@@ -79,10 +105,7 @@ const Notification: FC<{
           type="club"
           clubId={data.clubId}
         >
-          {t(data.event, {
-            user: data.user?.username || '',
-            player: data.player?.nickname || '',
-          })}
+          {t(data.event, richValues)}
         </NotificationItem>
       );
     case 'manager_left':
@@ -94,9 +117,7 @@ const Notification: FC<{
           type="club"
           clubId={data.clubId}
         >
-          {t(data.event, {
-            user: data.user?.username || '',
-          })}
+          {t(data.event, richValues)}
         </NotificationItem>
       );
     case 'affiliation_cancelled':
@@ -108,10 +129,7 @@ const Notification: FC<{
           type="club"
           clubId={data.clubId}
         >
-          {t(data.event, {
-            user: data.user?.username || '',
-            player: data.player?.nickname || '',
-          })}
+          {t(data.event, richValues)}
         </NotificationItem>
       );
     default:
@@ -121,7 +139,7 @@ const Notification: FC<{
 
 type NotificationTranslator = (
   key: ClubNotificationExtendedModel['event'],
-  values?: Record<string, string | number | Date>,
-) => string;
+  values?: Record<string, string | number | Date | RichTagsFunction>,
+) => ReactNode;
 
 export default ClubInbox;

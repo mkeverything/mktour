@@ -1,11 +1,10 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import { cn } from '@/lib/utils';
 import useSaveRoundsNumberMutation from '@/components/hooks/mutation-hooks/use-tournament-update-swiss-rounds-number';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
-import { getSwissMaxRoundsNumber, getSwissMinRoundsNumber } from '@/lib/utils';
+import { cn, getSwissMaxRoundsNumber } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useContext } from 'react';
@@ -25,48 +24,56 @@ export default function SwissRoundsNumber({
   const { mutate } = useSaveRoundsNumberMutation(queryClient, sendJsonMessage);
 
   const isOrganizer = status === 'organizer';
-  const currentValue = data?.tournament.roundsNumber ?? 0;
+  const currentValue = data?.tournament.roundsNumber ?? 1;
   const playerCount = players?.length ?? 0;
-  const minValue = getSwissMinRoundsNumber(playerCount);
+  const minValue = 1;
   const maxValue = getSwissMaxRoundsNumber(playerCount);
+  const boundedCurrentValue = Math.min(
+    Math.max(currentValue, minValue),
+    maxValue,
+  );
 
-  const canDecrement = currentValue > minValue;
-  const canIncrement = currentValue < maxValue;
+  const canDecrement = boundedCurrentValue > minValue;
+  const canIncrement = boundedCurrentValue < maxValue;
 
   const handleIncrement = () => {
-    const newValue = currentValue + 1;
+    if (!canIncrement) return;
+    const newValue = boundedCurrentValue + 1;
     mutate({ tournamentId, roundsNumber: newValue });
   };
 
   const handleDecrement = () => {
-    const newValue = currentValue - 1;
+    if (!canDecrement) return;
+    const newValue = boundedCurrentValue - 1;
     mutate({ tournamentId, roundsNumber: newValue });
   };
 
   if (!isOrganizer) {
-    return <span className={className}>{currentValue}</span>;
+    return <span className={className}>{boundedCurrentValue}</span>;
   }
 
   return (
-    <div className={cn('inline-flex items-center gap-2', className)}>
+    <div
+      className={cn('text-primary inline-flex items-center gap-2', className)}
+    >
       <button
         type="button"
         onClick={handleDecrement}
         disabled={!canDecrement}
         className={cn(
           'border-input bg-background hover:bg-accent hover:text-accent-foreground',
-          'flex h-8 w-8 items-center justify-center rounded border text-lg',
+          'flex size-8 items-center justify-center rounded border text-lg',
           'disabled:pointer-events-none disabled:opacity-50',
         )}
       >
-        −
+        -
       </button>
       <div
         className={cn(
-          'border-input bg-background flex h-8 w-8 items-center justify-center rounded border text-center text-lg',
+          'border-input bg-background flex size-8 items-center justify-center rounded border text-center',
         )}
       >
-        {currentValue}
+        {boundedCurrentValue}
       </div>
       <button
         type="button"
@@ -74,7 +81,7 @@ export default function SwissRoundsNumber({
         disabled={!canIncrement}
         className={cn(
           'border-input bg-background hover:bg-accent hover:text-accent-foreground',
-          'flex h-8 w-8 items-center justify-center rounded border text-lg',
+          'flex size-8 items-center justify-center rounded border text-lg',
           'disabled:pointer-events-none disabled:opacity-50',
         )}
       >

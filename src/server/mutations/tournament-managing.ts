@@ -1,9 +1,18 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
-import { newid } from '@/lib/utils';
-import { NewTournamentFormType } from '@/lib/zod/new-tournament-form';
+import {
+  buildScoreMaps,
+  hasSameStanding,
+  sortPlayersByResults,
+} from '@/lib/tournament-results';
+import {
+  getSwissMaxRoundsNumber,
+  getSwissRecommendedRoundsNumber,
+  newid,
+} from '@/lib/utils';
 import { db } from '@/server/db';
+import { users } from '@/server/db/schema';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import {
@@ -11,21 +20,22 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { GameResult, TournamentFormat } from '@/server/db/zod/enums';
+import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import { GameResult, TournamentFormat } from '@/server/zod/enums';
 import {
   PlayerFormModel,
   PlayerInsertModel,
   PlayerModel,
   PlayerTournamentModel,
-} from '@/server/db/zod/players';
+} from '@/server/zod/players';
 import {
   GameModel,
+  NewTournamentFormModel,
   PlayerToTournamentInsertModel,
   TournamentInfoModel,
   TournamentModel,
   tournamentsInsertSchema,
-} from '@/server/db/zod/tournaments';
-import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+} from '@/server/zod/tournaments';
 import {
   aliasedTable,
   and,
@@ -35,12 +45,14 @@ import {
   isNull,
   ne,
   notInArray,
+  or,
   sql,
 } from 'drizzle-orm';
+import { getPlayerResultDeltas } from './set-game-result-deltas';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
 
 export const createTournament = async (
-  values: Omit<NewTournamentFormType, 'date'> & {
+  values: Omit<NewTournamentFormModel, 'date'> & {
     date: string;
   },
 ) => {
@@ -53,7 +65,7 @@ export const createTournament = async (
     createdAt: new Date(),
     closedAt: null,
     startedAt: null,
-    roundsNumber: null,
+    roundsNumber: values.format === 'swiss' ? 1 : null,
     ongoingRound: 1,
   });
 
@@ -65,13 +77,36 @@ export const createTournament = async (
 export async function getTournamentPlayers(
   id: string,
 ): Promise<Array<PlayerTournamentModel>> {
+  const [tournament] = await db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.id, id));
+
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
+  const [playerModels, allGames] = await Promise.all([
+    getRawTournamentPlayers(id),
+    getTournamentGames(id),
+  ]);
+
+  return sortPlayersByResults(playerModels, tournament, allGames);
+}
+
+/**
+ * Fetches raw player models without sorting or additional queries.
+ * Use this when the caller already has tournament/games data and will sort externally.
+ */
+async function getRawTournamentPlayers(
+  id: string,
+): Promise<Array<PlayerTournamentModel>> {
   const playersDb = await db
     .select()
     .from(players_to_tournaments)
     .where(eq(players_to_tournaments.tournamentId, id))
-    .innerJoin(players, eq(players.id, players_to_tournaments.playerId));
+    .innerJoin(players, eq(players.id, players_to_tournaments.playerId))
+    .leftJoin(users, eq(users.id, players.userId));
 
-  const playerModels: PlayerTournamentModel[] = playersDb.map((each) => ({
+  return playersDb.map((each) => ({
     id: each.player.id,
     nickname: each.player.nickname,
     realname: each.player.realname,
@@ -83,11 +118,8 @@ export async function getTournamentPlayers(
     isOut: each.players_to_tournaments.isOut,
     place: each.players_to_tournaments.place,
     pairingNumber: each.players_to_tournaments.pairingNumber,
+    username: each.user?.username ?? null,
   }));
-
-  return playerModels.sort(
-    (a, b) => b.wins + b.draws / 2 - (a.wins + a.draws / 2),
-  );
 }
 
 // decided to keep using server action for this one not to face problems with dates serialization
@@ -96,7 +128,10 @@ export async function getTournamentInfo(
 ): Promise<TournamentInfoModel> {
   const tournamentInfo = (
     await db
-      .select()
+      .select({
+        tournament: getTableColumns(tournaments),
+        club: getTableColumns(clubs),
+      })
       .from(tournaments)
       .where(eq(tournaments.id, id))
       .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
@@ -137,6 +172,9 @@ export async function removePlayer({
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
 
   await db
     .delete(players_to_tournaments)
@@ -146,6 +184,7 @@ export async function removePlayer({
         eq(players_to_tournaments.tournamentId, tournamentId),
       ),
     );
+  await normalizeSwissRoundsNumber(tournamentId);
 }
 
 export async function addNewPlayer({
@@ -155,6 +194,10 @@ export async function addNewPlayer({
   tournamentId: string;
   player: PlayerFormModel & { id?: string };
 }) {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+
   const playerId = player.id ?? newid();
   await db
     .insert(players)
@@ -175,6 +218,7 @@ export async function addNewPlayer({
     volatilityChange: null,
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
+  await normalizeSwissRoundsNumber(tournamentId);
 }
 
 // moved to API endpoint
@@ -190,7 +234,10 @@ export async function addExistingPlayer({
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
-  const status = await getStatusInTournament(user.id, tournamentId);
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+  const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
 
   const playerToTournament: PlayerToTournamentInsertModel = {
@@ -209,6 +256,7 @@ export async function addExistingPlayer({
     volatilityChange: null,
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
+  await normalizeSwissRoundsNumber(tournamentId);
 }
 
 export async function getTournamentGames(
@@ -234,8 +282,8 @@ export async function getTournamentGames(
     })
     .from(games)
     .where(eq(games.tournamentId, tournamentId))
-    .innerJoin(whitePlayer, eq(games.blackId, whitePlayer.id))
-    .innerJoin(blackPlayer, eq(games.whiteId, blackPlayer.id));
+    .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
+    .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
 
   return gamesDb.sort((a, b) => a.gameNumber - b.gameNumber);
 }
@@ -280,8 +328,22 @@ export async function saveRound({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
+  const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const existingDecidedGames = await db
+    .select({ id: games.id })
+    .from(games)
+    .where(
+      and(
+        eq(games.tournamentId, tournamentId),
+        eq(games.roundNumber, roundNumber),
+        isNotNull(games.result),
+      ),
+    )
+    .limit(1);
+  if (existingDecidedGames.length > 0) {
+    throw new Error('ROUND_ALREADY_HAS_RESULTS');
+  }
   const cleanupPromises = [
     db
       .delete(games)
@@ -319,12 +381,14 @@ export async function startTournament({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const { status } = await getStatusInTournament(user.id, tournamentId);
+  if (status !== 'organizer') throw new Error('NOT_ADMIN');
 
-  const finalRoundsNumber = !roundsNumber
-    ? await getRoundsNumber(tournamentId, format)
-    : roundsNumber;
+  const finalRoundsNumber = await resolveTournamentRoundsNumber({
+    tournamentId,
+    format,
+    roundsNumber,
+  });
 
   await Promise.all([
     db
@@ -347,30 +411,29 @@ export async function resetTournament({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
-  const queries = [
-    db
+  const { status } = await getStatusInTournament(user.id, tournamentId);
+  if (status !== 'organizer') throw new Error('NOT_ADMIN');
+  await db.transaction(async (tx) => {
+    const tournamentUpdate = await tx
       .update(tournaments)
       .set({
         startedAt: null,
         ongoingRound: 1,
         closedAt: null,
-        roundsNumber: null,
       })
       .where(
         and(eq(tournaments.id, tournamentId), isNotNull(tournaments.startedAt)),
-      )
-      .then((value) => {
-        if (!value.rowsAffected) throw new Error('TOURNAMENT_ALREADY_RESET');
-      }),
+      );
+    if (!tournamentUpdate.rowsAffected)
+      throw new Error('TOURNAMENT_ALREADY_RESET');
 
-    db
+    await tx
       .delete(games)
       .where(
         and(eq(games.tournamentId, tournamentId), ne(games.roundNumber, 1)),
-      ),
-    db
+      );
+
+    await tx
       .update(players_to_tournaments)
       .set({
         wins: 0,
@@ -379,423 +442,133 @@ export async function resetTournament({
         colorIndex: 0,
         place: null,
       })
-      .where(eq(players_to_tournaments.tournamentId, tournamentId)),
-  ];
-  await Promise.all(queries);
-  await db
-    .update(games)
-    .set({ result: null })
-    .where(eq(games.tournamentId, tournamentId));
+      .where(eq(players_to_tournaments.tournamentId, tournamentId));
+
+    await tx
+      .update(games)
+      .set({ result: null, finishedAt: null })
+      .where(eq(games.tournamentId, tournamentId));
+  });
 }
 
 export async function setTournamentGameResult({
   gameId,
-  whiteId,
-  blackId,
   result,
-  prevResult,
   tournamentId,
 }: {
   tournamentId: string;
   gameId: string;
+  result: GameResult;
   whiteId: string;
   blackId: string;
-  result: GameResult;
   prevResult: GameResult | null;
   roundNumber: number;
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
-  const tournament = (
-    await db.select().from(tournaments).where(eq(tournaments.id, tournamentId))
+  const authStatus = await getStatusInTournament(user.id, tournamentId);
+  if (authStatus.status === 'viewer') throw new Error('NOT_AUTHORIZED');
+
+  const tournamentWithClub = (
+    await db
+      .select({
+        startedAt: tournaments.startedAt,
+        closedAt: tournaments.closedAt,
+        allowPlayersSetResults: clubs.allowPlayersSetResults,
+      })
+      .from(tournaments)
+      .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
+      .where(eq(tournaments.id, tournamentId))
   ).at(0);
-  if (tournament?.startedAt === null) return 'TOURNAMENT_NOT_STARTED';
-  if (result === prevResult) {
-    await Promise.all([
-      handleResultReset(whiteId, blackId, tournamentId, prevResult),
-      db
-        .update(games)
-        .set({ result: null, finishedAt: null })
-        .where(eq(games.id, gameId)),
-    ]);
-    return;
+  if (!tournamentWithClub) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournamentWithClub.startedAt === null)
+    throw new Error('TOURNAMENT_NOT_STARTED');
+  if (tournamentWithClub.closedAt !== null) {
+    throw new Error('TOURNAMENT_ALREADY_FINISHED');
   }
-  let handler;
-  if (result === '1-0') {
-    handler = handleWhiteWin(whiteId, blackId, tournamentId, prevResult);
-  }
-  if (result === '0-1') {
-    handler = handleBlackWin(whiteId, blackId, tournamentId, prevResult);
-  }
-  if (result === '1/2-1/2') {
-    handler = handleDraw(whiteId, blackId, tournamentId, prevResult);
-  }
-  await Promise.all([
-    handler,
-    db
+
+  await db.transaction(async (tx) => {
+    const game = (
+      await tx
+        .select({
+          whiteId: games.whiteId,
+          blackId: games.blackId,
+          result: games.result,
+        })
+        .from(games)
+        .where(and(eq(games.id, gameId), eq(games.tournamentId, tournamentId)))
+    ).at(0);
+    if (!game) throw new Error('GAME_NOT_FOUND');
+
+    if (authStatus.status === 'player') {
+      if (!tournamentWithClub.allowPlayersSetResults) {
+        throw new Error('PLAYER_RESULT_SETTING_DISABLED');
+      }
+      const isPlayerInGame =
+        authStatus.playerId === game.whiteId ||
+        authStatus.playerId === game.blackId;
+      if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
+    }
+
+    const nextResult: GameResult | null =
+      game.result === result ? null : result;
+    const deltas = getPlayerResultDeltas(game.result, nextResult);
+
+    const whitePlayerUpdate = await tx
+      .update(players_to_tournaments)
+      .set({
+        wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.white.wins}`,
+        draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.white.draws}`,
+        losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.white.losses}`,
+        colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.white.colorIndex}`,
+      })
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          eq(players_to_tournaments.playerId, game.whiteId),
+        ),
+      );
+    if (!whitePlayerUpdate.rowsAffected) {
+      throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+    }
+
+    const blackPlayerUpdate = await tx
+      .update(players_to_tournaments)
+      .set({
+        wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.black.wins}`,
+        draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.black.draws}`,
+        losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.black.losses}`,
+      })
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          eq(players_to_tournaments.playerId, game.blackId),
+        ),
+      );
+    if (!blackPlayerUpdate.rowsAffected) {
+      throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+    }
+
+    const currentResultCondition =
+      game.result === null
+        ? isNull(games.result)
+        : eq(games.result, game.result);
+    const gameUpdate = await tx
       .update(games)
-      .set({ result, finishedAt: new Date() })
-      .where(eq(games.id, gameId)),
-  ]);
-}
-
-async function handleWhiteWin(
-  whiteId: string,
-  blackId: string,
-  tournamentId: string,
-  prevResult?: GameResult | null,
-) {
-  if (!prevResult) {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + 1`,
-          colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
+      .set({
+        result: nextResult,
+        finishedAt: nextResult ? new Date() : null,
+      })
+      .where(
+        and(
+          eq(games.id, gameId),
+          eq(games.tournamentId, tournamentId),
+          currentResultCondition,
         ),
-      db
-        .update(players_to_tournaments)
-        .set({ losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + 1` })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  if (prevResult === '0-1') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + 1`,
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) - 1`,
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  if (prevResult === '1/2-1/2') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + 1`,
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) - 1`,
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-}
-
-async function handleBlackWin(
-  whiteId: string,
-  blackId: string,
-  tournamentId: string,
-  prevResult?: GameResult | null,
-) {
-  if (!prevResult) {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + 1`,
-          colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({ wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + 1` })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  if (prevResult === '1-0') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) - 1`,
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + 1`,
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  if (prevResult === '1/2-1/2') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) - 1`,
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + 1`,
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-}
-
-async function handleDraw(
-  whiteId: string,
-  blackId: string,
-  tournamentId: string,
-  prevResult?: GameResult | null,
-) {
-  if (!prevResult) {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + 1`,
-          colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({ draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + 1` })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  if (prevResult === '1-0') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + 1`,
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + 1`,
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  if (prevResult === '0-1') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + 1`,
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + 1`,
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-}
-
-async function handleResultReset(
-  whiteId: string,
-  blackId: string,
-  tournamentId: string,
-  prevResult: GameResult,
-) {
-  if (prevResult === '1-0') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) - 1`,
-          colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  if (prevResult === '0-1') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          losses: sql`COALESCE(${players_to_tournaments.losses}, 0) - 1`,
-          colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          wins: sql`COALESCE(${players_to_tournaments.wins}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  if (prevResult === '1/2-1/2') {
-    await Promise.all([
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) - 1`,
-          colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, whiteId),
-          ),
-        ),
-      db
-        .update(players_to_tournaments)
-        .set({
-          draws: sql`COALESCE(${players_to_tournaments.draws}, 0) - 1`,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, blackId),
-          ),
-        ),
-    ]);
-  }
-  return 'RESULT_RESET';
+      );
+    if (!gameUpdate.rowsAffected)
+      throw new Error('CONCURRENT_GAME_RESULT_UPDATE');
+  });
 }
 
 export async function finishTournament({
@@ -808,8 +581,8 @@ export async function finishTournament({
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
 
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const { status } = await getStatusInTournament(user.id, tournamentId);
+  if (status !== 'organizer') throw new Error('NOT_ADMIN');
 
   if (closedAt) {
     await db
@@ -823,25 +596,44 @@ export async function finishTournament({
       });
   }
 
-  //// NB following block is chatGPT generated and needs review:
-  const players = await getTournamentPlayers(tournamentId);
-  let counter = 1;
-  players.forEach((player, i) => {
-    const playerScore = player.wins + player.draws / 2;
+  const tournament = await db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .then((rows) => rows[0]);
+
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
+  const allGames = await getTournamentGames(tournamentId);
+  const playersUnsorted = await getRawTournamentPlayers(tournamentId);
+  const sortedPlayers = sortPlayersByResults(
+    playersUnsorted,
+    tournament,
+    allGames,
+  );
+  const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+    sortedPlayers,
+    tournament,
+    allGames,
+  );
+
+  sortedPlayers.forEach((player, i) => {
     if (i === 0) {
-      player.place = counter;
-      counter++;
+      player.place = 1;
     } else {
-      const prevPlayerScore = players[i - 1].wins + players[i - 1].draws / 2;
-      if (playerScore === prevPlayerScore) {
-        player.place = counter - 1;
-      } else {
-        player.place = counter;
-        counter++;
-      }
+      const prevPlayer = sortedPlayers[i - 1];
+      player.place = hasSameStanding(
+        player,
+        prevPlayer,
+        playerScoresMap,
+        tiebreakScoresMap,
+      )
+        ? prevPlayer.place
+        : i + 1;
     }
   });
-  const updates = players.map((player) =>
+
+  const pttUpdates = sortedPlayers.map((player) =>
     db
       .update(players_to_tournaments)
       .set({ place: player.place })
@@ -852,16 +644,18 @@ export async function finishTournament({
         ),
       ),
   );
+
+  const playersUpdates = sortedPlayers.map((player) =>
+    db
+      .update(players)
+      .set({ lastSeenAt: closedAt })
+      .where(eq(players.id, player.id)),
+  );
+
+  const updates = [...pttUpdates, ...playersUpdates];
   await Promise.all(updates);
 
-  // calculate and apply Glicko-2 ratings if tournament is rated
-  const tournament = await db
-    .select({ rated: tournaments.rated })
-    .from(tournaments)
-    .where(eq(tournaments.id, tournamentId))
-    .then((rows) => rows[0]);
-
-  if (tournament?.rated) {
+  if (tournament.rated) {
     await calculateAndApplyGlickoRatings(tournamentId);
   }
 }
@@ -873,8 +667,8 @@ export async function deleteTournament({
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const status = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const { status } = await getStatusInTournament(user.id, tournamentId);
+  if (status !== 'organizer') throw new Error('NOT_ADMIN');
   const queries = [
     db.delete(games).where(eq(games.tournamentId, tournamentId)),
     db
@@ -934,21 +728,6 @@ async function updatePairingNumbers(tournamentId: string) {
   await Promise.all(promises);
 }
 
-async function getRoundsNumber(
-  tournamentId: string,
-  tournamentFormat: TournamentFormat,
-) {
-  console.log({ tournamentFormat });
-  if (tournamentFormat === 'round robin') {
-    const players = await getTournamentPlayers(tournamentId);
-    console.log(
-      { players, rounds: players.length - 1 },
-      'tournament is round robin',
-    );
-    return players.length - 1;
-  }
-}
-
 export async function updateSwissRoundsNumber({
   tournamentId,
   roundsNumber,
@@ -956,8 +735,107 @@ export async function updateSwissRoundsNumber({
   tournamentId: string;
   roundsNumber: number;
 }) {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
+
+  const playerCount = await getTournamentPlayersCount(tournamentId);
+  const maxRounds = getSwissMaxRoundsNumber(playerCount);
+  const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
+  if (roundsNumber < minRounds) throw new Error('INVALID_ROUNDS_NUMBER');
+  if (roundsNumber > maxRounds) throw new Error('INVALID_ROUNDS_NUMBER');
+
   await db
     .update(tournaments)
     .set({ roundsNumber })
+    .where(eq(tournaments.id, tournamentId));
+}
+
+async function getTournamentById(tournamentId: string) {
+  return (
+    await db.select().from(tournaments).where(eq(tournaments.id, tournamentId))
+  ).at(0);
+}
+
+async function getTournamentPlayersCount(
+  tournamentId: string,
+): Promise<number> {
+  const [result] = await db
+    .select({ playersCount: sql<number>`count(*)` })
+    .from(players_to_tournaments)
+    .where(eq(players_to_tournaments.tournamentId, tournamentId));
+
+  return Number(result?.playersCount ?? 0);
+}
+
+async function normalizeSwissRoundsNumber(tournamentId: string) {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament || tournament.format !== 'swiss') return;
+
+  const playerCount = await getTournamentPlayersCount(tournamentId);
+  const maxRounds = getSwissMaxRoundsNumber(playerCount);
+  const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
+  if (minRounds > maxRounds) throw new Error('INVALID_SWISS_ROUNDS_BOUNDS');
+
+  const normalizedRounds = Math.min(
+    Math.max(tournament.roundsNumber ?? minRounds, minRounds),
+    maxRounds,
+  );
+
+  await db
+    .update(tournaments)
+    .set({ roundsNumber: normalizedRounds })
+    .where(
+      and(
+        eq(tournaments.id, tournamentId),
+        or(
+          isNull(tournaments.roundsNumber),
+          ne(tournaments.roundsNumber, normalizedRounds),
+        ),
+      ),
+    );
+}
+
+async function resolveTournamentRoundsNumber({
+  tournamentId,
+  format,
+  roundsNumber,
+}: {
+  tournamentId: string;
+  format: TournamentFormat;
+  roundsNumber: number | null;
+}) {
+  if (format === 'swiss') {
+    const playerCount = await getTournamentPlayersCount(tournamentId);
+    if (playerCount < 2) throw new Error('NOT_ENOUGH_PLAYERS');
+
+    const maxRounds = getSwissMaxRoundsNumber(playerCount);
+    const resolvedRounds =
+      roundsNumber ?? getSwissRecommendedRoundsNumber(playerCount);
+
+    if (resolvedRounds < 1 || resolvedRounds > maxRounds) {
+      throw new Error('INVALID_ROUNDS_NUMBER');
+    }
+
+    return resolvedRounds;
+  }
+  if (format === 'round robin') {
+    const players = await getTournamentPlayers(tournamentId);
+    if (players.length < 2) throw new Error('NOT_ENOUGH_PLAYERS');
+    return players.length % 2 === 0 ? players.length : players.length - 1;
+  }
+  throw new Error('UNSUPPORTED_TOURNAMENT_FORMAT');
+}
+
+export async function editTournamentTitle({
+  tournamentId,
+  title,
+}: {
+  tournamentId: string;
+  title: string;
+}) {
+  await db
+    .update(tournaments)
+    .set({ title })
     .where(eq(tournaments.id, tournamentId));
 }

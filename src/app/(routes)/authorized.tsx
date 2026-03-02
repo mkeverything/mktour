@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 
 export default async function Authorized() {
   return (
-    <div className="flex min-h-[calc(100svh-3.5rem)] w-full flex-auto items-center justify-center p-4">
+    <div className="min-h-mk-content-height flex w-full flex-auto items-center justify-center p-4">
       <MakeTournamentButton />
       <Suspense fallback={null}>
         <TeamJoinToasterServer />

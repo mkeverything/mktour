@@ -134,13 +134,15 @@ export default function AboutContent({ changelog }: AboutContentProps) {
                 </div>
               </Link>
               <Link
-                href="mailto:mkcode.org@gmail.com"
+                href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`}
                 target="_blank"
                 className="flex items-center gap-3"
               >
                 <MailIcon size="24" />
                 <div>
-                  <p className="font-medium">{t('contact.email')}</p>
+                  <p className="font-medium">
+                    {process.env.NEXT_PUBLIC_CONTACT_EMAIL}
+                  </p>
                   <p className="text-muted-foreground text-sm">
                     {t('contact.email_desc')}
                   </p>

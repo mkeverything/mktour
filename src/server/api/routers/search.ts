@@ -1,35 +1,33 @@
+import meta from '@/server/api/meta';
 import { publicProcedure } from '@/server/api/trpc';
 import { globalSearch } from '@/server/queries/search';
-import z from 'zod';
-
-const searchSchema = z.object({
-  query: z.string(),
-  filter: z
-    .object({
-      type: z.enum(['users']),
-      userId: z.string(),
-    })
-    .or(
-      z.object({
-        type: z.enum(['players', 'tournaments']),
-        clubId: z.string(),
-      }),
-    )
-    .optional(),
-});
-
-export type SearchParamsModel = z.infer<typeof searchSchema>;
+import {
+  searchOpenApiSchema,
+  searchOutputSchema,
+  searchSchema,
+} from '@/server/zod/search';
 
 export const search = publicProcedure
   .input(searchSchema)
-  //   .output(
-  // z.object({
-  //   users: z.array(usersSelectSchema).optional(),
-  //   players: z.array(playersSelectSchema).optional(),
-  //   tournaments: z.array(tournamentSelectSchema).optional(),
-  //   clubs: z.array(clubSelectSchema).optional(),
-  // }),
-  //   )
+  .output(searchOutputSchema)
   .query(async ({ input }) => {
     return await globalSearch(input);
+  });
+
+export const searchOpenApi = publicProcedure
+  .meta(meta.search)
+  .input(searchOpenApiSchema)
+  .output(searchOutputSchema)
+  .query(async ({ input }) => {
+    const { query, filterType, filterUserId, filterClubId } = input;
+    const filter =
+      filterType === 'users' && filterUserId
+        ? { type: filterType, userId: filterUserId }
+        : filterType && filterClubId
+          ? {
+              type: filterType as 'players' | 'tournaments',
+              clubId: filterClubId,
+            }
+          : undefined;
+    return await globalSearch({ query, filter });
   });

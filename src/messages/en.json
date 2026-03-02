@@ -1,5 +1,36 @@
 {
   "locale": "en",
+  "Seo": {
+    "siteName": "mktour",
+    "homepage": {
+      "title": "mktour - chess tournament management",
+      "description": "create and manage chess tournaments with swiss, round robin, single elimination and double elimination formats. free and open-source."
+    },
+    "clubs": {
+      "title": "chess clubs",
+      "description": "browse and join chess clubs on mktour"
+    },
+    "tournaments": {
+      "title": "chess tournaments",
+      "description": "find and follow chess tournaments on mktour"
+    },
+    "signIn": {
+      "title": "sign in",
+      "description": "sign in to mktour with your lichess account"
+    },
+    "about": {
+      "title": "about mktour",
+      "description": "open-source chess tournament management platform built by chess enthusiasts"
+    },
+    "faq": {
+      "title": "faq",
+      "description": "frequently asked questions about mktour chess tournament platform"
+    },
+    "contact": {
+      "title": "contact",
+      "description": "get in touch with the mktour team"
+    }
+  },
   "Common": {
     "back": "back",
     "cancel": "cancel",
@@ -31,10 +62,10 @@
       "about us": "about us"
     },
     "Descriptions": {
-      "club": "it is your chess club dashboard. here you can manage your players, events and other club settings",
+      "club": "your chess club dashboard. here you can manage your players, events and other club settings",
       "tournaments": "here are all the tournaments related to you. both, where you played and which were organized by your clubs",
       "about us": "mktour is an open-source project. here you can learn more about team and the app",
-      "profile": "it's your own page with all your clubs, stats and more"
+      "profile": "your page with clubs, stats and more"
     },
     "Subs": {
       "all clubs": "all clubs",
@@ -71,13 +102,21 @@
     "created": "joined mktour on",
     "clubs": "clubs",
     "myClubs": "my clubs",
-    "noClubs": "not a member of any club yet"
+    "noClubs": "not a member of any club yet",
+    "players": "players",
+    "noPlayers": "no players yet",
+    "clubProfiles": "club profiles",
+    "noClubProfiles": "user hasn't played anywhere yet",
+    "clubRating": "club rating",
+    "lastTournament": "last tournament",
+    "alsoManages": "admin in:"
   },
   "Player": {
     "last seen": "last seen: ",
     "never": "never",
     "delete": "delete player",
     "nickname": "username",
+    "name": "name",
     "rating": "rating",
     "realname": "real name",
     "lichess": "lichess",
@@ -89,7 +128,8 @@
     "linkedTo": "linked to",
     "not linked": "not linked to account",
     "cancel affiliation": "disconnect",
-    "cancel affiliation description": "you are going to disconnect your account from this player",
+    "cancel affiliation by user description": "you'll disconnect your account from this player. they won't show on your profile, and you won't be able to set their results",
+    "cancel affiliation by club description": "you are going to remove this player's affiliation to the club.",
     "Stats": {
       "gamesPlayed": "games played",
       "winRate": "win rate",
@@ -98,7 +138,10 @@
       "bestPlace": "best place",
       "streak": "win streak",
       "h2h": "head to head",
+      "yourScore": "your score vs this player",
       "h2hEmpty": "no games against other players yet",
+      "h2hEmptyForPlayer": "seems like you never played against {player} yet",
+      "h2hEmptyForClub": "seems like you never played against {player} in {club} yet",
       "total": "total",
       "wins": "w",
       "draws": "d",
@@ -155,7 +198,9 @@
         "leave club": "leave club",
         "delete club": "delete club",
         "add manager": "add manager",
-        "no affiliated users": "couldn't find users related to your club. start typing to search among all mktour users",
+        "allow players set results": "allow players to set game results",
+        "allow players set results description": "affiliated users can submit results in their own games",
+        "no affiliated users": "no users linked to your club found. start typing to search all mktour users",
         "search users error": "an error happened while searching",
         "make admin": "make admin",
         "make co-owner": "make co-owner",
@@ -168,10 +213,10 @@
         "affiliation": "link request",
         "mark all as read": "mark all as read",
         "Notification": {
-          "affiliation_request_approved": "player {player} is officially user {user}",
-          "affiliation_request_rejected": "{user}'s request to link with {player} was rejected",
-          "manager_left": "manager {user} has left the club",
-          "affiliation_cancelled": "{user} cancelled their request to link with {player}"
+          "affiliation_request_approved": "player <playerLink>{player}</playerLink> is officially user <userLink>{user}</userLink>",
+          "affiliation_request_rejected": "<userLink>{user}</userLink>'s request to link with <playerLink>{player}</playerLink> was rejected",
+          "manager_left": "manager <userLink>{user}</userLink> has left the club",
+          "affiliation_cancelled": "<userLink>{user}</userLink> is no more linked to <playerLink>{player}</playerLink>"
         }
       }
     },
@@ -181,7 +226,11 @@
       "createdAt": "created: {date}",
       "tournaments": "club tournaments:",
       "players": "players",
-      "most active": "most active players"
+      "most active": "most active players",
+      "yourPlayer": "your player in this club",
+      "linkedProfile": "linked profile",
+      "yourStatsInClub": "your own stats",
+      "nickname": "nickname"
     },
     "New": {
       "new club": "new club",
@@ -209,10 +258,10 @@
     "server error": "sorry! server error happened",
     "profile updated": "profile updated!",
     "ws success": "realtime updates enabled!",
-    "ws error": "live-server error. sorry! you will see no realtime updates",
+    "ws error": "live-server error. sorry! no realtime updates this time",
     "user deleted": "your profile has been deleted completely",
     "zero clubs error": "every user must have at least one club",
-    "round generated": "round genrated",
+    "round generated": "round generated",
     "result added": "result added",
     "started": "tournament has started!",
     "ended": "tournament is finished!",
@@ -223,8 +272,10 @@
     "affiliation requested": "request sent",
     "affiliation canceled": "request cancelled",
     "player deleted": "player deleted",
-    "player has tournaments": "sorry! the player, who is added to a tournament, cannot be deleted. otherwise you have to delete that tournament too",
-    "club updated": "club updated"
+    "player has tournaments": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
+    "club updated": "club updated",
+    "tournament renamed": "tournament title has been updated",
+    "player result setting disabled": "club admins disabled player result submissions"
   },
   "UserSettings": {
     "header": "settings",
@@ -294,7 +345,8 @@
       "ended at": "ended at",
       "number of rounds": "amount of rounds:",
       "unrated": "unrated",
-      "save": "save"
+      "save": "save",
+      "minimize": "minimize"
     },
     "Results": {
       "1-0": "1 - 0",
@@ -345,7 +397,7 @@
       "back": "back",
       "add new player": "add new player",
       "name": "name",
-      "estimated raiting": "estimated rating",
+      "estimated rating": "estimated rating",
       "save": "save",
       "search": "search",
       "possible players error": "error happened while loading club players",
@@ -417,13 +469,12 @@
   "About": {
     "title": "about mktour",
     "description": "open-source chess tournament management platform",
-    "intro": "mktour is a free, open-source platform designed to make organizing chess tournaments simple and efficient. built by chess enthusiasts, for chess enthusiasts.",
+    "intro": "mktour is a free, open-source platform designed to make organizing chess tournaments simple and efficient. fast, simple and clear.",
     "contact": {
       "title": "get in touch",
       "lichess": "lichess team",
       "lichess_desc": "there is a forum for your questions",
-      "email": "mkcode.org@gmail.com",
-      "email_desc": "contact us privately"
+      "email_desc": "or contact us privately"
     },
     "Changelog": {
       "title": "changelog",
@@ -437,9 +488,11 @@
     "User": {
       "affiliation approved": "linked",
       "affiliation rejected": "link rejected",
+      "affiliation cancelled": "affiliation removed",
       "became club manager": "you became club manager",
       "tournament won": "you won the tournament!",
-      "removed from club managers": "you were removed from club managers"
+      "removed from club managers": "you were removed from club managers",
+      "from": "from"
     },
     "Club": {
       "affiliation requested": "request sent"

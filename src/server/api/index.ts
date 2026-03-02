@@ -2,12 +2,12 @@ import { validateRequest } from '@/lib/auth/lucia';
 import { authRouter } from '@/server/api/routers/auth';
 import { clubRouter } from '@/server/api/routers/club';
 import { playerRouter } from '@/server/api/routers/player';
+import { search, searchOpenApi } from '@/server/api/routers/search';
 import { tournamentRouter } from '@/server/api/routers/tournament';
 import { userRouter } from '@/server/api/routers/user';
 import { createTRPCRouter } from '@/server/api/trpc';
 import { db } from '@/server/db';
 import { getUserClubIds } from '@/server/queries/get-user-clubs';
-import { search } from '@/server/api/routers/search';
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
@@ -16,6 +16,7 @@ export const appRouter = createTRPCRouter({
   player: playerRouter,
   auth: authRouter,
   search,
+  searchOpenApi,
 });
 
 export const publicCaller = appRouter.createCaller({

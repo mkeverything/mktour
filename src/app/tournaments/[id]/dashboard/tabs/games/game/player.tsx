@@ -8,15 +8,16 @@ const Player: FC<PlayerProps> = ({
   nickname,
   selected,
   position,
+  className,
 }) => (
   <Button
     variant="ghost"
     className={cn(
-      `line-clamp-2 h-full w-full max-w-full ${!selected && position.text} rounded-sm p-1 px-2 break-words text-ellipsis hyphens-auto select-none ${selected && isWinner && 'mk-link'}`,
+      `text-2xs ${selected ? 'col-span-1' : 'col-span-2'} line-clamp-2 h-full w-full lg:text-xs ${!selected && position.text} w-full rounded-sm p-0 select-none ${selected && isWinner && 'mk-link'} ${className}`,
     )}
     onClick={handleMutate}
   >
-    <small>{nickname}</small>
+    <span className="text-wrap wrap-break-word">{nickname}</span>
   </Button>
 );
 
@@ -30,6 +31,7 @@ type PlayerProps = {
     justify: 'justify-self-start' | 'justify-self-end';
     text: 'text-left' | 'text-right';
   };
+  className?: string;
 };
 
 export default Player;

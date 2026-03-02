@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { NewTournamentFormType } from '@/lib/zod/new-tournament-form';
+import { NewTournamentFormModel } from '@/server/zod/tournaments';
 import { CalendarIcon } from 'lucide-react';
 import * as React from 'react';
 
@@ -18,7 +18,7 @@ import { useLocale } from 'next-intl';
 import { ControllerRenderProps } from 'react-hook-form';
 
 interface FormDatePickerProps {
-  field: ControllerRenderProps<NewTournamentFormType, 'date'>;
+  field: ControllerRenderProps<NewTournamentFormModel, 'date'>;
 }
 
 export default function FormDatePicker({ field }: FormDatePickerProps) {

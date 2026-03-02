@@ -13,10 +13,10 @@ import {
   Title,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
+import { PlayerTournamentModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
 import Link from 'next/link';
-import { Dispatch, FC, SetStateAction, useContext, useState } from 'react';
+import { Dispatch, FC, SetStateAction, useContext } from 'react';
 
 const PlayerDrawer: FC<{
   player: PlayerTournamentModel;
@@ -25,46 +25,51 @@ const PlayerDrawer: FC<{
   hasEnded: boolean;
   hasStarted: boolean;
 }> = ({ player, setSelectedPlayer, hasEnded, hasStarted, handleDelete }) => {
-  const [open, setOpen] = useState(!!player);
+  const open = !!player;
   const { status } = useContext(DashboardContext);
 
   return (
     <Root
       open={open}
-      onClose={() => setOpen(false)}
-      onOpenChange={setOpen}
-      onAnimationEnd={() => setSelectedPlayer(null)}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) setSelectedPlayer(null);
+      }}
     >
       <Content>
         <Header>
-          <Title>{player?.nickname}</Title>
-          <Description hidden />
+          <Title>{player.nickname}</Title>
+          <Description>{player?.username}</Description>
         </Header>
-        <Button
-          className="flex w-full gap-2"
-          size="lg"
-          onClick={() => setTimeout(() => setSelectedPlayer(null), 500)}
-          asChild
-        >
-          <Link href={`/player/${player?.id}`}>
-            <UserRound />
-            <FormattedMessage id="Tournament.Table.Player.profile" />
-          </Link>
-        </Button>
-        {status === 'organizer' && (
-          <DestructiveButton
-            hasEnded={hasEnded}
-            hasStarted={hasStarted}
-            player={player}
-            handleDelete={handleDelete}
-            setOpen={setOpen}
-          />
-        )}
-        <Close asChild>
-          <Button size="lg" variant="outline">
-            <FormattedMessage id="Common.close" />
+        <>
+          <Button className="flex w-full gap-2" size="lg" asChild>
+            <Link
+              href={
+                player.username
+                  ? `/user/${player.username}`
+                  : `/player/${player.id}`
+              }
+            >
+              <UserRound />
+              <FormattedMessage id="Tournament.Table.Player.profile" />
+            </Link>
           </Button>
-        </Close>
+
+          {status === 'organizer' && (
+            <DestructiveButton
+              hasEnded={hasEnded}
+              hasStarted={hasStarted}
+              player={player}
+              handleDelete={handleDelete}
+              setOpen={() => setSelectedPlayer(null)}
+            />
+          )}
+
+          <Close asChild>
+            <Button size="lg" variant="outline">
+              <FormattedMessage id="Common.close" />
+            </Button>
+          </Close>
+        </>
       </Content>
     </Root>
   );

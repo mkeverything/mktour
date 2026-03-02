@@ -3,7 +3,7 @@
 import { LoadingSpinner } from '@/app/loading';
 import useAffiliationAuthMutation from '@/components/hooks/mutation-hooks/use-affiliation-auth';
 import { Button } from '@/components/ui/button';
-import { PlayerModel } from '@/server/db/zod/players';
+import { PlayerModel } from '@/server/zod/players';
 import { UserCheck2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';

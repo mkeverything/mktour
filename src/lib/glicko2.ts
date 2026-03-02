@@ -19,7 +19,7 @@ export interface RatingUpdate {
   volatilityChange: number;
 }
 
-const GLICKO2_CONSTANTS = {
+export const GLICKO2_CONSTANTS = {
   DEFAULT_RATING: 1500,
   DEFAULT_RD: 350,
   DEFAULT_VOLATILITY: 0.06,

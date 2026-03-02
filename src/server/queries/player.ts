@@ -5,10 +5,7 @@ import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import {
-  PlayerAuthStatsModel,
-  PlayerStatsModel,
-} from '@/server/db/zod/players';
+import { PlayerAuthStatsModel, PlayerStatsModel } from '@/server/zod/players';
 import {
   and,
   count,
@@ -32,11 +29,11 @@ export async function getPlayersTournaments(
       tournament: tournaments,
     })
     .from(players_to_tournaments)
-    .where(eq(players_to_tournaments.playerId, playerId))
     .innerJoin(
       tournaments,
       eq(players_to_tournaments.tournamentId, tournaments.id),
     )
+    .where(eq(players_to_tournaments.playerId, playerId))
     .orderBy(desc(tournaments.createdAt))
     .limit(limit)
     .offset(offset);

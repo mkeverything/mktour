@@ -27,12 +27,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { ClubModel } from '@/server/zod/clubs';
 import {
-  NewTournamentFormType,
+  dateToLocalDateString,
+  NewTournamentFormModel,
   newTournamentFormSchema,
-} from '@/lib/zod/new-tournament-form';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { UserModel } from '@/server/db/zod/users';
+} from '@/server/zod/tournaments';
+import { UserModel } from '@/server/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -46,10 +47,10 @@ export default function NewTournamentForm({
   clubs,
   user,
 }: NewTournamentFormProps) {
-  const form = useForm<NewTournamentFormType>({
+  const form = useForm<NewTournamentFormModel>({
     resolver: zodResolver(newTournamentFormSchema),
     defaultValues: {
-      title: undefined,
+      title: '',
       format: undefined,
       date: new Date(),
       timestamp: 0,
@@ -63,11 +64,11 @@ export default function NewTournamentForm({
   const router = useRouter();
   const isPending = isMutating || isNavigating;
 
-  const handleSubmit = (data: NewTournamentFormType) => {
+  const handleSubmit = (data: NewTournamentFormModel) => {
     mutate(
       {
         ...data,
-        date: data.date.toISOString().slice(0, 10),
+        date: dateToLocalDateString(data.date),
       },
       {
         onSuccess: (result) => {
@@ -87,7 +88,7 @@ export default function NewTournamentForm({
   return (
     <Form {...form}>
       <h2
-        className={`m-2 text-center text-4xl font-bold ${turboPascal.className}`}
+        className={`mt-2 text-center text-4xl font-bold sm:m-3 sm:mb-4 ${turboPascal.className}`}
       >
         {t('new tournament')}
       </h2>
@@ -161,7 +162,7 @@ export default function NewTournamentForm({
             <FormField
               control={form.control}
               name="format"
-              defaultValue="round robin"
+              defaultValue="swiss"
               render={({ field }) => (
                 <FormItem>
                   <Select
@@ -180,11 +181,9 @@ export default function NewTournamentForm({
                       }}
                     >
                       <SelectGroup>
+                        <SelectItem value="swiss">{t('swiss')}</SelectItem>
                         <SelectItem value="round robin">
                           {t('round robin')}
-                        </SelectItem>
-                        <SelectItem value="swiss" disabled>
-                          {t('swiss')}
                         </SelectItem>
                         <SelectItem value="single elimination" disabled>
                           {t('single elimination')}

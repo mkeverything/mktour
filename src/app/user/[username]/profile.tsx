@@ -1,9 +1,17 @@
 'use client';
 
+import { turboPascal } from '@/app/fonts';
+import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
+import EditButton from '@/app/player/[id]/edit-button';
+import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
+import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useUserClubs } from '@/components/hooks/query-hooks/use-user-clubs';
-import SkeletonList from '@/components/skeleton-list';
+import LastTournaments from '@/components/last-tournaments';
+import { useTRPC } from '@/components/trpc/client';
+import CarouselDots from '@/components/ui-custom/carousel-dots';
 import HalfCard from '@/components/ui-custom/half-card';
+import PlayerStats from '@/components/ui-custom/player-stats';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,33 +20,82 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { UserModel } from '@/server/db/zod/users';
-import { CalendarDays, Settings, Star, Users2 } from 'lucide-react';
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
+import { ClubModel } from '@/server/zod/clubs';
+import { StatusInClub } from '@/server/zod/enums';
+import type {
+  PlayerAuthStatsModel,
+  UserPlayerClubModel,
+} from '@/server/zod/players';
+import { useQueries } from '@tanstack/react-query';
+import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 const Profile: FC<{
-  user: Pick<UserModel, 'id' | 'username' | 'name' | 'rating' | 'createdAt'>;
+  user: UserWithPlayers;
   isOwner: boolean;
 }> = ({ user, isOwner }) => {
-  const { data, isPending } = useUserClubs(user.id);
+  const { data: authUser } = useAuth();
+  const { data: managedClubs, isPending } = useUserClubs(user.id);
+  const { data: viewerClubs } = useUserClubs(authUser?.id);
   const format = useFormatter();
   const preparedCreatedAt = user.createdAt
     ? format.dateTime(user.createdAt, { dateStyle: 'long' })
     : null;
   const t = useTranslations('Profile');
 
+  const playerClubIds = useMemo(
+    () => new Set(user.userPlayers.map((up) => up.club.id)),
+    [user.userPlayers],
+  );
+
+  const clubStatusMap = useMemo(
+    () => new Map(managedClubs?.map((c) => [c.id, c.status]) ?? []),
+    [managedClubs],
+  );
+  const viewerManagedClubIds = useMemo(
+    () =>
+      new Set(
+        viewerClubs
+          ?.filter(
+            (club) => club.status === 'admin' || club.status === 'co-owner',
+          )
+          .map((club) => club.id) ?? [],
+      ),
+    [viewerClubs],
+  );
+
+  const managedOnlyClubs = useMemo(
+    () =>
+      managedClubs?.filter(
+        (club) => !playerClubIds.has(club.id) && club.hasFinishedTournaments,
+      ) ?? [],
+    [managedClubs, playerClubIds],
+  );
+
   return (
-    <div className="mk-container flex w-full flex-col gap-6">
-      <HalfCard className="gap-mk-2 p-mk-2 sm:p-mk-3 flex flex-col">
+    <div className="mk-container gap-mk-2 flex w-full flex-col">
+      <HalfCard className="gap-mk-2 p-mk-2 py-mk sm:p-mk-3 flex flex-col">
         <CardHeader className="p-0">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               <div className="flex flex-col gap-1">
-                <CardTitle className="text-xl">{user.name}</CardTitle>
+                <CardTitle
+                  className={`text-3xl font-light ${turboPascal.className}`}
+                >
+                  {user.name}
+                </CardTitle>
                 <CardDescription className="text-muted-foreground">
                   <Link href={`https://lichess.org/@/${user.username}`}>
                     @{user.username}
@@ -67,8 +124,9 @@ const Profile: FC<{
         </CardContent>
       </HalfCard>
 
+      {/* Owner actions */}
       {isOwner && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="gap-mk grid grid-cols-2">
           <Button
             variant="outline"
             className="h-auto flex-col gap-2 py-4"
@@ -94,7 +152,21 @@ const Profile: FC<{
         </div>
       )}
 
-      <ClubList clubs={data} isPending={isPending} />
+      {/* Club profiles carousel */}
+      <ClubProfilesCarousel
+        userPlayers={user.userPlayers}
+        isOwner={isOwner}
+        clubStatusMap={clubStatusMap}
+        viewerManagedClubIds={viewerManagedClubIds}
+      />
+
+      {/* Managed-only clubs mention */}
+      {!isPending && managedOnlyClubs.length > 0 && (
+        <ManagedOnlyClubsMention clubs={managedOnlyClubs} />
+      )}
+
+      {/* Last tournaments */}
+      <LastTournaments tournaments={user.lastTournaments} />
     </div>
   );
 };
@@ -115,73 +187,256 @@ const StatItem: FC<{
   </div>
 );
 
-const ClubList: FC<ClubListProps> = ({ clubs, isPending }) => {
+const ClubProfilesCarousel: FC<{
+  userPlayers: UserWithPlayers['userPlayers'];
+  isOwner: boolean;
+  clubStatusMap: Map<string, StatusInClub>;
+  viewerManagedClubIds: Set<string>;
+}> = ({ userPlayers, isOwner, clubStatusMap, viewerManagedClubIds }) => {
   const t = useTranslations('Profile');
+  const trpc = useTRPC();
 
-  if (!clubs && isPending) {
+  const authStatsQueries = useQueries({
+    queries: userPlayers.map(({ player }) =>
+      trpc.player.stats.auth.queryOptions({ playerId: player.id }),
+    ),
+  });
+  const authStatsByPlayerId = useMemo(
+    () =>
+      new Map(
+        userPlayers.map(({ player }, index) => [
+          player.id,
+          authStatsQueries[index]?.data ?? null,
+        ]),
+      ),
+    [userPlayers, authStatsQueries],
+  );
+  const authStatsPendingByPlayerId = useMemo(
+    () =>
+      new Map(
+        userPlayers.map(({ player }, index) => [
+          player.id,
+          authStatsQueries[index]?.isPending ?? false,
+        ]),
+      ),
+    [userPlayers, authStatsQueries],
+  );
+  const areAuthStatsResolved = authStatsQueries.every(
+    (query) => !query.isPending,
+  );
+  const hasAnyHeadToHead = authStatsQueries.some((query) =>
+    Boolean(query.data),
+  );
+  const shouldRenderAuthStatsCard = hasAnyHeadToHead || areAuthStatsResolved;
+  const shouldShowEmptyHeadToHead = hasAnyHeadToHead;
+  const [api, setApi] = useState<CarouselApi>();
+  const [carouselState, setCarouselState] = useState({
+    isFirst: true,
+    isLast: false,
+  });
+
+  const handleSelect = useCallback(() => {
+    if (!api) return;
+    const isFirst = !api.canScrollPrev();
+    const isLast = !api.canScrollNext();
+
+    setCarouselState({ isFirst, isLast });
+  }, [api]);
+
+  useEffect(() => {
+    if (!api) return;
+
+    api.on('init', handleSelect);
+    api.on('select', handleSelect);
+  }, [api, handleSelect]);
+
+  if (!userPlayers || userPlayers.length === 0) {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <Skeleton className="h-5 w-24" />
+          <CardTitle className="gap-mk flex items-center text-base">
+            <User className="size-4" />
+            {t('clubProfiles')}
+          </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
-          <SkeletonList />
+        <CardContent>
+          <p className="text-muted-foreground text-center text-sm">
+            {t('noClubProfiles')}
+          </p>
         </CardContent>
       </Card>
     );
   }
 
-  if (!clubs || clubs.length === 0) {
+  if (userPlayers.length === 1) {
+    const { club, player } = userPlayers[0];
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Users2 className="size-4" />
-            {t('clubs')}
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <ClubPlayerCard
+        club={club}
+        player={player}
+        isOwner={isOwner}
+        status={clubStatusMap.get(club.id) ?? null}
+        canEdit={isOwner || viewerManagedClubIds.has(club.id)}
+        canEditRealname={viewerManagedClubIds.has(club.id)}
+        authStats={authStatsByPlayerId.get(player.id) ?? null}
+        isAuthStatsPending={
+          shouldRenderAuthStatsCard
+            ? (authStatsPendingByPlayerId.get(player.id) ?? false)
+            : false
+        }
+        renderAuthStatsCard={shouldRenderAuthStatsCard}
+        showAuthStatsWhenEmpty={shouldShowEmptyHeadToHead}
+      />
     );
   }
 
   return (
+    <Carousel setApi={setApi} opts={{ loop: false }}>
+      <CarouselContent>
+        {userPlayers.map(({ club, player }) => (
+          <CarouselItem key={club.id}>
+            <ClubPlayerCard
+              club={club}
+              player={player}
+              isOwner={isOwner}
+              status={clubStatusMap.get(club.id) ?? null}
+              canEdit={isOwner || viewerManagedClubIds.has(club.id)}
+              canEditRealname={viewerManagedClubIds.has(club.id)}
+              authStats={authStatsByPlayerId.get(player.id) ?? null}
+              isAuthStatsPending={
+                shouldRenderAuthStatsCard
+                  ? (authStatsPendingByPlayerId.get(player.id) ?? false)
+                  : false
+              }
+              renderAuthStatsCard={shouldRenderAuthStatsCard}
+              showAuthStatsWhenEmpty={shouldShowEmptyHeadToHead}
+            />
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselDots count={userPlayers.length} />
+      <CarouselPrevious
+        className={`max-sm:hidden ${carouselState?.isFirst && 'hidden'}`}
+      />
+      <CarouselNext
+        className={`max-sm:hidden ${carouselState?.isLast && 'hidden'}`}
+      />
+    </Carousel>
+  );
+};
+
+const ClubPlayerCard: FC<
+  UserPlayerClubModel & {
+    isOwner: boolean;
+    status: StatusInClub | null;
+    canEdit: boolean;
+    canEditRealname: boolean;
+    authStats: PlayerAuthStatsModel | null;
+    isAuthStatsPending: boolean;
+    renderAuthStatsCard: boolean;
+    showAuthStatsWhenEmpty: boolean;
+  }
+> = ({
+  club,
+  player,
+  isOwner,
+  status,
+  canEdit,
+  canEditRealname,
+  authStats,
+  isAuthStatsPending,
+  renderAuthStatsCard,
+  showAuthStatsWhenEmpty,
+}) => {
+  const t = useTranslations('Profile');
+  const format = useFormatter();
+  const tStatus = useTranslations('Status');
+  const formattedPlayerRating = !player.rating
+    ? '—'
+    : player.ratingDeviation > GLICKO2_CONSTANTS.STABLE_RD_THRESHOLD
+      ? `${player.rating}?`
+      : player.rating;
+
+  return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Users2 className="size-4" />
-          {t('clubs')} ({clubs.length})
-        </CardTitle>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-base">
+              <Link href={`/clubs/${club.id}`} className="hover:underline">
+                {club.name}
+              </Link>
+            </CardTitle>
+            <CardDescription className="flex items-center gap-2">
+              {player.nickname}
+              {status && (
+                <span className="bg-primary/10 text-primary text-3xs rounded-md px-1.5 py-0.5 font-medium">
+                  {tStatus(status)}
+                </span>
+              )}
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-1">
+            {canEdit && (
+              <EditButton
+                player={{ ...player, clubId: club.id }}
+                status={null}
+                canEditRealname={canEditRealname}
+              />
+            )}
+            {isOwner && <CancelAffiliationByUser playerId={player.id} />}
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <ul className="flex flex-col">
-          {clubs.map((club, index) => (
-            <div key={club.id}>
-              {index > 0 && <Separator />}
-              <li className="py-1">
-                <Link
-                  href={`/clubs/${club.id}`}
-                  className="hover:bg-muted/50 -mx-2 flex items-center justify-between rounded-lg px-2 py-3 transition-colors"
-                >
-                  <span className="text-sm font-medium">{club.name}</span>
-                  {/* <ChevronRight className="text-muted-foreground size-4" /> */}
-                </Link>
-              </li>
-            </div>
-          ))}
-        </ul>
+      <CardContent className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          <StatItem
+            icon={Star}
+            label={t('clubRating')}
+            value={formattedPlayerRating}
+          />
+          <StatItem
+            icon={CalendarDays}
+            label={t('lastTournament')}
+            value={
+              player.lastSeenAt
+                ? format.dateTime(player.lastSeenAt, { dateStyle: 'medium' })
+                : '—'
+            }
+          />
+        </div>
+        <PlayerStats
+          player={player}
+          clubName={club.name}
+          wrapper="none"
+          renderAuthStatsCard={renderAuthStatsCard}
+          authStats={authStats}
+          isAuthStatsPending={isAuthStatsPending}
+          showAuthStatsWhenEmpty={showAuthStatsWhenEmpty}
+        />
       </CardContent>
     </Card>
   );
 };
 
-type ClubListProps = {
-  clubs:
-    | {
-        id: string;
-        name: string;
-      }[]
-    | undefined;
-  isPending: boolean;
+const ManagedOnlyClubsMention: FC<{
+  clubs: Array<Pick<ClubModel, 'id' | 'name'>>;
+}> = ({ clubs }) => {
+  const t = useTranslations('Profile');
+
+  return (
+    <p className="text-muted-foreground text-sm">
+      {t('alsoManages')}{' '}
+      {clubs.map((club, i) => (
+        <span key={club.id}>
+          {i > 0 && ', '}
+          <Link href={`/clubs/${club.id}`} className="hover:underline">
+            {club.name}
+          </Link>
+        </span>
+      ))}
+    </p>
+  );
 };
 
 export default Profile;

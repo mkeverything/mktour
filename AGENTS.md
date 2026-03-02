@@ -1,136 +1,191 @@
 ## mktour - agent guidelines
 
-this file describes how to operate as an agent inside this repo. it covers build, lint, test workflows, and code style expectations so agents can work consistently and safely.
+tournament management web app. users sign in via lichess, create clubs, manage players, run tournaments (swiss, round robin, single/double elimination), and track ratings (glicko-2).
+
+production: https://mktour.org
+
+## architecture contract (highest priority)
+
+this section overrides all other local conventions when there is any conflict.
+
+- all product/domain data operations must go through tRPC procedures. do not add alternative rpc paths for domain features.
+- `src/server/zod/` is the only canonical source for domain schemas and domain types.
+- client-side domain types must be inferred or imported from canonical zod schemas in `src/server/zod/`; no manual re-declaration of domain shapes.
+- tRPC `.input()` and `.output()` contracts must use canonical schemas from `src/server/zod/`.
+- zod schemas should be derived from drizzle db schemas where possible.
+- form-level or ui-level adapter schemas may exist outside `src/server/zod/`, but they must derive from canonical server schemas and must not redefine domain contracts.
+
+allowed infra exceptions (non-domain): oauth callbacks/login routes, cron/migration routes, websocket transport.
+
+see `docs/architecture/type-contracts.md` for migration rules and enforcement checklist.
+
+## architecture
+
+- next.js 16 app router with react 19, bun runtime
+- database: turso (libsql) via drizzle orm — sqlite dialect
+- auth: lucia + arctic (lichess oauth), session cookies, api tokens (`mktour_<id>_<secret>`)
+- api: trpc v11 with superjson transformer and openapi generation (trpc-to-openapi)
+- client state: tanstack react-query via `@trpc/tanstack-react-query`
+- real-time: websockets (react-use-websocket) for tournament dashboards and global events
+- i18n: next-intl, locales in `src/messages/` (en, ru)
+- styling: tailwind css v4, shadcn/ui, class-variance-authority
+- pwa: next-pwa, service worker in `public/`
+- caching: next.js `"use cache"` directives with `cacheLife()` and `cacheTag()` (see `src/lib/cache-tags.ts`)
+- hosting: vercel with cron jobs (`vercel.json`)
+
+## domain model
+
+clubs → tournaments → players → games
+
+- **users**: lichess-authenticated accounts, each has a selectedClub
+- **clubs**: organizations that own tournaments and players. managers have status admin/co-owner (`clubs_to_users`)
+- **players**: belong to a club, have glicko-2 ratings (rating, ratingDeviation, ratingVolatility). a user can be affiliated to a player via `affiliations`
+- **tournaments**: belong to a club, formats: swiss / round robin / single elimination / double elimination. types: solo / doubles / team
+- **games**: belong to a tournament round, white/black player ids, result (1-0, 0-1, 1/2-1/2)
+- **notifications**: club-level and user-level event notifications
+
+schema source of truth: `src/server/db/schema/` — zod models in `src/server/zod/`
+
+### player-user relationships
+
+players have a direct `userId` field that links them to users. this is the primary relationship.
+
+the `affiliations` table is for affiliation requests/management (pending, active, rejected statuses). it's not the primary way to query player-user relationships.
+
+**when querying players for a user**: use `players.userId` directly. do not over-complicate with joins to the affiliations table unless specifically dealing with affiliation status/requests.
+
+## key directories
+
+```
+src/
+├── app/                   # next.js routes and api
+│   ├── (routes)/          # auth-conditional layout
+│   ├── api/[...trpc]/     # trpc http handler
+│   ├── api/auth/          # lichess oauth + session cleanup cron
+│   ├── api/db/migrate/    # production migration endpoint
+│   ├── clubs/[id]/        # club dashboard
+│   └── tournaments/[id]/  # tournament dashboard
+├── components/
+│   ├── hooks/
+│   │   ├── mutation-hooks/  # trpc mutation wrappers with optimistic updates
+│   │   └── query-hooks/     # trpc query wrappers
+│   ├── trpc/              # client.tsx (TRPCReactProvider), server.tsx, query-client.ts
+│   ├── ui/                # shadcn components (DO NOT EDIT)
+│   └── ui-custom/         # extended/custom components
+├── lib/
+│   ├── auth/lucia.ts      # lucia setup, validateRequest (cached), lichess oauth
+│   ├── cache-tags.ts      # cache tag constants (AUTH, USER_CLUBS, ALL_TOURNAMENTS, ALL_CLUBS)
+│   ├── config/            # urls.ts (base url, socket url, db url), constants.ts
+│   ├── pairing-generators/ # swiss, round-robin, random pairs algorithms
+│   └── zod/               # form validation schemas
+├── server/
+│   ├── api/
+│   │   ├── trpc.ts        # context, procedures (public, protected, auth, clubAdmin, tournamentAdmin)
+│   │   ├── index.ts       # appRouter, publicCaller, makeProtectedCaller
+│   │   └── routers/       # auth, club, player, search, tournament, user
+│   ├── db/
+│   │   ├── schema/        # drizzle table definitions (clubs, users, tournaments, players, notifications)
+│   │   ├── migrations/    # drizzle migration files
+│   │   └── seed.ts        # test data seeding
+│   ├── zod/               # zod models inferred from schema + enums
+│   ├── mutations/         # server-side mutation logic by domain
+│   └── queries/           # server-side query logic by domain
+├── tests/
+│   ├── setup/
+│   │   ├── preload.ts     # sets NODE_ENV=test, verifies test db, seeds data
+│   │   └── utils.ts       # createAuthenticatedCaller, cleanupTestDb, helpers
+│   └── *.test.ts
+└── types/                 # global type declarations
+```
+
+## trpc procedures
+
+five procedure levels in `src/server/api/trpc.ts`:
+
+- `publicProcedure` — no auth required
+- `authProcedure` — attaches user if logged in but does not enforce
+- `protectedProcedure` — requires valid session, throws UNAUTHORIZED
+- `clubAdminProcedure` — extends protected, requires user to be admin/co-owner of the club
+- `tournamentAdminProcedure` — extends protected, requires user to be organizer of the tournament
+
+routers: `auth`, `club`, `player`, `search`, `tournament`, `user` (in `src/server/api/routers/`)
+
+server-side callers: `publicCaller` and `makeProtectedCaller()` in `src/server/api/index.ts`
+
+## openapi spec generation
+
+**CRITICAL**: openapi spec is ALWAYS auto-generated by trpc-to-openapi. NEVER edit `src/app/api/spec/openapi-spec.json` manually.
+
+workflow for adding new endpoints to openapi:
+
+1. add openapi metadata to `src/server/api/meta.ts` (method, path, summary, tags)
+2. attach `.meta(meta.yourEndpoint)` to the trpc procedure
+3. run `bun generate-openapi` to regenerate the spec file
+
+the spec file is generated from trpc router definitions and should never be manually modified.
+
+## query design principles
+
+- **keep queries simple**: use the most direct path to get data. avoid unnecessary joins or complex logic
+- **respect the domain model**: understand the primary relationships (e.g., `players.userId` is the primary user-player link, not `affiliations`)
+- **avoid over-engineering**: if a simple query with one join works, don't add multiple queries and deduplication logic
+- **read existing patterns**: before implementing, check similar queries in the codebase to follow established patterns
 
 ## commands
 
-- development
-- bun dev # start development server
-- bun dev:test # run with test environment
-- bun dev:local # offline/local database mode
-- bun opt # enable optimizations
+```
+bun dev                      # start dev server
+bun dev:test                 # dev with test database (MKTOURTEST=true)
+bun dev:local                # offline mode (OFFLINE=true, local sqld at :8080)
+bun run build                # production build
+bun start                    # start production server
+bun check                    # typecheck + lint + tests (run before pushing)
+bun format                   # prettier formatting
+bun knip                     # find unused deps/exports
+bun test                     # run all tests (with db seed)
+bun test path/to/file        # run single test file (with db seed)
+bun test:noseed path/to/file # run test without db seed (fast for non-db tests)
+SKIP_SEED=1 bun test ...     # alternative: skip seed via env var
+bun analyze                  # bundle analysis
+bun db:push                  # generate + run migrations
+bun db:studio                # open drizzle studio
+bun generate-erd             # generate entity-relationship diagram
+bun generate-openapi         # generate openapi spec
+```
 
-- building & production
-- bun run build # production build
-- bun start # start production server
-- bun analyze # analyze bundle size
+always run `bun check` before pushing. use single-file test when validating changes.
 
-- code quality
-- bun check # typecheck, lint, tests
-- bun format # prettier formatting
-- bun knip # find unused dependencies/exports
+## code style
 
-- testing
-- bun test # run all tests
-- bun test path/to/file # run a single test file (e.g. bun test src/tests/foo.test.ts)
-- bun test path/to/file -t "name" # run a single test by name (where supported)
-- bun test path/to/file -- -t "name" # alternative passthrough form for test name filtering
-
-- database
-- bun db:push # generate and run migrations
-- bun db:drop # drop database
-- bun db:studio # open drizzle studio
-- bun db:check # check database schema
-- bun localdb:\* # offline development commands (aliases)
-
-- migrating production database
-  curl -X POST https://mktour.org/api/db/migrate \
-   -H "authorization: Bearer <CRON_SECRET>"
-
-- other
-- bun generate-erd # generate entity-relationship diagram
-- bun generate-openapi # generate openapi specification
-
-> notes:
-
-- always run tests and lint before pushing; use single-file test when validating changes.
-- if a test name pattern is used, ensure the pattern matches an existing test description.
-
-## code style & conventions
-
-- ui & formatting rules
-- no capital letters in ui text at all
-- no capital letters in comments
+- **no capital letters** in ui text, comments, or prose — write everything lowercase unless technically required
 - no unnecessary comments in code
-- write everything in lowercase unless technically required
+- files: kebab-case (`user-profile.tsx`), components: PascalCase, variables: camelCase, constants: UPPER_SNAKE_CASE, types: PascalCase
+- absolute imports: `@/` prefix (maps to `src/`)
+- import order: react → third-party → internal (blank lines between groups), use `import type` for type-only
+- server components by default; add `'use client'` only for interactive parts
+- `cn()` for conditional tailwind classes, cva for component variants
+- `src/components/ui/` = untouched shadcn components; extend in `src/components/ui-custom/`
 
-- file structure
-- use 'src/' as the base directory
-- follow next.js 13+ app router conventions
-- components in 'src/components/' (subdirectories for categories)
-- pages in 'src/app/[route]/page.tsx'
-- api routes in 'src/app/api/[...] /route.ts'
-- database schema in 'src/server/db/schema/'
-- utilities in 'src/lib/'
+## typescript & types
 
-- component organization
-- 'src/components/ui/' only for default shadcn components
-- all customized components go in 'src/components/ui-custom/'
-- never modify shadcn components directly, extend them in ui-custom
-
-- import style
-- use absolute imports with '@/ prefix: 'import { button } from '@/components/ui/button''
-- order: react → third-party → internal (blank lines between groups)
-- use 'import type' for type-only imports
-- consolidate import paths when possible (vs code organize imports)
-
-- naming conventions
-- files: kebab-case ('user-profile.tsx')
-- components: PascalCase ('UserProfile')
-- variables/functions: camelCase ('getUserData')
-- constants: lower_snake_case ('api_base_url')
-- interfaces/types: PascalCase ('UserData')
-
-- typescript & typing
-- strict typing; follow a single source of truth where possible
-- all types relate to the database schema when feasible
-- schema/types prefixed with 'database' (e.g. 'DatabaseUser')
-- models defined in 'server/db/zod/' and inferred from schema
-- avoid defining ad-hoc types outside the canonical folder
-- types exported from the schema should be used by api boundaries
-- use zod for input/output validation in APIs
-
-- react components
-- prefer functional components with hooks
-- server components by default; add 'use client' only for interactive parts
-- use cn() for conditional tailwind classes
-- use class-variance-authority (cva) for component variants
-
-- styling
-- tailwind css as primary styling solution
-- mobile-first responsive design
-- extend shadcn/ui components via 'ui-custom/'; avoid editing upstream files
-- css-in-js only when absolutely necessary
-
-- database & api
-- drizzle orm with zod schemas for type safety
-- tRPC for API endpoints with auto-generated types
-- separate router files by domain (e.g. 'user.ts', 'club.ts')
-- implement optimistic UI updates where appropriate
-- proper error handling and http status codes; avoid leaking sensitive data
-
-- error handling
-- use react-error-boundary for react components
-- api routes should use try/catch and return clear errors
-- log errors with context; avoid exposing secrets
+- strict typing; schema is the single source of truth
+- types prefixed with `Database` (e.g. `DatabaseUser`) live in `src/server/zod/`
+- enums defined via zod in `src/server/zod/enums.ts`, inferred as typescript types
+- use zod for all api input/output validation
+- avoid ad-hoc types outside canonical folders
 
 ## optimistic updates
 
-use react-query optimistic updates when the UI needs to feel instant (e.g. counters, toggles, quick actions). follow this pattern to handle concurrent mutations without flicker:
+use react-query optimistic updates when the ui needs to feel instant. pattern:
 
 - onMutate: cancel queries, save previous state, optimistically update cache
-- onSuccess: broadcast changes via WebSocket if multi-client sync needed
+- onSuccess: broadcast via websocket if multi-client sync needed
 - onError: rollback to previous state
-- onSettled / onSuccess: use `isMutating() === 1` check - invalidation only runs after the final mutation, preventing flicker during rapid clicks
+- onSettled: use `isMutating() === 1` check — invalidation only runs after the final concurrent mutation completes, preventing flicker during rapid clicks
 
-### when to use isMutating() === 1 check
-
-the check is required ONLY for updates (onMutate with manual cache update). these mutations create mutations that use optimistic a gap between client and server state, so we must wait for all concurrent mutations to complete before invalidating.
-
-pattern:
+the `isMutating() === 1` check is required ONLY for mutations that do optimistic cache updates (onMutate with manual cache set). these create a gap between client and server state.
 
 ```typescript
-// with mutationKey (recommended - more specific)
 onSettled: () => {
   if (
     queryClient.isMutating({
@@ -140,81 +195,49 @@ onSettled: () => {
     queryClient.invalidateQueries({ queryKey: ... });
   }
 },
-
-// or without mutationKey (checks all mutations)
-onSettled: () => {
-  if (queryClient.isMutating() === 1) {
-  }
-},
 ```
 
 ## testing
 
-- bun test runner; tests end with '.test.ts' or '.test.tsx'
-- place tests under 'src/tests/'
-- share utilities under 'tests/setup/utils.ts'
-- use mocks from 'bun:test'
+- bun test runner; test files end with `.test.ts` or `.test.tsx`
+- tests live under `src/tests/`, some colocated in `src/lib/` (e.g. pairing generators)
+- `bunfig.toml` preloads `src/tests/setup/preload.ts` which sets NODE_ENV=test, verifies the test database url contains "test", cleans and seeds data
+- test utilities: `src/tests/setup/utils.ts` — `createAuthenticatedCaller()`, `createUnauthenticatedCaller()`, `cleanupTestDb()`, `getSeededTestData()`
+- use mocks from `bun:test`
 - test both success and failure paths
-- focus tests to a single file when validating changes
 
-- internationalization
-- next-intl for translations
-- translation bundles in 'messages/' per locale
-- use structured text components (no hard-coded strings)
+### skipping database seed
+
+for tests that don't need database (e.g. pure logic tests like glicko-2, pairing generators), skip seeding to run tests instantly:
+
+```bash
+bun test:noseed path/to/test.ts  # using npm script
+SKIP_SEED=1 bun test path/to/test.ts  # using env var directly
+```
+
+this reduces test time from ~15s to ~20ms for non-db tests.
+
+## i18n
+
+- next-intl, configured at `src/components/i18n.ts`
+- translation files: `src/messages/en.json`, `src/messages/ru.json`
+- no hard-coded user-facing strings; use translation keys
 - format dates with date-fns
 
-- performance
-- caching and memoization where appropriate
-- avoid unnecessary re-renders; use React.memo
-- suspense for data loading states
-- optimize images; use framework image components when possible
-- run bundle analysis with 'bun analyze'
+## git & commits
 
-- git & commits
-- follow conventional commits (feat, impr, fix, docs, style, ref, perf, test, build, ci, chore, revert)
-- subject line <= 100 characters; imperative mood
-- body wrapped at ~100 characters; explain why the change matters
+- conventional commits: feat, impr, fix, docs, style, ref, perf, test, build, ci, chore, revert
+- subject line ≤ 100 chars, imperative mood
+- body wrapped at ~100 chars; explain why
 - small, focused commits; avoid large rewrites
-- avoid amend unless explicitly requested and safe
 - do not push to remote without user approval
-- syncing branches: to make beta identical to main without merge commits: `git checkout beta && git reset --hard origin/main && git push --force origin beta`
+- do not amend unless explicitly requested
+- syncing beta to main: `git checkout beta && git reset --hard origin/main && git push --force origin beta`
 
-- code quality tools
-- eslint with next.js ts config
-- prettier with tailwind plugin
-- husky pre-commit hooks
-- knip for unused code detection
-- semantic release for versioning
+## environment
 
-- environment
-- use '.env.local' for local development
-- separate test environment with 'node_env=test'
-- database URLs configured per environment; env vars validated via schemas
-- secrets should never be committed
-
-## cursor rules and copilot guidance
-
-- cursor rules: not configured in this repo; follow editor and team conventions
-- copilot instructions: see .github/copilot-instructions.md for full policy
-- summary: edits should be patch-based (apply_patch); avoid destructive git commands unless asked
-- always run tests and lint locally; report failures and fix before prs
-- ensure no secrets are introduced by generated code
-- when in doubt, craft small, reviewable changes and add tests
-
-## copilot guidelines (summary)
-
-- follow repository conventions when generating code
-- prefer patch-based edits; avoid large rewrites without review
-- validate changes with tests locally
-- guard against leaking sensitive data in generated patches
-- consult .github/copilot-instructions.md for full policy
-
-## closing
-
-- this file should be kept up to date with repository practices
-- if cursor rules exist later, append them here
-- aim for clear, actionable guidance that agents can follow without extra context
-
-```
-
-```
+- `.env.local` for local development
+- test env: `NODE_ENV=test` + `TEST_DATABASE_URL` / `TEST_DATABASE_AUTH_TOKEN`
+- offline/local mode: `OFFLINE=true` uses local sqld at `http://localhost:8080`
+- websocket server at `ws://localhost:7070` in dev, `NEXT_PUBLIC_SOCKET_URL` in prod
+- secrets must never be committed

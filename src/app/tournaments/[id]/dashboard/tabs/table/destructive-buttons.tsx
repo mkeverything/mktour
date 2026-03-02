@@ -9,7 +9,7 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { PlayerTournamentModel } from '@/server/db/zod/players';
+import { PlayerTournamentModel } from '@/server/zod/players';
 import { LogOut, Trash2 } from 'lucide-react';
 import { FC } from 'react';
 

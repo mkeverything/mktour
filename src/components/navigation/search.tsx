@@ -17,9 +17,9 @@ import {
 } from '@/components/ui/command';
 import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClubModel } from '@/server/db/zod/clubs';
-import { PlayerModel } from '@/server/db/zod/players';
-import { UserModel } from '@/server/db/zod/users';
+import { ClubModel } from '@/server/zod/clubs';
+import { PlayerModel } from '@/server/zod/players';
+import { UserPublicModel } from '@/server/zod/users';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -170,7 +170,7 @@ export default function GlobalSearch() {
                   {data?.users && data?.users.length > 0 && (
                     <>
                       <CommandGroup heading={t('users')}>
-                        {data.users.map((item: UserModel) => (
+                        {data.users.map((item: UserPublicModel) => (
                           <Link key={item.id} href={`/user/${item.username}`}>
                             <CommandItem
                               value={item.id}
