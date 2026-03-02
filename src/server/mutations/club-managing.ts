@@ -27,7 +27,7 @@ import {
 import { UserNotificationInsertModel } from '@/server/zod/notifications';
 import { PlayerEditModel, PlayerFormModel } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, inArray, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
@@ -233,29 +233,17 @@ export const deleteClubFunction = async ({
       .set({ selectedClub: otherClubs[0].clubId })
       .where(eq(users.id, userId));
   }
+
+  const clubTournamentIds = db
+    .select({ id: tournaments.id })
+    .from(tournaments)
+    .where(eq(tournaments.clubId, clubId));
+
   await db.batch([
-    db
-      .delete(games)
-      .where(
-        eq(
-          games.tournamentId,
-          db
-            .select({ id: tournaments.id })
-            .from(tournaments)
-            .where(eq(tournaments.clubId, clubId)),
-        ),
-      ),
+    db.delete(games).where(inArray(games.tournamentId, clubTournamentIds)),
     db
       .delete(players_to_tournaments)
-      .where(
-        eq(
-          players_to_tournaments.tournamentId,
-          db
-            .select({ id: tournaments.id })
-            .from(tournaments)
-            .where(eq(tournaments.clubId, clubId)),
-        ),
-      ),
+      .where(inArray(players_to_tournaments.tournamentId, clubTournamentIds)),
 
     db.delete(affiliations).where(eq(affiliations.clubId, clubId)),
     db.delete(club_notifications).where(eq(club_notifications.clubId, clubId)),
