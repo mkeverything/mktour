@@ -1,3 +1,10 @@
+# [1.0.0-beta.29](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.28...v1.0.0-beta.29) (2026-03-02)
+
+
+### Features
+
+* display affiliated player on club public page ([fce871f](https://github.com/mkeverything/mktour/commit/fce871f1a483439dc78a9895da32a2d5c1c5edb1))
+
 # [1.0.0-beta.28](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.27...v1.0.0-beta.28) (2026-03-02)
 
 
