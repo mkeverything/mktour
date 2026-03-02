@@ -1,3 +1,16 @@
+# [1.0.0-beta.30](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.29...v1.0.0-beta.30) (2026-03-02)
+
+
+### Bug Fixes
+
+* delete user - sqlite constraint ([b55fb60](https://github.com/mkeverything/mktour/commit/b55fb6074c75ebdd51c93bb7d8ff5386cb97c6ac))
+* **MONKEYPATCH:** client filtering notifications with removed affeliation ([2f6f03a](https://github.com/mkeverything/mktour/commit/2f6f03ac99209571153512f21c7edb157a71fd2e))
+
+
+### Features
+
+* highlightning gameItem of user and its place in table ([4c11f76](https://github.com/mkeverything/mktour/commit/4c11f7663317b9ad31722a4e2610a40c463aefd0))
+
 # [1.0.0-beta.29](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.28...v1.0.0-beta.29) (2026-03-02)
 
 
