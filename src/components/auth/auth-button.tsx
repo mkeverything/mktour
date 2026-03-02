@@ -84,7 +84,7 @@ export default function AuthButton() {
           >
             {t('Profile.logout')}
           </StyledItem>
-          <div className="p-mk mx-mk mt-mk flex items-center justify-evenly border-t">
+          <div className="p-mk mx-mk mt-mk hidden items-center justify-evenly border-t md:flex">
             <LocaleSwitcher />
             <ModeToggler />
           </div>
