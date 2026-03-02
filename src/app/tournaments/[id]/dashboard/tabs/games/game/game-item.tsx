@@ -33,6 +33,7 @@ const GameItem: FC<GameProps> = ({
     sendJsonMessage,
     status,
     playerId,
+    userId,
   } = useContext(DashboardContext);
   const queryClient = useQueryClient();
   const mutation = useTournamentSetGameResult(queryClient, {
@@ -40,7 +41,6 @@ const GameItem: FC<GameProps> = ({
     sendJsonMessage,
   });
   const { data } = useTournamentInfo(tournamentId);
-  const { userId } = useContext(DashboardContext);
   const ref = useRef<HTMLDivElement>(null);
   const hasStarted = !!data?.tournament.startedAt;
   const selected = selectedGameId === id;
@@ -117,7 +117,7 @@ const GameItem: FC<GameProps> = ({
         onClick={handleOpenGame}
       >
         <Card
-          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'}`}
+          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerInGame && 'ring-border border-border border-2 ring-2'}`}
         >
           <Player
             isWinner={result === '1-0'}
@@ -125,6 +125,7 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={playerLeft.whiteNickname}
             position={{ justify: 'justify-self-start', text: 'text-left' }}
+            className={`${playerId === playerLeft.whiteId && 'font-bold'}`}
           />
           <Button
             variant="ghost"
@@ -139,6 +140,7 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={playerRight.blackNickname}
             position={{ justify: 'justify-self-end', text: 'text-right' }}
+            className={`${playerId === playerRight.blackId && 'font-bold'}`}
           />
         </Card>
       </motion.div>

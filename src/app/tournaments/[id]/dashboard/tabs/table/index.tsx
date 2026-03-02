@@ -34,10 +34,12 @@ import { toast } from 'sonner';
 
 import FormattedMessage from '@/components/formatted-message';
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
+import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import {
   type SortedPlayersResult,
   sortPlayersByResultsWithMaps,
 } from '@/lib/tournament-results';
+import { UserModel } from '@/server/zod/users';
 
 const TournamentTable: FC = ({}) => {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +58,7 @@ const TournamentTable: FC = ({}) => {
     useState<PlayerTournamentModel | null>(null);
   const hasStarted = !!tournament.data?.tournament.startedAt;
   const hasEnded = !!tournament.data?.tournament.closedAt;
+  const { data: user } = useAuth();
 
   const allGames = useTournamentGames(id);
 
@@ -132,14 +135,20 @@ const TournamentTable: FC = ({}) => {
         </TableHeader>
         <TableBody>
           {sortedPlayers.map((player: PlayerTournamentModel, i: number) => (
-            <TableRow key={player.id} onClick={() => setSelectedPlayer(player)}>
+            <TableRow
+              key={player.id}
+              onClick={() => setSelectedPlayer(player)}
+              className={`${player.username === user?.username && 'bg-card/50 font-bold'}`}
+            >
               <TableCellStyled className={`font-small w-10 text-center`}>
                 <Place player={player} hasEnded={hasEnded}>
                   {i + 1}
                 </Place>
               </TableCellStyled>
               <TableCellStyled className="font-small flex gap-2 truncate pl-0">
-                <Status player={player}>{player.nickname}</Status>
+                <Status player={player} user={user}>
+                  {player.nickname}
+                </Status>
               </TableCellStyled>
               {stats.map((stat) => (
                 <Stat key={stat}>{statRenderers[stat](player)}</Stat>
@@ -232,10 +241,12 @@ const Place: FC<
   );
 };
 
-const Status: FC<{ player: PlayerTournamentModel } & PropsWithChildren> = ({
-  player,
-  children,
-}) => {
+const Status: FC<
+  {
+    player: PlayerTournamentModel;
+    user: UserModel | null | undefined;
+  } & PropsWithChildren
+> = ({ player, user, children }) => {
   return (
     <div
       className={`gap-mk flex items-center ${player.isOut && 'text-muted-foreground'}`}
