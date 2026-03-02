@@ -17,7 +17,11 @@ import getAllClubManagers, {
   getClubAffiliatedUsers,
   leaveClub,
 } from '@/server/mutations/club-managing';
-import { getClubInfo, getClubPlayers } from '@/server/queries/club';
+import {
+  getClubInfo,
+  getClubPlayers,
+  getUserClubPlayer,
+} from '@/server/queries/club';
 import getAllClubs from '@/server/queries/get-all-clubs';
 import getClubNotifications from '@/server/queries/get-club-notifications';
 import { getClubStats } from '@/server/queries/get-club-stats';
@@ -120,6 +124,16 @@ export const clubRouter = createTRPCRouter({
     .output(affiliationExtendedSchema.nullable())
     .query(async (opts) => {
       return await getUserClubAffiliation(opts.ctx.user, opts.input.clubId);
+    }),
+  authPlayer: protectedProcedure
+    .meta(meta.clubAuthPlayer)
+    .input(clubIdInputSchema)
+    .output(playersSelectSchema.nullable())
+    .query(async (opts) => {
+      return await getUserClubPlayer({
+        clubId: opts.input.clubId,
+        userId: opts.ctx.user.id,
+      });
     }),
   authStatus: publicProcedure
     .meta(meta.clubAuthStatus)

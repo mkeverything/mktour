@@ -3,7 +3,7 @@ import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import { ClubModel } from '@/server/zod/clubs';
 import { PlayerModel } from '@/server/zod/players';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 export const getClubInfo = async (id: ClubModel['id']) => {
   const data = (await db.select().from(clubs).where(eq(clubs.id, id)))?.at(0);
@@ -34,4 +34,20 @@ export const getClubPlayers = async (
     players: result.slice(0, limit),
     nextCursor,
   };
+};
+
+export const getUserClubPlayer = async ({
+  clubId,
+  userId,
+}: {
+  clubId: string;
+  userId: string;
+}): Promise<PlayerModel | null> => {
+  const player = await db
+    .select()
+    .from(players)
+    .where(and(eq(players.clubId, clubId), eq(players.userId, userId)))
+    .get();
+
+  return player ?? null;
 };

@@ -225,7 +225,11 @@
       "createdAt": "создан: {date}",
       "tournaments": "турниры клуба:",
       "players": "игроки",
-      "most active": "самые активные игроки"
+      "most active": "самые активные игроки",
+      "yourPlayer": "ваш игрок в этом клубе",
+      "linkedProfile": "привязанный профиль",
+      "yourStatsInClub": "ваша статистика",
+      "nickname": "никнейм"
     },
     "New": {
       "new club": "новый клуб",

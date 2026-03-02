@@ -226,7 +226,11 @@
       "createdAt": "created: {date}",
       "tournaments": "club tournaments:",
       "players": "players",
-      "most active": "most active players"
+      "most active": "most active players",
+      "yourPlayer": "your player in this club",
+      "linkedProfile": "linked profile",
+      "yourStatsInClub": "your own stats",
+      "nickname": "nickname"
     },
     "New": {
       "new club": "new club",

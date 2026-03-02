@@ -1,5 +1,6 @@
 'use client';
 
+import AffiliatedPlayerCard from '@/app/clubs/[id]/affiliated-player-card';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
@@ -31,17 +32,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Home, Search, Trophy, Users2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC, useEffect, useState } from 'react';
+import { FC, ReactNode, useEffect, useState } from 'react';
 
 const ClubPage: FC<{
   club: ClubModel;
   statusInClub: StatusInClub | null;
   userId: string;
-}> = ({ club, statusInClub }) => {
+}> = ({ club, statusInClub, userId }) => {
   return (
     <div className="mk-container gap-mk-2 flex flex-col">
       <ClubHeader club={club} statusInClub={statusInClub} />
       <ClubStats clubId={club.id} />
+      <AffiliatedPlayerCard clubId={club.id} userId={userId} />
       <MostActivePlayers clubId={club.id} />
 
       <div className="gap-mk hidden md:grid md:grid-cols-2">
@@ -188,7 +190,7 @@ const ClubStats: FC<{ clubId: string }> = ({ clubId }) => {
 const StatCard: FC<{
   icon: FC<{ className?: string }>;
   label: string;
-  value?: number;
+  value?: ReactNode;
   isLoading?: boolean;
 }> = ({ icon: Icon, label, value, isLoading }) => (
   <div className="bg-primary/5 border-primary/10 flex items-center gap-4 rounded-xl border p-4">

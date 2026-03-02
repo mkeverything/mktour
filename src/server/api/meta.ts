@@ -248,6 +248,15 @@ const meta = {
     },
   },
 
+  clubAuthPlayer: {
+    openapi: {
+      method: 'GET',
+      path: '/clubs/{clubId}/auth-player',
+      summary: 'get auth user player in club',
+      tags: ['clubs'],
+    },
+  },
+
   clubAuthStatus: {
     openapi: {
       method: 'GET',
