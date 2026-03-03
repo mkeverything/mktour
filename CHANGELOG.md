@@ -1,3 +1,10 @@
+# [1.1.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.0.2-beta.2...v1.1.0-beta.1) (2026-03-03)
+
+
+### Features
+
+* store new rating values instead of changes ([3b30f21](https://github.com/mkeverything/mktour/commit/3b30f21590100c7363552b7158ea9414aa3d6c33))
+
 ## [1.0.2-beta.2](https://github.com/mkeverything/mktour/compare/v1.0.2-beta.1...v1.0.2-beta.2) (2026-03-03)
 
 
