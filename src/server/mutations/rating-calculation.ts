@@ -244,35 +244,34 @@ export async function calculateAndApplyGlickoRatings(
     });
   }
 
-  // Apply all updates (caller provides the transaction)
-  for (const { playerId, update, newPeak } of ratingUpdates) {
-    // Update player's main rating
-    await tx
-      .update(players)
-      .set({
-        rating: update.newRating,
-        ratingPeak: newPeak,
-        ratingDeviation: update.newRatingDeviation,
-        ratingVolatility: update.newVolatility,
-        ratingLastUpdateAt: new Date(),
-      })
-      .where(eq(players.id, playerId));
-
-    // Update player's tournament record with rating changes
-    await tx
-      .update(players_to_tournaments)
-      .set({
-        ratingChange: update.ratingChange,
-        ratingDeviationChange: update.ratingDeviationChange,
-        volatilityChange: update.volatilityChange,
-      })
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, playerId),
+  // Apply all updates in parallel (caller provides the transaction)
+  await Promise.all(
+    ratingUpdates.flatMap(({ playerId, update, newPeak }) => [
+      tx
+        .update(players)
+        .set({
+          rating: update.newRating,
+          ratingPeak: newPeak,
+          ratingDeviation: update.newRatingDeviation,
+          ratingVolatility: update.newVolatility,
+          ratingLastUpdateAt: new Date(),
+        })
+        .where(eq(players.id, playerId)),
+      tx
+        .update(players_to_tournaments)
+        .set({
+          ratingChange: update.ratingChange,
+          ratingDeviationChange: update.ratingDeviationChange,
+          volatilityChange: update.volatilityChange,
+        })
+        .where(
+          and(
+            eq(players_to_tournaments.tournamentId, tournamentId),
+            eq(players_to_tournaments.playerId, playerId),
+          ),
         ),
-      );
-  }
+    ]),
+  );
 
   console.log(
     `Updated ratings for ${ratingUpdates.length} players in tournament ${tournamentId}`,
