@@ -4,9 +4,7 @@ import type { ChessTournamentEntity } from '@/lib/pairing-generators/common-gene
 import { getSwissColouredPair } from '@/lib/pairing-generators/swiss-generator/colouring';
 import { EDGE_WEIGHT_ATTRIBUTE } from '@/lib/pairing-generators/swiss-generator/matching/weighted-operations';
 import {
-  areEntitiesCompatibleByC3,
   canEntityReceivePAB,
-  getNonTopscorers,
   getTopscorers,
   havePlayedBefore,
   PAB_NODE_ID,
@@ -94,7 +92,6 @@ function addRegularEdges(
   context: WeightContext,
   multipliers: CriterionMultipliers,
   topscorers: readonly ChessTournamentEntity[],
-  nonTopscorers: readonly ChessTournamentEntity[],
 ): void {
   for (let firstIndex = 0; firstIndex < players.length; firstIndex++) {
     for (
@@ -106,12 +103,7 @@ function addRegularEdges(
       const secondPlayer = players[secondIndex];
 
       const hasNotPlayedBefore = !havePlayedBefore(firstPlayer, secondPlayer);
-      const isCompatibleByC3 = areEntitiesCompatibleByC3(
-        firstPlayer,
-        secondPlayer,
-        [...nonTopscorers],
-      );
-      if (hasNotPlayedBefore && isCompatibleByC3) {
+      if (hasNotPlayedBefore) {
         const simplePair: [ChessTournamentEntity, ChessTournamentEntity] = [
           firstPlayer,
           secondPlayer,
@@ -196,16 +188,8 @@ export function buildWeightedGraph(
   }
 
   const topscorers = getTopscorers([...players], context.roundNumber);
-  const nonTopscorers = getNonTopscorers([...players], context.roundNumber);
 
-  addRegularEdges(
-    graph,
-    players,
-    context,
-    multipliers,
-    topscorers,
-    nonTopscorers,
-  );
+  addRegularEdges(graph, players, context, multipliers, topscorers);
 
   if (context.hasOddPlayers) {
     addPabEdges(graph, players, context, multipliers, topscorers);
