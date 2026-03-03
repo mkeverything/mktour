@@ -1,8 +1,17 @@
+# [1.1.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.0.2-beta.2...v1.1.0-beta.1) (2026-03-03)
+
+
+### Features
+
+* store new rating values instead of changes ([3b30f21](https://github.com/mkeverything/mktour/commit/3b30f21590100c7363552b7158ea9414aa3d6c33))
+
+## [1.0.2-beta.2](https://github.com/mkeverything/mktour/compare/v1.0.2-beta.1...v1.0.2-beta.2) (2026-03-03)
 ## [1.0.2](https://github.com/mkeverything/mktour/compare/v1.0.1...v1.0.2) (2026-03-03)
 
 
 ### Bug Fixes
 
+* wrap rating calculations with promise.all to speed it up and fit in allowed 10 sec ([60ab5fd](https://github.com/mkeverything/mktour/commit/60ab5fd724383949439a57482cb0873be608774c))
 * converting websocked dates ([c9a3d7f](https://github.com/mkeverything/mktour/commit/c9a3d7feec4b25b2aac209bb2380f5f18dd73947))
 * stabilize finishing tournament and rating calculation (rap in single transaction) ([addee31](https://github.com/mkeverything/mktour/commit/addee316b671504e610f0c32ed5d7c6419cbd184))
 

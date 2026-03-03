@@ -54,9 +54,9 @@ export const players_to_tournaments = sqliteTable('players_to_tournaments', {
   place: integer('place'),
   isOut: integer('is_out', { mode: 'boolean' }),
   pairingNumber: integer('pairing_number'),
-  ratingChange: integer('rating_change'),
-  ratingDeviationChange: integer('rating_deviation_change'),
-  volatilityChange: real('volatility_change'),
+  newRating: integer('new_rating'),
+  newRatingDeviation: integer('new_rating_deviation'),
+  newVolatility: real('new_volatility'),
 });
 
 export const games = sqliteTable('game', {

@@ -27,7 +27,7 @@ import {
 import { UserNotificationInsertModel } from '@/server/zod/notifications';
 import { PlayerEditModel, PlayerFormModel } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { and, eq, inArray, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
@@ -305,10 +305,36 @@ export const addClubManager = async ({
     createdAt: new Date(),
     metadata: { clubId: clubId, role: status },
   };
-  await Promise.all([
-    db.insert(clubs_to_users).values(newRelation),
-    db.insert(user_notifications).values(userNotification),
-  ]);
+  await db.transaction(async (tx) => {
+    await tx.insert(clubs_to_users).values(newRelation);
+    await tx.insert(user_notifications).values(userNotification);
+
+    if (status !== 'admin') return;
+
+    const targetUser = await tx.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: {
+        selectedClub: true,
+      },
+    });
+    if (!targetUser) return;
+
+    const hasFinishedTournamentsInSelectedClub =
+      await tx.query.tournaments.findFirst({
+        where: and(
+          eq(tournaments.clubId, targetUser.selectedClub),
+          isNotNull(tournaments.closedAt),
+        ),
+        columns: { id: true },
+      });
+
+    if (!hasFinishedTournamentsInSelectedClub) {
+      await tx
+        .update(users)
+        .set({ selectedClub: clubId })
+        .where(eq(users.id, userId));
+    }
+  });
 };
 
 export const deleteClubManager = async ({

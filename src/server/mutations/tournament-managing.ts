@@ -213,9 +213,9 @@ export async function addNewPlayer({
     place: null,
     isOut: null,
     pairingNumber: null,
-    ratingChange: null,
-    ratingDeviationChange: null,
-    volatilityChange: null,
+    newRating: null,
+    newRatingDeviation: null,
+    newVolatility: null,
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
   await normalizeSwissRoundsNumber(tournamentId);
@@ -251,9 +251,9 @@ export async function addExistingPlayer({
     place: null,
     isOut: null,
     pairingNumber: null,
-    ratingChange: null,
-    ratingDeviationChange: null,
-    volatilityChange: null,
+    newRating: null,
+    newRatingDeviation: null,
+    newVolatility: null,
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
   await normalizeSwissRoundsNumber(tournamentId);
@@ -635,22 +635,23 @@ export async function finishTournament({
       }
     });
 
-    for (const player of sortedPlayers) {
-      await tx
-        .update(players_to_tournaments)
-        .set({ place: player.place })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, player.id),
+    await Promise.all(
+      sortedPlayers.flatMap((player) => [
+        tx
+          .update(players_to_tournaments)
+          .set({ place: player.place })
+          .where(
+            and(
+              eq(players_to_tournaments.tournamentId, tournamentId),
+              eq(players_to_tournaments.playerId, player.id),
+            ),
           ),
-        );
-
-      await tx
-        .update(players)
-        .set({ lastSeenAt: closedAt })
-        .where(eq(players.id, player.id));
-    }
+        tx
+          .update(players)
+          .set({ lastSeenAt: closedAt })
+          .where(eq(players.id, player.id)),
+      ]),
+    );
 
     if (tournament.rated) {
       await calculateAndApplyGlickoRatings(tournamentId, tx);
