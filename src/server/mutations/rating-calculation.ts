@@ -3,7 +3,6 @@ import {
   type GameResult,
   type RatingUpdate,
 } from '@/lib/glicko2';
-import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
   games,
@@ -12,8 +11,9 @@ import {
 } from '@/server/db/schema/tournaments';
 import type { GameResult as DbGameResult } from '@/server/zod/enums';
 import { and, eq } from 'drizzle-orm';
+import { db } from '@/server/db';
 
-type Tx = typeof db;
+type Tx = Pick<typeof db, 'select' | 'update'>;
 
 /**
  * Get all completed games for a tournament with player ratings
