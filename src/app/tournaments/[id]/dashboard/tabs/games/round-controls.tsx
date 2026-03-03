@@ -54,8 +54,8 @@ const RoundControls: FC<RoundControlProps> = ({
         </Button>
       </div>
       <div className="gap-mk m-auto flex w-full max-w-4xl flex-1 justify-between">
-        <Card className="h-mk bg-primary w-full rounded-lg" />
-        <Card className="h-mk bg-secondary w-full rounded-lg" />
+        <Card className="h-mk dark:bg-primary bg-secondary w-full rounded-lg" />
+        <Card className="h-mk dark:bg-secondary bg-primary w-full rounded-lg" />
       </div>
     </div>
   );
