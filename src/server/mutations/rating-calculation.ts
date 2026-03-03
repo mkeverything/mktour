@@ -13,11 +13,13 @@ import {
 import type { GameResult as DbGameResult } from '@/server/zod/enums';
 import { and, eq } from 'drizzle-orm';
 
+type Tx = typeof db;
+
 /**
  * Get all completed games for a tournament with player ratings
  */
-async function getTournamentGamesWithRatings(tournamentId: string) {
-  const tournamentGames = await db
+async function getTournamentGamesWithRatings(tournamentId: string, tx: Tx) {
+  const tournamentGames = await tx
     .select({
       id: games.id,
       whiteId: games.whiteId,
@@ -29,7 +31,7 @@ async function getTournamentGamesWithRatings(tournamentId: string) {
     .where(eq(games.tournamentId, tournamentId));
 
   // Get all players in the tournament with their current ratings
-  const tournamentPlayers = await db
+  const tournamentPlayers = await tx
     .select({
       id: players.id,
       rating: players.rating,
@@ -154,9 +156,12 @@ function getScoreFromResult(
 /**
  * Calculate and apply Glicko-2 ratings for all players in a tournament
  */
-export async function calculateAndApplyGlickoRatings(tournamentId: string) {
+export async function calculateAndApplyGlickoRatings(
+  tournamentId: string,
+  tx: Tx,
+) {
   // Get tournament info to verify it's rated
-  const tournament = await db
+  const tournament = await tx
     .select({ rated: tournaments.rated })
     .from(tournaments)
     .where(eq(tournaments.id, tournamentId))
@@ -174,7 +179,7 @@ export async function calculateAndApplyGlickoRatings(tournamentId: string) {
   }
 
   // Get all tournament games with ratings
-  const tournamentGames = await getTournamentGamesWithRatings(tournamentId);
+  const tournamentGames = await getTournamentGamesWithRatings(tournamentId, tx);
 
   if (tournamentGames.length === 0) {
     console.log(`No completed games found for tournament ${tournamentId}`);
@@ -182,7 +187,7 @@ export async function calculateAndApplyGlickoRatings(tournamentId: string) {
   }
 
   // Get all players in the tournament
-  const tournamentPlayers = await db
+  const tournamentPlayers = await tx
     .select({
       id: players.id,
       rating: players.rating,
@@ -239,37 +244,35 @@ export async function calculateAndApplyGlickoRatings(tournamentId: string) {
     });
   }
 
-  // Apply all updates in a transaction
-  await db.transaction(async (tx) => {
-    for (const { playerId, update, newPeak } of ratingUpdates) {
-      // Update player's main rating
-      await tx
-        .update(players)
-        .set({
-          rating: update.newRating,
-          ratingPeak: newPeak,
-          ratingDeviation: update.newRatingDeviation,
-          ratingVolatility: update.newVolatility,
-          ratingLastUpdateAt: new Date(),
-        })
-        .where(eq(players.id, playerId));
+  // Apply all updates (caller provides the transaction)
+  for (const { playerId, update, newPeak } of ratingUpdates) {
+    // Update player's main rating
+    await tx
+      .update(players)
+      .set({
+        rating: update.newRating,
+        ratingPeak: newPeak,
+        ratingDeviation: update.newRatingDeviation,
+        ratingVolatility: update.newVolatility,
+        ratingLastUpdateAt: new Date(),
+      })
+      .where(eq(players.id, playerId));
 
-      // Update player's tournament record with rating changes
-      await tx
-        .update(players_to_tournaments)
-        .set({
-          ratingChange: update.ratingChange,
-          ratingDeviationChange: update.ratingDeviationChange,
-          volatilityChange: update.volatilityChange,
-        })
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, playerId),
-          ),
-        );
-    }
-  });
+    // Update player's tournament record with rating changes
+    await tx
+      .update(players_to_tournaments)
+      .set({
+        ratingChange: update.ratingChange,
+        ratingDeviationChange: update.ratingDeviationChange,
+        volatilityChange: update.volatilityChange,
+      })
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          eq(players_to_tournaments.playerId, playerId),
+        ),
+      );
+  }
 
   console.log(
     `Updated ratings for ${ratingUpdates.length} players in tournament ${tournamentId}`,
