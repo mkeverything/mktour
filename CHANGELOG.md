@@ -1,3 +1,10 @@
+# [1.2.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2026-03-03)
+
+
+### Bug Fixes
+
+* wrong color indication in light theme ([764858e](https://github.com/mkeverything/mktour/commit/764858e6c595408970846706b487e938efc6fae9))
+
 # [1.2.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.1.1-beta.1...v1.2.0-beta.1) (2026-03-03)
 
 
