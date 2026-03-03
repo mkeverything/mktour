@@ -73,12 +73,18 @@ const TournamentTable: FC = ({}) => {
         playerScoresMap: new Map(),
         tiebreakScoresMap: new Map(),
       };
+
+    const tournamentForScoring = {
+      format: tournament.data.tournament.format,
+      ongoingRound: hasStarted ? tournament.data.tournament.ongoingRound : 0,
+    };
+
     return sortPlayersByResultsWithMaps(
       players.data,
-      tournament.data.tournament,
+      tournamentForScoring,
       allGames.data ?? [],
     );
-  }, [players.data, tournament.data, allGames.data]);
+  }, [players.data, tournament.data, allGames.data, hasStarted]);
 
   const stats: Stat[] = STATS_WITH_TIEBREAK;
 
