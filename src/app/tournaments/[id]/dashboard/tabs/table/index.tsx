@@ -120,7 +120,11 @@ const TournamentTable: FC = ({}) => {
     draws: (p) => p.draws,
     losses: (p) => p.losses,
     score: (p) => playerScoresMap.get(p.id),
-    tiebreak: (p) => tiebreakScoresMap.get(p.id),
+    tiebreak: (p) => (
+      <span className="text-muted-foreground">
+        {tiebreakScoresMap.get(p.id)}
+      </span>
+    ),
   };
 
   return (
@@ -300,7 +304,7 @@ const statHeadRenderers: Record<Stat, React.ReactNode> = {
   draws: renderTextHead('draws'),
   losses: renderTextHead('losses'),
   score: <Trophy className="m-auto size-3.5" />,
-  tiebreak: <Scale className="m-auto size-3.5" />,
+  tiebreak: <Scale className="m-auto size-4" />,
 };
 
 const STATS_WITH_TIEBREAK: Stat[] = [
