@@ -11,7 +11,7 @@ type DashboardMessage =
       result: GameResult;
       roundNumber: number;
     }
-  | { event: 'start-tournament'; startedAt: Date }
+  | { event: 'start-tournament'; startedAt: Date } // it accepts date on input but has to be converted from string to date on incomming messages
   | { event: 'reset-tournament' }
   | {
       event: 'new-round';
