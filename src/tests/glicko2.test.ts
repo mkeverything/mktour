@@ -32,8 +32,8 @@ describe('glicko-2', () => {
     );
     expect(update.newRatingDeviation).toBeLessThanOrEqual(expectedRDRange.max);
 
-    expect(update.ratingChange).toBeGreaterThan(0);
-    expect(update.ratingDeviationChange).toBeLessThan(0);
+    expect(update.newRating).toBeGreaterThan(newPlayer.rating);
+    expect(update.newRatingDeviation).toBeLessThan(newPlayer.ratingDeviation);
   });
 
   // test case 2: established player with volatile performance
@@ -87,9 +87,11 @@ describe('glicko-2', () => {
     );
 
     // expected: rating unchanged, RD increased slightly, volatility unchanged
-    expect(update.ratingChange).toBe(0);
-    expect(update.ratingDeviationChange).toBeGreaterThan(0);
-    expect(update.volatilityChange).toBe(0);
+    expect(update.newRating).toBe(inactivePlayer.rating);
+    expect(update.newRatingDeviation).toBeGreaterThan(
+      inactivePlayer.ratingDeviation,
+    );
+    expect(update.newVolatility).toBe(inactivePlayer.volatility);
   });
 
   // test case 4: database format conversion
@@ -136,7 +138,7 @@ describe('glicko-2', () => {
       resultsHigh,
     );
     // should lose very little rating for losing to a much stronger player
-    expect(Math.abs(updateHigh.ratingChange)).toBeLessThan(5);
+    expect(Math.abs(updateHigh.newRating - player.rating)).toBeLessThan(5);
 
     const resultsLow: GameResult[] = [
       { opponentRating: 500, opponentRatingDeviation: 50, score: 1.0 }, // Expected win
@@ -144,7 +146,7 @@ describe('glicko-2', () => {
 
     const updateLow = glicko2Calculator.calculateNewRatings(player, resultsLow);
     // Should gain very little rating for beating a much weaker player
-    expect(updateLow.ratingChange).toBeLessThan(5);
+    expect(updateLow.newRating - player.rating).toBeLessThan(5);
   });
 
   // test case 6: winning streak
@@ -164,7 +166,7 @@ describe('glicko-2', () => {
 
     const update = glicko2Calculator.calculateNewRatings(player, results);
 
-    expect(update.ratingChange).toBeGreaterThan(50); // significant gain
+    expect(update.newRating - player.rating).toBeGreaterThan(50); // significant gain
     expect(update.newVolatility).toBeGreaterThan(0.06); // volatility likely increases due to consistent overperformance
   });
 });

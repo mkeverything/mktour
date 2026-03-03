@@ -213,9 +213,9 @@ export async function addNewPlayer({
     place: null,
     isOut: null,
     pairingNumber: null,
-    ratingChange: null,
-    ratingDeviationChange: null,
-    volatilityChange: null,
+    newRating: null,
+    newRatingDeviation: null,
+    newVolatility: null,
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
   await normalizeSwissRoundsNumber(tournamentId);
@@ -251,9 +251,9 @@ export async function addExistingPlayer({
     place: null,
     isOut: null,
     pairingNumber: null,
-    ratingChange: null,
-    ratingDeviationChange: null,
-    volatilityChange: null,
+    newRating: null,
+    newRatingDeviation: null,
+    newVolatility: null,
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
   await normalizeSwissRoundsNumber(tournamentId);

@@ -260,9 +260,9 @@ export async function calculateAndApplyGlickoRatings(
       tx
         .update(players_to_tournaments)
         .set({
-          ratingChange: update.ratingChange,
-          ratingDeviationChange: update.ratingDeviationChange,
-          volatilityChange: update.volatilityChange,
+          newRating: update.newRating,
+          newRatingDeviation: update.newRatingDeviation,
+          newVolatility: update.newVolatility,
         })
         .where(
           and(
@@ -289,9 +289,9 @@ export async function getPlayerRatingHistory(playerId: string) {
       tournamentId: players_to_tournaments.tournamentId,
       tournamentTitle: tournaments.title,
       tournamentDate: tournaments.date,
-      ratingChange: players_to_tournaments.ratingChange,
-      ratingDeviationChange: players_to_tournaments.ratingDeviationChange,
-      volatilityChange: players_to_tournaments.volatilityChange,
+      newRating: players_to_tournaments.newRating,
+      newRatingDeviation: players_to_tournaments.newRatingDeviation,
+      newVolatility: players_to_tournaments.newVolatility,
       place: players_to_tournaments.place,
       wins: players_to_tournaments.wins,
       losses: players_to_tournaments.losses,

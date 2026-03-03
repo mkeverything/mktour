@@ -14,9 +14,6 @@ export interface RatingUpdate {
   newRating: number;
   newRatingDeviation: number;
   newVolatility: number;
-  ratingChange: number;
-  ratingDeviationChange: number;
-  volatilityChange: number;
 }
 
 export const GLICKO2_CONSTANTS = {
@@ -151,15 +148,11 @@ export class Glicko2Calculator {
     player: GlickoPlayer,
     results: GameResult[],
   ): RatingUpdate {
-    const originalRating = player.rating;
-    const originalRD = player.ratingDeviation;
-    const originalVolatility = player.volatility;
-
     // if no games played, only apply RD increase
     if (results.length === 0) {
       // apply time-based RD increase (assuming one rating period)
-      const phi = originalRD / this.constants.SCALE_FACTOR;
-      const sigma = originalVolatility;
+      const phi = player.ratingDeviation / this.constants.SCALE_FACTOR;
+      const sigma = player.volatility;
       const phi_new = Math.sqrt(phi * phi + sigma * sigma);
       const newRD = Math.min(
         phi_new * this.constants.SCALE_FACTOR,
@@ -170,9 +163,6 @@ export class Glicko2Calculator {
         newRating: Math.round(player.rating),
         newRatingDeviation: Math.round(newRD),
         newVolatility: player.volatility,
-        ratingChange: 0,
-        ratingDeviationChange: Math.round(newRD) - originalRD,
-        volatilityChange: 0,
       };
     }
 
@@ -244,9 +234,6 @@ export class Glicko2Calculator {
       newRating: finalRating,
       newRatingDeviation: finalRD,
       newVolatility: finalVolatility,
-      ratingChange: finalRating - originalRating,
-      ratingDeviationChange: finalRD - originalRD,
-      volatilityChange: finalVolatility - originalVolatility,
     };
   }
 
