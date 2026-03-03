@@ -75,7 +75,7 @@ button {
   --spacing-mk-4: calc(var(--spacing-mk) * 4);
   --spacing-mk-card-height: calc(var(--spacing-mk) * 4);
   --spacing-mk-navbar-height: calc(var(--spacing) * 14);
-  --spacing-mk-content-height: calc(100dvh - (var(--spacing-mk-navbar-height)));
+  --spacing-mk-content-height: calc(100svh - (var(--spacing-mk-navbar-height)));
 }
 
 @utility mk-container {

@@ -24,10 +24,10 @@ export default function AboutContent({ changelog }: AboutContentProps) {
 
   return (
     <Center className="pt-8">
-      <div className="max-w-4xl space-y-8">
+      <div className="w-full max-w-4xl space-y-6 sm:space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-3xl">{t('title')}</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl">{t('title')}</CardTitle>
             <CardDescription className="text-lg">
               {t('description')}
             </CardDescription>
@@ -47,7 +47,7 @@ export default function AboutContent({ changelog }: AboutContentProps) {
             {changelog.map((v) => (
               <div key={v.version} className="group relative">
                 <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline justify-between gap-4">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                     <h3 className="text-lg font-bold tracking-tight">
                       {v.version}
                     </h3>
@@ -75,7 +75,7 @@ export default function AboutContent({ changelog }: AboutContentProps) {
                                   <span className="text-primary/50 pt-1.5 leading-none">
                                     •
                                   </span>
-                                  <span>
+                                  <span className="min-w-0 break-words">
                                     {change.description}&nbsp;
                                     {change.commitHash && change.commitUrl && (
                                       <Link
@@ -117,16 +117,16 @@ export default function AboutContent({ changelog }: AboutContentProps) {
             <CardTitle>{t('contact.title')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:gap-6">
               <Link
                 href="https://lichess.org/team/mktour"
                 target="_blank"
-                className="flex items-center gap-3"
+                className="flex min-w-0 items-center gap-3"
               >
                 <div className="flex h-6 w-6 items-center">
                   <LichessSVG />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium">{t('contact.lichess')}</p>
                   <p className="text-muted-foreground text-sm">
                     {t('contact.lichess_desc')}
@@ -136,11 +136,11 @@ export default function AboutContent({ changelog }: AboutContentProps) {
               <Link
                 href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`}
                 target="_blank"
-                className="flex items-center gap-3"
+                className="flex min-w-0 items-center gap-3"
               >
                 <MailIcon size="24" />
-                <div>
-                  <p className="font-medium">
+                <div className="min-w-0">
+                  <p className="font-medium break-all">
                     {process.env.NEXT_PUBLIC_CONTACT_EMAIL}
                   </p>
                   <p className="text-muted-foreground text-sm">
