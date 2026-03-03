@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/mkeverything/mktour/compare/v1.0.2...v1.1.0) (2026-03-03)
+
+
+### Bug Fixes
+
+* wrap rating calculations with promise.all to speed it up and fit in allowed 10 sec ([60ab5fd](https://github.com/mkeverything/mktour/commit/60ab5fd724383949439a57482cb0873be608774c))
+
+
+### Features
+
+* store new rating values instead of changes ([3b30f21](https://github.com/mkeverything/mktour/commit/3b30f21590100c7363552b7158ea9414aa3d6c33))
+
 # [1.1.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.0.2-beta.2...v1.1.0-beta.1) (2026-03-03)
 
 
