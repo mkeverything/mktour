@@ -1,3 +1,10 @@
+# [1.2.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.1.1-beta.1...v1.2.0-beta.1) (2026-03-03)
+
+
+### Features
+
+* white/black indicator; games layout for wide screens ([d41a2f7](https://github.com/mkeverything/mktour/commit/d41a2f75f8818b8e60b2ba15e952d221d38d273c))
+
 ## [1.1.1-beta.1](https://github.com/mkeverything/mktour/compare/v1.1.0...v1.1.1-beta.1) (2026-03-03)
 
 
