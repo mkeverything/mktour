@@ -1,10 +1,14 @@
-# [1.1.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.1.0-beta.1...v1.1.0-beta.2) (2026-03-03)
+# [1.1.0](https://github.com/mkeverything/mktour/compare/v1.0.2...v1.1.0) (2026-03-03)
 
 
 ### Bug Fixes
 
-* do not give players bye until tournament is started ([01f0aff](https://github.com/mkeverything/mktour/commit/01f0aff29107a6be720957b4b6c4e020e70cf0f0))
-* oauth ([2532416](https://github.com/mkeverything/mktour/commit/2532416a2bbffce64bf53fa9c5055fdd38029e80))
+* wrap rating calculations with promise.all to speed it up and fit in allowed 10 sec ([60ab5fd](https://github.com/mkeverything/mktour/commit/60ab5fd724383949439a57482cb0873be608774c))
+
+
+### Features
+
+* store new rating values instead of changes ([3b30f21](https://github.com/mkeverything/mktour/commit/3b30f21590100c7363552b7158ea9414aa3d6c33))
 
 # [1.1.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.0.2-beta.2...v1.1.0-beta.1) (2026-03-03)
 
