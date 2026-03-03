@@ -1,3 +1,16 @@
+# [1.2.0](https://github.com/mkeverything/mktour/compare/v1.1.0...v1.2.0) (2026-03-03)
+
+
+### Bug Fixes
+
+* do not give players bye until tournament is started ([01f0aff](https://github.com/mkeverything/mktour/commit/01f0aff29107a6be720957b4b6c4e020e70cf0f0))
+* oauth ([2532416](https://github.com/mkeverything/mktour/commit/2532416a2bbffce64bf53fa9c5055fdd38029e80))
+
+
+### Features
+
+* white/black indicator; games layout for wide screens ([d41a2f7](https://github.com/mkeverything/mktour/commit/d41a2f75f8818b8e60b2ba15e952d221d38d273c))
+
 # [1.2.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.1.1-beta.1...v1.2.0-beta.1) (2026-03-03)
 
 
