@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Dispatch, FC, SetStateAction } from 'react';
@@ -21,35 +22,41 @@ const RoundControls: FC<RoundControlProps> = ({
   };
 
   return (
-    <div
-      className={`px-mk bg-background/50 sticky top-0 z-10 grid h-10 w-full grid-cols-3 items-center justify-between p-1 backdrop-blur-md`}
-    >
-      <Button
-        style={{ visibility: roundInView === 1 ? 'hidden' : 'visible' }}
-        onClick={() => handleClick('<')}
-        {...buttonProps}
+    <div className="bg-background/50 px-mk-2 sticky top-0 z-10 backdrop-blur-md">
+      <div
+        className={`m-auto grid h-10 w-full max-w-xl grid-cols-3 items-center justify-between`}
       >
-        <ChevronLeft />
-      </Button>
-      <Button
-        variant="ghost"
-        className="w-full"
-        onClick={() => setRoundInView(currentRound)}
-        size="sm"
-      >
-        <span className={roundInView === currentRound ? 'font-bold' : ''}>
-          {t('round', { roundInView })}
-        </span>
-      </Button>
-      <Button
-        style={{
-          visibility: roundInView === currentRound ? 'hidden' : 'visible',
-        }}
-        onClick={() => handleClick('>')}
-        {...buttonProps}
-      >
-        <ChevronRight />
-      </Button>
+        <Button
+          style={{ visibility: roundInView === 1 ? 'hidden' : 'visible' }}
+          onClick={() => handleClick('<')}
+          {...buttonProps}
+        >
+          <ChevronLeft />
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full"
+          onClick={() => setRoundInView(currentRound)}
+          size="sm"
+        >
+          <span className={roundInView === currentRound ? 'font-bold' : ''}>
+            {t('round', { roundInView })}
+          </span>
+        </Button>
+        <Button
+          style={{
+            visibility: roundInView === currentRound ? 'hidden' : 'visible',
+          }}
+          onClick={() => handleClick('>')}
+          {...buttonProps}
+        >
+          <ChevronRight />
+        </Button>
+      </div>
+      <div className="gap-mk m-auto flex w-full max-w-4xl flex-1 justify-between">
+        <Card className="h-mk bg-primary w-full rounded-lg" />
+        <Card className="h-mk bg-secondary w-full rounded-lg" />
+      </div>
     </div>
   );
 };

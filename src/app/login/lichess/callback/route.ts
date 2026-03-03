@@ -28,12 +28,15 @@ export async function GET(request: Request): Promise<Response> {
     state !== storedState ||
     !codeVerifier
   ) {
-    return new Response(
-      "code or state don't match stored to those stored in cookies",
-      {
-        status: 400,
+    const retryUrl = authFrom
+      ? `/login/lichess?from=${encodeURIComponent(authFrom)}`
+      : '/login/lichess';
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: retryUrl,
       },
-    );
+    });
   }
 
   try {
