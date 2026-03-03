@@ -1,3 +1,11 @@
+## [1.0.2](https://github.com/mkeverything/mktour/compare/v1.0.1...v1.0.2) (2026-03-03)
+
+
+### Bug Fixes
+
+* converting websocked dates ([c9a3d7f](https://github.com/mkeverything/mktour/commit/c9a3d7feec4b25b2aac209bb2380f5f18dd73947))
+* stabilize finishing tournament and rating calculation (rap in single transaction) ([addee31](https://github.com/mkeverything/mktour/commit/addee316b671504e610f0c32ed5d7c6419cbd184))
+
 ## [1.0.2-beta.1](https://github.com/mkeverything/mktour/compare/v1.0.1...v1.0.2-beta.1) (2026-03-03)
 
 
