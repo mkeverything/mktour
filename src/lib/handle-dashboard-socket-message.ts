@@ -134,7 +134,7 @@ export const handleSocketMessage = (
         trpc.tournament.info.queryKey({ tournamentId }),
         (cache) => {
           if (!cache) return cache;
-          cache.tournament.startedAt = message.startedAt;
+          cache.tournament.startedAt = new Date(message.startedAt);
           return cache;
         },
       );
@@ -187,7 +187,7 @@ export const handleSocketMessage = (
         trpc.tournament.info.queryKey({ tournamentId }),
         (cache) => {
           if (!cache) return cache;
-          cache.tournament.closedAt = message.closedAt;
+          cache.tournament.closedAt = new Date(message.closedAt);
           return cache;
         },
       );

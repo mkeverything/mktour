@@ -4,7 +4,7 @@ import { players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { SearchParamsModel } from '@/server/zod/search';
-import { and, eq, or, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, or, sql } from 'drizzle-orm';
 
 export async function globalSearch(params: SearchParamsModel) {
   const { query, filter } = params;
@@ -83,9 +83,22 @@ export async function globalSearch(params: SearchParamsModel) {
     .where(sql`lower(${tournaments.title}) like lower(${queryStr})`)
     .limit(5);
   const clubsDb = db
-    .select()
+    .selectDistinct({
+      id: clubs.id,
+      name: clubs.name,
+      description: clubs.description,
+      createdAt: clubs.createdAt,
+      lichessTeam: clubs.lichessTeam,
+      allowPlayersSetResults: clubs.allowPlayersSetResults,
+    })
     .from(clubs)
-    .where(sql`lower(${clubs.name}) like lower(${queryStr})`)
+    .innerJoin(tournaments, eq(clubs.id, tournaments.clubId))
+    .where(
+      and(
+        sql`lower(${clubs.name}) like lower(${queryStr})`,
+        isNotNull(tournaments.closedAt),
+      ),
+    )
     .limit(5);
 
   const [playersResult, usersResult, tournamentsResult, clubsResult] =

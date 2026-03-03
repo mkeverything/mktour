@@ -584,80 +584,78 @@ export async function finishTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new Error('NOT_ADMIN');
 
-  if (closedAt) {
-    await db
-      .update(tournaments)
-      .set({ closedAt })
-      .where(
-        and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)),
-      )
-      .then((value) => {
-        if (!value.rowsAffected) throw new Error('TOURNAMENT_ALREADY_FINISHED');
-      });
-  }
-
-  const tournament = await db
-    .select()
-    .from(tournaments)
-    .where(eq(tournaments.id, tournamentId))
-    .then((rows) => rows[0]);
-
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-
+  // Read-only data needed for placement calculation (fetched before the transaction)
   const allGames = await getTournamentGames(tournamentId);
   const playersUnsorted = await getRawTournamentPlayers(tournamentId);
-  const sortedPlayers = sortPlayersByResults(
-    playersUnsorted,
-    tournament,
-    allGames,
-  );
-  const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
-    sortedPlayers,
-    tournament,
-    allGames,
-  );
 
-  sortedPlayers.forEach((player, i) => {
-    if (i === 0) {
-      player.place = 1;
-    } else {
-      const prevPlayer = sortedPlayers[i - 1];
-      player.place = hasSameStanding(
-        player,
-        prevPlayer,
-        playerScoresMap,
-        tiebreakScoresMap,
-      )
-        ? prevPlayer.place
-        : i + 1;
+  await db.transaction(async (tx) => {
+    // Mark tournament as closed (atomic guard against double-finish)
+    if (closedAt) {
+      const result = await tx
+        .update(tournaments)
+        .set({ closedAt })
+        .where(
+          and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)),
+        );
+      if (!result.rowsAffected) throw new Error('TOURNAMENT_ALREADY_FINISHED');
+    }
+
+    const tournament = await tx
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, tournamentId))
+      .then((rows) => rows[0]);
+
+    if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
+    const sortedPlayers = sortPlayersByResults(
+      playersUnsorted,
+      tournament,
+      allGames,
+    );
+    const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+      sortedPlayers,
+      tournament,
+      allGames,
+    );
+
+    sortedPlayers.forEach((player, i) => {
+      if (i === 0) {
+        player.place = 1;
+      } else {
+        const prevPlayer = sortedPlayers[i - 1];
+        player.place = hasSameStanding(
+          player,
+          prevPlayer,
+          playerScoresMap,
+          tiebreakScoresMap,
+        )
+          ? prevPlayer.place
+          : i + 1;
+      }
+    });
+
+    for (const player of sortedPlayers) {
+      await tx
+        .update(players_to_tournaments)
+        .set({ place: player.place })
+        .where(
+          and(
+            eq(players_to_tournaments.tournamentId, tournamentId),
+            eq(players_to_tournaments.playerId, player.id),
+          ),
+        );
+
+      await tx
+        .update(players)
+        .set({ lastSeenAt: closedAt })
+        .where(eq(players.id, player.id));
+    }
+
+    if (tournament.rated) {
+      await calculateAndApplyGlickoRatings(tournamentId, tx);
     }
   });
-
-  const pttUpdates = sortedPlayers.map((player) =>
-    db
-      .update(players_to_tournaments)
-      .set({ place: player.place })
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, player.id),
-        ),
-      ),
-  );
-
-  const playersUpdates = sortedPlayers.map((player) =>
-    db
-      .update(players)
-      .set({ lastSeenAt: closedAt })
-      .where(eq(players.id, player.id)),
-  );
-
-  const updates = [...pttUpdates, ...playersUpdates];
-  await Promise.all(updates);
-
-  if (tournament.rated) {
-    await calculateAndApplyGlickoRatings(tournamentId);
-  }
 }
 
 export async function deleteTournament({
