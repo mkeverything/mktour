@@ -232,7 +232,6 @@ this reduces test time from ~15s to ~20ms for non-db tests.
 - small, focused commits; avoid large rewrites
 - do not push to remote without user approval
 - do not amend unless explicitly requested
-- syncing beta to main: `git checkout beta && git reset --hard origin/main && git push --force origin beta`
 
 ## environment
 
