@@ -6,14 +6,6 @@
       "title": "мктур - шахматные турниры",
       "description": "простое управление шахматными турнирами. форматы: швейцарская система, круговик, одинарное и двойное выбывание. бесплатно и опен-сорс."
     },
-    "clubs": {
-      "title": "шахматные клубы",
-      "description": "шахматные клубы на мктуре - можно найти и вступить"
-    },
-    "tournaments": {
-      "title": "шахматные турниры",
-      "description": "тут можно искать шахматные турниры"
-    },
     "signIn": {
       "title": "вход",
       "description": "войти в мктур через аккаунт lichess"
@@ -29,6 +21,74 @@
     "contact": {
       "title": "контакты",
       "description": "связаться с командой мктура"
+    },
+    "clubs": {
+      "all": {
+        "title": "все клубы",
+        "description": "шахматные клубы на мктуре"
+      },
+      "my": {
+        "title": "мои клубы",
+        "description": "клубы, которыми вы управляете или состоите"
+      },
+      "create": {
+        "title": "создать клуб",
+        "description": "создать новый шахматный клуб"
+      },
+      "clubPage": {
+        "title": "{name}",
+        "description": "шахматный клуб {name} на мктуре"
+      }
+    },
+    "tournaments": {
+      "all": {
+        "title": "шахматные турниры",
+        "description": "искать шахматные турниры"
+      },
+      "my": {
+        "title": "мои турниры",
+        "description": "турниры, в которых вы играете или организуете"
+      },
+      "create": {
+        "title": "создать турнир",
+        "description": "создать новый шахматный турнир"
+      },
+      "tournamentPage": {
+        "title": "{name}",
+        "description": "{clubName} – турнир {format} на мктуре"
+      },
+      "format": {
+        "swiss": "швейцарская система",
+        "round robin": "круговик",
+        "single elimination": "одинарное выбывание",
+        "double elimination": "двойное выбывание"
+      }
+    },
+    "player": {
+      "page": {
+        "title": "{nickname}",
+        "description": "{nickname} - рейтинг {rating} в клубе {club}"
+      }
+    },
+    "user": {
+      "profile": {
+        "title": "профиль {username}",
+        "description": "{username} на мктуре - {clubs} клубов, {tournaments} турниров"
+      }
+    },
+    "notifications": {
+      "title": "уведомления",
+      "description": "ваши уведомления на мктуре"
+    },
+    "profile": {
+      "my": {
+        "title": "мой профиль",
+        "description": "ваш профиль и статистика на мктуре"
+      },
+      "settings": {
+        "title": "настройки",
+        "description": "настройки аккаунта и уведомлений"
+      }
     }
   },
   "Common": {

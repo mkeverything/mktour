@@ -3,9 +3,11 @@ import ApiTokens from '@/app/profile/settings/api-tokens';
 import DeleteUser from '@/app/profile/settings/delete-user';
 import EditProfileForm from '@/app/profile/settings/edit-profile-form';
 import { getQueryClient, trpc } from '@/components/trpc/server';
+import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 
 export default async function EditUserPage() {
@@ -30,4 +32,25 @@ export default async function EditUserPage() {
       </div>
     </HydrationBoundary>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'Seo' });
+  const baseUrl = BASE_URL || 'https://mktour.org';
+  const url = `${baseUrl}/profile/settings`;
+
+  return {
+    title: t('profile.settings.title'),
+    description: t('profile.settings.description'),
+    alternates: {
+      canonical: url,
+      languages: { en: url, ru: url, 'x-default': url },
+    },
+    openGraph: {
+      title: t('profile.settings.title'),
+      description: t('profile.settings.description'),
+      url,
+    },
+  };
 }
