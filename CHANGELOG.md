@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/mkeverything/mktour/compare/v1.3.0...v1.3.1) (2026-03-04)
+
+
+### Bug Fixes
+
+* og by merging with root metadata ([32a1021](https://github.com/mkeverything/mktour/commit/32a10212e90b96a68c1245d27005b7f20a41ebba))
+
 # [1.3.0](https://github.com/mkeverything/mktour/compare/v1.2.1...v1.3.0) (2026-03-04)
 
 
