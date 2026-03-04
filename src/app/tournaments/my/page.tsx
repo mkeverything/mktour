@@ -2,7 +2,7 @@ import TournamentItemIteratee from '@/components/tournament-item';
 import { publicCaller } from '@/server/api';
 import { TournamentWithClubModel } from '@/server/zod/tournaments';
 import { getLocale, getTranslations } from 'next-intl/server';
-import type { Metadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { BASE_URL } from '@/lib/config/urls';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -78,11 +78,15 @@ const getGroupedTournaments = (props: TournamentWithClubModel[]) =>
     >,
   );
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata(
+  _: unknown,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
   const baseUrl = BASE_URL || 'https://mktour.org';
   const url = `${baseUrl}/tournaments/my`;
+  const previous = await parent;
 
   return {
     title: t('tournaments.my.title'),
@@ -92,6 +96,7 @@ export async function generateMetadata(): Promise<Metadata> {
       languages: { en: url, ru: url, 'x-default': url },
     },
     openGraph: {
+      ...previous.openGraph,
       title: t('tournaments.my.title'),
       description: t('tournaments.my.description'),
       url,

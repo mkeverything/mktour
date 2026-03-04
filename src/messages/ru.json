@@ -58,7 +58,7 @@
         "description": "{clubName} – турнир {format} на мктуре"
       },
       "format": {
-        "swiss": "швейцарская система",
+        "swiss": "швейцарка",
         "round robin": "круговик",
         "single elimination": "одинарное выбывание",
         "double elimination": "двойное выбывание"

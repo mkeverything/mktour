@@ -6,7 +6,7 @@ import { getQueryClient, trpc } from '@/components/trpc/server';
 import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import type { Metadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 
@@ -34,11 +34,15 @@ export default async function EditUserPage() {
   );
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata(
+  _: unknown,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
   const baseUrl = BASE_URL || 'https://mktour.org';
   const url = `${baseUrl}/profile/settings`;
+  const previous = await parent;
 
   return {
     title: t('profile.settings.title'),
@@ -48,6 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
       languages: { en: url, ru: url, 'x-default': url },
     },
     openGraph: {
+      ...previous.openGraph,
       title: t('profile.settings.title'),
       description: t('profile.settings.description'),
       url,

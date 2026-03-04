@@ -10,7 +10,7 @@ import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
 import { PlayerModel } from '@/server/zod/players';
 import { ChevronRight, Users2 } from 'lucide-react';
-import type { Metadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
@@ -95,14 +95,18 @@ const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
   </div>
 );
 
-export async function generateMetadata(props: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ id: string }>;
+  },
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
   const params = await props.params;
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
   const baseUrl = BASE_URL || 'https://mktour.org';
   const url = `${baseUrl}/player/${params.id}`;
+  const previous = await parent;
 
   let playerData;
   try {
@@ -128,6 +132,7 @@ export async function generateMetadata(props: {
       languages: { en: url, ru: url, 'x-default': url },
     },
     openGraph: {
+      ...previous.openGraph,
       title: t('player.page.title', { nickname: player.nickname }),
       description: t('player.page.description', {
         nickname: player.nickname,
