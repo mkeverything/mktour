@@ -6,14 +6,6 @@
       "title": "mktour - chess tournament management",
       "description": "create and manage chess tournaments with swiss, round robin, single elimination and double elimination formats. free and open-source."
     },
-    "clubs": {
-      "title": "chess clubs",
-      "description": "browse and join chess clubs on mktour"
-    },
-    "tournaments": {
-      "title": "chess tournaments",
-      "description": "find and follow chess tournaments on mktour"
-    },
     "signIn": {
       "title": "sign in",
       "description": "sign in to mktour with your lichess account"
@@ -29,6 +21,74 @@
     "contact": {
       "title": "contact",
       "description": "get in touch with the mktour team"
+    },
+    "clubs": {
+      "all": {
+        "title": "all clubs",
+        "description": "browse and join chess clubs on mktour"
+      },
+      "my": {
+        "title": "my clubs",
+        "description": "clubs you manage or belong to"
+      },
+      "create": {
+        "title": "create club",
+        "description": "create a new chess club"
+      },
+      "clubPage": {
+        "title": "{name}",
+        "description": "chess club {name} on mktour"
+      }
+    },
+    "tournaments": {
+      "all": {
+        "title": "chess tournaments",
+        "description": "find and follow chess tournaments on mktour"
+      },
+      "my": {
+        "title": "my tournaments",
+        "description": "tournaments you play or organize"
+      },
+      "create": {
+        "title": "create tournament",
+        "description": "create a new chess tournament"
+      },
+      "tournamentPage": {
+        "title": "{name}",
+        "description": "{clubName} – {format} tournament on mktour"
+      },
+      "format": {
+        "swiss": "swiss",
+        "round robin": "round robin",
+        "single elimination": "single elimination",
+        "double elimination": "double elimination"
+      }
+    },
+    "player": {
+      "page": {
+        "title": "{nickname}",
+        "description": "{nickname} - rating {rating} in {club}"
+      }
+    },
+    "user": {
+      "profile": {
+        "title": "{username}'s profile",
+        "description": "{username} on mktour - {clubs} clubs, {tournaments} tournaments"
+      }
+    },
+    "notifications": {
+      "title": "notifications",
+      "description": "your mktour notifications"
+    },
+    "profile": {
+      "my": {
+        "title": "my profile",
+        "description": "your mktour profile and stats"
+      },
+      "settings": {
+        "title": "settings",
+        "description": "account and notification settings"
+      }
     }
   },
   "Common": {

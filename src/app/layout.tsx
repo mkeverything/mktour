@@ -42,6 +42,31 @@ async function LayoutContent({ children }: PropsWithChildren) {
   );
 }
 
+export default function RootLayout({ children }: PropsWithChildren) {
+  return (
+    <html lang="ru" suppressHydrationWarning>
+      <body className="small-scrollbar">
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <MediaQueryProvider>
+              <TRPCReactProvider>
+                <Suspense fallback={<Loading />}>
+                  <LayoutContent>{children}</LayoutContent>
+                </Suspense>
+              </TRPCReactProvider>
+            </MediaQueryProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
+      </body>
+    </html>
+  );
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = BASE_URL || 'https://mktour.org';
 
@@ -337,31 +362,6 @@ export async function generateMetadata(): Promise<Metadata> {
       'mobile-web-app-capable': 'yes',
     },
   };
-}
-
-export default function RootLayout({ children }: PropsWithChildren) {
-  return (
-    <html lang="ru" suppressHydrationWarning>
-      <body className="small-scrollbar">
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <MediaQueryProvider>
-              <TRPCReactProvider>
-                <Suspense fallback={<Loading />}>
-                  <LayoutContent>{children}</LayoutContent>
-                </Suspense>
-              </TRPCReactProvider>
-            </MediaQueryProvider>
-          </ThemeProvider>
-        </ErrorBoundary>
-      </body>
-    </html>
-  );
 }
 
 export const viewport: Viewport = {

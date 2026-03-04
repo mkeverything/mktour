@@ -85,7 +85,7 @@ export async function GET(request: Request): Promise<Response> {
       const userId = newid();
       const clubId = newid();
       const ctuId = `${clubId}=${userId}`;
-      const name = `${lichessUser.profile?.realName}`;
+      const name = lichessUser.profile?.realName ?? null;
 
       await db.insert(clubs).values({
         id: clubId,

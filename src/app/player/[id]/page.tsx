@@ -6,9 +6,12 @@ import EditButton from '@/app/player/[id]/edit-button';
 import PlayerStats from '@/app/player/[id]/player-stats';
 import LastTournaments from '@/components/last-tournaments';
 import { CardTitle } from '@/components/ui/card';
+import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
 import { PlayerModel } from '@/server/zod/players';
 import { ChevronRight, Users2 } from 'lucide-react';
+import type { Metadata, ResolvingMetadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { FC, Suspense } from 'react';
@@ -91,6 +94,55 @@ const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
     </div>
   </div>
 );
+
+export async function generateMetadata(
+  props: {
+    params: Promise<{ id: string }>;
+  },
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const params = await props.params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'Seo' });
+  const baseUrl = BASE_URL || 'https://mktour.org';
+  const url = `${baseUrl}/player/${params.id}`;
+  const previous = await parent;
+
+  let playerData;
+  try {
+    playerData = await publicCaller.player.info({ playerId: params.id });
+  } catch {
+    notFound();
+  }
+
+  if (!playerData) notFound();
+  if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
+
+  const { club, ...player } = playerData;
+
+  return {
+    title: t('player.page.title', { nickname: player.nickname }),
+    description: t('player.page.description', {
+      nickname: player.nickname,
+      rating: player.rating,
+      club: club.name,
+    }),
+    alternates: {
+      canonical: url,
+      languages: { en: url, ru: url, 'x-default': url },
+    },
+    openGraph: {
+      ...previous.openGraph,
+      title: t('player.page.title', { nickname: player.nickname }),
+      description: t('player.page.description', {
+        nickname: player.nickname,
+        rating: player.rating,
+        club: club.name,
+      }),
+      url,
+    },
+  };
+}
 
 export interface PlayerPageProps {
   params: Promise<{ id: string }>;

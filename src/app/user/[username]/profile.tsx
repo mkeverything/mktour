@@ -94,12 +94,10 @@ const Profile: FC<{
                 <CardTitle
                   className={`text-3xl font-light ${turboPascal.className}`}
                 >
-                  {user.name}
+                  {user.name ?? <UserLink user={user} />}
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  <Link href={`https://lichess.org/@/${user.username}`}>
-                    @{user.username}
-                  </Link>
+                  {user.name && <UserLink user={user} />}
                 </CardDescription>
               </div>
             </div>
@@ -170,6 +168,10 @@ const Profile: FC<{
     </div>
   );
 };
+
+const UserLink: FC<{ user: UserWithPlayers }> = ({ user }) => (
+  <Link href={`https://lichess.org/@/${user.username}`}>@{user.username}</Link>
+);
 
 const StatItem: FC<{
   icon: FC<{ className?: string }>;

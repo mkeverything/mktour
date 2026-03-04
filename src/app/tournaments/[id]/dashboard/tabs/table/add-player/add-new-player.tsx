@@ -26,7 +26,7 @@ import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useContext, useEffect } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 
@@ -64,10 +64,7 @@ const AddNewPlayer = ({
     reValidateMode: 'onSubmit',
   });
 
-  const nickname = useWatch({
-    control: form.control,
-    name: 'nickname',
-  });
+  const nickname = form.watch('nickname');
 
   useEffect(() => {
     if (nickname === undefined) return;

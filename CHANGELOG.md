@@ -1,14 +1,70 @@
-# [1.2.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2026-03-03)
+## [1.3.1](https://github.com/mkeverything/mktour/compare/v1.3.0...v1.3.1) (2026-03-04)
+
+### Bug Fixes
+
+- og by merging with root metadata ([32a1021](https://github.com/mkeverything/mktour/commit/32a10212e90b96a68c1245d27005b7f20a41ebba))
+
+# [1.3.0](https://github.com/mkeverything/mktour/compare/v1.2.1...v1.3.0) (2026-03-04)
+
+### Bug Fixes
+
+- handle no lichess username on backend ([8022b2a](https://github.com/mkeverything/mktour/commit/8022b2a2560d6715c9394ec95a9ff5394f323036))
+- handle no user.name in profile ([d75a5f6](https://github.com/mkeverything/mktour/commit/d75a5f6b801139711c9b8b040fba744b67a36acc))
+- prevent weird states restoring nickname of added player ([ff33091](https://github.com/mkeverything/mktour/commit/ff330914ae006fff3b9166a505ef6c3058e1fdd5))
+- using null when missing realName from lichess ([ac78e7e](https://github.com/mkeverything/mktour/commit/ac78e7ed37e3fd58842dbbc26413281d29372856))
+
+### Features
+
+- club-scoped search ([7315a3b](https://github.com/mkeverything/mktour/commit/7315a3ba20862bd256e6b9ab3e107e7ae756fa05))
+- key controls '<' and '>' to go through rounds ([447d7a7](https://github.com/mkeverything/mktour/commit/447d7a796001d18a807c8de24b4ec3424fbb03ae))
+- proper page-specific OG metadata ([191816c](https://github.com/mkeverything/mktour/commit/191816ceb31774044cd12ba4095f5b62c2a0d3bf))
+
+# [1.3.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.3.0-beta.1...v1.3.0-beta.2) (2026-03-04)
+
+### Bug Fixes
+
+- prevent weird states restoring nickname of added player ([ff33091](https://github.com/mkeverything/mktour/commit/ff330914ae006fff3b9166a505ef6c3058e1fdd5))
+
+### Features
+
+- club-scoped search ([7315a3b](https://github.com/mkeverything/mktour/commit/7315a3ba20862bd256e6b9ab3e107e7ae756fa05))
+- key controls '<' and '>' to go through rounds ([447d7a7](https://github.com/mkeverything/mktour/commit/447d7a796001d18a807c8de24b4ec3424fbb03ae))
+
+# [1.3.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.2.2-beta.2...v1.3.0-beta.1) (2026-03-04)
+
+### Features
+
+- proper page-specific OG metadata ([191816c](https://github.com/mkeverything/mktour/commit/191816ceb31774044cd12ba4095f5b62c2a0d3bf))
+
+## [1.2.2-beta.2](https://github.com/mkeverything/mktour/compare/v1.2.2-beta.1...v1.2.2-beta.2) (2026-03-04)
+
+### Bug Fixes
+
+- using null when missing realName from lichess ([ac78e7e](https://github.com/mkeverything/mktour/commit/ac78e7ed37e3fd58842dbbc26413281d29372856))
+
+## [1.2.2-beta.1](https://github.com/mkeverything/mktour/compare/v1.2.1...v1.2.2-beta.1) (2026-03-04)
+
+### Bug Fixes
+
+- handle no lichess username on backend ([8022b2a](https://github.com/mkeverything/mktour/commit/8022b2a2560d6715c9394ec95a9ff5394f323036))
+- handle no user.name in profile ([d75a5f6](https://github.com/mkeverything/mktour/commit/d75a5f6b801139711c9b8b040fba744b67a36acc))
+
+## [1.2.1](https://github.com/mkeverything/mktour/compare/v1.2.0...v1.2.1) (2026-03-03)
 
 ### Bug Fixes
 
 - wrong color indication in light theme ([764858e](https://github.com/mkeverything/mktour/commit/764858e6c595408970846706b487e938efc6fae9))
-- prevent weird states restoring nickname of added player ([de26f69](https://github.com/mkeverything/mktour/commit/de26f69e))
+
+# [1.2.0](https://github.com/mkeverything/mktour/compare/v1.1.0...v1.2.0) (2026-03-03)
+
+### Bug Fixes
+
+- do not give players bye until tournament is started ([01f0aff](https://github.com/mkeverything/mktour/commit/01f0aff29107a6be720957b4b6c4e020e70cf0f0))
+- oauth ([2532416](https://github.com/mkeverything/mktour/commit/2532416a2bbffce64bf53fa9c5055fdd38029e80))
 
 ### Features
 
-- club-scoped search ([1a1f16c](https://github.com/mkeverything/mktour/commit/1a1f16cb))
-- key controls '<' and '>' to go through rounds ([9e34bb4](https://github.com/mkeverything/mktour/commit/9e34bb43))
+- white/black indicator; games layout for wide screens ([d41a2f7](https://github.com/mkeverything/mktour/commit/d41a2f75f8818b8e60b2ba15e952d221d38d273c))
 
 # [1.2.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.1.1-beta.1...v1.2.0-beta.1) (2026-03-03)
 
