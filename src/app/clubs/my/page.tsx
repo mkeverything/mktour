@@ -3,7 +3,7 @@ import { clubQueryPrefetch } from '@/app/clubs/my/prefetch';
 import { HydrateClient } from '@/components/trpc/server';
 import { publicCaller } from '@/server/api';
 import { getLocale, getTranslations } from 'next-intl/server';
-import type { Metadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { BASE_URL } from '@/lib/config/urls';
 import { redirect } from 'next/navigation';
 
@@ -22,11 +22,15 @@ export default async function ClubInfo() {
   );
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata(
+  _: unknown,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
   const baseUrl = BASE_URL || 'https://mktour.org';
   const url = `${baseUrl}/clubs/my`;
+  const previous = await parent;
 
   return {
     title: t('clubs.my.title'),
@@ -36,6 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
       languages: { en: url, ru: url, 'x-default': url },
     },
     openGraph: {
+      ...previous.openGraph,
       title: t('clubs.my.title'),
       description: t('clubs.my.description'),
       url,
