@@ -1,25 +1,53 @@
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Dispatch, FC, SetStateAction, useContext } from 'react';
+
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Dispatch, FC, SetStateAction } from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
+
+import { MediaQueryContext } from '@/components/providers/media-query-context';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 const RoundControls: FC<RoundControlProps> = ({
   currentRound,
   roundInView,
   setRoundInView,
+  currentTab,
 }) => {
   const t = useTranslations('Tournament.Round');
+  const { isDesktop } = useContext(MediaQueryContext);
+  const shouldHandleArrows = isDesktop || currentTab === 'games';
 
-  const handleClick = (direction: string) => {
-    let newRoundInView = roundInView;
-    if (direction === '<') {
-      newRoundInView = roundInView - 1;
-    } else if (direction === '>') {
-      newRoundInView = roundInView + 1;
-    }
-    setRoundInView(newRoundInView);
+  const changeRound = (delta: number) => {
+    setRoundInView((prevRound) => {
+      const nextRound = prevRound + delta;
+      if (nextRound < 1) return 1;
+      if (nextRound > currentRound) return currentRound;
+      return nextRound;
+    });
   };
+
+  useHotkeys(
+    'left',
+    (event) => {
+      if (!shouldHandleArrows || roundInView <= 1) return;
+      event.preventDefault();
+      changeRound(-1);
+    },
+    { enabled: shouldHandleArrows, enableOnFormTags: false },
+    [shouldHandleArrows, roundInView, currentRound],
+  );
+
+  useHotkeys(
+    'right',
+    (event) => {
+      if (!shouldHandleArrows || roundInView >= currentRound) return;
+      event.preventDefault();
+      changeRound(1);
+    },
+    { enabled: shouldHandleArrows, enableOnFormTags: false },
+    [shouldHandleArrows, roundInView, currentRound],
+  );
 
   return (
     <div className="bg-background/50 px-mk-2 sticky top-0 z-10 backdrop-blur-md">
@@ -28,7 +56,7 @@ const RoundControls: FC<RoundControlProps> = ({
       >
         <Button
           style={{ visibility: roundInView === 1 ? 'hidden' : 'visible' }}
-          onClick={() => handleClick('<')}
+          onClick={() => changeRound(-1)}
           {...buttonProps}
         >
           <ChevronLeft />
@@ -47,7 +75,7 @@ const RoundControls: FC<RoundControlProps> = ({
           style={{
             visibility: roundInView === currentRound ? 'hidden' : 'visible',
           }}
-          onClick={() => handleClick('>')}
+          onClick={() => changeRound(1)}
           {...buttonProps}
         >
           <ChevronRight />

@@ -1,7 +1,9 @@
 import TournamentItemIteratee from '@/components/tournament-item';
 import { publicCaller } from '@/server/api';
 import { TournamentWithClubModel } from '@/server/zod/tournaments';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+import { BASE_URL } from '@/lib/config/urls';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { FC } from 'react';
@@ -75,3 +77,24 @@ const getGroupedTournaments = (props: TournamentWithClubModel[]) =>
       { clubName: string; tournaments: TournamentWithClubModel[] }
     >,
   );
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'Seo' });
+  const baseUrl = BASE_URL || 'https://mktour.org';
+  const url = `${baseUrl}/tournaments/my`;
+
+  return {
+    title: t('tournaments.my.title'),
+    description: t('tournaments.my.description'),
+    alternates: {
+      canonical: url,
+      languages: { en: url, ru: url, 'x-default': url },
+    },
+    openGraph: {
+      title: t('tournaments.my.title'),
+      description: t('tournaments.my.description'),
+      url,
+    },
+  };
+}

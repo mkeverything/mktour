@@ -1,5 +1,7 @@
 # mktour\_&nbsp;&nbsp;&nbsp;tournament manager for chess clubs
 
+![mktour tournament interface](docs/mktour-demo.png)
+
 **mktour** — is a modern web application for organizing chess tournaments and networking with chess clubs, integrated with [lichess](https://lichess.org) chess platform. kinda ultimate tool for a chess community
 
 ---

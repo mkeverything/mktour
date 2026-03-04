@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, beta]
+    branches: [main]
   pull_request:
     types: [opened, synchronize]
 
@@ -50,9 +50,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest

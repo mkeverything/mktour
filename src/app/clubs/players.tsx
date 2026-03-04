@@ -4,10 +4,10 @@ import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import EditPlayerForm from '@/app/player/[id]/player-form';
 import Empty from '@/components/empty';
 import FormattedMessage from '@/components/formatted-message';
-import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
-import SkeletonList from '@/components/skeleton-list';
+import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
+import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
-import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { StatusInClub } from '@/server/zod/enums';
@@ -18,32 +18,36 @@ import Link from 'next/link';
 import { FC } from 'react';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
-  const { fetchNextPage, ...players } = useClubPlayers(selectedClub);
-  const t = useTranslations('Empty');
-  const playersData = players.data?.pages.flatMap((page) => page.players) ?? [];
-
-  if (players.status === 'pending' || players.status === 'error')
-    return <SkeletonList length={4} className="h-14 rounded-xl" />;
-  if (!playersData.length) {
-    return <Empty className="text-center text-balance">{t('players')}</Empty>;
-  }
+  const t = useTranslations();
+  const { playersCount } = useClubStats(selectedClub).data ?? {};
+  const {
+    data: searchResults,
+    search,
+    setSearch,
+  } = useClubScopedSearch({
+    clubId: selectedClub,
+    type: 'players',
+  });
 
   return (
     <div className="mk-list">
+      <ClubSearchInput search={search} setSearch={setSearch} />
       <div className="mk-list">
-        {playersData.map((player) => (
+        {searchResults?.players?.map((player) => (
           <PlayerItemIteratee
             key={player.id}
             player={player}
             statusInClub={statusInClub}
           />
         ))}
+        {searchResults?.players?.length === 0 && (
+          <Empty className="text-center text-balance">
+            {playersCount !== 0
+              ? t('GlobalSearch.not found')
+              : t('Empty.players')}
+          </Empty>
+        )}
       </div>
-      <Paginator
-        hasNextPage={players.hasNextPage}
-        isFetchingNextPage={players.isFetchingNextPage}
-        fetchNextPage={fetchNextPage}
-      />
     </div>
   );
 };

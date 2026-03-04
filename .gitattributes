@@ -1,0 +1,3 @@
+src/server/db/migrations/meta/*_snapshot.json linguist-generated=true
+src/server/db/migrations/meta/_journal.json linguist-generated=true
+src/server/db/migrations/*.sql linguist-generated=true
