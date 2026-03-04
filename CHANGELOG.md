@@ -1,3 +1,20 @@
+# [1.3.0](https://github.com/mkeverything/mktour/compare/v1.2.1...v1.3.0) (2026-03-04)
+
+
+### Bug Fixes
+
+* handle no lichess username on backend ([8022b2a](https://github.com/mkeverything/mktour/commit/8022b2a2560d6715c9394ec95a9ff5394f323036))
+* handle no user.name in profile ([d75a5f6](https://github.com/mkeverything/mktour/commit/d75a5f6b801139711c9b8b040fba744b67a36acc))
+* prevent weird states restoring nickname of added player ([ff33091](https://github.com/mkeverything/mktour/commit/ff330914ae006fff3b9166a505ef6c3058e1fdd5))
+* using null when missing realName from lichess ([ac78e7e](https://github.com/mkeverything/mktour/commit/ac78e7ed37e3fd58842dbbc26413281d29372856))
+
+
+### Features
+
+*  club-scoped search ([7315a3b](https://github.com/mkeverything/mktour/commit/7315a3ba20862bd256e6b9ab3e107e7ae756fa05))
+* key controls '<' and '>' to go through rounds ([447d7a7](https://github.com/mkeverything/mktour/commit/447d7a796001d18a807c8de24b4ec3424fbb03ae))
+* proper page-specific OG metadata ([191816c](https://github.com/mkeverything/mktour/commit/191816ceb31774044cd12ba4095f5b62c2a0d3bf))
+
 # [1.3.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.3.0-beta.1...v1.3.0-beta.2) (2026-03-04)
 
 
