@@ -3,17 +3,16 @@
 import AffiliatedPlayerCard from '@/app/clubs/[id]/affiliated-player-card';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
+import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
-import { useSearchQuery } from '@/components/hooks/query-hooks/use-search-result';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
-import { useDebounce } from '@/components/hooks/use-debounce';
 import TournamentItemIteratee from '@/components/tournament-item';
 import { useTRPC } from '@/components/trpc/client';
 import HalfCard from '@/components/ui-custom/half-card';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
+import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -29,10 +28,10 @@ import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, Home, Search, Trophy, Users2 } from 'lucide-react';
+import { CalendarDays, Home, Trophy, Users2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC, ReactNode, useEffect, useState } from 'react';
+import { FC, ReactNode } from 'react';
 
 const ClubPage: FC<{
   club: ClubModel;
@@ -287,46 +286,16 @@ const ClubTournamentsSection: FC<{
   clubId: string;
   statusInClub: StatusInClub | null;
 }> = ({ clubId, statusInClub }) => {
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
-  const secondDebouncedSearch = useDebounce(search, 290);
+  const {
+    data: searchResults,
+    search,
+    setSearch,
+  } = useClubScopedSearch({
+    clubId,
+    type: 'tournaments',
+  });
   const t = useTranslations();
   const { data: stats } = useClubStats(clubId);
-  const queryClient = useQueryClient();
-  const trpc = useTRPC();
-  const { data: searchResults } = useSearchQuery({
-    query: debouncedSearch,
-    filter: {
-      type: 'tournaments',
-      clubId,
-    },
-  });
-
-  useEffect(() => {
-    if (
-      !queryClient.getQueryData(
-        trpc.search.queryKey({
-          filter: { type: 'tournaments', clubId },
-          query: secondDebouncedSearch,
-        }),
-      )
-    ) {
-      queryClient.setQueryData(
-        trpc.search.queryKey({
-          filter: { type: 'tournaments', clubId },
-          query: secondDebouncedSearch,
-        }),
-        searchResults,
-      );
-      queryClient.invalidateQueries({
-        queryKey: trpc.search.queryKey({
-          filter: { type: 'tournaments', clubId },
-          query: secondDebouncedSearch,
-        }),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubId, queryClient, secondDebouncedSearch, trpc.search]);
 
   return (
     <Card className="flex max-h-[512px] flex-col">
@@ -338,15 +307,7 @@ const ClubTournamentsSection: FC<{
             ({stats?.tournamentsCount ?? 0})
           </span>
         </CardTitle>
-        <div className="relative mt-2">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            placeholder={t('Common.search')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <ClubSearchInput search={search} setSearch={setSearch} />
       </CardHeader>
       <CardContent className="overflow-y-auto pt-3">
         {!searchResults?.tournaments?.length && (
@@ -377,48 +338,16 @@ const ClubTournamentsSection: FC<{
 };
 
 const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
-  const secondDebouncedSearch = useDebounce(search, 290);
-
+  const {
+    data: searchResults,
+    search,
+    setSearch,
+  } = useClubScopedSearch({
+    clubId,
+    type: 'players',
+  });
   const t = useTranslations();
   const { playersCount } = useClubStats(clubId).data ?? {};
-  const queryClient = useQueryClient();
-  const trpc = useTRPC();
-
-  const { data: searchResults } = useSearchQuery({
-    query: debouncedSearch,
-    filter: {
-      type: 'players',
-      clubId,
-    },
-  });
-
-  useEffect(() => {
-    if (
-      !queryClient.getQueryData(
-        trpc.search.queryKey({
-          filter: { type: 'players', clubId },
-          query: secondDebouncedSearch,
-        }),
-      )
-    ) {
-      queryClient.setQueryData(
-        trpc.search.queryKey({
-          filter: { type: 'players', clubId },
-          query: secondDebouncedSearch,
-        }),
-        searchResults,
-      );
-      queryClient.invalidateQueries({
-        queryKey: trpc.search.queryKey({
-          filter: { type: 'players', clubId },
-          query: secondDebouncedSearch,
-        }),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubId, queryClient, secondDebouncedSearch, trpc.search]);
 
   return (
     <Card className="flex max-h-[512px] flex-col">
@@ -432,15 +361,7 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
             </span>
           )}
         </CardTitle>
-        <div className="relative mt-2">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            placeholder={t('Common.search')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <ClubSearchInput search={search} setSearch={setSearch} />
       </CardHeader>
       <CardContent className="overflow-y-auto pt-3">
         {searchResults?.players?.length === 0 && (
