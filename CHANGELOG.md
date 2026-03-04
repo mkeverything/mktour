@@ -1,3 +1,10 @@
+# [1.3.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.2.2-beta.2...v1.3.0-beta.1) (2026-03-04)
+
+
+### Features
+
+* proper page-specific OG metadata ([191816c](https://github.com/mkeverything/mktour/commit/191816ceb31774044cd12ba4095f5b62c2a0d3bf))
+
 ## [1.2.2-beta.2](https://github.com/mkeverything/mktour/compare/v1.2.2-beta.1...v1.2.2-beta.2) (2026-03-04)
 
 
