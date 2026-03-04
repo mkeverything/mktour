@@ -37,7 +37,7 @@ const AddNewPlayer = ({
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const { sendJsonMessage } = useContext(DashboardContext);
-  const { mutate } = useTournamentAddNewPlayer(
+  const { mutate, isPending } = useTournamentAddNewPlayer(
     id,
     queryClient,
     sendJsonMessage,
@@ -46,21 +46,30 @@ const AddNewPlayer = ({
   const t = useTranslations('Tournament.AddPlayer');
   useHotkeys('escape', handleClose, { enableOnFormTags: true });
 
+  const getDefaultValues = (nickname: string): PlayerFormModel => ({
+    nickname,
+    rating: 1500,
+    clubId: tournament.data?.club?.id ?? '',
+  });
+
   const form = useForm<PlayerFormModel>({
     resolver: zodResolver(playerFormSchema),
-    defaultValues: {
-      nickname: value,
-      rating: 1500,
-      clubId: tournament.data?.club?.id,
-    },
+    defaultValues: getDefaultValues(value),
     reValidateMode: 'onSubmit',
   });
 
-  const nickname = form.getValues('nickname');
+  const nickname = form.watch('nickname');
 
   useEffect(() => {
+    if (nickname === undefined) return;
     setValue(nickname);
   }, [nickname, setValue]);
+
+  useEffect(() => {
+    const clubId = tournament.data?.club?.id;
+    if (!clubId) return;
+    form.setValue('clubId', clubId, { shouldDirty: false });
+  }, [form, tournament.data?.club?.id]);
 
   async function onSubmit(player: PlayerFormModel) {
     const validation = await queryClient.fetchQuery(
@@ -78,13 +87,13 @@ const AddNewPlayer = ({
     }
     const playerWithId = { ...player, id: newid() };
     setValue('');
-    form.reset();
+    form.reset(getDefaultValues(''), { keepDefaultValues: true });
     form.setFocus('nickname');
     mutate(
       { tournamentId: id, player: playerWithId },
       {
         onError: () => {
-          form.reset(player);
+          form.reset(player, { keepDefaultValues: true });
           form.setFocus('nickname');
         },
         onSuccess: () => {
@@ -144,9 +153,15 @@ const AddNewPlayer = ({
         <Button
           type="submit"
           className="w-full"
-          disabled={form.formState.isSubmitting || form.formState.isValidating}
+          disabled={
+            form.formState.isSubmitting ||
+            form.formState.isValidating ||
+            isPending
+          }
         >
-          {form.formState.isSubmitting || form.formState.isValidating ? (
+          {form.formState.isSubmitting ||
+          form.formState.isValidating ||
+          isPending ? (
             <>
               <LoadingSpinner />
               {t('save')}

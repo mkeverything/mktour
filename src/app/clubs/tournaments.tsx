@@ -1,10 +1,12 @@
 import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import Empty from '@/components/empty';
 import FormattedMessage from '@/components/formatted-message';
-import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
-import SkeletonList from '@/components/skeleton-list';
+import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
+import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
 import TournamentItemIteratee from '@/components/tournament-item';
+import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
 
@@ -12,24 +14,31 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
   selectedClub,
   statusInClub,
 }) => {
-  const { data, isLoading, isError, failureReason } =
-    useClubTournaments(selectedClub);
+  const t = useTranslations();
+  const { data: stats } = useClubStats(selectedClub);
+  const {
+    data: searchResults,
+    search,
+    setSearch,
+  } = useClubScopedSearch({
+    clubId: selectedClub,
+    type: 'tournaments',
+  });
 
-  if (isLoading) return <SkeletonList length={10} />;
-  if (!data || !data.length)
-    return (
-      <Empty className="mk-container text-center text-balance">
-        <FormattedMessage id="Empty.tournaments" />
-        <br />
-        {statusInClub && <MakeTournament />}
-      </Empty>
-    );
-  if (isError) return <p className="w-full">{failureReason?.message}</p>;
   return (
     <div className="mk-list">
-      {data.map((props) => (
+      <ClubSearchInput search={search} setSearch={setSearch} />
+      {searchResults?.tournaments?.map((props) => (
         <TournamentItemIteratee key={props.id} tournament={props} />
       ))}
+      {!searchResults?.tournaments?.length && (
+        <Empty className="text-center text-balance">
+          {stats?.tournamentsCount !== 0
+            ? t('GlobalSearch.not found')
+            : t('Empty.tournaments')}
+        </Empty>
+      )}
+      {statusInClub && stats?.tournamentsCount === 0 && <MakeTournament />}
     </div>
   );
 };

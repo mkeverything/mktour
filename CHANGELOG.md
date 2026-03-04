@@ -1,325 +1,297 @@
 # [1.2.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2026-03-03)
 
-
 ### Bug Fixes
 
-* wrong color indication in light theme ([764858e](https://github.com/mkeverything/mktour/commit/764858e6c595408970846706b487e938efc6fae9))
+- wrong color indication in light theme ([764858e](https://github.com/mkeverything/mktour/commit/764858e6c595408970846706b487e938efc6fae9))
+- prevent weird states restoring nickname of added player ([de26f69](https://github.com/mkeverything/mktour/commit/de26f69e))
+
+### Features
+
+- club-scoped search ([1a1f16c](https://github.com/mkeverything/mktour/commit/1a1f16cb))
+- key controls '<' and '>' to go through rounds ([9e34bb4](https://github.com/mkeverything/mktour/commit/9e34bb43))
 
 # [1.2.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.1.1-beta.1...v1.2.0-beta.1) (2026-03-03)
 
-
 ### Features
 
-* white/black indicator; games layout for wide screens ([d41a2f7](https://github.com/mkeverything/mktour/commit/d41a2f75f8818b8e60b2ba15e952d221d38d273c))
+- white/black indicator; games layout for wide screens ([d41a2f7](https://github.com/mkeverything/mktour/commit/d41a2f75f8818b8e60b2ba15e952d221d38d273c))
 
 ## [1.1.1-beta.1](https://github.com/mkeverything/mktour/compare/v1.1.0...v1.1.1-beta.1) (2026-03-03)
 
-
 ### Bug Fixes
 
-* do not give players bye until tournament is started ([01f0aff](https://github.com/mkeverything/mktour/commit/01f0aff29107a6be720957b4b6c4e020e70cf0f0))
-* oauth ([2532416](https://github.com/mkeverything/mktour/commit/2532416a2bbffce64bf53fa9c5055fdd38029e80))
+- do not give players bye until tournament is started ([01f0aff](https://github.com/mkeverything/mktour/commit/01f0aff29107a6be720957b4b6c4e020e70cf0f0))
+- oauth ([2532416](https://github.com/mkeverything/mktour/commit/2532416a2bbffce64bf53fa9c5055fdd38029e80))
 
 # [1.1.0](https://github.com/mkeverything/mktour/compare/v1.0.2...v1.1.0) (2026-03-03)
 
-
 ### Bug Fixes
 
-* wrap rating calculations with promise.all to speed it up and fit in allowed 10 sec ([60ab5fd](https://github.com/mkeverything/mktour/commit/60ab5fd724383949439a57482cb0873be608774c))
-
+- wrap rating calculations with promise.all to speed it up and fit in allowed 10 sec ([60ab5fd](https://github.com/mkeverything/mktour/commit/60ab5fd724383949439a57482cb0873be608774c))
 
 ### Features
 
-* store new rating values instead of changes ([3b30f21](https://github.com/mkeverything/mktour/commit/3b30f21590100c7363552b7158ea9414aa3d6c33))
+- store new rating values instead of changes ([3b30f21](https://github.com/mkeverything/mktour/commit/3b30f21590100c7363552b7158ea9414aa3d6c33))
 
 # [1.1.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.0.2-beta.2...v1.1.0-beta.1) (2026-03-03)
 
-
 ### Features
 
-* store new rating values instead of changes ([3b30f21](https://github.com/mkeverything/mktour/commit/3b30f21590100c7363552b7158ea9414aa3d6c33))
+- store new rating values instead of changes ([3b30f21](https://github.com/mkeverything/mktour/commit/3b30f21590100c7363552b7158ea9414aa3d6c33))
 
 ## [1.0.2-beta.2](https://github.com/mkeverything/mktour/compare/v1.0.2-beta.1...v1.0.2-beta.2) (2026-03-03)
-## [1.0.2](https://github.com/mkeverything/mktour/compare/v1.0.1...v1.0.2) (2026-03-03)
 
+## [1.0.2](https://github.com/mkeverything/mktour/compare/v1.0.1...v1.0.2) (2026-03-03)
 
 ### Bug Fixes
 
-* wrap rating calculations with promise.all to speed it up and fit in allowed 10 sec ([60ab5fd](https://github.com/mkeverything/mktour/commit/60ab5fd724383949439a57482cb0873be608774c))
-* converting websocked dates ([c9a3d7f](https://github.com/mkeverything/mktour/commit/c9a3d7feec4b25b2aac209bb2380f5f18dd73947))
-* stabilize finishing tournament and rating calculation (rap in single transaction) ([addee31](https://github.com/mkeverything/mktour/commit/addee316b671504e610f0c32ed5d7c6419cbd184))
+- wrap rating calculations with promise.all to speed it up and fit in allowed 10 sec ([60ab5fd](https://github.com/mkeverything/mktour/commit/60ab5fd724383949439a57482cb0873be608774c))
+- converting websocked dates ([c9a3d7f](https://github.com/mkeverything/mktour/commit/c9a3d7feec4b25b2aac209bb2380f5f18dd73947))
+- stabilize finishing tournament and rating calculation (rap in single transaction) ([addee31](https://github.com/mkeverything/mktour/commit/addee316b671504e610f0c32ed5d7c6419cbd184))
 
 ## [1.0.2-beta.1](https://github.com/mkeverything/mktour/compare/v1.0.1...v1.0.2-beta.1) (2026-03-03)
 
-
 ### Bug Fixes
 
-* converting websocked dates ([c9a3d7f](https://github.com/mkeverything/mktour/commit/c9a3d7feec4b25b2aac209bb2380f5f18dd73947))
-* stabilize finishing tournament and rating calculation (rap in single transaction) ([addee31](https://github.com/mkeverything/mktour/commit/addee316b671504e610f0c32ed5d7c6419cbd184))
+- converting websocked dates ([c9a3d7f](https://github.com/mkeverything/mktour/commit/c9a3d7feec4b25b2aac209bb2380f5f18dd73947))
+- stabilize finishing tournament and rating calculation (rap in single transaction) ([addee31](https://github.com/mkeverything/mktour/commit/addee316b671504e610f0c32ed5d7c6419cbd184))
 
 ## [1.0.1](https://github.com/mkeverything/mktour/compare/v1.0.0...v1.0.1) (2026-03-02)
 
-
 ### Bug Fixes
 
-* **swiss:** disable C3 hard constraint to prevent CardinalityValidationError ([4870085](https://github.com/mkeverything/mktour/commit/4870085b4547b21a77a2d46f8b40aac46bb7994c))
+- **swiss:** disable C3 hard constraint to prevent CardinalityValidationError ([4870085](https://github.com/mkeverything/mktour/commit/4870085b4547b21a77a2d46f8b40aac46bb7994c))
 
 # [1.0.0](https://github.com/mkeverything/mktour/compare/v0.12.7...v1.0.0) (2026-03-02)
 
-
 ### Bug Fixes
 
-* amount of wins tie break ([67a01f2](https://github.com/mkeverything/mktour/commit/67a01f28f9eb56844470c9ce77181a64d8e2d689))
-* apple icons ([1626f01](https://github.com/mkeverything/mktour/commit/1626f015085635f9d556ac511afaccde3b06d840))
-* backend control of modifiable columns in players table. only names are editable ([4ff1ebf](https://github.com/mkeverything/mktour/commit/4ff1ebf8b91bf874a07f725eb36c0a14d57c9189))
-* beta release flow ([6c6bbaa](https://github.com/mkeverything/mktour/commit/6c6bbaaef9a0e323f467469036744973339ee61b))
-* cancel button in start tournament modal ([60dfa08](https://github.com/mkeverything/mktour/commit/60dfa08131204bed3de7367fc9a7ac4344433482))
-* canEditTitle check in tournament ([4cbfc64](https://github.com/mkeverything/mktour/commit/4cbfc64faec2f2429392a0166a9b0c1bb6dad475))
-* changelog version display ([6e7a46d](https://github.com/mkeverything/mktour/commit/6e7a46dd0ef988beca0712ff99a2c533699f1a01))
-* condition ([26bd740](https://github.com/mkeverything/mktour/commit/26bd7401c1a5b8a338f487bb319e4088ebb5a1e8))
-* correct maximum rounds number in swiss ([29ef289](https://github.com/mkeverything/mktour/commit/29ef289e9904262726223144134eea4fd3754539))
-* dashboard fabs positioning ([7e9be45](https://github.com/mkeverything/mktour/commit/7e9be453c5432fec5243c1baca13156c1364234d))
-* delete user - sqlite constraint ([b55fb60](https://github.com/mkeverything/mktour/commit/b55fb6074c75ebdd51c93bb7d8ff5386cb97c6ac))
-* display user lastSeenAt in ClubPlayerCard ([b3e7e06](https://github.com/mkeverything/mktour/commit/b3e7e06bdbe97c36b960d5662fdb1302cebaf78a))
-* editing trnmnt title disabled after trnmnt started ([23d7c29](https://github.com/mkeverything/mktour/commit/23d7c2911b11498906439c21cb10d633e7759ad7))
-* fab display only to organizer; minor styling ([9b8c8a7](https://github.com/mkeverything/mktour/commit/9b8c8a713b2caeb8d30e14bfbb5c1822387536a0))
-* harden game result transitions and rollbacks ([d6499f5](https://github.com/mkeverything/mktour/commit/d6499f59d58131612b070aafb8ec1ab8188a4be0))
-* lichess api endpoint teams/of/{username} has become protected ([8a149e8](https://github.com/mkeverything/mktour/commit/8a149e8d69d84c7c885d5ea11c1bf3d3dca8f646))
-* minor ([44efd2d](https://github.com/mkeverything/mktour/commit/44efd2dd1a9be32a6c6b91d275a2d3a1d57429d7))
-* minor styling ([8227b0a](https://github.com/mkeverything/mktour/commit/8227b0ac4368795625f32242bd53a96dcd5e29b0))
-* minor styling ([f1d46ed](https://github.com/mkeverything/mktour/commit/f1d46ed8e538e682c7672c6aacfaabf79e82ce05))
-* minor styling ([c2a6f1d](https://github.com/mkeverything/mktour/commit/c2a6f1d8f7ad6a80b99aa04c02ef04e30b56d335))
-* minor styling ([be48c81](https://github.com/mkeverything/mktour/commit/be48c817d1ab1bbf42a8ac8376adcd0c9c87541a))
-* minor styling ([82d68da](https://github.com/mkeverything/mktour/commit/82d68da7101c1eda1479d296107d9d4865331202))
-* minor styling ([dd56bcf](https://github.com/mkeverything/mktour/commit/dd56bcfff29e14fe8aacb0c93497b0b2150ee72b))
-* minor styling ([cff2506](https://github.com/mkeverything/mktour/commit/cff250646f5c02185bce9ce2995699fd450e2edd))
-* minor styling ([c48e1b8](https://github.com/mkeverything/mktour/commit/c48e1b8017d2ccaacb254af2b733443ca7b4d9cb))
-* missing asset src ([ebebc8d](https://github.com/mkeverything/mktour/commit/ebebc8dcbace5478c4d165448d62b78cc1543025))
-* missing fab in clubs/my ([beb4422](https://github.com/mkeverything/mktour/commit/beb44223d0e6103b7ccfad714ebe49f328f6ebf3))
-* missing opengraph image ([2c740f1](https://github.com/mkeverything/mktour/commit/2c740f16d7bbbde8ca838ea9c91a805b026d543d))
-* missing pwa splash screen; bg at the top ([8c029a7](https://github.com/mkeverything/mktour/commit/8c029a76431d3f3e25d92b227ba1769fb897fdf9))
-* missing tournaments with no title in club/[id] ([a1a8ab8](https://github.com/mkeverything/mktour/commit/a1a8ab865bb5dd24f88d82ab62db39f34897082e))
-* missing username in hook ([8a3784d](https://github.com/mkeverything/mktour/commit/8a3784d1fad6ff805d04c912666538d39f848643))
-* **MONKEYPATCH:** client filtering notifications with removed affeliation ([2f6f03a](https://github.com/mkeverything/mktour/commit/2f6f03ac99209571153512f21c7edb157a71fd2e))
-* multiple issues with setting quantity of rounds ([5bcde74](https://github.com/mkeverything/mktour/commit/5bcde7455b2614ba20bf2ab2c36b525bd8c5c6fd))
-* navigation items overflow ([97041c9](https://github.com/mkeverything/mktour/commit/97041c9cc99f69ba87d20ec1f28e2437d7802892))
-* openapi search specification and leaking user emails in search ([1fdf603](https://github.com/mkeverything/mktour/commit/1fdf603b77e55bbfe8d08fae4d97226f26527ca9))
-* player info can be edited by affiliated user (not only club admin) ([bbc05b0](https://github.com/mkeverything/mktour/commit/bbc05b01730e100da07f941d9f8d7fe68daef43c))
-* player modal in trnmt ([70363ca](https://github.com/mkeverything/mktour/commit/70363ca835f477ed61ccd5d45804b9903396e7e0))
-* playerWithUsername schema and type (dc3761ee6aa53d3852392ae1336301cb6c328c0f) ([b9b6bfa](https://github.com/mkeverything/mktour/commit/b9b6bfa842db46cf429836b44c94f4a6030a0a34))
-* proper logic operator ([f8738ce](https://github.com/mkeverything/mktour/commit/f8738cec587d91d15c76343877c38f8d0f8c6cf6))
-* proper usage of user-players api ([e4cb1c7](https://github.com/mkeverything/mktour/commit/e4cb1c7aa0d3762e39d6f3be63426672f8a59377))
-* proper usage of user-players api ([206b472](https://github.com/mkeverything/mktour/commit/206b472c7c5881032df80f57cf9f05bb1739522f))
-* reduce tournamentInfo schema ([cedd60c](https://github.com/mkeverything/mktour/commit/cedd60c7c28a7129e9066f576ed5efe965069334))
-* returned synchronous root layout ([20ae4d4](https://github.com/mkeverything/mktour/commit/20ae4d437a8b19ad9a6de37edc6ba4da7f822a94))
-* rm makeTournament button from unauthorized route ([01e1c18](https://github.com/mkeverything/mktour/commit/01e1c1859e826d0ed5c855c7ab40348a0ea5a41d))
-* round controls paddings; minor styling ([f1006ed](https://github.com/mkeverything/mktour/commit/f1006eda68bd6cd9e88ccc76b1845be732bdfe0c))
-* rounds number not less that 1 ([4c36122](https://github.com/mkeverything/mktour/commit/4c3612207cb073d6bd9d2fe745bb88db2ca8dc10))
-* side-drawer width ([3cebbe1](https://github.com/mkeverything/mktour/commit/3cebbe1a625112b3cc5b9b2982d16f7b5d5a9a8b))
-* skeleton in auth-button ([9fc9076](https://github.com/mkeverything/mktour/commit/9fc90765ce28c6e0f021449c35c01eb5c0128458))
-* tournament dashboard skeleton ([11e2b5b](https://github.com/mkeverything/mktour/commit/11e2b5ba9079fb174177071762a8602966c6408c))
-* ui for updating or rejecting affiliations in club inbox ([8450c97](https://github.com/mkeverything/mktour/commit/8450c97051569a57d8b305dafd4eb0b9c11a327e))
-* undefined changed to '' in default title value ([ef5eca0](https://github.com/mkeverything/mktour/commit/ef5eca0617e0e5d785e0635a30c5ae99d09de2ac))
-* using onBlur on trnmt title editing instead of debounced value ([80aea4f](https://github.com/mkeverything/mktour/commit/80aea4fcf75d3f7adb9078176d942526b7ea6199))
-* valid statusInClub in club/my; minor styling ([592a048](https://github.com/mkeverything/mktour/commit/592a0480c882287da4a54a41024a6b7435786e4b))
-* wrong date to dateString translations ([7adcdb7](https://github.com/mkeverything/mktour/commit/7adcdb7de1caa52e15be6e6ac8326ca523ac138a))
-
+- amount of wins tie break ([67a01f2](https://github.com/mkeverything/mktour/commit/67a01f28f9eb56844470c9ce77181a64d8e2d689))
+- apple icons ([1626f01](https://github.com/mkeverything/mktour/commit/1626f015085635f9d556ac511afaccde3b06d840))
+- backend control of modifiable columns in players table. only names are editable ([4ff1ebf](https://github.com/mkeverything/mktour/commit/4ff1ebf8b91bf874a07f725eb36c0a14d57c9189))
+- beta release flow ([6c6bbaa](https://github.com/mkeverything/mktour/commit/6c6bbaaef9a0e323f467469036744973339ee61b))
+- cancel button in start tournament modal ([60dfa08](https://github.com/mkeverything/mktour/commit/60dfa08131204bed3de7367fc9a7ac4344433482))
+- canEditTitle check in tournament ([4cbfc64](https://github.com/mkeverything/mktour/commit/4cbfc64faec2f2429392a0166a9b0c1bb6dad475))
+- changelog version display ([6e7a46d](https://github.com/mkeverything/mktour/commit/6e7a46dd0ef988beca0712ff99a2c533699f1a01))
+- condition ([26bd740](https://github.com/mkeverything/mktour/commit/26bd7401c1a5b8a338f487bb319e4088ebb5a1e8))
+- correct maximum rounds number in swiss ([29ef289](https://github.com/mkeverything/mktour/commit/29ef289e9904262726223144134eea4fd3754539))
+- dashboard fabs positioning ([7e9be45](https://github.com/mkeverything/mktour/commit/7e9be453c5432fec5243c1baca13156c1364234d))
+- delete user - sqlite constraint ([b55fb60](https://github.com/mkeverything/mktour/commit/b55fb6074c75ebdd51c93bb7d8ff5386cb97c6ac))
+- display user lastSeenAt in ClubPlayerCard ([b3e7e06](https://github.com/mkeverything/mktour/commit/b3e7e06bdbe97c36b960d5662fdb1302cebaf78a))
+- editing trnmnt title disabled after trnmnt started ([23d7c29](https://github.com/mkeverything/mktour/commit/23d7c2911b11498906439c21cb10d633e7759ad7))
+- fab display only to organizer; minor styling ([9b8c8a7](https://github.com/mkeverything/mktour/commit/9b8c8a713b2caeb8d30e14bfbb5c1822387536a0))
+- harden game result transitions and rollbacks ([d6499f5](https://github.com/mkeverything/mktour/commit/d6499f59d58131612b070aafb8ec1ab8188a4be0))
+- lichess api endpoint teams/of/{username} has become protected ([8a149e8](https://github.com/mkeverything/mktour/commit/8a149e8d69d84c7c885d5ea11c1bf3d3dca8f646))
+- minor ([44efd2d](https://github.com/mkeverything/mktour/commit/44efd2dd1a9be32a6c6b91d275a2d3a1d57429d7))
+- minor styling ([8227b0a](https://github.com/mkeverything/mktour/commit/8227b0ac4368795625f32242bd53a96dcd5e29b0))
+- minor styling ([f1d46ed](https://github.com/mkeverything/mktour/commit/f1d46ed8e538e682c7672c6aacfaabf79e82ce05))
+- minor styling ([c2a6f1d](https://github.com/mkeverything/mktour/commit/c2a6f1d8f7ad6a80b99aa04c02ef04e30b56d335))
+- minor styling ([be48c81](https://github.com/mkeverything/mktour/commit/be48c817d1ab1bbf42a8ac8376adcd0c9c87541a))
+- minor styling ([82d68da](https://github.com/mkeverything/mktour/commit/82d68da7101c1eda1479d296107d9d4865331202))
+- minor styling ([dd56bcf](https://github.com/mkeverything/mktour/commit/dd56bcfff29e14fe8aacb0c93497b0b2150ee72b))
+- minor styling ([cff2506](https://github.com/mkeverything/mktour/commit/cff250646f5c02185bce9ce2995699fd450e2edd))
+- minor styling ([c48e1b8](https://github.com/mkeverything/mktour/commit/c48e1b8017d2ccaacb254af2b733443ca7b4d9cb))
+- missing asset src ([ebebc8d](https://github.com/mkeverything/mktour/commit/ebebc8dcbace5478c4d165448d62b78cc1543025))
+- missing fab in clubs/my ([beb4422](https://github.com/mkeverything/mktour/commit/beb44223d0e6103b7ccfad714ebe49f328f6ebf3))
+- missing opengraph image ([2c740f1](https://github.com/mkeverything/mktour/commit/2c740f16d7bbbde8ca838ea9c91a805b026d543d))
+- missing pwa splash screen; bg at the top ([8c029a7](https://github.com/mkeverything/mktour/commit/8c029a76431d3f3e25d92b227ba1769fb897fdf9))
+- missing tournaments with no title in club/[id] ([a1a8ab8](https://github.com/mkeverything/mktour/commit/a1a8ab865bb5dd24f88d82ab62db39f34897082e))
+- missing username in hook ([8a3784d](https://github.com/mkeverything/mktour/commit/8a3784d1fad6ff805d04c912666538d39f848643))
+- **MONKEYPATCH:** client filtering notifications with removed affeliation ([2f6f03a](https://github.com/mkeverything/mktour/commit/2f6f03ac99209571153512f21c7edb157a71fd2e))
+- multiple issues with setting quantity of rounds ([5bcde74](https://github.com/mkeverything/mktour/commit/5bcde7455b2614ba20bf2ab2c36b525bd8c5c6fd))
+- navigation items overflow ([97041c9](https://github.com/mkeverything/mktour/commit/97041c9cc99f69ba87d20ec1f28e2437d7802892))
+- openapi search specification and leaking user emails in search ([1fdf603](https://github.com/mkeverything/mktour/commit/1fdf603b77e55bbfe8d08fae4d97226f26527ca9))
+- player info can be edited by affiliated user (not only club admin) ([bbc05b0](https://github.com/mkeverything/mktour/commit/bbc05b01730e100da07f941d9f8d7fe68daef43c))
+- player modal in trnmt ([70363ca](https://github.com/mkeverything/mktour/commit/70363ca835f477ed61ccd5d45804b9903396e7e0))
+- playerWithUsername schema and type (dc3761ee6aa53d3852392ae1336301cb6c328c0f) ([b9b6bfa](https://github.com/mkeverything/mktour/commit/b9b6bfa842db46cf429836b44c94f4a6030a0a34))
+- proper logic operator ([f8738ce](https://github.com/mkeverything/mktour/commit/f8738cec587d91d15c76343877c38f8d0f8c6cf6))
+- proper usage of user-players api ([e4cb1c7](https://github.com/mkeverything/mktour/commit/e4cb1c7aa0d3762e39d6f3be63426672f8a59377))
+- proper usage of user-players api ([206b472](https://github.com/mkeverything/mktour/commit/206b472c7c5881032df80f57cf9f05bb1739522f))
+- reduce tournamentInfo schema ([cedd60c](https://github.com/mkeverything/mktour/commit/cedd60c7c28a7129e9066f576ed5efe965069334))
+- returned synchronous root layout ([20ae4d4](https://github.com/mkeverything/mktour/commit/20ae4d437a8b19ad9a6de37edc6ba4da7f822a94))
+- rm makeTournament button from unauthorized route ([01e1c18](https://github.com/mkeverything/mktour/commit/01e1c1859e826d0ed5c855c7ab40348a0ea5a41d))
+- round controls paddings; minor styling ([f1006ed](https://github.com/mkeverything/mktour/commit/f1006eda68bd6cd9e88ccc76b1845be732bdfe0c))
+- rounds number not less that 1 ([4c36122](https://github.com/mkeverything/mktour/commit/4c3612207cb073d6bd9d2fe745bb88db2ca8dc10))
+- side-drawer width ([3cebbe1](https://github.com/mkeverything/mktour/commit/3cebbe1a625112b3cc5b9b2982d16f7b5d5a9a8b))
+- skeleton in auth-button ([9fc9076](https://github.com/mkeverything/mktour/commit/9fc90765ce28c6e0f021449c35c01eb5c0128458))
+- tournament dashboard skeleton ([11e2b5b](https://github.com/mkeverything/mktour/commit/11e2b5ba9079fb174177071762a8602966c6408c))
+- ui for updating or rejecting affiliations in club inbox ([8450c97](https://github.com/mkeverything/mktour/commit/8450c97051569a57d8b305dafd4eb0b9c11a327e))
+- undefined changed to '' in default title value ([ef5eca0](https://github.com/mkeverything/mktour/commit/ef5eca0617e0e5d785e0635a30c5ae99d09de2ac))
+- using onBlur on trnmt title editing instead of debounced value ([80aea4f](https://github.com/mkeverything/mktour/commit/80aea4fcf75d3f7adb9078176d942526b7ea6199))
+- valid statusInClub in club/my; minor styling ([592a048](https://github.com/mkeverything/mktour/commit/592a0480c882287da4a54a41024a6b7435786e4b))
+- wrong date to dateString translations ([7adcdb7](https://github.com/mkeverything/mktour/commit/7adcdb7de1caa52e15be6e6ac8326ca523ac138a))
 
 ### Features
 
-* (exp) search button moved to the left of navbar ([3136b67](https://github.com/mkeverything/mktour/commit/3136b6702ff61a321b7deec26a549b0849b28bb5))
-* (experimental) turboPascal in tournament title ([804d042](https://github.com/mkeverything/mktour/commit/804d042504f8ef73ebb94895fafb7f7ec73ce277))
-* add and remove lichess team in club settings ([9de786d](https://github.com/mkeverything/mktour/commit/9de786d44e3c7b195f705d9956be06b295998f71))
-* affiliation cancels for users and club-admins ([907390c](https://github.com/mkeverything/mktour/commit/907390ceb94c851e4653bce3c83b8f154d0ceac8))
-* backend for editing tournament title ([991e3c6](https://github.com/mkeverything/mktour/commit/991e3c6f2845eee1df443daccb1e0fb857f2a155))
-* bg-black for desktop table ([9ac99e1](https://github.com/mkeverything/mktour/commit/9ac99e1789484b4337d83b7191846a24d0dd0d25))
-* compact game item ([0ca318c](https://github.com/mkeverything/mktour/commit/0ca318c32f50e6c3998a7ca9e918e0d65773ad41))
-* comprehensive SEO setup — metadata, sitemap, robots, structured data ([ea2dbe7](https://github.com/mkeverything/mktour/commit/ea2dbe77c8cc416092fb631d872fdbe1e24cdbc5))
-* disable feature, that affiliated users can set their own game results ([c4786ba](https://github.com/mkeverything/mktour/commit/c4786ba555af22222dca2321129f847666ce8319))
-* display affiliated player on club public page ([fce871f](https://github.com/mkeverything/mktour/commit/fce871f1a483439dc78a9895da32a2d5c1c5edb1))
-* display total score in tournament table (with byes calculated on the go) ([4b7ac97](https://github.com/mkeverything/mktour/commit/4b7ac97b4ac813f7a1551c194379a71dadc215db))
-* draft for desktop fullscreen mode in tournament dshbrd ([86b5852](https://github.com/mkeverything/mktour/commit/86b58523901555480d3d45a63ca2ef2aa56032ca))
-* draft for desktop tournament dashboard ([e945c41](https://github.com/mkeverything/mktour/commit/e945c41ab00425e681b9c2d22382e70a6b33b19f))
-* edit affiliated player button ([503dfac](https://github.com/mkeverything/mktour/commit/503dfac4d61e4d3ed7e5eb9fb8181c00eb0c0f4a))
-* edit tournament title ([dd62001](https://github.com/mkeverything/mktour/commit/dd62001913ecc74f74cfa7cc2143d3b8ad1c88d1))
-* enabled swiss selection ([0a0b681](https://github.com/mkeverything/mktour/commit/0a0b68185e9c23085f36e69fe3b1af1770dc0dcb))
-* highlightning gameItem of user and its place in table ([4c11f76](https://github.com/mkeverything/mktour/commit/4c11f7663317b9ad31722a4e2610a40c463aefd0))
-* implement PAB at the frontend + implement tiebreaks ([63a6db0](https://github.com/mkeverything/mktour/commit/63a6db04ef6ec3610a729c4bc503f8530c45cceb))
-* integrate swiss pairing system into the website ([7796b86](https://github.com/mkeverything/mktour/commit/7796b86c83fde36c154a8aeea627ab249f605b3d))
-* lang and theme toggles under auth button dropdown ([cc8430d](https://github.com/mkeverything/mktour/commit/cc8430dccc1e15377521423e2181704e2b903878))
-* links in club notifications ([e7221ba](https://github.com/mkeverything/mktour/commit/e7221bad068cd715fe4b569c09ce140cbcda039d))
-* merge player with affiliated user ([4387b8d](https://github.com/mkeverything/mktour/commit/4387b8d0a2dd5946887b88ccac51fa77dc7503af))
-* mk-content-height css variable ([f4c3070](https://github.com/mkeverything/mktour/commit/f4c30709a269b85a01e899bc73cfcfe500c5f555))
-* reduced affiliations to be either pending or active ([4dd9148](https://github.com/mkeverything/mktour/commit/4dd91482be5136442190b7e4bd328468bdf7f162))
-* sticky table header ([171db78](https://github.com/mkeverything/mktour/commit/171db784beb830b2180a4931444f7b2159e1ab44))
-* turbopascal to player's nickname and user's username ([abf74b0](https://github.com/mkeverything/mktour/commit/abf74b06023e091b6ca59a9f271c7ef994eb900a))
-* user affiliated with player can now set their own result ([18ab3c6](https://github.com/mkeverything/mktour/commit/18ab3c6996d31e28865d69c2fb0c84fb68eb4688))
-* user last touranaments ([36e7f8b](https://github.com/mkeverything/mktour/commit/36e7f8b58afc157cf671ef4d84212b6f746ebdb8))
-* user reference in possible tournament players list ([dc3761e](https://github.com/mkeverything/mktour/commit/dc3761ee6aa53d3852392ae1336301cb6c328c0f))
-* user.playerClubs - returns clubs where user has affiliated players ([0f9a356](https://github.com/mkeverything/mktour/commit/0f9a356ff067a4acd0855d807cebc3ec10bd8969))
-* user's players display ([a73a43e](https://github.com/mkeverything/mktour/commit/a73a43e1a078b0f95b2c10ef2e966b1977e8cda0))
-* username in player drawer ([b745db7](https://github.com/mkeverything/mktour/commit/b745db7a05098fde6b532bcc8d1a20d50ac0efa3))
-
+- (exp) search button moved to the left of navbar ([3136b67](https://github.com/mkeverything/mktour/commit/3136b6702ff61a321b7deec26a549b0849b28bb5))
+- (experimental) turboPascal in tournament title ([804d042](https://github.com/mkeverything/mktour/commit/804d042504f8ef73ebb94895fafb7f7ec73ce277))
+- add and remove lichess team in club settings ([9de786d](https://github.com/mkeverything/mktour/commit/9de786d44e3c7b195f705d9956be06b295998f71))
+- affiliation cancels for users and club-admins ([907390c](https://github.com/mkeverything/mktour/commit/907390ceb94c851e4653bce3c83b8f154d0ceac8))
+- backend for editing tournament title ([991e3c6](https://github.com/mkeverything/mktour/commit/991e3c6f2845eee1df443daccb1e0fb857f2a155))
+- bg-black for desktop table ([9ac99e1](https://github.com/mkeverything/mktour/commit/9ac99e1789484b4337d83b7191846a24d0dd0d25))
+- compact game item ([0ca318c](https://github.com/mkeverything/mktour/commit/0ca318c32f50e6c3998a7ca9e918e0d65773ad41))
+- comprehensive SEO setup — metadata, sitemap, robots, structured data ([ea2dbe7](https://github.com/mkeverything/mktour/commit/ea2dbe77c8cc416092fb631d872fdbe1e24cdbc5))
+- disable feature, that affiliated users can set their own game results ([c4786ba](https://github.com/mkeverything/mktour/commit/c4786ba555af22222dca2321129f847666ce8319))
+- display affiliated player on club public page ([fce871f](https://github.com/mkeverything/mktour/commit/fce871f1a483439dc78a9895da32a2d5c1c5edb1))
+- display total score in tournament table (with byes calculated on the go) ([4b7ac97](https://github.com/mkeverything/mktour/commit/4b7ac97b4ac813f7a1551c194379a71dadc215db))
+- draft for desktop fullscreen mode in tournament dshbrd ([86b5852](https://github.com/mkeverything/mktour/commit/86b58523901555480d3d45a63ca2ef2aa56032ca))
+- draft for desktop tournament dashboard ([e945c41](https://github.com/mkeverything/mktour/commit/e945c41ab00425e681b9c2d22382e70a6b33b19f))
+- edit affiliated player button ([503dfac](https://github.com/mkeverything/mktour/commit/503dfac4d61e4d3ed7e5eb9fb8181c00eb0c0f4a))
+- edit tournament title ([dd62001](https://github.com/mkeverything/mktour/commit/dd62001913ecc74f74cfa7cc2143d3b8ad1c88d1))
+- enabled swiss selection ([0a0b681](https://github.com/mkeverything/mktour/commit/0a0b68185e9c23085f36e69fe3b1af1770dc0dcb))
+- highlightning gameItem of user and its place in table ([4c11f76](https://github.com/mkeverything/mktour/commit/4c11f7663317b9ad31722a4e2610a40c463aefd0))
+- implement PAB at the frontend + implement tiebreaks ([63a6db0](https://github.com/mkeverything/mktour/commit/63a6db04ef6ec3610a729c4bc503f8530c45cceb))
+- integrate swiss pairing system into the website ([7796b86](https://github.com/mkeverything/mktour/commit/7796b86c83fde36c154a8aeea627ab249f605b3d))
+- lang and theme toggles under auth button dropdown ([cc8430d](https://github.com/mkeverything/mktour/commit/cc8430dccc1e15377521423e2181704e2b903878))
+- links in club notifications ([e7221ba](https://github.com/mkeverything/mktour/commit/e7221bad068cd715fe4b569c09ce140cbcda039d))
+- merge player with affiliated user ([4387b8d](https://github.com/mkeverything/mktour/commit/4387b8d0a2dd5946887b88ccac51fa77dc7503af))
+- mk-content-height css variable ([f4c3070](https://github.com/mkeverything/mktour/commit/f4c30709a269b85a01e899bc73cfcfe500c5f555))
+- reduced affiliations to be either pending or active ([4dd9148](https://github.com/mkeverything/mktour/commit/4dd91482be5136442190b7e4bd328468bdf7f162))
+- sticky table header ([171db78](https://github.com/mkeverything/mktour/commit/171db784beb830b2180a4931444f7b2159e1ab44))
+- turbopascal to player's nickname and user's username ([abf74b0](https://github.com/mkeverything/mktour/commit/abf74b06023e091b6ca59a9f271c7ef994eb900a))
+- user affiliated with player can now set their own result ([18ab3c6](https://github.com/mkeverything/mktour/commit/18ab3c6996d31e28865d69c2fb0c84fb68eb4688))
+- user last touranaments ([36e7f8b](https://github.com/mkeverything/mktour/commit/36e7f8b58afc157cf671ef4d84212b6f746ebdb8))
+- user reference in possible tournament players list ([dc3761e](https://github.com/mkeverything/mktour/commit/dc3761ee6aa53d3852392ae1336301cb6c328c0f))
+- user.playerClubs - returns clubs where user has affiliated players ([0f9a356](https://github.com/mkeverything/mktour/commit/0f9a356ff067a4acd0855d807cebc3ec10bd8969))
+- user's players display ([a73a43e](https://github.com/mkeverything/mktour/commit/a73a43e1a078b0f95b2c10ef2e966b1977e8cda0))
+- username in player drawer ([b745db7](https://github.com/mkeverything/mktour/commit/b745db7a05098fde6b532bcc8d1a20d50ac0efa3))
 
 ### Performance Improvements
 
-* dev memory optimization flag ([79f61cd](https://github.com/mkeverything/mktour/commit/79f61cd832d98852f5d95bc8b73133a0d94fdc72))
-* minor fixes ([a5d92a1](https://github.com/mkeverything/mktour/commit/a5d92a196b8c17745aa9e7a21a39b07c4de7b9c0))
-
+- dev memory optimization flag ([79f61cd](https://github.com/mkeverything/mktour/commit/79f61cd832d98852f5d95bc8b73133a0d94fdc72))
+- minor fixes ([a5d92a1](https://github.com/mkeverything/mktour/commit/a5d92a196b8c17745aa9e7a21a39b07c4de7b9c0))
 
 ### BREAKING CHANGES
 
-* all cancelled/rejected affiliations just get removed from now
+- all cancelled/rejected affiliations just get removed from now
 
 # [1.0.0-beta.30](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.29...v1.0.0-beta.30) (2026-03-02)
 
-
 ### Bug Fixes
 
-* delete user - sqlite constraint ([b55fb60](https://github.com/mkeverything/mktour/commit/b55fb6074c75ebdd51c93bb7d8ff5386cb97c6ac))
-* **MONKEYPATCH:** client filtering notifications with removed affeliation ([2f6f03a](https://github.com/mkeverything/mktour/commit/2f6f03ac99209571153512f21c7edb157a71fd2e))
-
+- delete user - sqlite constraint ([b55fb60](https://github.com/mkeverything/mktour/commit/b55fb6074c75ebdd51c93bb7d8ff5386cb97c6ac))
+- **MONKEYPATCH:** client filtering notifications with removed affeliation ([2f6f03a](https://github.com/mkeverything/mktour/commit/2f6f03ac99209571153512f21c7edb157a71fd2e))
 
 ### Features
 
-* highlightning gameItem of user and its place in table ([4c11f76](https://github.com/mkeverything/mktour/commit/4c11f7663317b9ad31722a4e2610a40c463aefd0))
+- highlightning gameItem of user and its place in table ([4c11f76](https://github.com/mkeverything/mktour/commit/4c11f7663317b9ad31722a4e2610a40c463aefd0))
 
 # [1.0.0-beta.29](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.28...v1.0.0-beta.29) (2026-03-02)
 
-
 ### Features
 
-* display affiliated player on club public page ([fce871f](https://github.com/mkeverything/mktour/commit/fce871f1a483439dc78a9895da32a2d5c1c5edb1))
+- display affiliated player on club public page ([fce871f](https://github.com/mkeverything/mktour/commit/fce871f1a483439dc78a9895da32a2d5c1c5edb1))
 
 # [1.0.0-beta.28](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.27...v1.0.0-beta.28) (2026-03-02)
 
-
 ### Bug Fixes
 
-* missing opengraph image ([2c740f1](https://github.com/mkeverything/mktour/commit/2c740f16d7bbbde8ca838ea9c91a805b026d543d))
+- missing opengraph image ([2c740f1](https://github.com/mkeverything/mktour/commit/2c740f16d7bbbde8ca838ea9c91a805b026d543d))
 
 # [1.0.0-beta.27](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.26...v1.0.0-beta.27) (2026-03-01)
 
-
 ### Bug Fixes
 
-* apple icons ([1626f01](https://github.com/mkeverything/mktour/commit/1626f015085635f9d556ac511afaccde3b06d840))
+- apple icons ([1626f01](https://github.com/mkeverything/mktour/commit/1626f015085635f9d556ac511afaccde3b06d840))
 
 # [1.0.0-beta.26](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.25...v1.0.0-beta.26) (2026-03-01)
 
-
 ### Bug Fixes
 
-* harden game result transitions and rollbacks ([d6499f5](https://github.com/mkeverything/mktour/commit/d6499f59d58131612b070aafb8ec1ab8188a4be0))
+- harden game result transitions and rollbacks ([d6499f5](https://github.com/mkeverything/mktour/commit/d6499f59d58131612b070aafb8ec1ab8188a4be0))
 
 # [1.0.0-beta.25](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.24...v1.0.0-beta.25) (2026-03-01)
 
-
 ### Bug Fixes
 
-* reduce tournamentInfo schema ([cedd60c](https://github.com/mkeverything/mktour/commit/cedd60c7c28a7129e9066f576ed5efe965069334))
+- reduce tournamentInfo schema ([cedd60c](https://github.com/mkeverything/mktour/commit/cedd60c7c28a7129e9066f576ed5efe965069334))
 
 # [1.0.0-beta.24](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.23...v1.0.0-beta.24) (2026-03-01)
 
-
 ### Features
 
-* disable feature, that affiliated users can set their own game results ([c4786ba](https://github.com/mkeverything/mktour/commit/c4786ba555af22222dca2321129f847666ce8319))
+- disable feature, that affiliated users can set their own game results ([c4786ba](https://github.com/mkeverything/mktour/commit/c4786ba555af22222dca2321129f847666ce8319))
 
 # [1.0.0-beta.23](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.22...v1.0.0-beta.23) (2026-03-01)
 
-
 ### Bug Fixes
 
-* fab display only to organizer; minor styling ([9b8c8a7](https://github.com/mkeverything/mktour/commit/9b8c8a713b2caeb8d30e14bfbb5c1822387536a0))
+- fab display only to organizer; minor styling ([9b8c8a7](https://github.com/mkeverything/mktour/commit/9b8c8a713b2caeb8d30e14bfbb5c1822387536a0))
 
 # [1.0.0-beta.22](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.21...v1.0.0-beta.22) (2026-03-01)
 
-
 ### Bug Fixes
 
-* rm makeTournament button from unauthorized route ([01e1c18](https://github.com/mkeverything/mktour/commit/01e1c1859e826d0ed5c855c7ab40348a0ea5a41d))
-* skeleton in auth-button ([9fc9076](https://github.com/mkeverything/mktour/commit/9fc90765ce28c6e0f021449c35c01eb5c0128458))
+- rm makeTournament button from unauthorized route ([01e1c18](https://github.com/mkeverything/mktour/commit/01e1c1859e826d0ed5c855c7ab40348a0ea5a41d))
+- skeleton in auth-button ([9fc9076](https://github.com/mkeverything/mktour/commit/9fc90765ce28c6e0f021449c35c01eb5c0128458))
 
 # [1.0.0-beta.21](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.20...v1.0.0-beta.21) (2026-03-01)
 
-
 ### Bug Fixes
 
-* missing fab in clubs/my ([beb4422](https://github.com/mkeverything/mktour/commit/beb44223d0e6103b7ccfad714ebe49f328f6ebf3))
-* missing username in hook ([8a3784d](https://github.com/mkeverything/mktour/commit/8a3784d1fad6ff805d04c912666538d39f848643))
-
+- missing fab in clubs/my ([beb4422](https://github.com/mkeverything/mktour/commit/beb44223d0e6103b7ccfad714ebe49f328f6ebf3))
+- missing username in hook ([8a3784d](https://github.com/mkeverything/mktour/commit/8a3784d1fad6ff805d04c912666538d39f848643))
 
 ### Features
 
-* username in player drawer ([b745db7](https://github.com/mkeverything/mktour/commit/b745db7a05098fde6b532bcc8d1a20d50ac0efa3))
+- username in player drawer ([b745db7](https://github.com/mkeverything/mktour/commit/b745db7a05098fde6b532bcc8d1a20d50ac0efa3))
 
 # [1.0.0-beta.20](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.19...v1.0.0-beta.20) (2026-03-01)
 
-
 ### Bug Fixes
 
-* playerWithUsername schema and type (dc3761ee6aa53d3852392ae1336301cb6c328c0f) ([b9b6bfa](https://github.com/mkeverything/mktour/commit/b9b6bfa842db46cf429836b44c94f4a6030a0a34))
-
+- playerWithUsername schema and type (dc3761ee6aa53d3852392ae1336301cb6c328c0f) ([b9b6bfa](https://github.com/mkeverything/mktour/commit/b9b6bfa842db46cf429836b44c94f4a6030a0a34))
 
 ### Features
 
-* user reference in possible tournament players list ([dc3761e](https://github.com/mkeverything/mktour/commit/dc3761ee6aa53d3852392ae1336301cb6c328c0f))
-
+- user reference in possible tournament players list ([dc3761e](https://github.com/mkeverything/mktour/commit/dc3761ee6aa53d3852392ae1336301cb6c328c0f))
 
 ### Performance Improvements
 
-* dev memory optimization flag ([79f61cd](https://github.com/mkeverything/mktour/commit/79f61cd832d98852f5d95bc8b73133a0d94fdc72))
+- dev memory optimization flag ([79f61cd](https://github.com/mkeverything/mktour/commit/79f61cd832d98852f5d95bc8b73133a0d94fdc72))
 
 # [1.0.0-beta.19](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.18...v1.0.0-beta.19) (2026-03-01)
 
-
 ### Features
 
-* add and remove lichess team in club settings ([9de786d](https://github.com/mkeverything/mktour/commit/9de786d44e3c7b195f705d9956be06b295998f71))
+- add and remove lichess team in club settings ([9de786d](https://github.com/mkeverything/mktour/commit/9de786d44e3c7b195f705d9956be06b295998f71))
 
 # [1.0.0-beta.18](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.17...v1.0.0-beta.18) (2026-02-28)
 
-
 ### Bug Fixes
 
-* amount of wins tie break ([67a01f2](https://github.com/mkeverything/mktour/commit/67a01f28f9eb56844470c9ce77181a64d8e2d689))
-* multiple issues with setting quantity of rounds ([5bcde74](https://github.com/mkeverything/mktour/commit/5bcde7455b2614ba20bf2ab2c36b525bd8c5c6fd))
-
+- amount of wins tie break ([67a01f2](https://github.com/mkeverything/mktour/commit/67a01f28f9eb56844470c9ce77181a64d8e2d689))
+- multiple issues with setting quantity of rounds ([5bcde74](https://github.com/mkeverything/mktour/commit/5bcde7455b2614ba20bf2ab2c36b525bd8c5c6fd))
 
 ### Features
 
-* edit affiliated player button ([503dfac](https://github.com/mkeverything/mktour/commit/503dfac4d61e4d3ed7e5eb9fb8181c00eb0c0f4a))
+- edit affiliated player button ([503dfac](https://github.com/mkeverything/mktour/commit/503dfac4d61e4d3ed7e5eb9fb8181c00eb0c0f4a))
 
 # [1.0.0-beta.17](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.16...v1.0.0-beta.17) (2026-02-28)
 
-
 ### Bug Fixes
 
-* lichess api endpoint teams/of/{username} has become protected ([8a149e8](https://github.com/mkeverything/mktour/commit/8a149e8d69d84c7c885d5ea11c1bf3d3dca8f646))
+- lichess api endpoint teams/of/{username} has become protected ([8a149e8](https://github.com/mkeverything/mktour/commit/8a149e8d69d84c7c885d5ea11c1bf3d3dca8f646))
 
 # [1.0.0-beta.16](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.15...v1.0.0-beta.16) (2026-02-28)
 
-
 ### Bug Fixes
 
-* missing asset src ([ebebc8d](https://github.com/mkeverything/mktour/commit/ebebc8dcbace5478c4d165448d62b78cc1543025))
+- missing asset src ([ebebc8d](https://github.com/mkeverything/mktour/commit/ebebc8dcbace5478c4d165448d62b78cc1543025))
 
 # [1.0.0-beta.15](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.14...v1.0.0-beta.15) (2026-02-28)
 
-
 ### Bug Fixes
 
-* beta release flow ([6c6bbaa](https://github.com/mkeverything/mktour/commit/6c6bbaaef9a0e323f467469036744973339ee61b))
-* display user lastSeenAt in ClubPlayerCard ([b3e7e06](https://github.com/mkeverything/mktour/commit/b3e7e06bdbe97c36b960d5662fdb1302cebaf78a))
-* proper usage of user-players api ([e4cb1c7](https://github.com/mkeverything/mktour/commit/e4cb1c7aa0d3762e39d6f3be63426672f8a59377))
-* proper usage of user-players api ([206b472](https://github.com/mkeverything/mktour/commit/206b472c7c5881032df80f57cf9f05bb1739522f))
-
+- beta release flow ([6c6bbaa](https://github.com/mkeverything/mktour/commit/6c6bbaaef9a0e323f467469036744973339ee61b))
+- display user lastSeenAt in ClubPlayerCard ([b3e7e06](https://github.com/mkeverything/mktour/commit/b3e7e06bdbe97c36b960d5662fdb1302cebaf78a))
+- proper usage of user-players api ([e4cb1c7](https://github.com/mkeverything/mktour/commit/e4cb1c7aa0d3762e39d6f3be63426672f8a59377))
+- proper usage of user-players api ([206b472](https://github.com/mkeverything/mktour/commit/206b472c7c5881032df80f57cf9f05bb1739522f))
 
 ### Features
 
-* merge player with affiliated user ([4387b8d](https://github.com/mkeverything/mktour/commit/4387b8d0a2dd5946887b88ccac51fa77dc7503af))
-* user last touranaments ([36e7f8b](https://github.com/mkeverything/mktour/commit/36e7f8b58afc157cf671ef4d84212b6f746ebdb8))
+- merge player with affiliated user ([4387b8d](https://github.com/mkeverything/mktour/commit/4387b8d0a2dd5946887b88ccac51fa77dc7503af))
+- user last touranaments ([36e7f8b](https://github.com/mkeverything/mktour/commit/36e7f8b58afc157cf671ef4d84212b6f746ebdb8))
 
 # [1.0.0-beta.14](https://github.com/mkeverything/mktour/compare/v1.0.0-beta.13...v1.0.0-beta.14) (2026-02-28)
 
