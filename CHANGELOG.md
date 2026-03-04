@@ -1,3 +1,16 @@
+# [1.3.0-beta.2](https://github.com/mkeverything/mktour/compare/v1.3.0-beta.1...v1.3.0-beta.2) (2026-03-04)
+
+
+### Bug Fixes
+
+* prevent weird states restoring nickname of added player ([ff33091](https://github.com/mkeverything/mktour/commit/ff330914ae006fff3b9166a505ef6c3058e1fdd5))
+
+
+### Features
+
+*  club-scoped search ([7315a3b](https://github.com/mkeverything/mktour/commit/7315a3ba20862bd256e6b9ab3e107e7ae756fa05))
+* key controls '<' and '>' to go through rounds ([447d7a7](https://github.com/mkeverything/mktour/commit/447d7a796001d18a807c8de24b4ec3424fbb03ae))
+
 # [1.3.0-beta.1](https://github.com/mkeverything/mktour/compare/v1.2.2-beta.2...v1.3.0-beta.1) (2026-03-04)
 
 
