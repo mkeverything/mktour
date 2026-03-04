@@ -1,3 +1,10 @@
+## [1.2.2-beta.2](https://github.com/mkeverything/mktour/compare/v1.2.2-beta.1...v1.2.2-beta.2) (2026-03-04)
+
+
+### Bug Fixes
+
+* using null when missing realName from lichess ([ac78e7e](https://github.com/mkeverything/mktour/commit/ac78e7ed37e3fd58842dbbc26413281d29372856))
+
 ## [1.2.2-beta.1](https://github.com/mkeverything/mktour/compare/v1.2.1...v1.2.2-beta.1) (2026-03-04)
 
 
