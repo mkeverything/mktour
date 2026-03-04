@@ -1,3 +1,11 @@
+## [1.2.2-beta.1](https://github.com/mkeverything/mktour/compare/v1.2.1...v1.2.2-beta.1) (2026-03-04)
+
+
+### Bug Fixes
+
+* handle no lichess username on backend ([8022b2a](https://github.com/mkeverything/mktour/commit/8022b2a2560d6715c9394ec95a9ff5394f323036))
+* handle no user.name in profile ([d75a5f6](https://github.com/mkeverything/mktour/commit/d75a5f6b801139711c9b8b040fba744b67a36acc))
+
 ## [1.2.1](https://github.com/mkeverything/mktour/compare/v1.2.0...v1.2.1) (2026-03-03)
 
 ### Bug Fixes
