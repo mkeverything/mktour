@@ -130,6 +130,7 @@ the spec file is generated from trpc router definitions and should never be manu
 - **respect the domain model**: understand the primary relationships (e.g., `players.userId` is the primary user-player link, not `affiliations`)
 - **avoid over-engineering**: if a simple query with one join works, don't add multiple queries and deduplication logic
 - **read existing patterns**: before implementing, check similar queries in the codebase to follow established patterns
+- **never use raw `sql\`\`` operator** when drizzle provides a typed method. use drizzle's query builder, filters (`eq`, `and`, `or`, `inArray`, `isNull`, etc.), aggregates (`count`, `sum`, `avg`), ordering, and other built-in operators. only fall back to `sql\`\`` for cases that genuinely have no drizzle equivalent (e.g. database-specific functions or expressions drizzle doesn't support)
 
 ## commands
 

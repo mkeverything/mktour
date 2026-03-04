@@ -27,6 +27,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ClubModel } from '@/server/zod/clubs';
 import {
   dateToLocalDateString,
@@ -39,8 +45,8 @@ import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useTransition } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 export default function NewTournamentForm({
@@ -63,6 +69,17 @@ export default function NewTournamentForm({
   const [isNavigating, startNavigation] = useTransition();
   const router = useRouter();
   const isPending = isMutating || isNavigating;
+  const tournamentType = useWatch({
+    control: form.control,
+    name: 'type',
+  });
+  const isDoubles = tournamentType === 'doubles';
+
+  useEffect(() => {
+    if (isDoubles) {
+      form.setValue('rated', false);
+    }
+  }, [form, isDoubles]);
 
   const handleSubmit = (data: NewTournamentFormModel) => {
     mutate(
@@ -209,7 +226,7 @@ export default function NewTournamentForm({
                     className="grid grid-cols-3 gap-2 sm:gap-4"
                   >
                     <TypeCard name="solo" />
-                    <TypeCard name="doubles" disabled />
+                    <TypeCard name="doubles" />
                     <TypeCard name="team" disabled />
                   </RadioGroup>
                 </FormItem>
@@ -228,11 +245,31 @@ export default function NewTournamentForm({
                   <Label htmlFor="rated" className="text-muted-foreground">
                     {t('rated')}
                   </Label>
-                  <Switch
-                    id="rated"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                  {isDoubles ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex">
+                            <Switch
+                              id="rated"
+                              checked={false}
+                              disabled
+                              onCheckedChange={field.onChange}
+                            />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {t('doubles rating disabled')}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Switch
+                      id="rated"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  )}
                 </div>
               )}
             />

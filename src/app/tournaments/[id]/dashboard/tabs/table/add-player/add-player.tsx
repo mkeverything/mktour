@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { PlayerWithUsernameModel } from '@/server/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -14,7 +15,14 @@ import { useContext } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 
-const AddPlayer = ({ value, setValue, handleClose }: DrawerProps) => {
+const AddPlayer = ({
+  value,
+  setValue,
+  handleClose,
+  onPlayerSelected,
+}: DrawerProps & {
+  onPlayerSelected?: (_player: PlayerWithUsernameModel) => void;
+}) => {
   const { id } = useParams<{ id: string }>();
   const possiblePlayers = useTournamentPossiblePlayers(id);
   const queryClient = useQueryClient();
@@ -37,20 +45,30 @@ const AddPlayer = ({ value, setValue, handleClose }: DrawerProps) => {
       );
     }) ?? [];
 
+  const handlePlayerSelect = (player: PlayerWithUsernameModel) => {
+    setValue('');
+    document.getElementById('possible-players-search')?.focus();
+
+    if (onPlayerSelected) {
+      onPlayerSelected(player);
+      return;
+    }
+
+    if (!userId) {
+      console.log('not found user id in context');
+      return;
+    }
+
+    mutate({ tournamentId: id, player, userId });
+  };
+
   useHotkeys('escape', () => handleClose, { enableOnFormTags: true });
   useHotkeys(
     'enter',
     () => {
-      if (
-        !filteredPlayers ||
-        value === '' ||
-        filteredPlayers.length !== 1 ||
-        !userId
-      )
+      if (!filteredPlayers || value === '' || filteredPlayers.length !== 1)
         return;
-      setValue('');
-      document.getElementById('possible-players-search')?.focus();
-      mutate({ tournamentId: id, player: filteredPlayers[0], userId });
+      handlePlayerSelect(filteredPlayers[0]);
     },
     { enableOnFormTags: true },
   );
@@ -106,13 +124,7 @@ const AddPlayer = ({ value, setValue, handleClose }: DrawerProps) => {
               <TableRow
                 key={player.id}
                 onClick={() => {
-                  if (!userId) {
-                    console.log('not found user id in context');
-                    return;
-                  }
-                  setValue('');
-                  document.getElementById('possible-players-search')?.focus();
-                  mutate({ tournamentId: id, player, userId });
+                  handlePlayerSelect(player);
                 }}
                 className="p-0"
               >

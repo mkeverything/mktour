@@ -1,9 +1,15 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import AddPairTeam, {
+  type PairTeamInitialValues,
+} from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-pair-team';
 import {
   DeleteButton,
   WithdrawButtonWithConfirmation,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/destructive-buttons';
+import PairPlayerCard from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
+import { useTournamentEditPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-edit-pair-team';
 import FormattedMessage from '@/components/formatted-message';
+import SideDrawer from '@/components/ui-custom/side-drawer';
 import {
   Close,
   Content,
@@ -14,9 +20,11 @@ import {
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
 import { PlayerTournamentModel } from '@/server/zod/players';
-import { UserRound } from 'lucide-react';
+import { Pencil, UserRound } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Dispatch, FC, SetStateAction, useContext } from 'react';
+import { useParams } from 'next/navigation';
+import { FC, useContext, useState } from 'react';
 
 const PlayerDrawer: FC<{
   player: PlayerTournamentModel;
@@ -27,32 +35,77 @@ const PlayerDrawer: FC<{
 }> = ({ player, setSelectedPlayer, hasEnded, hasStarted, handleDelete }) => {
   const open = !!player;
   const { status } = useContext(DashboardContext);
+  const t = useTranslations('Tournament.AddPlayer');
+  const { id: tournamentId } = useParams<{ id: string }>();
+  const editPairTeam = useTournamentEditPairTeam(tournamentId);
+  const isDoublesTeam = (player.pairPlayers?.length ?? 0) > 0;
+  const [isEditingTeam, setIsEditingTeam] = useState(false);
+
+  const closeDrawer = () => setSelectedPlayer(null);
+  const comboOpen = open && !isEditingTeam;
+  const pairPlayers = player.pairPlayers ?? [];
+  const canEditTeam =
+    status === 'organizer' && !hasStarted && !hasEnded && isDoublesTeam;
+  const editInitialValues: PairTeamInitialValues | null =
+    pairPlayers.length === 2
+      ? {
+          nickname: player.teamNickname ?? player.nickname,
+          firstPlayer: pairPlayers[0],
+          secondPlayer: pairPlayers[1],
+        }
+      : null;
 
   return (
     <Root
-      open={open}
+      open={comboOpen}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen) setSelectedPlayer(null);
+        if (!nextOpen && !isEditingTeam) closeDrawer();
       }}
     >
       <Content>
         <Header>
-          <Title>{player.nickname}</Title>
+          <div className="flex items-center justify-between gap-2">
+            <Title>{player.nickname}</Title>
+            {canEditTeam && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setIsEditingTeam(true)}
+              >
+                <Pencil className="size-4" />
+              </Button>
+            )}
+          </div>
           <Description>{player?.username}</Description>
         </Header>
         <>
-          <Button className="flex w-full gap-2" size="lg" asChild>
-            <Link
-              href={
-                player.username
-                  ? `/user/${player.username}`
-                  : `/player/${player.id}`
-              }
-            >
-              <UserRound />
-              <FormattedMessage id="Tournament.Table.Player.profile" />
-            </Link>
-          </Button>
+          {isDoublesTeam ? (
+            <>
+              <div className="space-y-2">
+                {pairPlayers.map((pairPlayer, index) => (
+                  <PairPlayerCard
+                    key={pairPlayer.id}
+                    player={pairPlayer}
+                    label={index === 0 ? '#1' : '#2'}
+                    href={`/player/${pairPlayer.id}`}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <Button className="flex w-full gap-2" size="lg" asChild>
+              <Link
+                href={
+                  player.username
+                    ? `/user/${player.username}`
+                    : `/player/${player.id}`
+                }
+              >
+                <UserRound />
+                <FormattedMessage id="Tournament.Table.Player.profile" />
+              </Link>
+            </Button>
+          )}
 
           {status === 'organizer' && (
             <DestructiveButton
@@ -60,7 +113,7 @@ const PlayerDrawer: FC<{
               hasStarted={hasStarted}
               player={player}
               handleDelete={handleDelete}
-              setOpen={() => setSelectedPlayer(null)}
+              closeDrawer={closeDrawer}
             />
           )}
 
@@ -71,6 +124,40 @@ const PlayerDrawer: FC<{
           </Close>
         </>
       </Content>
+
+      {canEditTeam && editInitialValues && (
+        <SideDrawer
+          open={isEditingTeam}
+          setOpen={(nextOpen) => {
+            setIsEditingTeam(nextOpen);
+            if (!nextOpen) {
+              closeDrawer();
+            }
+          }}
+        >
+          <AddPairTeam
+            handleClose={() => setIsEditingTeam(false)}
+            initialValues={editInitialValues}
+            submitLabel={t('save')}
+            isSubmitting={editPairTeam.isPending}
+            onSubmitValues={(values) => {
+              editPairTeam.mutate(
+                {
+                  tournamentId,
+                  currentTeamPlayerId: player.id,
+                  ...values,
+                },
+                {
+                  onSuccess: () => {
+                    setIsEditingTeam(false);
+                    closeDrawer();
+                  },
+                },
+              );
+            }}
+          />
+        </SideDrawer>
+      )}
     </Root>
   );
 };
@@ -80,19 +167,19 @@ const DestructiveButton = ({
   hasStarted,
   player,
   handleDelete,
-  setOpen,
+  closeDrawer,
 }: {
   hasEnded: boolean;
   hasStarted: boolean;
   player: PlayerTournamentModel;
   handleDelete: () => void;
-  setOpen: Dispatch<SetStateAction<boolean>>;
+  closeDrawer: () => void;
 }) => {
   if (hasEnded) return null;
   // prettier-ignore
   return hasStarted 
       ? <WithdrawButtonWithConfirmation selectedPlayer={player} />
-      : <DeleteButton handleDelete={() => { setOpen(false); handleDelete() }} />;
+      : <DeleteButton handleDelete={() => { closeDrawer(); handleDelete() }} />;
 };
 
 export default PlayerDrawer;

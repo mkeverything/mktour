@@ -29,6 +29,27 @@
       "when": 1772548731014,
       "tag": "0003_medical_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1772571461950,
+      "tag": "0004_fixed_valkyrie",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1772577369809,
+      "tag": "0005_smooth_newton_destine",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1772580276808,
+      "tag": "0006_fancy_wolverine",
+      "breakpoints": true
     }
   ]
 }

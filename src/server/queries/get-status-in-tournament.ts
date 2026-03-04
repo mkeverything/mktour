@@ -15,12 +15,13 @@ export const getStatusInTournament = cache(
     tournamentId: string,
   ): Promise<TournamentAuthStatusModel> => {
     if (!userId) return { status: 'viewer' };
-    const clubId = (
+    const tournament = (
       await db
-        .select({ club: tournaments.clubId })
+        .select({ clubId: tournaments.clubId })
         .from(tournaments)
         .where(eq(tournaments.id, tournamentId))
-    ).at(0)?.club;
+    ).at(0);
+    const clubId = tournament?.clubId;
     if (!clubId) throw new Error('cannot resolve tournament organizer');
 
     const dbStatus = (
@@ -47,7 +48,7 @@ export const getStatusInTournament = cache(
 
     const isHere = (
       await db
-        .select()
+        .select({ playerId: players_to_tournaments.playerId })
         .from(players_to_tournaments)
         .where(
           and(
@@ -56,7 +57,7 @@ export const getStatusInTournament = cache(
           ),
         )
     ).at(0);
-    if (isHere) return { status: 'player', playerId: player.id };
+    if (isHere) return { status: 'player', playerId: isHere.playerId };
     else return { status: 'viewer' };
   },
 );

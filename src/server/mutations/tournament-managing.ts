@@ -29,6 +29,8 @@ import {
   PlayerTournamentModel,
 } from '@/server/zod/players';
 import {
+  AddDoublesTeamModel,
+  EditDoublesTeamModel,
   GameModel,
   NewTournamentFormModel,
   PlayerToTournamentInsertModel,
@@ -39,8 +41,10 @@ import {
 import {
   aliasedTable,
   and,
+  countDistinct,
   eq,
   getTableColumns,
+  inArray,
   isNotNull,
   isNull,
   ne,
@@ -51,6 +55,20 @@ import {
 import { getPlayerResultDeltas } from './set-game-result-deltas';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
 
+function compareTeamMembers<
+  T extends { numberInTeam: number | null; playerId: string },
+>(a: T, b: T): number {
+  if (a.numberInTeam === null && b.numberInTeam === null) {
+    return a.playerId.localeCompare(b.playerId);
+  }
+  if (a.numberInTeam === null) return 1;
+  if (b.numberInTeam === null) return -1;
+  if (a.numberInTeam !== b.numberInTeam) {
+    return a.numberInTeam - b.numberInTeam;
+  }
+  return a.playerId.localeCompare(b.playerId);
+}
+
 export const createTournament = async (
   values: Omit<NewTournamentFormModel, 'date'> & {
     date: string;
@@ -59,8 +77,10 @@ export const createTournament = async (
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   const newTournamentID = newid();
+  const resolvedRated = values.type === 'doubles' ? false : values.rated;
   const newTournament = tournamentsInsertSchema.parse({
     ...values,
+    rated: resolvedRated,
     id: newTournamentID,
     createdAt: new Date(),
     closedAt: null,
@@ -99,27 +119,90 @@ export async function getTournamentPlayers(
 async function getRawTournamentPlayers(
   id: string,
 ): Promise<Array<PlayerTournamentModel>> {
+  const [tournament] = await db
+    .select({ type: tournaments.type })
+    .from(tournaments)
+    .where(eq(tournaments.id, id));
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
   const playersDb = await db
-    .select()
+    .select({
+      playerId: players.id,
+      nickname: players.nickname,
+      realname: players.realname,
+      rating: players.rating,
+      wins: players_to_tournaments.wins,
+      draws: players_to_tournaments.draws,
+      losses: players_to_tournaments.losses,
+      colorIndex: players_to_tournaments.colorIndex,
+      isOut: players_to_tournaments.isOut,
+      place: players_to_tournaments.place,
+      pairingNumber: players_to_tournaments.pairingNumber,
+      username: users.username,
+      teamNickname: players_to_tournaments.teamNickname,
+      numberInTeam: players_to_tournaments.numberInTeam,
+    })
     .from(players_to_tournaments)
     .where(eq(players_to_tournaments.tournamentId, id))
     .innerJoin(players, eq(players.id, players_to_tournaments.playerId))
     .leftJoin(users, eq(users.id, players.userId));
 
-  return playersDb.map((each) => ({
-    id: each.player.id,
-    nickname: each.player.nickname,
-    realname: each.player.realname,
-    rating: each.player.rating,
-    wins: each.players_to_tournaments.wins,
-    draws: each.players_to_tournaments.draws,
-    losses: each.players_to_tournaments.losses,
-    colorIndex: each.players_to_tournaments.colorIndex,
-    isOut: each.players_to_tournaments.isOut,
-    place: each.players_to_tournaments.place,
-    pairingNumber: each.players_to_tournaments.pairingNumber,
-    username: each.user?.username ?? null,
-  }));
+  if (tournament.type !== 'doubles') {
+    return playersDb.map((each) => ({
+      id: each.playerId,
+      nickname: each.nickname,
+      realname: each.realname,
+      rating: each.rating,
+      wins: each.wins,
+      draws: each.draws,
+      losses: each.losses,
+      colorIndex: each.colorIndex,
+      isOut: each.isOut,
+      place: each.place,
+      pairingNumber: each.pairingNumber,
+      teamNickname: each.teamNickname,
+      username: each.username ?? null,
+      pairPlayers: null,
+    }));
+  }
+
+  const teamsMap = new Map<string, typeof playersDb>();
+  playersDb.forEach((row) => {
+    if (!row.teamNickname) return;
+    const existingRows = teamsMap.get(row.teamNickname) ?? [];
+    existingRows.push(row);
+    teamsMap.set(row.teamNickname, existingRows);
+  });
+
+  return Array.from(teamsMap.entries()).map(([_teamNickname, members]) => {
+    const sortedMembers = [...members].sort(compareTeamMembers);
+    const leader = sortedMembers[0];
+    const totalRating = sortedMembers.reduce(
+      (acc, member) => acc + member.rating,
+      0,
+    );
+    const rating = Math.round(totalRating / members.length);
+
+    return {
+      id: leader.playerId,
+      nickname: leader.teamNickname ?? leader.nickname,
+      realname: null,
+      rating,
+      wins: leader.wins,
+      draws: leader.draws,
+      losses: leader.losses,
+      colorIndex: leader.colorIndex,
+      isOut: leader.isOut,
+      place: leader.place,
+      pairingNumber: leader.pairingNumber,
+      teamNickname: leader.teamNickname,
+      username: null,
+      pairPlayers: sortedMembers.map((member) => ({
+        id: member.playerId,
+        nickname: member.nickname,
+      })),
+    };
+  });
 }
 
 // decided to keep using server action for this one not to face problems with dates serialization
@@ -176,6 +259,53 @@ export async function removePlayer({
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
 
+  if (tournament.type === 'doubles') {
+    const participant = await db
+      .select({ teamNickname: players_to_tournaments.teamNickname })
+      .from(players_to_tournaments)
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          eq(players_to_tournaments.playerId, playerId),
+        ),
+      )
+      .then((rows) => rows.at(0));
+    if (!participant) throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(games)
+        .where(
+          and(
+            eq(games.tournamentId, tournamentId),
+            or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
+          ),
+        );
+
+      if (participant.teamNickname) {
+        await tx
+          .delete(players_to_tournaments)
+          .where(
+            and(
+              eq(players_to_tournaments.tournamentId, tournamentId),
+              eq(players_to_tournaments.teamNickname, participant.teamNickname),
+            ),
+          );
+      } else {
+        await tx
+          .delete(players_to_tournaments)
+          .where(
+            and(
+              eq(players_to_tournaments.playerId, playerId),
+              eq(players_to_tournaments.tournamentId, tournamentId),
+            ),
+          );
+      }
+    });
+    await normalizeSwissRoundsNumber(tournamentId);
+    return;
+  }
+
   await db
     .delete(players_to_tournaments)
     .where(
@@ -197,6 +327,9 @@ export async function addNewPlayer({
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+  if (tournament.type === 'doubles') {
+    throw new Error('DOUBLES_USE_PAIRS');
+  }
 
   const playerId = player.id ?? newid();
   await db
@@ -237,6 +370,9 @@ export async function addExistingPlayer({
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+  if (tournament.type === 'doubles') {
+    throw new Error('DOUBLES_USE_PAIRS');
+  }
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
 
@@ -259,6 +395,387 @@ export async function addExistingPlayer({
   await normalizeSwissRoundsNumber(tournamentId);
 }
 
+export async function addDoublesTeam({
+  tournamentId,
+  nickname,
+  firstPlayerId,
+  secondPlayerId,
+}: AddDoublesTeamModel & {
+  tournamentId: string;
+}): Promise<PlayerTournamentModel> {
+  const { user } = await validateRequest();
+  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
+
+  if (firstPlayerId === secondPlayerId) {
+    throw new Error('INVALID_DOUBLES_PAIR');
+  }
+
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+  if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
+
+  const selectedPlayers = await db
+    .select({
+      id: players.id,
+      nickname: players.nickname,
+      rating: players.rating,
+    })
+    .from(players)
+    .where(
+      and(
+        eq(players.clubId, tournament.clubId),
+        or(eq(players.id, firstPlayerId), eq(players.id, secondPlayerId)),
+      ),
+    );
+
+  if (selectedPlayers.length !== 2) {
+    throw new Error('PAIR_PLAYERS_NOT_FOUND');
+  }
+
+  const existingPair = await db
+    .select({ id: players_to_tournaments.id })
+    .from(players_to_tournaments)
+    .where(
+      and(
+        eq(players_to_tournaments.tournamentId, tournamentId),
+        or(
+          eq(players_to_tournaments.playerId, firstPlayerId),
+          eq(players_to_tournaments.playerId, secondPlayerId),
+        ),
+      ),
+    )
+    .limit(1);
+
+  if (existingPair.length > 0) {
+    throw new Error('PLAYER_ALREADY_IN_PAIR');
+  }
+
+  const existingNickname = await db
+    .select({ id: players_to_tournaments.id })
+    .from(players_to_tournaments)
+    .where(
+      and(
+        eq(players_to_tournaments.tournamentId, tournamentId),
+        sql`lower(${players_to_tournaments.teamNickname}) = ${nickname.toLowerCase()}`,
+      ),
+    )
+    .limit(1);
+
+  if (existingNickname.length > 0) {
+    throw new Error('PAIR_NICKNAME_TAKEN');
+  }
+
+  const selectedPlayersById = new Map(
+    selectedPlayers.map((each) => [each.id, each]),
+  );
+  const orderedPlayers = [firstPlayerId, secondPlayerId].map((id) => {
+    const player = selectedPlayersById.get(id);
+    if (!player) throw new Error('PAIR_PLAYERS_NOT_FOUND');
+    return player;
+  });
+  const leaderPlayerId = firstPlayerId;
+
+  const teamRating = Math.round(
+    orderedPlayers.reduce((acc, player) => acc + player.rating, 0) /
+      orderedPlayers.length,
+  );
+
+  await db.transaction(async (tx) => {
+    const firstPlayerToTournament: PlayerToTournamentInsertModel = {
+      playerId: firstPlayerId,
+      tournamentId,
+      id: `${firstPlayerId}=${tournamentId}`,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      colorIndex: 0,
+      place: null,
+      isOut: null,
+      pairingNumber: null,
+      teamNickname: nickname,
+      numberInTeam: 1,
+      newRating: null,
+      newRatingDeviation: null,
+      newVolatility: null,
+    };
+
+    const secondPlayerToTournament: PlayerToTournamentInsertModel = {
+      playerId: secondPlayerId,
+      tournamentId,
+      id: `${secondPlayerId}=${tournamentId}`,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      colorIndex: 0,
+      place: null,
+      isOut: null,
+      pairingNumber: null,
+      teamNickname: nickname,
+      numberInTeam: 2,
+      newRating: null,
+      newRatingDeviation: null,
+      newVolatility: null,
+    };
+
+    await tx.insert(players_to_tournaments).values(firstPlayerToTournament);
+    await tx.insert(players_to_tournaments).values(secondPlayerToTournament);
+  });
+
+  await normalizeSwissRoundsNumber(tournamentId);
+
+  return {
+    id: leaderPlayerId,
+    nickname,
+    realname: null,
+    rating: teamRating,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    colorIndex: 0,
+    isOut: null,
+    place: null,
+    pairingNumber: null,
+    teamNickname: nickname,
+    username: null,
+    pairPlayers: orderedPlayers.map((player) => ({
+      id: player.id,
+      nickname: player.nickname,
+    })),
+  };
+}
+
+export async function editDoublesTeam({
+  tournamentId,
+  currentTeamPlayerId,
+  nickname,
+  firstPlayerId,
+  secondPlayerId,
+}: EditDoublesTeamModel & {
+  tournamentId: string;
+}): Promise<void> {
+  const { user } = await validateRequest();
+  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
+
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+  if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
+
+  const participant = await db
+    .select({ teamNickname: players_to_tournaments.teamNickname })
+    .from(players_to_tournaments)
+    .where(
+      and(
+        eq(players_to_tournaments.tournamentId, tournamentId),
+        eq(players_to_tournaments.playerId, currentTeamPlayerId),
+      ),
+    )
+    .then((rows) => rows.at(0));
+
+  if (!participant?.teamNickname) {
+    throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+  }
+  const currentTeamNickname = participant.teamNickname;
+
+  const selectedPlayers = await db
+    .select({
+      id: players.id,
+      nickname: players.nickname,
+      rating: players.rating,
+    })
+    .from(players)
+    .where(
+      and(
+        eq(players.clubId, tournament.clubId),
+        or(eq(players.id, firstPlayerId), eq(players.id, secondPlayerId)),
+      ),
+    );
+
+  if (selectedPlayers.length !== 2) {
+    throw new Error('PAIR_PLAYERS_NOT_FOUND');
+  }
+
+  const currentTeamMembers = await db
+    .select({ playerId: players_to_tournaments.playerId })
+    .from(players_to_tournaments)
+    .where(
+      and(
+        eq(players_to_tournaments.tournamentId, tournamentId),
+        eq(players_to_tournaments.teamNickname, currentTeamNickname),
+      ),
+    );
+
+  const currentTeamMemberIds = new Set(
+    currentTeamMembers.map((member) => member.playerId),
+  );
+
+  const occupiedPlayers = await db
+    .select({
+      playerId: players_to_tournaments.playerId,
+      teamNickname: players_to_tournaments.teamNickname,
+    })
+    .from(players_to_tournaments)
+    .where(
+      and(
+        eq(players_to_tournaments.tournamentId, tournamentId),
+        inArray(players_to_tournaments.playerId, [
+          firstPlayerId,
+          secondPlayerId,
+        ]),
+      ),
+    );
+
+  const hasOtherTeamMember = occupiedPlayers.some(
+    (row) =>
+      !currentTeamMemberIds.has(row.playerId) &&
+      row.teamNickname !== currentTeamNickname,
+  );
+  if (hasOtherTeamMember) {
+    throw new Error('PLAYER_ALREADY_IN_PAIR');
+  }
+
+  const existingNickname = await db
+    .select({ id: players_to_tournaments.id })
+    .from(players_to_tournaments)
+    .where(
+      and(
+        eq(players_to_tournaments.tournamentId, tournamentId),
+        eq(players_to_tournaments.teamNickname, nickname),
+        ne(players_to_tournaments.teamNickname, currentTeamNickname),
+      ),
+    )
+    .limit(1);
+
+  if (existingNickname.length > 0) {
+    throw new Error('PAIR_NICKNAME_TAKEN');
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(players_to_tournaments)
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          eq(players_to_tournaments.teamNickname, currentTeamNickname),
+        ),
+      );
+
+    const selectedPlayersById = new Map(
+      selectedPlayers.map((each) => [each.id, each]),
+    );
+    const orderedPlayers = [firstPlayerId, secondPlayerId].map((id) => {
+      const player = selectedPlayersById.get(id);
+      if (!player) throw new Error('PAIR_PLAYERS_NOT_FOUND');
+      return player;
+    });
+
+    const [firstPlayer, secondPlayer] = orderedPlayers;
+
+    await tx.insert(players_to_tournaments).values({
+      playerId: firstPlayer.id,
+      tournamentId,
+      id: `${firstPlayer.id}=${tournamentId}`,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      colorIndex: 0,
+      place: null,
+      isOut: null,
+      pairingNumber: null,
+      teamNickname: nickname,
+      numberInTeam: 1,
+      newRating: null,
+      newRatingDeviation: null,
+      newVolatility: null,
+    });
+
+    await tx.insert(players_to_tournaments).values({
+      playerId: secondPlayer.id,
+      tournamentId,
+      id: `${secondPlayer.id}=${tournamentId}`,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      colorIndex: 0,
+      place: null,
+      isOut: null,
+      pairingNumber: null,
+      teamNickname: nickname,
+      numberInTeam: 2,
+      newRating: null,
+      newRatingDeviation: null,
+      newVolatility: null,
+    });
+  });
+
+  await normalizeSwissRoundsNumber(tournamentId);
+}
+
+type DoublesTeamMembersMap = {
+  teamByPlayerId: Map<string, string>;
+  membersByTeam: Map<
+    string,
+    Array<{ id: string; nickname: string; numberInTeam: number | null }>
+  >;
+};
+
+async function getDoublesTeamMembers(
+  tournamentId: string,
+): Promise<DoublesTeamMembersMap> {
+  const rows = await db
+    .select({
+      playerId: players_to_tournaments.playerId,
+      teamNickname: players_to_tournaments.teamNickname,
+      nickname: players.nickname,
+      numberInTeam: players_to_tournaments.numberInTeam,
+    })
+    .from(players_to_tournaments)
+    .innerJoin(players, eq(players.id, players_to_tournaments.playerId))
+    .where(
+      and(
+        eq(players_to_tournaments.tournamentId, tournamentId),
+        isNotNull(players_to_tournaments.teamNickname),
+      ),
+    );
+
+  const teamByPlayerId = new Map<string, string>();
+  const membersByTeam = new Map<
+    string,
+    Array<{ id: string; nickname: string; numberInTeam: number | null }>
+  >();
+
+  rows.forEach((row) => {
+    if (!row.teamNickname) return;
+    teamByPlayerId.set(row.playerId, row.teamNickname);
+    const members = membersByTeam.get(row.teamNickname) ?? [];
+    members.push({
+      id: row.playerId,
+      nickname: row.nickname,
+      numberInTeam: row.numberInTeam,
+    });
+    membersByTeam.set(row.teamNickname, members);
+  });
+
+  membersByTeam.forEach((members, teamNickname) => {
+    members.sort((a, b) =>
+      compareTeamMembers(
+        {
+          numberInTeam: a.numberInTeam,
+          playerId: a.id,
+        },
+        {
+          numberInTeam: b.numberInTeam,
+          playerId: b.id,
+        },
+      ),
+    );
+    membersByTeam.set(teamNickname, members);
+  });
+
+  return { teamByPlayerId, membersByTeam };
+}
+
 export async function getTournamentGames(
   tournamentId: string,
 ): Promise<GameModel[]> {
@@ -274,10 +791,10 @@ export async function getTournamentGames(
       whiteNickname: whitePlayer.nickname,
       roundNumber: games.roundNumber,
       gameNumber: games.gameNumber,
-      roundName: games.roundName || null,
-      whitePrevGameId: games.whitePrevGameId || null,
-      blackPrevGameId: games.blackPrevGameId || null,
-      result: games.result || null,
+      roundName: games.roundName,
+      whitePrevGameId: games.whitePrevGameId,
+      blackPrevGameId: games.blackPrevGameId,
+      result: games.result,
       finishedAt: games.finishedAt,
     })
     .from(games)
@@ -285,7 +802,35 @@ export async function getTournamentGames(
     .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
     .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
 
-  return gamesDb.sort((a, b) => a.gameNumber - b.gameNumber);
+  const sortedGames = (gamesDb as GameModel[]).sort(
+    (a, b) => a.gameNumber - b.gameNumber,
+  );
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament || tournament.type !== 'doubles') return sortedGames;
+
+  const { teamByPlayerId, membersByTeam } =
+    await getDoublesTeamMembers(tournamentId);
+
+  return sortedGames.map((game) => {
+    const whiteTeam = teamByPlayerId.get(game.whiteId);
+    const blackTeam = teamByPlayerId.get(game.blackId);
+    const whiteMembers = whiteTeam ? (membersByTeam.get(whiteTeam) ?? []) : [];
+    const blackMembers = blackTeam ? (membersByTeam.get(blackTeam) ?? []) : [];
+
+    return {
+      ...game,
+      whiteNickname: whiteTeam ?? game.whiteNickname,
+      blackNickname: blackTeam ?? game.blackNickname,
+      whiteFirstPairPlayerId: whiteMembers[0]?.id ?? null,
+      whiteSecondPairPlayerId: whiteMembers[1]?.id ?? null,
+      blackFirstPairPlayerId: blackMembers[0]?.id ?? null,
+      blackSecondPairPlayerId: blackMembers[1]?.id ?? null,
+      whiteFirstPairNickname: whiteMembers[0]?.nickname ?? null,
+      whiteSecondPairNickname: whiteMembers[1]?.nickname ?? null,
+      blackFirstPairNickname: blackMembers[0]?.nickname ?? null,
+      blackSecondPairNickname: blackMembers[1]?.nickname ?? null,
+    };
+  });
 }
 
 // moved to API endpoint
@@ -314,7 +859,35 @@ export async function getTournamentRoundGames({
     .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
     .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
 
-  return gamesDb.sort((a, b) => a.gameNumber - b.gameNumber);
+  const sortedGames = (gamesDb as GameModel[]).sort(
+    (a, b) => a.gameNumber - b.gameNumber,
+  );
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament || tournament.type !== 'doubles') return sortedGames;
+
+  const { teamByPlayerId, membersByTeam } =
+    await getDoublesTeamMembers(tournamentId);
+
+  return sortedGames.map((game) => {
+    const whiteTeam = teamByPlayerId.get(game.whiteId);
+    const blackTeam = teamByPlayerId.get(game.blackId);
+    const whiteMembers = whiteTeam ? (membersByTeam.get(whiteTeam) ?? []) : [];
+    const blackMembers = blackTeam ? (membersByTeam.get(blackTeam) ?? []) : [];
+
+    return {
+      ...game,
+      whiteNickname: whiteTeam ?? game.whiteNickname,
+      blackNickname: blackTeam ?? game.blackNickname,
+      whiteFirstPairPlayerId: whiteMembers[0]?.id ?? null,
+      whiteSecondPairPlayerId: whiteMembers[1]?.id ?? null,
+      blackFirstPairPlayerId: blackMembers[0]?.id ?? null,
+      blackSecondPairPlayerId: blackMembers[1]?.id ?? null,
+      whiteFirstPairNickname: whiteMembers[0]?.nickname ?? null,
+      whiteSecondPairNickname: whiteMembers[1]?.nickname ?? null,
+      blackFirstPairNickname: blackMembers[0]?.nickname ?? null,
+      blackSecondPairNickname: blackMembers[1]?.nickname ?? null,
+    };
+  });
 }
 
 export async function saveRound({
@@ -364,7 +937,19 @@ export async function saveRound({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const insertPromises: Promise<any>[] = []; // FIXME any
   newGames.forEach((game) => {
-    const { blackNickname, whiteNickname, ...newGame } = game;
+    const {
+      blackNickname,
+      whiteNickname,
+      whiteFirstPairPlayerId,
+      whiteSecondPairPlayerId,
+      blackFirstPairPlayerId,
+      blackSecondPairPlayerId,
+      whiteFirstPairNickname,
+      whiteSecondPairNickname,
+      blackFirstPairNickname,
+      blackSecondPairNickname,
+      ...newGame
+    } = game;
     insertPromises.push(db.insert(games).values(newGame));
   });
 
@@ -500,13 +1085,53 @@ export async function setTournamentGameResult({
     ).at(0);
     if (!game) throw new Error('GAME_NOT_FOUND');
 
+    const [whiteParticipant, blackParticipant] = await Promise.all([
+      tx
+        .select({ teamNickname: players_to_tournaments.teamNickname })
+        .from(players_to_tournaments)
+        .where(
+          and(
+            eq(players_to_tournaments.tournamentId, tournamentId),
+            eq(players_to_tournaments.playerId, game.whiteId),
+          ),
+        )
+        .then((rows) => rows.at(0)),
+      tx
+        .select({ teamNickname: players_to_tournaments.teamNickname })
+        .from(players_to_tournaments)
+        .where(
+          and(
+            eq(players_to_tournaments.tournamentId, tournamentId),
+            eq(players_to_tournaments.playerId, game.blackId),
+          ),
+        )
+        .then((rows) => rows.at(0)),
+    ]);
+
     if (authStatus.status === 'player') {
       if (!tournamentWithClub.allowPlayersSetResults) {
         throw new Error('PLAYER_RESULT_SETTING_DISABLED');
       }
+      const authParticipant = await tx
+        .select({
+          playerId: players_to_tournaments.playerId,
+          teamNickname: players_to_tournaments.teamNickname,
+        })
+        .from(players_to_tournaments)
+        .where(
+          and(
+            eq(players_to_tournaments.tournamentId, tournamentId),
+            eq(players_to_tournaments.playerId, authStatus.playerId),
+          ),
+        )
+        .then((rows) => rows.at(0));
+
       const isPlayerInGame =
         authStatus.playerId === game.whiteId ||
-        authStatus.playerId === game.blackId;
+        authStatus.playerId === game.blackId ||
+        (!!authParticipant?.teamNickname &&
+          (authParticipant.teamNickname === whiteParticipant?.teamNickname ||
+            authParticipant.teamNickname === blackParticipant?.teamNickname));
       if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
     }
 
@@ -523,10 +1148,18 @@ export async function setTournamentGameResult({
         colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.white.colorIndex}`,
       })
       .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, game.whiteId),
-        ),
+        whiteParticipant?.teamNickname
+          ? and(
+              eq(players_to_tournaments.tournamentId, tournamentId),
+              eq(
+                players_to_tournaments.teamNickname,
+                whiteParticipant.teamNickname,
+              ),
+            )
+          : and(
+              eq(players_to_tournaments.tournamentId, tournamentId),
+              eq(players_to_tournaments.playerId, game.whiteId),
+            ),
       );
     if (!whitePlayerUpdate.rowsAffected) {
       throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
@@ -540,10 +1173,18 @@ export async function setTournamentGameResult({
         losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.black.losses}`,
       })
       .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, game.blackId),
-        ),
+        blackParticipant?.teamNickname
+          ? and(
+              eq(players_to_tournaments.tournamentId, tournamentId),
+              eq(
+                players_to_tournaments.teamNickname,
+                blackParticipant.teamNickname,
+              ),
+            )
+          : and(
+              eq(players_to_tournaments.tournamentId, tournamentId),
+              eq(players_to_tournaments.playerId, game.blackId),
+            ),
       );
     if (!blackPlayerUpdate.rowsAffected) {
       throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
@@ -636,21 +1277,28 @@ export async function finishTournament({
     });
 
     await Promise.all(
-      sortedPlayers.flatMap((player) => [
-        tx
-          .update(players_to_tournaments)
-          .set({ place: player.place })
-          .where(
-            and(
-              eq(players_to_tournaments.tournamentId, tournamentId),
-              eq(players_to_tournaments.playerId, player.id),
+      sortedPlayers.flatMap((player) => {
+        const playerIds =
+          player.pairPlayers && player.pairPlayers.length > 0
+            ? player.pairPlayers.map((pairPlayer) => pairPlayer.id)
+            : [player.id];
+
+        return [
+          tx
+            .update(players_to_tournaments)
+            .set({ place: player.place })
+            .where(
+              and(
+                eq(players_to_tournaments.tournamentId, tournamentId),
+                inArray(players_to_tournaments.playerId, playerIds),
+              ),
             ),
-          ),
-        tx
-          .update(players)
-          .set({ lastSeenAt: closedAt })
-          .where(eq(players.id, player.id)),
-      ]),
+          tx
+            .update(players)
+            .set({ lastSeenAt: closedAt })
+            .where(inArray(players.id, playerIds)),
+        ];
+      }),
     );
 
     if (tournament.rated) {
@@ -683,14 +1331,64 @@ export async function resetTournamentPlayers({
 }: {
   tournamentId: string;
 }) {
+  await db.delete(games).where(eq(games.tournamentId, tournamentId));
   await db
     .delete(players_to_tournaments)
     .where(eq(players_to_tournaments.tournamentId, tournamentId));
 }
 
 async function updatePairingNumbers(tournamentId: string) {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   const games = await getTournamentGames(tournamentId);
   if (games.length === 0) throw new Error('NO_GAMES_TO_START');
+
+  if (tournament.type === 'doubles') {
+    const participants = await db
+      .select({
+        playerId: players_to_tournaments.playerId,
+        teamNickname: players_to_tournaments.teamNickname,
+      })
+      .from(players_to_tournaments)
+      .where(eq(players_to_tournaments.tournamentId, tournamentId));
+
+    const teamByPlayerId = new Map<string, string>();
+    const allTeams = new Set<string>();
+    participants.forEach((participant) => {
+      if (!participant.teamNickname) return;
+      teamByPlayerId.set(participant.playerId, participant.teamNickname);
+      allTeams.add(participant.teamNickname);
+    });
+
+    const orderedTeams: string[] = [];
+    const pushTeam = (teamNickname: string | undefined) => {
+      if (!teamNickname || orderedTeams.includes(teamNickname)) return;
+      orderedTeams.push(teamNickname);
+    };
+
+    games.forEach((game) => {
+      pushTeam(teamByPlayerId.get(game.whiteId));
+      pushTeam(teamByPlayerId.get(game.blackId));
+    });
+
+    allTeams.forEach((teamNickname) => pushTeam(teamNickname));
+
+    await Promise.all(
+      orderedTeams.map((teamNickname, index) =>
+        db
+          .update(players_to_tournaments)
+          .set({ pairingNumber: index })
+          .where(
+            and(
+              eq(players_to_tournaments.tournamentId, tournamentId),
+              eq(players_to_tournaments.teamNickname, teamNickname),
+            ),
+          ),
+      ),
+    );
+    return;
+  }
+
   const playerIds = games.reduce((acc, game) => {
     if (game.result) throw new Error('RESULTS_PRESENT_BEFORE_TMT_START');
     if (game.roundNumber !== 1) throw new Error('ROUND_NOT_FIRST_BEFORE_START');
@@ -759,6 +1457,25 @@ async function getTournamentById(tournamentId: string) {
 async function getTournamentPlayersCount(
   tournamentId: string,
 ): Promise<number> {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
+  if (tournament.type === 'doubles') {
+    const [result] = await db
+      .select({
+        playersCount: countDistinct(players_to_tournaments.teamNickname),
+      })
+      .from(players_to_tournaments)
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          isNotNull(players_to_tournaments.teamNickname),
+        ),
+      );
+
+    return Number(result?.playersCount ?? 0);
+  }
+
   const [result] = await db
     .select({ playersCount: sql<number>`count(*)` })
     .from(players_to_tournaments)

@@ -2,10 +2,6 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
-import {
-  PlayerTournamentModel,
-  PlayerWithUsernameModel,
-} from '@/server/zod/players';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';
@@ -67,38 +63,10 @@ export const handleSocketMessage = (
       queryClient.cancelQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
       });
-      const addedPlayers = queryClient.getQueryData(
-        trpc.tournament.playersIn.queryKey({ tournamentId }),
-      );
-      if (!addedPlayers) break;
-      const removedPlayer = addedPlayers.find(
-        (player: PlayerTournamentModel) => player.id === message.id,
-      );
-
       queryClient.setQueryData(
         trpc.tournament.playersIn.queryKey({ tournamentId }),
         (cache) => cache && cache.filter((player) => player.id !== message.id),
       );
-      if (removedPlayer) {
-        const removedPlayerDb: PlayerWithUsernameModel = {
-          id: removedPlayer.id,
-          nickname: removedPlayer.nickname,
-          realname: removedPlayer.realname ?? null,
-          rating: removedPlayer.rating,
-          ratingPeak: null,
-          clubId: '',
-          userId: null,
-          lastSeenAt: new Date(),
-          ratingDeviation: 0,
-          ratingVolatility: 0,
-          ratingLastUpdateAt: new Date(),
-          username: null,
-        };
-        queryClient.setQueryData(
-          trpc.tournament.playersOut.queryKey({ tournamentId }),
-          (cache) => cache && cache.concat(removedPlayerDb),
-        );
-      }
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
       });

@@ -15,14 +15,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { newid } from '@/lib/utils';
-import { PlayerFormModel, playerFormSchema } from '@/server/zod/players';
+import {
+  PlayerFormModel,
+  playerFormSchema,
+  PlayerWithUsernameModel,
+} from '@/server/zod/players';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useContext, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 
@@ -31,11 +35,13 @@ const AddNewPlayer = ({
   setValue,
   returnToNewPlayer,
   handleClose,
+  onPlayerCreated,
 }: AddNewPlayerProps) => {
   const { id } = useParams<{ id: string }>();
   const tournament = useTournamentInfo(id);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
+  const createPlayer = useMutation(trpc.player.create.mutationOptions());
   const { sendJsonMessage } = useContext(DashboardContext);
   const { mutate, isPending } = useTournamentAddNewPlayer(
     id,
@@ -58,7 +64,10 @@ const AddNewPlayer = ({
     reValidateMode: 'onSubmit',
   });
 
-  const nickname = form.watch('nickname');
+  const nickname = useWatch({
+    control: form.control,
+    name: 'nickname',
+  });
 
   useEffect(() => {
     if (nickname === undefined) return;
@@ -85,6 +94,24 @@ const AddNewPlayer = ({
       });
       return;
     }
+
+    if (onPlayerCreated) {
+      createPlayer.mutate(player, {
+        onSuccess: (createdPlayer) => {
+          const createdPlayerWithUsername: PlayerWithUsernameModel = {
+            ...createdPlayer,
+            username: null,
+          };
+          setValue('');
+          form.reset();
+          form.setFocus('nickname');
+          onPlayerCreated(createdPlayerWithUsername);
+          toast.success(t('player added', { name: createdPlayer.nickname }));
+        },
+      });
+      return;
+    }
+
     const playerWithId = { ...player, id: newid() };
     setValue('');
     form.reset(getDefaultValues(''), { keepDefaultValues: true });
@@ -181,6 +208,7 @@ const AddNewPlayer = ({
 interface AddNewPlayerProps extends DrawerProps {
   returnToNewPlayer: (_player: PlayerFormModel & { id?: string }) => void;
   handleClose: () => void;
+  onPlayerCreated?: (_player: PlayerWithUsernameModel) => void;
 }
 
 export default AddNewPlayer;

@@ -169,6 +169,7 @@ const TournamentTable: FC = ({}) => {
       </Table>
       {selectedPlayer && (
         <PlayerDrawer
+          key={selectedPlayer.id}
           player={selectedPlayer}
           setSelectedPlayer={setSelectedPlayer}
           handleDelete={handleDelete}
@@ -257,15 +258,24 @@ const Status: FC<
     user: UserModel | null | undefined;
   } & PropsWithChildren
 > = ({ player, children }) => {
+  const pairPlayers = player.pairPlayers ?? [];
+
   return (
-    <div
-      className={`gap-mk flex items-center ${player.isOut && 'text-muted-foreground'}`}
-    >
-      {children}
-      {player.username && (
-        <UserRound className="text-muted-foreground size-4" />
+    <div className="flex flex-col gap-0.5">
+      <div
+        className={`gap-mk flex items-center ${player.isOut && 'text-muted-foreground'}`}
+      >
+        {children}
+        {player.username && (
+          <UserRound className="text-muted-foreground size-4" />
+        )}
+        {player.isOut && <Flag className="size-4" />}
+      </div>
+      {pairPlayers.length === 2 && (
+        <small className="text-muted-foreground text-2xs">
+          {pairPlayers[0].nickname} + {pairPlayers[1].nickname}
+        </small>
       )}
-      {player.isOut && <Flag className="size-4" />}
     </div>
   );
 };
