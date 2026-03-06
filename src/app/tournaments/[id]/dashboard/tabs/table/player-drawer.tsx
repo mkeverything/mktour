@@ -141,19 +141,13 @@ const PlayerDrawer: FC<{
             submitLabel={t('save')}
             isSubmitting={editPairTeam.isPending}
             onSubmitValues={(values) => {
-              editPairTeam.mutate(
-                {
-                  tournamentId,
-                  currentTeamPlayerId: player.id,
-                  ...values,
-                },
-                {
-                  onSuccess: () => {
-                    setIsEditingTeam(false);
-                    closeDrawer();
-                  },
-                },
-              );
+              setIsEditingTeam(false);
+              closeDrawer();
+              editPairTeam.mutate({
+                tournamentId,
+                currentTeamPlayerId: player.id,
+                ...values,
+              });
             }}
           />
         </SideDrawer>

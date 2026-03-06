@@ -52,8 +52,8 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
-import { getPlayerResultDeltas } from './set-game-result-deltas';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
+import { getPlayerResultDeltas } from './set-game-result-deltas';
 
 function compareTeamMembers<
   T extends { numberInTeam: number | null; playerId: string },
@@ -120,20 +120,22 @@ async function getRawTournamentPlayers(
   id: string,
   tournamentType?: string,
 ): Promise<Array<PlayerTournamentModel>> {
-  const type =
-    tournamentType ??
-    (await db
-      .select({ type: tournaments.type })
-      .from(tournaments)
-      .where(eq(tournaments.id, id))
-      .then((rows) => {
-        if (!rows[0]) throw new Error('TOURNAMENT NOT FOUND');
-        return rows[0].type;
-      }));
+  let type = tournamentType;
+  if (!type) {
+    const tournament = (
+      await db
+        .select({ type: tournaments.type })
+        .from(tournaments)
+        .where(eq(tournaments.id, id))
+    ).at(0);
+
+    if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+    type = tournament.type;
+  }
 
   const playersDb = await db
     .select({
-      playerId: players.id,
+      id: players.id,
       nickname: players.nickname,
       realname: players.realname,
       rating: players.rating,
@@ -144,6 +146,7 @@ async function getRawTournamentPlayers(
       isOut: players_to_tournaments.isOut,
       place: players_to_tournaments.place,
       pairingNumber: players_to_tournaments.pairingNumber,
+      addedAt: players_to_tournaments.addedAt,
       username: users.username,
       teamNickname: players_to_tournaments.teamNickname,
       numberInTeam: players_to_tournaments.numberInTeam,
@@ -154,20 +157,8 @@ async function getRawTournamentPlayers(
     .leftJoin(users, eq(users.id, players.userId));
 
   if (type !== 'doubles') {
-    return playersDb.map((each) => ({
-      id: each.playerId,
-      nickname: each.nickname,
-      realname: each.realname,
-      rating: each.rating,
-      wins: each.wins,
-      draws: each.draws,
-      losses: each.losses,
-      colorIndex: each.colorIndex,
-      isOut: each.isOut,
-      place: each.place,
-      pairingNumber: each.pairingNumber,
-      teamNickname: each.teamNickname,
-      username: each.username ?? null,
+    return playersDb.map(({ numberInTeam: _numberInTeam, ...rest }) => ({
+      ...rest,
       pairPlayers: null,
     }));
   }
@@ -188,23 +179,37 @@ async function getRawTournamentPlayers(
       0,
     );
     const rating = Math.round(totalRating / members.length);
+    const {
+      id,
+      nickname,
+      teamNickname,
+      wins,
+      draws,
+      losses,
+      colorIndex,
+      isOut,
+      place,
+      pairingNumber,
+      addedAt,
+    } = leader;
 
     return {
-      id: leader.playerId,
-      nickname: leader.teamNickname ?? leader.nickname,
+      id,
+      nickname: teamNickname ?? nickname,
       realname: null,
       rating,
-      wins: leader.wins,
-      draws: leader.draws,
-      losses: leader.losses,
-      colorIndex: leader.colorIndex,
-      isOut: leader.isOut,
-      place: leader.place,
-      pairingNumber: leader.pairingNumber,
-      teamNickname: leader.teamNickname,
+      wins,
+      draws,
+      losses,
+      colorIndex,
+      isOut,
+      place,
+      pairingNumber,
+      addedAt,
+      teamNickname,
       username: null,
       pairPlayers: sortedMembers.map((member) => ({
-        id: member.playerId,
+        id: member.id,
         nickname: member.nickname,
       })),
     };
@@ -352,6 +357,7 @@ export async function addNewPlayer({
     place: null,
     isOut: null,
     pairingNumber: null,
+    addedAt: new Date(),
     newRating: null,
     newRatingDeviation: null,
     newVolatility: null,
@@ -393,6 +399,7 @@ export async function addExistingPlayer({
     place: null,
     isOut: null,
     pairingNumber: null,
+    addedAt: new Date(),
     newRating: null,
     newRatingDeviation: null,
     newVolatility: null,
@@ -487,6 +494,7 @@ export async function addDoublesTeam({
       orderedPlayers.length,
   );
 
+  const now = new Date();
   const teamMembers: PlayerToTournamentInsertModel[] = [
     {
       playerId: firstPlayerId,
@@ -501,6 +509,7 @@ export async function addDoublesTeam({
       pairingNumber: null,
       teamNickname: nickname,
       numberInTeam: 1,
+      addedAt: now,
       newRating: null,
       newRatingDeviation: null,
       newVolatility: null,
@@ -518,6 +527,7 @@ export async function addDoublesTeam({
       pairingNumber: null,
       teamNickname: nickname,
       numberInTeam: 2,
+      addedAt: now,
       newRating: null,
       newRatingDeviation: null,
       newVolatility: null,
@@ -540,6 +550,7 @@ export async function addDoublesTeam({
     isOut: null,
     place: null,
     pairingNumber: null,
+    addedAt: now,
     teamNickname: nickname,
     username: null,
     pairPlayers: orderedPlayers.map((player) => ({
@@ -679,6 +690,7 @@ export async function editDoublesTeam({
     });
 
     const [firstPlayer, secondPlayer] = orderedPlayers;
+    const now = new Date();
 
     await tx.insert(players_to_tournaments).values([
       {
@@ -694,6 +706,7 @@ export async function editDoublesTeam({
         pairingNumber: null,
         teamNickname: nickname,
         numberInTeam: 1,
+        addedAt: now,
         newRating: null,
         newRatingDeviation: null,
         newVolatility: null,
@@ -711,6 +724,7 @@ export async function editDoublesTeam({
         pairingNumber: null,
         teamNickname: nickname,
         numberInTeam: 2,
+        addedAt: now,
         newRating: null,
         newRatingDeviation: null,
         newVolatility: null,

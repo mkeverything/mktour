@@ -1,6 +1,10 @@
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
 import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
+import {
+  PlayerTournamentModel,
+  type PlayerWithUsernameModel,
+} from '@/server/zod/players';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -21,47 +25,102 @@ export const useTournamentAddPairTeam = (
 
   return useMutation(
     trpc.tournament.addPairTeam.mutationOptions({
-      onSuccess: (teamPlayer) => {
+      async onMutate({ nickname, firstPlayerId, secondPlayerId }) {
+        await queryClient.cancelQueries({
+          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+        });
+        await queryClient.cancelQueries({
+          queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
+        });
+
+        const previousState: Array<PlayerTournamentModel> | undefined =
+          queryClient.getQueryData(
+            trpc.tournament.playersIn.queryKey({ tournamentId }),
+          );
+
+        const nicknameLower = nickname.toLowerCase();
+        const isDuplicateNickname = previousState?.some(
+          (player) =>
+            player.teamNickname &&
+            player.teamNickname.toLowerCase() === nicknameLower,
+        );
+
+        if (isDuplicateNickname) {
+          throw new Error('PAIR_NICKNAME_TAKEN');
+        }
+
+        const playersOut =
+          queryClient.getQueryData<Array<PlayerWithUsernameModel>>(
+            trpc.tournament.playersOut.queryKey({ tournamentId }),
+          ) ?? [];
+
+        const firstPlayer = playersOut.find(
+          (player) => player.id === firstPlayerId,
+        );
+        const secondPlayer = playersOut.find(
+          (player) => player.id === secondPlayerId,
+        );
+
+        if (!firstPlayer || !secondPlayer) {
+          throw new Error('PAIR_PLAYERS_NOT_FOUND');
+        }
+
+        const teamRating = Math.round(
+          (firstPlayer.rating + secondPlayer.rating) / 2,
+        );
+
+        const now = new Date();
+
+        const newPlayer: PlayerTournamentModel = {
+          id: firstPlayer.id,
+          nickname,
+          realname: null,
+          rating: teamRating,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          colorIndex: 0,
+          place: null,
+          isOut: null,
+          pairingNumber: null,
+          addedAt: now,
+          teamNickname: nickname,
+          username: null,
+          pairPlayers: [
+            { id: firstPlayer.id, nickname: firstPlayer.nickname },
+            { id: secondPlayer.id, nickname: secondPlayer.nickname },
+          ],
+        };
+
         queryClient.setQueryData(
           trpc.tournament.playersIn.queryKey({ tournamentId }),
-          (cache) => {
-            if (!cache) return [teamPlayer];
-            if (cache.some((player) => player.id === teamPlayer.id))
+          (cache: Array<PlayerTournamentModel> | undefined) => {
+            if (!cache) return [newPlayer];
+            if (cache.some((player) => player.id === newPlayer.id))
               return cache;
-            return cache.concat(teamPlayer);
+            return cache.concat(newPlayer);
           },
         );
 
-        sendJsonMessage({ event: 'add-new-player', body: teamPlayer });
-
-        const players = queryClient.getQueryData(
-          trpc.tournament.playersIn.queryKey({ tournamentId }),
-        );
-
-        const newGames = generateRandomRoundGames({
-          players: players
-            ? players.map((player, i) => ({
-                ...player,
-                pairingNumber: i,
-              }))
-            : [],
-          games: [],
-          roundNumber: 1,
-          tournamentId,
-        });
-
-        saveRound.mutate({ tournamentId, roundNumber: 1, newGames });
         queryClient.setQueryData(
-          trpc.tournament.roundGames.queryKey({
-            tournamentId,
-            roundNumber: 1,
-          }),
-          () => newGames.sort((a, b) => a.gameNumber - b.gameNumber),
+          trpc.tournament.playersOut.queryKey({ tournamentId }),
+          (cache: Array<PlayerWithUsernameModel> | undefined) =>
+            cache?.filter(
+              (player) =>
+                player.id !== firstPlayerId && player.id !== secondPlayerId,
+            ),
         );
 
-        toast.success(t('team added', { name: teamPlayer.nickname }));
+        return { previousState, newPlayer };
       },
-      onError: (error) => {
+      onError: (error, _data, context) => {
+        if (context?.previousState) {
+          queryClient.setQueryData(
+            trpc.tournament.playersIn.queryKey({ tournamentId }),
+            context.previousState,
+          );
+        }
+
         if (error.message === 'PAIR_NICKNAME_TAKEN') {
           toast.error(t('team nickname taken'));
           return;
@@ -75,6 +134,41 @@ export const useTournamentAddPairTeam = (
           return;
         }
         toast.error(t('team add error'));
+      },
+      onSuccess: (_result, _variables) => {
+        // const teamPlayer = context!.newPlayer;
+        // sendJsonMessage({ event: 'add-new-player', body: teamPlayer });
+
+        if (
+          queryClient.isMutating({
+            mutationKey: trpc.tournament.addPairTeam.mutationKey(),
+          }) === 1
+        ) {
+          const players = queryClient.getQueryData(
+            trpc.tournament.playersIn.queryKey({ tournamentId }),
+          );
+
+          const newGames = generateRandomRoundGames({
+            players: players
+              ? players.map((player, i) => ({
+                  ...player,
+                  pairingNumber: i,
+                }))
+              : [],
+            games: [],
+            roundNumber: 1,
+            tournamentId,
+          });
+
+          saveRound.mutate({ tournamentId, roundNumber: 1, newGames });
+          queryClient.setQueryData(
+            trpc.tournament.roundGames.queryKey({
+              tournamentId,
+              roundNumber: 1,
+            }),
+            () => newGames.sort((a, b) => a.gameNumber - b.gameNumber),
+          );
+        }
       },
       onSettled: () => {
         if (

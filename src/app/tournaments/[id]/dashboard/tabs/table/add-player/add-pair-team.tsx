@@ -195,6 +195,7 @@ const AddPairTeam = ({
 
   const onSubmit = (values: AddDoublesTeamModel) => {
     if (onSubmitValues) {
+      handleClose();
       onSubmitValues(values, { reset: resetState });
       return;
     }
