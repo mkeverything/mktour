@@ -7,6 +7,7 @@ import PairPlayerCard, {
 import type { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-add-pair-team';
 import { useTRPC } from '@/components/trpc/client';
+import { deriveTeamNickname } from '@/lib/derive-team-nickname';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { PlayerWithUsernameModel } from '@/server/zod/players';
 import {
   AddDoublesTeamModel,
-  addDoublesTeamSchema,
+  addDoublesTeamFormSchema,
 } from '@/server/zod/tournaments';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -91,7 +92,7 @@ const AddPairTeam = ({
   });
 
   const form = useForm<AddDoublesTeamModel>({
-    resolver: zodResolver(addDoublesTeamSchema),
+    resolver: zodResolver(addDoublesTeamFormSchema),
     defaultValues: {
       nickname: initialValues?.nickname ?? '',
       firstPlayerId: initialValues?.firstPlayer.id ?? '',
@@ -194,9 +195,19 @@ const AddPairTeam = ({
   };
 
   const onSubmit = (values: AddDoublesTeamModel) => {
+    const nickname =
+      (values.nickname ?? '').trim() ||
+      (selectedPlayers.first && selectedPlayers.second
+        ? deriveTeamNickname(
+            selectedPlayers.first.nickname,
+            selectedPlayers.second.nickname,
+          )
+        : (values.nickname ?? ''));
+    const payload = { ...values, nickname };
+
     if (onSubmitValues) {
       handleClose();
-      onSubmitValues(values, { reset: resetState });
+      onSubmitValues(payload, { reset: resetState });
       return;
     }
 
@@ -211,7 +222,7 @@ const AddPairTeam = ({
     const addedAt = new Date();
     addPairTeam.mutate({
       tournamentId,
-      ...values,
+      ...payload,
       addedAt,
     });
   };

@@ -157,6 +157,15 @@ export const editDoublesTeamSchema = z
     message: 'team players should be different',
   });
 
+/** form schema: nickname optional (derive on submit when empty). api still requires min(2). */
+export const addDoublesTeamFormSchema = addDoublesTeamSchema.safeExtend({
+  nickname: z.string().trim().max(30, { error: 'max nickname length' }),
+});
+
+export const editDoublesTeamFormSchema = editDoublesTeamSchema.safeExtend({
+  nickname: z.string().trim().max(30, { error: 'max nickname length' }),
+});
+
 export type TournamentInfoModel = z.infer<typeof tournamentInfoSchema>;
 export type TournamentWithClubModel = z.infer<typeof tournamentWithClubSchema>;
 export type TournamentAuthStatusModel = z.infer<
