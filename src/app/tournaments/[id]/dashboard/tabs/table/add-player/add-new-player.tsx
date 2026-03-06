@@ -110,11 +110,12 @@ const AddNewPlayer = ({
     }
 
     const playerWithId = { ...player, id: newid() };
+    const addedAt = new Date();
     setValue('');
     form.reset(getDefaultValues(''), { keepDefaultValues: true });
     form.setFocus('nickname');
     mutate(
-      { tournamentId: id, player: playerWithId },
+      { tournamentId: id, player: playerWithId, addedAt },
       {
         onError: () => {
           form.reset(player, { keepDefaultValues: true });

@@ -25,7 +25,7 @@ export const useTournamentAddPairTeam = (
 
   return useMutation(
     trpc.tournament.addPairTeam.mutationOptions({
-      async onMutate({ nickname, firstPlayerId, secondPlayerId }) {
+      async onMutate({ nickname, firstPlayerId, secondPlayerId, addedAt }) {
         await queryClient.cancelQueries({
           queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
         });
@@ -69,8 +69,6 @@ export const useTournamentAddPairTeam = (
           (firstPlayer.rating + secondPlayer.rating) / 2,
         );
 
-        const now = new Date();
-
         const newPlayer: PlayerTournamentModel = {
           id: firstPlayer.id,
           nickname,
@@ -83,7 +81,7 @@ export const useTournamentAddPairTeam = (
           place: null,
           isOut: null,
           pairingNumber: null,
-          addedAt: now,
+          addedAt,
           teamNickname: nickname,
           username: null,
           pairPlayers: [

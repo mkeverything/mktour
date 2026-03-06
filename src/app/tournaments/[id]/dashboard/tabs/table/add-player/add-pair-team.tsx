@@ -208,9 +208,11 @@ const AddPairTeam = ({
     setSelectedPlayers({ first: null, second: null });
     setTimeout(() => form.setFocus('nickname'), 0);
 
+    const addedAt = new Date();
     addPairTeam.mutate({
       tournamentId,
       ...values,
+      addedAt,
     });
   };
 

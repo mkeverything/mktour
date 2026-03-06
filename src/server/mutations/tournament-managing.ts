@@ -331,10 +331,13 @@ export async function removePlayer({
 export async function addNewPlayer({
   tournamentId,
   player,
+  addedAt,
 }: {
   tournamentId: string;
   player: PlayerFormModel & { id?: string };
+  addedAt?: Date;
 }) {
+  const now = addedAt ?? new Date();
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
@@ -357,7 +360,7 @@ export async function addNewPlayer({
     place: null,
     isOut: null,
     pairingNumber: null,
-    addedAt: new Date(),
+    addedAt: now,
     newRating: null,
     newRatingDeviation: null,
     newVolatility: null,
@@ -371,11 +374,14 @@ export async function addExistingPlayer({
   tournamentId,
   player,
   userId,
+  addedAt,
 }: {
   tournamentId: string;
   player: PlayerInsertModel;
   userId: string;
+  addedAt?: Date;
 }) {
+  const now = addedAt ?? new Date();
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
@@ -399,7 +405,7 @@ export async function addExistingPlayer({
     place: null,
     isOut: null,
     pairingNumber: null,
-    addedAt: new Date(),
+    addedAt: now,
     newRating: null,
     newRatingDeviation: null,
     newVolatility: null,
@@ -413,9 +419,12 @@ export async function addDoublesTeam({
   nickname,
   firstPlayerId,
   secondPlayerId,
+  addedAt,
 }: AddDoublesTeamModel & {
   tournamentId: string;
+  addedAt?: Date;
 }): Promise<PlayerTournamentModel> {
+  const now = addedAt ?? new Date();
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
 
@@ -494,7 +503,6 @@ export async function addDoublesTeam({
       orderedPlayers.length,
   );
 
-  const now = new Date();
   const teamMembers: PlayerToTournamentInsertModel[] = [
     {
       playerId: firstPlayerId,

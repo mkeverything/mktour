@@ -160,6 +160,7 @@ export const tournamentRouter = {
       tournamentIdInputSchema.extend({
         player: playersSelectSchema,
         userId: z.string(),
+        addedAt: z.date().optional(),
       }),
     )
     .output(z.void())
@@ -171,6 +172,7 @@ export const tournamentRouter = {
     .input(
       z.object({
         player: playerFormSchema.and(z.object({ id: z.string().optional() })),
+        addedAt: z.date().optional(),
       }),
     )
     .output(z.void())
@@ -179,7 +181,11 @@ export const tournamentRouter = {
       await addNewPlayer(input);
     }),
   addPairTeam: tournamentAdminProcedure
-    .input(tournamentIdInputSchema.and(addDoublesTeamSchema))
+    .input(
+      tournamentIdInputSchema.and(
+        addDoublesTeamSchema.extend({ addedAt: z.date().optional() }),
+      ),
+    )
     .output(playerTournamentSchema)
     .mutation(async (opts) => {
       const { input } = opts;
