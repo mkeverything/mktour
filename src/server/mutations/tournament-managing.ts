@@ -105,7 +105,7 @@ export async function getTournamentPlayers(
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
 
   const [playerModels, allGames] = await Promise.all([
-    getRawTournamentPlayers(id),
+    getRawTournamentPlayers(id, tournament.type),
     getTournamentGames(id),
   ]);
 
@@ -118,12 +118,18 @@ export async function getTournamentPlayers(
  */
 async function getRawTournamentPlayers(
   id: string,
+  tournamentType?: string,
 ): Promise<Array<PlayerTournamentModel>> {
-  const [tournament] = await db
-    .select({ type: tournaments.type })
-    .from(tournaments)
-    .where(eq(tournaments.id, id));
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  const type =
+    tournamentType ??
+    (await db
+      .select({ type: tournaments.type })
+      .from(tournaments)
+      .where(eq(tournaments.id, id))
+      .then((rows) => {
+        if (!rows[0]) throw new Error('TOURNAMENT NOT FOUND');
+        return rows[0].type;
+      }));
 
   const playersDb = await db
     .select({
@@ -147,7 +153,7 @@ async function getRawTournamentPlayers(
     .innerJoin(players, eq(players.id, players_to_tournaments.playerId))
     .leftJoin(users, eq(users.id, players.userId));
 
-  if (tournament.type !== 'doubles') {
+  if (type !== 'doubles') {
     return playersDb.map((each) => ({
       id: each.playerId,
       nickname: each.nickname,
@@ -481,8 +487,8 @@ export async function addDoublesTeam({
       orderedPlayers.length,
   );
 
-  await db.transaction(async (tx) => {
-    const firstPlayerToTournament: PlayerToTournamentInsertModel = {
+  const teamMembers: PlayerToTournamentInsertModel[] = [
+    {
       playerId: firstPlayerId,
       tournamentId,
       id: `${firstPlayerId}=${tournamentId}`,
@@ -498,9 +504,8 @@ export async function addDoublesTeam({
       newRating: null,
       newRatingDeviation: null,
       newVolatility: null,
-    };
-
-    const secondPlayerToTournament: PlayerToTournamentInsertModel = {
+    },
+    {
       playerId: secondPlayerId,
       tournamentId,
       id: `${secondPlayerId}=${tournamentId}`,
@@ -516,11 +521,10 @@ export async function addDoublesTeam({
       newRating: null,
       newRatingDeviation: null,
       newVolatility: null,
-    };
+    },
+  ];
 
-    await tx.insert(players_to_tournaments).values(firstPlayerToTournament);
-    await tx.insert(players_to_tournaments).values(secondPlayerToTournament);
-  });
+  await db.insert(players_to_tournaments).values(teamMembers);
 
   await normalizeSwissRoundsNumber(tournamentId);
 
@@ -556,6 +560,10 @@ export async function editDoublesTeam({
 }): Promise<void> {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
+
+  if (firstPlayerId === secondPlayerId) {
+    throw new Error('INVALID_DOUBLES_PAIR');
+  }
 
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
@@ -641,7 +649,7 @@ export async function editDoublesTeam({
     .where(
       and(
         eq(players_to_tournaments.tournamentId, tournamentId),
-        eq(players_to_tournaments.teamNickname, nickname),
+        sql`lower(${players_to_tournaments.teamNickname}) = ${nickname.toLowerCase()}`,
         ne(players_to_tournaments.teamNickname, currentTeamNickname),
       ),
     )
@@ -672,41 +680,42 @@ export async function editDoublesTeam({
 
     const [firstPlayer, secondPlayer] = orderedPlayers;
 
-    await tx.insert(players_to_tournaments).values({
-      playerId: firstPlayer.id,
-      tournamentId,
-      id: `${firstPlayer.id}=${tournamentId}`,
-      wins: 0,
-      losses: 0,
-      draws: 0,
-      colorIndex: 0,
-      place: null,
-      isOut: null,
-      pairingNumber: null,
-      teamNickname: nickname,
-      numberInTeam: 1,
-      newRating: null,
-      newRatingDeviation: null,
-      newVolatility: null,
-    });
-
-    await tx.insert(players_to_tournaments).values({
-      playerId: secondPlayer.id,
-      tournamentId,
-      id: `${secondPlayer.id}=${tournamentId}`,
-      wins: 0,
-      losses: 0,
-      draws: 0,
-      colorIndex: 0,
-      place: null,
-      isOut: null,
-      pairingNumber: null,
-      teamNickname: nickname,
-      numberInTeam: 2,
-      newRating: null,
-      newRatingDeviation: null,
-      newVolatility: null,
-    });
+    await tx.insert(players_to_tournaments).values([
+      {
+        playerId: firstPlayer.id,
+        tournamentId,
+        id: `${firstPlayer.id}=${tournamentId}`,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        colorIndex: 0,
+        place: null,
+        isOut: null,
+        pairingNumber: null,
+        teamNickname: nickname,
+        numberInTeam: 1,
+        newRating: null,
+        newRatingDeviation: null,
+        newVolatility: null,
+      },
+      {
+        playerId: secondPlayer.id,
+        tournamentId,
+        id: `${secondPlayer.id}=${tournamentId}`,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        colorIndex: 0,
+        place: null,
+        isOut: null,
+        pairingNumber: null,
+        teamNickname: nickname,
+        numberInTeam: 2,
+        newRating: null,
+        newRatingDeviation: null,
+        newVolatility: null,
+      },
+    ]);
   });
 
   await normalizeSwissRoundsNumber(tournamentId);
@@ -776,6 +785,37 @@ async function getDoublesTeamMembers(
   return { teamByPlayerId, membersByTeam };
 }
 
+function enrichGamesWithDoublesInfo(
+  sortedGames: GameModel[],
+  doublesTeamMembers: DoublesTeamMembersMap,
+): GameModel[] {
+  const { teamByPlayerId, membersByTeam } = doublesTeamMembers;
+  return sortedGames.map((game) => {
+    const whiteTeam = teamByPlayerId.get(game.whiteId);
+    const blackTeam = teamByPlayerId.get(game.blackId);
+    const whiteMembers = whiteTeam ? (membersByTeam.get(whiteTeam) ?? []) : [];
+    const blackMembers = blackTeam ? (membersByTeam.get(blackTeam) ?? []) : [];
+
+    if (whiteMembers.length < 2 || blackMembers.length < 2) {
+      return {
+        ...game,
+        whiteNickname: whiteTeam ?? game.whiteNickname,
+        blackNickname: blackTeam ?? game.blackNickname,
+      };
+    }
+
+    return {
+      ...game,
+      whiteNickname: whiteTeam ?? game.whiteNickname,
+      blackNickname: blackTeam ?? game.blackNickname,
+      pairMembers: {
+        white: [whiteMembers[0], whiteMembers[1]],
+        black: [blackMembers[0], blackMembers[1]],
+      },
+    };
+  });
+}
+
 export async function getTournamentGames(
   tournamentId: string,
 ): Promise<GameModel[]> {
@@ -802,35 +842,14 @@ export async function getTournamentGames(
     .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
     .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
 
-  const sortedGames = (gamesDb as GameModel[]).sort(
-    (a, b) => a.gameNumber - b.gameNumber,
-  );
+  const sortedGames: GameModel[] = gamesDb
+    .map((g) => ({ ...g, pairMembers: null }))
+    .sort((a, b) => a.gameNumber - b.gameNumber);
   const tournament = await getTournamentById(tournamentId);
   if (!tournament || tournament.type !== 'doubles') return sortedGames;
 
-  const { teamByPlayerId, membersByTeam } =
-    await getDoublesTeamMembers(tournamentId);
-
-  return sortedGames.map((game) => {
-    const whiteTeam = teamByPlayerId.get(game.whiteId);
-    const blackTeam = teamByPlayerId.get(game.blackId);
-    const whiteMembers = whiteTeam ? (membersByTeam.get(whiteTeam) ?? []) : [];
-    const blackMembers = blackTeam ? (membersByTeam.get(blackTeam) ?? []) : [];
-
-    return {
-      ...game,
-      whiteNickname: whiteTeam ?? game.whiteNickname,
-      blackNickname: blackTeam ?? game.blackNickname,
-      whiteFirstPairPlayerId: whiteMembers[0]?.id ?? null,
-      whiteSecondPairPlayerId: whiteMembers[1]?.id ?? null,
-      blackFirstPairPlayerId: blackMembers[0]?.id ?? null,
-      blackSecondPairPlayerId: blackMembers[1]?.id ?? null,
-      whiteFirstPairNickname: whiteMembers[0]?.nickname ?? null,
-      whiteSecondPairNickname: whiteMembers[1]?.nickname ?? null,
-      blackFirstPairNickname: blackMembers[0]?.nickname ?? null,
-      blackSecondPairNickname: blackMembers[1]?.nickname ?? null,
-    };
-  });
+  const doublesTeamMembers = await getDoublesTeamMembers(tournamentId);
+  return enrichGamesWithDoublesInfo(sortedGames, doublesTeamMembers);
 }
 
 // moved to API endpoint
@@ -859,35 +878,14 @@ export async function getTournamentRoundGames({
     .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
     .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
 
-  const sortedGames = (gamesDb as GameModel[]).sort(
-    (a, b) => a.gameNumber - b.gameNumber,
-  );
+  const sortedGames: GameModel[] = gamesDb
+    .map((g) => ({ ...g, pairMembers: null }))
+    .sort((a, b) => a.gameNumber - b.gameNumber);
   const tournament = await getTournamentById(tournamentId);
   if (!tournament || tournament.type !== 'doubles') return sortedGames;
 
-  const { teamByPlayerId, membersByTeam } =
-    await getDoublesTeamMembers(tournamentId);
-
-  return sortedGames.map((game) => {
-    const whiteTeam = teamByPlayerId.get(game.whiteId);
-    const blackTeam = teamByPlayerId.get(game.blackId);
-    const whiteMembers = whiteTeam ? (membersByTeam.get(whiteTeam) ?? []) : [];
-    const blackMembers = blackTeam ? (membersByTeam.get(blackTeam) ?? []) : [];
-
-    return {
-      ...game,
-      whiteNickname: whiteTeam ?? game.whiteNickname,
-      blackNickname: blackTeam ?? game.blackNickname,
-      whiteFirstPairPlayerId: whiteMembers[0]?.id ?? null,
-      whiteSecondPairPlayerId: whiteMembers[1]?.id ?? null,
-      blackFirstPairPlayerId: blackMembers[0]?.id ?? null,
-      blackSecondPairPlayerId: blackMembers[1]?.id ?? null,
-      whiteFirstPairNickname: whiteMembers[0]?.nickname ?? null,
-      whiteSecondPairNickname: whiteMembers[1]?.nickname ?? null,
-      blackFirstPairNickname: blackMembers[0]?.nickname ?? null,
-      blackSecondPairNickname: blackMembers[1]?.nickname ?? null,
-    };
-  });
+  const doublesTeamMembers = await getDoublesTeamMembers(tournamentId);
+  return enrichGamesWithDoublesInfo(sortedGames, doublesTeamMembers);
 }
 
 export async function saveRound({
@@ -937,19 +935,7 @@ export async function saveRound({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const insertPromises: Promise<any>[] = []; // FIXME any
   newGames.forEach((game) => {
-    const {
-      blackNickname,
-      whiteNickname,
-      whiteFirstPairPlayerId,
-      whiteSecondPairPlayerId,
-      blackFirstPairPlayerId,
-      blackSecondPairPlayerId,
-      whiteFirstPairNickname,
-      whiteSecondPairNickname,
-      blackFirstPairNickname,
-      blackSecondPairNickname,
-      ...newGame
-    } = game;
+    const { blackNickname, whiteNickname, pairMembers, ...newGame } = game;
     insertPromises.push(db.insert(games).values(newGame));
   });
 
@@ -1436,7 +1422,10 @@ export async function updateSwissRoundsNumber({
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
 
-  const playerCount = await getTournamentPlayersCount(tournamentId);
+  const playerCount = await getTournamentPlayersCount(
+    tournamentId,
+    tournament.type,
+  );
   const maxRounds = getSwissMaxRoundsNumber(playerCount);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
   if (roundsNumber < minRounds) throw new Error('INVALID_ROUNDS_NUMBER');
@@ -1456,11 +1445,16 @@ async function getTournamentById(tournamentId: string) {
 
 async function getTournamentPlayersCount(
   tournamentId: string,
+  tournamentType?: string,
 ): Promise<number> {
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  const type =
+    tournamentType ??
+    (await getTournamentById(tournamentId).then((t) => {
+      if (!t) throw new Error('TOURNAMENT NOT FOUND');
+      return t.type;
+    }));
 
-  if (tournament.type === 'doubles') {
+  if (type === 'doubles') {
     const [result] = await db
       .select({
         playersCount: countDistinct(players_to_tournaments.teamNickname),
@@ -1488,7 +1482,10 @@ async function normalizeSwissRoundsNumber(tournamentId: string) {
   const tournament = await getTournamentById(tournamentId);
   if (!tournament || tournament.format !== 'swiss') return;
 
-  const playerCount = await getTournamentPlayersCount(tournamentId);
+  const playerCount = await getTournamentPlayersCount(
+    tournamentId,
+    tournament.type,
+  );
   const maxRounds = getSwissMaxRoundsNumber(playerCount);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
   if (minRounds > maxRounds) throw new Error('INVALID_SWISS_ROUNDS_BOUNDS');

@@ -111,8 +111,7 @@ export const playerTournamentSchema = playersToTournamentsSelectSchema
           nickname: z.string(),
         }),
       )
-      .nullable()
-      .optional(), //TODO: try nullish
+      .nullable(),
   });
 
 export const playerStatsSchema = z.object({

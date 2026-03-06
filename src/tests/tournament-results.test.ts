@@ -29,6 +29,7 @@ function makePlayer(
     pairingNumber: null,
     teamNickname: teamNickname ?? null,
     username: null,
+    pairPlayers: null,
     ...restOverrides,
   };
 }
@@ -52,6 +53,7 @@ function makeGame(
     blackPrevGameId: null,
     result: null,
     finishedAt: null,
+    pairMembers: null,
     ...overrides,
   };
 }

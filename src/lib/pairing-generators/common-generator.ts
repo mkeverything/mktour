@@ -399,6 +399,7 @@ export function getGameToInsert(
     blackPrevGameId: null,
     result: null,
     finishedAt: null,
+    pairMembers: null,
   };
   return gameToInsert;
 }

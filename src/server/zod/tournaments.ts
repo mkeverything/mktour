@@ -21,17 +21,22 @@ export const tournamentSchema = createSelectSchema(tournaments, {
   format: tournamentFormatEnum,
   type: tournamentTypeEnum,
 });
+const pairMemberSchema = z.object({
+  id: z.string(),
+  nickname: z.string(),
+});
+
+const gamePairSideSchema = z.tuple([pairMemberSchema, pairMemberSchema]);
+
+export const gamePairMembersSchema = z.object({
+  white: gamePairSideSchema,
+  black: gamePairSideSchema,
+});
+
 export const gameSchema = createSelectSchema(games).extend({
   whiteNickname: z.string(),
   blackNickname: z.string(),
-  whiteFirstPairPlayerId: z.string().nullable().optional(),
-  whiteSecondPairPlayerId: z.string().nullable().optional(),
-  blackFirstPairPlayerId: z.string().nullable().optional(),
-  blackSecondPairPlayerId: z.string().nullable().optional(),
-  whiteFirstPairNickname: z.string().nullable().optional(),
-  whiteSecondPairNickname: z.string().nullable().optional(),
-  blackFirstPairNickname: z.string().nullable().optional(),
-  blackSecondPairNickname: z.string().nullable().optional(),
+  pairMembers: gamePairMembersSchema.nullable(),
   roundName: roundNameEnum.nullable(),
   result: gameResultEnum.nullable(),
 });
@@ -166,6 +171,7 @@ export type TournamentCreateInputModel = z.infer<
 >;
 
 export type GameModel = z.infer<typeof gameSchema>;
+export type GamePairMembersModel = z.infer<typeof gamePairMembersSchema>;
 export type GameInsertModel = z.infer<typeof gamesInsertSchema>;
 export type GameUpdateModel = z.infer<typeof gamesUpdateSchema>;
 export type AddDoublesTeamModel = z.infer<typeof addDoublesTeamSchema>;
