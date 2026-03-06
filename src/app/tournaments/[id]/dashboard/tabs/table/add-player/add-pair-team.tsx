@@ -7,7 +7,6 @@ import PairPlayerCard, {
 import type { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-add-pair-team';
 import { useTRPC } from '@/components/trpc/client';
-import { deriveTeamNickname } from '@/lib/derive-team-nickname';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { deriveTeamNickname } from '@/lib/derive-team-nickname';
 import { PlayerWithUsernameModel } from '@/server/zod/players';
 import {
   AddDoublesTeamModel,
@@ -162,7 +162,15 @@ const AddPairTeam = ({
       ...prev,
       [slot]: toPairCardPlayer(player),
     }));
-    closeSelector();
+
+    const otherSlot = getOppositeSlot(slot);
+    if (!selectedPlayers[otherSlot]) {
+      setActiveSlot(otherSlot);
+      setSelectorValue('');
+      setSelectorAddingNewPlayer(false);
+    } else {
+      closeSelector();
+    }
   };
 
   const handlePlayerSelected = (player: PlayerWithUsernameModel) => {
@@ -284,9 +292,9 @@ const AddPairTeam = ({
           if (!open) closeSelector();
         }}
       >
-        <p className="text-muted-foreground text-sm">
+        <h3 className="text-sm font-semibold">
           {activeSlot ? getSlotLabel(activeSlot) : ''}
-        </p>
+        </h3>
 
         <AddPlayerDrawerContent
           value={selectorValue}
