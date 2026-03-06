@@ -200,23 +200,18 @@ const AddPairTeam = ({
       return;
     }
 
-    addPairTeam.mutate(
-      {
-        tournamentId,
-        ...values,
-      },
-      {
-        onSuccess: () => {
-          form.reset({
-            nickname: '',
-            firstPlayerId: '',
-            secondPlayerId: '',
-          });
-          form.setFocus('nickname');
-          setSelectedPlayers({ first: null, second: null });
-        },
-      },
-    );
+    form.reset({
+      nickname: '',
+      firstPlayerId: '',
+      secondPlayerId: '',
+    });
+    setSelectedPlayers({ first: null, second: null });
+    setTimeout(() => form.setFocus('nickname'), 0);
+
+    addPairTeam.mutate({
+      tournamentId,
+      ...values,
+    });
   };
 
   return (
