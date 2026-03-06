@@ -56,17 +56,17 @@ import { calculateAndApplyGlickoRatings } from './rating-calculation';
 import { getPlayerResultDeltas } from './set-game-result-deltas';
 
 function compareTeamMembers<
-  T extends { numberInTeam: number | null; playerId: string },
+  T extends { numberInTeam: number | null; id: string },
 >(a: T, b: T): number {
   if (a.numberInTeam === null && b.numberInTeam === null) {
-    return a.playerId.localeCompare(b.playerId);
+    return a.id.localeCompare(b.id);
   }
   if (a.numberInTeam === null) return 1;
   if (b.numberInTeam === null) return -1;
   if (a.numberInTeam !== b.numberInTeam) {
     return a.numberInTeam - b.numberInTeam;
   }
-  return a.playerId.localeCompare(b.playerId);
+  return a.id.localeCompare(b.id);
 }
 
 export const createTournament = async (
@@ -780,20 +780,13 @@ async function getDoublesTeamMembers(
     membersByTeam.set(row.teamNickname, members);
   });
 
-  membersByTeam.forEach((members, teamNickname) => {
+  membersByTeam.forEach((members) => {
     members.sort((a, b) =>
       compareTeamMembers(
-        {
-          numberInTeam: a.numberInTeam,
-          playerId: a.id,
-        },
-        {
-          numberInTeam: b.numberInTeam,
-          playerId: b.id,
-        },
+        { numberInTeam: a.numberInTeam, id: a.id },
+        { numberInTeam: b.numberInTeam, id: b.id },
       ),
     );
-    membersByTeam.set(teamNickname, members);
   });
 
   return { teamByPlayerId, membersByTeam };
