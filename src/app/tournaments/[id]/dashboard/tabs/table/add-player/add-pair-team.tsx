@@ -1,8 +1,9 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import AddPlayerDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player-drawer-content';
 import PairPlayerCard, {
-  type PairPlayerCardPlayer,
+  PairPlayerCardPlayer,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
+
 import type { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-add-pair-team';
 import { useTRPC } from '@/components/trpc/client';
@@ -231,12 +232,7 @@ const AddPairTeam = ({
               <FormItem>
                 <FormLabel>{t('team nickname')}</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    autoComplete="off"
-                    autoFocus
-                    placeholder={t('team nickname')}
-                  />
+                  <Input {...field} autoComplete="off" autoFocus />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -280,7 +276,7 @@ const AddPairTeam = ({
         }}
       >
         <p className="text-muted-foreground text-sm">
-          {activeSlot ? getSlotPlaceholder(activeSlot) : ''}
+          {activeSlot ? getSlotLabel(activeSlot) : ''}
         </p>
 
         <AddPlayerDrawerContent
