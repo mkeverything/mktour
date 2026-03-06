@@ -73,7 +73,7 @@ const PairPlayerCard: FC<PairPlayerCardProps> = ({
 
   if (href) {
     return (
-      <Link href={href} className={cn(cardClassName, 'block')}>
+      <Link href={href} className={cn(cardClassName, 'block')} tabIndex={0}>
         {content}
       </Link>
     );

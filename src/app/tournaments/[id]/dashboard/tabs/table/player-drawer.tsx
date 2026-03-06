@@ -2,14 +2,13 @@ import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-con
 import AddPairTeam, {
   type PairTeamInitialValues,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-pair-team';
+import PairPlayerCard from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
 import {
   DeleteButton,
   WithdrawButtonWithConfirmation,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/destructive-buttons';
-import PairPlayerCard from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
-import { useTournamentEditPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-edit-pair-team';
 import FormattedMessage from '@/components/formatted-message';
-import SideDrawer from '@/components/ui-custom/side-drawer';
+import { useTournamentEditPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-edit-pair-team';
 import {
   Close,
   Content,
@@ -18,6 +17,7 @@ import {
   Root,
   Title,
 } from '@/components/ui-custom/combo-modal';
+import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
 import { PlayerTournamentModel } from '@/server/zod/players';
 import { Pencil, UserRound } from 'lucide-react';
@@ -63,8 +63,8 @@ const PlayerDrawer: FC<{
       }}
     >
       <Content>
-        <Header>
-          <div className="flex items-center justify-between gap-2">
+        <Header className="mx-auto">
+          <div className="flex items-center justify-start gap-4">
             <Title>{player.nickname}</Title>
             {canEditTeam && (
               <Button
