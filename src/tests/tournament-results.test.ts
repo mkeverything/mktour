@@ -27,6 +27,7 @@ function makePlayer(
     isOut: null,
     place: null,
     pairingNumber: null,
+    addedAt: null,
     teamNickname: teamNickname ?? null,
     username: null,
     pairPlayers: null,

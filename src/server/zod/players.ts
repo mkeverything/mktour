@@ -91,6 +91,7 @@ export const playerTournamentSchema = playersToTournamentsSelectSchema
   .pick({
     pairingNumber: true,
     teamNickname: true,
+    addedAt: true,
     wins: true,
     draws: true,
     losses: true,

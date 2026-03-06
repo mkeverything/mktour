@@ -44,6 +44,7 @@ export const useTournamentAddNewPlayer = (
           place: null,
           isOut: null,
           pairingNumber: null,
+          addedAt: new Date(),
           teamNickname: null,
           username: null,
           pairPlayers: null,
