@@ -1,16 +1,21 @@
+import ClubsAllList from '@/components/clubs-all-list';
+import { BASE_URL } from '@/lib/config/urls';
+import type { Metadata, ResolvingMetadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
+
 import ClubsIteratee from '@/app/clubs/all/clubs-list';
 import Center from '@/components/center';
 import { publicCaller } from '@/server/api';
-import { getLocale, getTranslations } from 'next-intl/server';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { BASE_URL } from '@/lib/config/urls';
+import { Suspense } from 'react';
 
 export default async function ClubSettings() {
-  const clubs = await publicCaller.club.all();
+  const { clubs } = await publicCaller.club.all({});
 
   return (
-    <Center className="mk-list mk-container">
-      <ClubsIteratee clubs={clubs} />
+    <Center className="mk-list">
+      <Suspense fallback={<ClubsIteratee clubs={clubs.slice(0, 5)} />}>
+        <ClubsAllList />
+      </Suspense>
     </Center>
   );
 }

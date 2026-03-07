@@ -53,9 +53,23 @@ import { z } from 'zod';
 export const clubRouter = createTRPCRouter({
   all: publicProcedure
     .meta(meta.clubsAll)
-    .output(z.array(clubsSelectSchema))
-    .query(async () => {
-      return await getAllClubs();
+    .input(
+      z.object({
+        cursor: z.number().nullish(),
+        limit: z.number().min(1).max(100).optional().default(10),
+      }),
+    )
+    .output(
+      z.object({
+        clubs: z.array(clubsSelectSchema),
+        nextCursor: z.number().nullable(),
+      }),
+    )
+    .query(async ({ input }) => {
+      return await getAllClubs({
+        limit: input.limit,
+        cursor: input.cursor ?? undefined,
+      });
     }),
   create: protectedProcedure
     .meta(meta.clubCreate)

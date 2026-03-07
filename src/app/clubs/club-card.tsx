@@ -1,13 +1,13 @@
 import LichessLogo from '@/components/ui-custom/lichess-logo';
 import { Card, CardTitle } from '@/components/ui/card';
 import { ClubModel } from '@/server/zod/clubs';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
 
-const ClubCard: FC<{ club: ClubModel }> = async ({ club }) => {
-  const t = await getTranslations();
-  const locale = await getLocale();
+const ClubCard: FC<{ club: ClubModel }> = ({ club }) => {
+  const t = useTranslations();
+  const locale = useLocale();
 
   return (
     <Link href={`/clubs/${club.id}`}>
