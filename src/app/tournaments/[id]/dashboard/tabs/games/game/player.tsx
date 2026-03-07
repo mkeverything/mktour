@@ -13,11 +13,11 @@ const Player: FC<PlayerProps> = ({
   <Button
     variant="ghost"
     className={cn(
-      `text-2xs ${selected ? 'col-span-1' : 'col-span-2'} line-clamp-2 h-full w-full lg:text-xs ${!selected && position.text} w-full rounded-sm p-0 select-none ${selected && isWinner && 'mk-link'} ${className}`,
+      `text-2xs ${selected ? 'col-span-1' : 'col-span-2'} h-full w-full lg:text-xs ${!selected && position.text} w-full rounded-sm p-0 select-none ${selected && isWinner && 'mk-link'} ${className}`,
     )}
     onClick={handleMutate}
   >
-    <span className="text-wrap wrap-break-word">{nickname}</span>
+    <span className="truncate">{nickname}</span>
   </Button>
 );
 
