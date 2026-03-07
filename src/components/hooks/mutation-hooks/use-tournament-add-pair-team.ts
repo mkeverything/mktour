@@ -81,7 +81,7 @@ export const useTournamentAddPairTeam = (
           place: null,
           isOut: null,
           pairingNumber: null,
-          addedAt,
+          addedAt: addedAt ?? null,
           teamNickname: nickname,
           username: null,
           pairPlayers: [
