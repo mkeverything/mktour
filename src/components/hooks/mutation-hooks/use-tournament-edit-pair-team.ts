@@ -5,6 +5,7 @@ import {
   type PlayerTournamentModel,
   type PlayerWithUsernameModel,
 } from '@/server/zod/players';
+import { DashboardMessage } from '@/types/tournament-ws-events';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -26,7 +27,10 @@ function getPairPlayer(
   return null;
 }
 
-export const useTournamentEditPairTeam = (tournamentId: string) => {
+export const useTournamentEditPairTeam = (
+  tournamentId: string,
+  sendJsonMessage: (_message: DashboardMessage) => void,
+) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const t = useTranslations('Tournament.AddPlayer');
@@ -155,8 +159,20 @@ export const useTournamentEditPairTeam = (tournamentId: string) => {
         }
         toast.error(t('team add error'));
       },
-      onSuccess: (_data) => {
-        // TODO: sendJsonMessage({ event: 'edit-pair-team', body: variables });
+      onSuccess: (_data, variables) => {
+        const players = queryClient.getQueryData<Array<PlayerTournamentModel>>(
+          trpc.tournament.playersIn.queryKey({ tournamentId }),
+        );
+        const updatedTeam = players?.find(
+          (p) => p.id === variables.firstPlayerId,
+        );
+        if (updatedTeam) {
+          sendJsonMessage({
+            event: 'edit-team-player',
+            body: updatedTeam,
+            previousId: variables.currentTeamPlayerId,
+          });
+        }
       },
       onSettled: () => {
         if (

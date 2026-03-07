@@ -34,10 +34,10 @@ const PlayerDrawer: FC<{
   hasStarted: boolean;
 }> = ({ player, setSelectedPlayer, hasEnded, hasStarted, handleDelete }) => {
   const open = !!player;
-  const { status } = useContext(DashboardContext);
+  const { status, sendJsonMessage } = useContext(DashboardContext);
   const t = useTranslations('Tournament.AddPlayer');
   const { id: tournamentId } = useParams<{ id: string }>();
-  const editPairTeam = useTournamentEditPairTeam(tournamentId);
+  const editPairTeam = useTournamentEditPairTeam(tournamentId, sendJsonMessage);
   const isDoublesTeam = (player.pairPlayers?.length ?? 0) > 0;
   const [isEditingTeam, setIsEditingTeam] = useState(false);
 

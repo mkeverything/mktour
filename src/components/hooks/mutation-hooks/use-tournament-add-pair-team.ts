@@ -133,10 +133,10 @@ export const useTournamentAddPairTeam = (
         }
         toast.error(t('team add error'));
       },
-      onSuccess: (_result, _variables) => {
-        // const teamPlayer = context!.newPlayer;
-        // sendJsonMessage({ event: 'add-new-player', body: teamPlayer });
-
+      onSuccess: (_result, _variables, context) => {
+        if (context?.newPlayer) {
+          sendJsonMessage({ event: 'add-new-player', body: context.newPlayer });
+        }
         if (
           queryClient.isMutating({
             mutationKey: trpc.tournament.addPairTeam.mutationKey(),
