@@ -1,14 +1,42 @@
 'use server';
 
-import { defaultLocale, Locale } from '@/components/i18n';
-import { cookies } from 'next/headers';
+import { Locale } from '@/components/i18n';
+import { cookies, headers } from 'next/headers';
 
-// In this example the locale is read from a cookie. You could alternatively
-// also read it from a database, backend service, or any other source.
 const COOKIE_NAME = 'NEXT_LOCALE';
+const SUPPORTED_LOCALES: ReadonlyArray<Locale> = ['en', 'ru'];
 
-export async function getUserLocale() {
-  return (await cookies()).get(COOKIE_NAME)?.value || defaultLocale;
+function detectLocaleFromHeader(acceptLanguage: string | null): Locale {
+  if (!acceptLanguage) return 'en';
+
+  const entries = acceptLanguage
+    .split(',')
+    .map((part) => {
+      const [lang, quality] = part.trim().split(';q=');
+      return {
+        lang: lang.trim().toLowerCase(),
+        q: quality ? parseFloat(quality) : 1,
+      };
+    })
+    .sort((a, b) => b.q - a.q);
+
+  for (const entry of entries) {
+    const prefix = entry.lang.split('-')[0];
+    const match = SUPPORTED_LOCALES.find((l) => l === prefix);
+    if (match) return match;
+  }
+
+  return 'en';
+}
+
+export async function getUserLocale(): Promise<Locale> {
+  const cookieValue = (await cookies()).get(COOKIE_NAME)?.value;
+  if (cookieValue && SUPPORTED_LOCALES.includes(cookieValue as Locale)) {
+    return cookieValue as Locale;
+  }
+
+  const acceptLanguage = (await headers()).get('accept-language');
+  return detectLocaleFromHeader(acceptLanguage);
 }
 
 export async function setUserLocale(locale: Locale) {

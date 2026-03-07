@@ -70,12 +70,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = BASE_URL || 'https://mktour.org';
 
-  let locale = 'ru';
-  try {
-    locale = (await getLocale()) ?? 'ru';
-  } catch {
-    locale = 'ru';
-  }
+  const locale = await getLocale();
 
   const t = await getTranslations({ locale, namespace: 'Seo' });
 
