@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/mkeverything/mktour/compare/v1.4.0...v1.4.1) (2026-03-07)
+
+
+### Bug Fixes
+
+* proper order for tournamemtn lists. recent first ([1c066ba](https://github.com/mkeverything/mktour/commit/1c066ba4e65f96db2f1499d80aff85da461bf7f9))
+
 # [1.4.0](https://github.com/mkeverything/mktour/compare/v1.3.1...v1.4.0) (2026-03-07)
 
 
