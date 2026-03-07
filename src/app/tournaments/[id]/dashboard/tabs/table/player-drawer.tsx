@@ -3,10 +3,7 @@ import AddPairTeam, {
   type PairTeamInitialValues,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-pair-team';
 import PairPlayerCard from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
-import {
-  DeleteButton,
-  WithdrawButtonWithConfirmation,
-} from '@/app/tournaments/[id]/dashboard/tabs/table/destructive-buttons';
+import { DeleteButton } from '@/app/tournaments/[id]/dashboard/tabs/table/destructive-buttons';
 import FormattedMessage from '@/components/formatted-message';
 import { useTournamentEditPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-edit-pair-team';
 import {
@@ -166,7 +163,6 @@ const PlayerDrawer: FC<{
 const DestructiveButton = ({
   hasEnded,
   hasStarted,
-  player,
   handleDelete,
   closeDrawer,
 }: {
@@ -176,11 +172,17 @@ const DestructiveButton = ({
   handleDelete: () => void;
   closeDrawer: () => void;
 }) => {
-  if (hasEnded) return null;
-  // prettier-ignore
-  return hasStarted 
-      ? <WithdrawButtonWithConfirmation selectedPlayer={player} />
-      : <DeleteButton handleDelete={() => { closeDrawer(); handleDelete() }} />;
+  if (hasEnded || hasStarted) return null; // FIXME add withdrawal option
+  // if (hasEnded) return null;
+  // if (hasStarted) return <WithdrawButtonWithConfirmation selectedPlayer={player} />
+  return (
+    <DeleteButton
+      handleDelete={() => {
+        closeDrawer();
+        handleDelete();
+      }}
+    />
+  );
 };
 
 export default PlayerDrawer;
