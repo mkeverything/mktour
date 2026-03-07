@@ -479,7 +479,10 @@ export async function addDoublesTeam({
     .where(
       and(
         eq(players_to_tournaments.tournamentId, tournamentId),
-        sql`lower(${players_to_tournaments.teamNickname}) = ${nickname.toLowerCase()}`,
+        eq(
+          sql<string>`lower(${players_to_tournaments.teamNickname})`,
+          nickname.toLowerCase(),
+        ),
       ),
     )
     .limit(1);
@@ -668,7 +671,10 @@ export async function editDoublesTeam({
     .where(
       and(
         eq(players_to_tournaments.tournamentId, tournamentId),
-        sql`lower(${players_to_tournaments.teamNickname}) = ${nickname.toLowerCase()}`,
+        eq(
+          sql<string>`lower(${players_to_tournaments.teamNickname})`,
+          nickname.toLowerCase(),
+        ),
         ne(players_to_tournaments.teamNickname, currentTeamNickname),
       ),
     )
