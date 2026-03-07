@@ -70,9 +70,23 @@ export const tournamentRouter = {
       return result;
     }),
   all: publicProcedure
-    .output(z.array(tournamentWithClubSchema))
-    .query(async () => {
-      return await getAllTournaments();
+    .input(
+      z.object({
+        cursor: z.number().nullish(),
+        limit: z.number().min(1).max(100).optional().default(10),
+      }),
+    )
+    .output(
+      z.object({
+        tournaments: z.array(tournamentWithClubSchema),
+        nextCursor: z.number().nullable(),
+      }),
+    )
+    .query(async ({ input }) => {
+      return await getAllTournaments({
+        limit: input.limit,
+        cursor: input.cursor ?? undefined,
+      });
     }),
   info: publicProcedure
     .input(tournamentIdInputSchema)

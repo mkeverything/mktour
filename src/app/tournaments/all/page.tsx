@@ -1,21 +1,16 @@
-import TournamentItemIteratee from '@/components/tournament-item';
-import TournamentsAllCache from '@/components/tournament-item-cache';
+import TournamentsAllList from '@/components/tournaments-all-list';
 import { BASE_URL } from '@/lib/config/urls';
-import { publicCaller } from '@/server/api';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 
 import { Suspense } from 'react';
+import TournamentsAllCache from '@/components/tournament-item-cache';
 
-export default async function Tournaments() {
-  const allTournaments = await publicCaller.tournament.all();
-
+export default function Tournaments() {
   return (
     <main className="mk-container mk-list">
       <Suspense fallback={<TournamentsAllCache />}>
-        {allTournaments.map((props) => (
-          <TournamentItemIteratee key={props.tournament.id} {...props} />
-        ))}
+        <TournamentsAllList />
       </Suspense>
     </main>
   );
