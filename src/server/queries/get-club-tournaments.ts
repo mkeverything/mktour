@@ -9,5 +9,5 @@ export const getClubTournaments = async (clubId: string) => {
     .select()
     .from(tournaments)
     .where(eq(tournaments.clubId, clubId))
-    .orderBy(desc(tournaments.date));
+    .orderBy(desc(tournaments.createdAt));
 };
