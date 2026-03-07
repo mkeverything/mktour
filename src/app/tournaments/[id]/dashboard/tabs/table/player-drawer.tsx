@@ -65,7 +65,14 @@ const PlayerDrawer: FC<{
       <Content>
         <Header className="mx-auto">
           <div className="flex items-center justify-start gap-4">
-            <Title>{player.nickname}</Title>
+            <Title className="flex items-baseline gap-2">
+              {player.nickname}
+              {!isDoublesTeam && player.rating != null && (
+                <span className="text-muted-foreground text-sm font-normal">
+                  {player.rating}
+                </span>
+              )}
+            </Title>
             {canEditTeam && (
               <Button
                 size="icon"

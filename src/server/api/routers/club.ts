@@ -51,7 +51,7 @@ import {
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
-import { count, desc, eq, sql } from 'drizzle-orm';
+import { count, desc, eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 

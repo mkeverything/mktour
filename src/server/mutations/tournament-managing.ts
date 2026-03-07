@@ -211,6 +211,7 @@ async function getRawTournamentPlayers(
       pairPlayers: sortedMembers.map((member) => ({
         id: member.id,
         nickname: member.nickname,
+        rating: member.rating,
       })),
     };
   });

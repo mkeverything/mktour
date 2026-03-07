@@ -110,6 +110,7 @@ export const playerTournamentSchema = playersToTournamentsSelectSchema
         z.object({
           id: z.string(),
           nickname: z.string(),
+          rating: z.number().optional(), // TODO: to remove this optional we need to change playersOut api
         }),
       )
       .nullable(),
