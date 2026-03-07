@@ -593,7 +593,10 @@ export async function editDoublesTeam({
   if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
 
   const participant = await db
-    .select({ teamNickname: players_to_tournaments.teamNickname })
+    .select({
+      teamNickname: players_to_tournaments.teamNickname,
+      addedAt: players_to_tournaments.addedAt,
+    })
     .from(players_to_tournaments)
     .where(
       and(
@@ -607,6 +610,7 @@ export async function editDoublesTeam({
     throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
   }
   const currentTeamNickname = participant.teamNickname;
+  const preservedAddedAt = participant.addedAt ?? new Date();
 
   const selectedPlayers = await db
     .select({
@@ -704,7 +708,6 @@ export async function editDoublesTeam({
     });
 
     const [firstPlayer, secondPlayer] = orderedPlayers;
-    const now = new Date();
 
     await tx.insert(players_to_tournaments).values([
       {
@@ -720,7 +723,7 @@ export async function editDoublesTeam({
         pairingNumber: null,
         teamNickname: nickname,
         numberInTeam: 1,
-        addedAt: now,
+        addedAt: preservedAddedAt,
         newRating: null,
         newRatingDeviation: null,
         newVolatility: null,
@@ -738,7 +741,7 @@ export async function editDoublesTeam({
         pairingNumber: null,
         teamNickname: nickname,
         numberInTeam: 2,
-        addedAt: now,
+        addedAt: preservedAddedAt,
         newRating: null,
         newRatingDeviation: null,
         newVolatility: null,
