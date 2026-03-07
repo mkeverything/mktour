@@ -1,14 +1,10 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import AddFakerPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-fake-player';
-import AddNewPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-new-player';
-import AddPlayer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player';
+import AddPlayerDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player-drawer-content';
+import AddPairTeam from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-pair-team';
 import Fab from '@/components/fab';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import SideDrawer from '@/components/ui-custom/side-drawer';
-import { Button } from '@/components/ui/button';
-import { PlayerFormModel } from '@/server/zod/players';
-import { ArrowLeft, Plus, UserPlus, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { UserPlus, X } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { Dispatch, SetStateAction, useContext, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -18,7 +14,6 @@ const AddPlayerDrawer = () => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
   const [addingNewPlayer, setAddingNewPlayer] = useState(false);
-  const t = useTranslations('Tournament.AddPlayer');
   const [isAnimating, setIsAnimating] = useState(false);
   const { status } = useContext(DashboardContext);
 
@@ -48,13 +43,8 @@ const AddPlayerDrawer = () => {
     }
   };
 
-  const returnToNewPlayer = (player: PlayerFormModel & { id?: string }) => {
-    setOpen(true);
-    setAddingNewPlayer(true);
-    setValue(player.nickname);
-  };
-
   const { data: tournamentInfo } = useTournamentInfo(tournamentId);
+  const isDoubles = tournamentInfo?.tournament.type === 'doubles';
   if (
     !tournamentInfo ||
     tournamentInfo.tournament.startedAt ||
@@ -75,34 +65,17 @@ const AddPlayerDrawer = () => {
         setOpen={handleChange}
         setIsAnimating={setIsAnimating}
       >
-        <div className="flex flex-col gap-3">
-          <Button
-            className="flex w-full gap-2"
-            onClick={() => setAddingNewPlayer((prev) => !prev)}
-            variant={addingNewPlayer ? 'outline' : 'default'}
-          >
-            {!addingNewPlayer ? <Plus /> : <ArrowLeft />}
-            {!addingNewPlayer ? t('add new player') : t('back')}{' '}
-          </Button>
-          {
-            process.env.NODE_ENV !== 'production' && (
-              <AddFakerPlayer setOpen={setOpen} />
-            )
-            // NB DEVTOOL
-          }
-        </div>
-        {addingNewPlayer ? (
-          <AddNewPlayer
-            value={value}
-            setValue={setValue}
-            returnToNewPlayer={returnToNewPlayer}
-            handleClose={() => handleChange(false)}
-          />
+        {isDoubles ? (
+          <AddPairTeam handleClose={() => handleChange(false)} />
         ) : (
-          <AddPlayer
+          <AddPlayerDrawerContent
             value={value}
             setValue={setValue}
+            addingNewPlayer={addingNewPlayer}
+            setAddingNewPlayer={setAddingNewPlayer}
             handleClose={() => handleChange(false)}
+            setDrawerOpen={handleChange}
+            showFakerButton
           />
         )}
       </SideDrawer>

@@ -90,6 +90,8 @@ export const playersToTournamentsSelectSchema = createSelectSchema(
 export const playerTournamentSchema = playersToTournamentsSelectSchema
   .pick({
     pairingNumber: true,
+    teamNickname: true,
+    addedAt: true,
     wins: true,
     draws: true,
     losses: true,
@@ -103,6 +105,14 @@ export const playerTournamentSchema = playersToTournamentsSelectSchema
     realname: playersSelectSchema.shape.realname,
     rating: playersSelectSchema.shape.rating,
     username: playersWithUsernameSchema.shape.username,
+    pairPlayers: z
+      .array(
+        z.object({
+          id: z.string(),
+          nickname: z.string(),
+        }),
+      )
+      .nullable(),
   });
 
 export const playerStatsSchema = z.object({

@@ -44,9 +44,11 @@ const AddFakerPlayer: FC<{ setOpen: (_arg: boolean) => void }> = ({
 
   const onClick = () => {
     setOpen(false);
+    const addedAt = new Date();
     mutate({
       player,
       tournamentId: tournament.data?.tournament.id || '',
+      addedAt,
     });
   };
 

@@ -23,7 +23,7 @@ export const useTournamentAddNewPlayer = (
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.addNewPlayer.mutationOptions({
-      onMutate: async ({ player }) => {
+      onMutate: async ({ player, addedAt }) => {
         await queryClient.cancelQueries({
           queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
         });
@@ -44,7 +44,10 @@ export const useTournamentAddNewPlayer = (
           place: null,
           isOut: null,
           pairingNumber: null,
+          addedAt: addedAt ?? null,
+          teamNickname: null,
           username: null,
+          pairPlayers: null,
         };
 
         queryClient.setQueryData(

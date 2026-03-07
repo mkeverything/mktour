@@ -463,7 +463,19 @@
       "search": "поиск",
       "possible players error": "ошибка! не получилось загрузить ваших игроков",
       "no players": "тут пока никого! можно добавить новых игроков",
-      "player added": "игрок {name} добавлен"
+      "player added": "игрок {name} добавлен",
+      "team nickname": "название команды",
+      "first player": "первый игрок",
+      "second player": "второй игрок",
+      "select first player": "—",
+      "select second player": "—",
+      "create team": "создать команду",
+      "team added": "команда {name} добавлена",
+      "team nickname taken": "такое название команды уже занято в клубе",
+      "player already in team": "кто-то из выбранных уже в команде",
+      "team players not found": "не удалось найти выбранных игроков",
+      "team add error": "не удалось добавить команду",
+      "not enough players for team": "нужно хотя бы два свободных игрока для команды"
     }
   },
   "Tournaments": {
@@ -488,6 +500,7 @@
     "no data": "данные не получены",
     "name": "название",
     "rated": "рейтинговый",
+    "doubles rating disabled": "парные турниры пока не могут быть рейтинговыми",
     "unrated": "не рейтинговый",
     "error": "не получилось сделать турнир"
   },

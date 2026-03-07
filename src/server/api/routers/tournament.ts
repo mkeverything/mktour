@@ -14,10 +14,12 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import {
+  addDoublesTeam,
   addExistingPlayer,
   addNewPlayer,
   createTournament,
   deleteTournament,
+  editDoublesTeam,
   editTournamentTitle,
   finishTournament,
   getTournamentGames,
@@ -45,6 +47,8 @@ import {
   playerTournamentSchema,
 } from '@/server/zod/players';
 import {
+  addDoublesTeamSchema,
+  editDoublesTeamSchema,
   gameSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
@@ -105,16 +109,17 @@ export const tournamentRouter = {
     .output(z.array(playersWithUsernameSchema))
     .query(async (opts) => {
       const { input } = opts;
-      const result = await db
+      const tournament = await db
+        .select({ clubId: tournaments.clubId })
+        .from(tournaments)
+        .where(eq(tournaments.id, input.tournamentId))
+        .then((rows) => rows.at(0));
+
+      if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
+      return db
         .select({ ...getTableColumns(players), username: users.username })
         .from(players)
-        .innerJoin(
-          tournaments,
-          and(
-            eq(tournaments.id, input.tournamentId),
-            eq(players.clubId, tournaments.clubId),
-          ),
-        )
         .leftJoin(
           players_to_tournaments,
           and(
@@ -123,9 +128,12 @@ export const tournamentRouter = {
           ),
         )
         .leftJoin(users, eq(users.id, players.userId))
-        .where(isNull(players_to_tournaments.playerId));
-
-      return result;
+        .where(
+          and(
+            eq(players.clubId, tournament.clubId),
+            isNull(players_to_tournaments.playerId),
+          ),
+        );
     }),
   roundGames: publicProcedure
     .input(
@@ -152,6 +160,7 @@ export const tournamentRouter = {
       tournamentIdInputSchema.extend({
         player: playersSelectSchema,
         userId: z.string(),
+        addedAt: z.date().optional(),
       }),
     )
     .output(z.void())
@@ -163,12 +172,31 @@ export const tournamentRouter = {
     .input(
       z.object({
         player: playerFormSchema.and(z.object({ id: z.string().optional() })),
+        addedAt: z.date().optional(),
       }),
     )
     .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await addNewPlayer(input);
+    }),
+  addPairTeam: tournamentAdminProcedure
+    .input(
+      tournamentIdInputSchema.and(
+        addDoublesTeamSchema.extend({ addedAt: z.date().optional() }),
+      ),
+    )
+    .output(playerTournamentSchema)
+    .mutation(async (opts) => {
+      const { input } = opts;
+      return await addDoublesTeam(input);
+    }),
+  editPairTeam: tournamentAdminProcedure
+    .input(tournamentIdInputSchema.and(editDoublesTeamSchema))
+    .output(z.void())
+    .mutation(async (opts) => {
+      const { input } = opts;
+      await editDoublesTeam(input);
     }),
   removePlayer: tournamentAdminProcedure
     .input(

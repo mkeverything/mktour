@@ -462,7 +462,19 @@
       "search": "search",
       "possible players error": "error happened while loading club players",
       "no players": "nobody here yet!\ngo add some new people",
-      "player added": "player {name} added"
+      "player added": "player {name} added",
+      "team nickname": "team nickname",
+      "first player": "first player",
+      "second player": "second player",
+      "select first player": "—",
+      "select second player": "—",
+      "create team": "create team",
+      "team added": "team {name} added",
+      "team nickname taken": "team nickname is already used in this club",
+      "player already in team": "one of selected players is already in a team",
+      "team players not found": "could not find selected players",
+      "team add error": "could not add team",
+      "not enough players for team": "you need at least two available players to create a team"
     }
   },
   "Tournaments": {
@@ -487,6 +499,7 @@
     "no data": "no data",
     "name": "name",
     "rated": "rated",
+    "doubles rating disabled": "doubles cannot be rated yet",
     "unrated": "unrated",
     "error": "tournament making failed"
   },

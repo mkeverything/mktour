@@ -15,6 +15,8 @@ import { describe, expect, it } from 'bun:test';
 function makePlayer(
   overrides: Partial<PlayerTournamentModel> & { id: string; nickname: string },
 ): PlayerTournamentModel {
+  const { teamNickname, ...restOverrides } = overrides;
+
   return {
     wins: 0,
     draws: 0,
@@ -25,8 +27,11 @@ function makePlayer(
     isOut: null,
     place: null,
     pairingNumber: null,
+    addedAt: null,
+    teamNickname: teamNickname ?? null,
     username: null,
-    ...overrides,
+    pairPlayers: null,
+    ...restOverrides,
   };
 }
 
@@ -49,6 +54,7 @@ function makeGame(
     blackPrevGameId: null,
     result: null,
     finishedAt: null,
+    pairMembers: null,
     ...overrides,
   };
 }

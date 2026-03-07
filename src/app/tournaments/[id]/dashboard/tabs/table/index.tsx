@@ -155,7 +155,7 @@ const TournamentTable: FC = ({}) => {
                   {i + 1}
                 </Place>
               </TableCellStyled>
-              <TableCellStyled className="font-small flex gap-2 truncate pl-0">
+              <TableCellStyled className="font-small max-w-0 truncate pl-0">
                 <Status player={player} user={user}>
                   {player.nickname}
                 </Status>
@@ -169,6 +169,7 @@ const TournamentTable: FC = ({}) => {
       </Table>
       {selectedPlayer && (
         <PlayerDrawer
+          key={selectedPlayer.id}
           player={selectedPlayer}
           setSelectedPlayer={setSelectedPlayer}
           handleDelete={handleDelete}
@@ -216,7 +217,7 @@ const TableLoading: FC<{ stats: Stat[] }> = ({ stats }) => {
                 <TableCellStyled className="font-small w-10 text-center">
                   <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
                 </TableCellStyled>
-                <TableCellStyled className="font-small flex gap-2 truncate pl-0">
+                <TableCellStyled className="font-small max-w-0 truncate pl-0">
                   <div className="bg-muted h-4 w-40 animate-pulse rounded" />
                 </TableCellStyled>
                 {Array(stats.length)
@@ -257,15 +258,24 @@ const Status: FC<
     user: UserModel | null | undefined;
   } & PropsWithChildren
 > = ({ player, children }) => {
+  const pairPlayers = player.pairPlayers ?? [];
+
   return (
-    <div
-      className={`gap-mk flex items-center ${player.isOut && 'text-muted-foreground'}`}
-    >
-      {children}
-      {player.username && (
-        <UserRound className="text-muted-foreground size-4" />
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <div
+        className={`gap-mk flex min-w-0 items-center ${player.isOut && 'text-muted-foreground'}`}
+      >
+        <span className="truncate">{children}</span>
+        {player.username && (
+          <UserRound className="text-muted-foreground size-4 shrink-0" />
+        )}
+        {player.isOut && <Flag className="size-4 shrink-0" />}
+      </div>
+      {pairPlayers.length === 2 && (
+        <small className="text-muted-foreground text-2xs truncate">
+          {pairPlayers[0].nickname} + {pairPlayers[1].nickname}
+        </small>
       )}
-      {player.isOut && <Flag className="size-4" />}
     </div>
   );
 };
@@ -273,9 +283,7 @@ const Status: FC<
 const TableCellStyled: FC<PropsWithChildren & { className?: string }> = ({
   children,
   className,
-}) => (
-  <TableCell className={`p-3 text-wrap ${className}`}>{children}</TableCell>
-);
+}) => <TableCell className={`p-3 ${className}`}>{children}</TableCell>;
 
 const TableHeadStyled: FC<PropsWithChildren & { className?: string }> = ({
   children,

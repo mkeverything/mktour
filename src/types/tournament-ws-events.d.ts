@@ -4,6 +4,11 @@ import { PlayerTournamentModel } from '@/server/zod/players';
 type DashboardMessage =
   | { event: 'add-existing-player'; body: PlayerTournamentModel }
   | { event: 'add-new-player'; body: PlayerTournamentModel }
+  | {
+      event: 'edit-team-player';
+      body: PlayerTournamentModel;
+      previousId: string;
+    }
   | { event: 'remove-player'; id: string } // onError add-exidsting-player
   | {
       event: 'set-game-result';

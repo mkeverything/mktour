@@ -153,18 +153,11 @@ export const buildScoreMaps = (
  * Sorts players by score → tiebreak → wins and returns the sorted array
  * along with the computed score maps.
  */
-export const sortPlayersByResults = (
-  players: PlayerTournamentModel[],
-  tournament: Pick<TournamentModel, 'format' | 'ongoingRound'>,
-  allGames: GameModel[],
-): PlayerTournamentModel[] => {
-  const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
-    players,
-    tournament,
-    allGames,
-  );
-
-  return [...players].sort((a, b) => {
+function makePlayerComparator(
+  playerScoresMap: Map<string, number>,
+  tiebreakScoresMap: Map<string, number>,
+) {
+  return (a: PlayerTournamentModel, b: PlayerTournamentModel): number => {
     const scoreA = playerScoresMap.get(a.id) ?? 0;
     const scoreB = playerScoresMap.get(b.id) ?? 0;
 
@@ -177,8 +170,28 @@ export const sortPlayersByResults = (
 
     if (b.wins !== a.wins) return b.wins - a.wins;
 
+    const addedAtA = a.addedAt?.getTime() ?? 0;
+    const addedAtB = b.addedAt?.getTime() ?? 0;
+    if (addedAtA !== addedAtB) return addedAtA - addedAtB;
+
     return 0;
-  });
+  };
+}
+
+export const sortPlayersByResults = (
+  players: PlayerTournamentModel[],
+  tournament: Pick<TournamentModel, 'format' | 'ongoingRound'>,
+  allGames: GameModel[],
+): PlayerTournamentModel[] => {
+  const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+    players,
+    tournament,
+    allGames,
+  );
+
+  return [...players].sort(
+    makePlayerComparator(playerScoresMap, tiebreakScoresMap),
+  );
 };
 
 /**
@@ -196,21 +209,9 @@ export const sortPlayersByResultsWithMaps = (
     allGames,
   );
 
-  const sorted = [...players].sort((a, b) => {
-    const scoreA = playerScoresMap.get(a.id) ?? 0;
-    const scoreB = playerScoresMap.get(b.id) ?? 0;
-
-    if (scoreB !== scoreA) return scoreB - scoreA;
-
-    const tbA = tiebreakScoresMap.get(a.id) ?? 0;
-    const tbB = tiebreakScoresMap.get(b.id) ?? 0;
-
-    if (tbB !== tbA) return tbB - tbA;
-
-    if (b.wins !== a.wins) return b.wins - a.wins;
-
-    return 0;
-  });
+  const sorted = [...players].sort(
+    makePlayerComparator(playerScoresMap, tiebreakScoresMap),
+  );
 
   return { players: sorted, playerScoresMap, tiebreakScoresMap };
 };

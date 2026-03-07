@@ -1,0 +1,1 @@
+ALTER TABLE `players_to_tournaments` ADD `number_in_team` integer;

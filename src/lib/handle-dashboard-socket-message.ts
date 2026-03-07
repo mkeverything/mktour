@@ -2,14 +2,20 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
-import {
-  PlayerTournamentModel,
-  PlayerWithUsernameModel,
-} from '@/server/zod/players';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
+import type { PlayerTournamentModel } from '@/server/zod/players';
 import { QueryClient } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
+
+function parsePlayerBody(
+  body: PlayerTournamentModel & { addedAt?: Date | string | null },
+): PlayerTournamentModel {
+  return {
+    ...body,
+    addedAt: body.addedAt != null ? new Date(body.addedAt as string) : null,
+  };
+}
 
 export const handleSocketMessage = (
   message: DashboardMessage,
@@ -20,21 +26,24 @@ export const handleSocketMessage = (
   trpc: ReturnType<typeof useTRPC>,
 ) => {
   switch (message.event) {
-    case 'add-new-player':
+    case 'add-new-player': {
+      const body = parsePlayerBody(message.body);
       queryClient.cancelQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
       });
       queryClient.setQueryData(
         trpc.tournament.playersIn.queryKey({ tournamentId }),
         (cache) => {
-          if (cache) return cache.concat(message.body);
+          if (cache) return cache.concat(body);
         },
       );
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
       });
       break;
-    case 'add-existing-player':
+    }
+    case 'add-existing-player': {
+      const body = parsePlayerBody(message.body);
       queryClient.cancelQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
       });
@@ -44,13 +53,13 @@ export const handleSocketMessage = (
       queryClient.setQueryData(
         trpc.tournament.playersIn.queryKey({ tournamentId }),
         (cache) => {
-          if (cache) return cache.concat(message.body);
+          if (cache) return cache.concat(body);
         },
       );
       queryClient.setQueryData(
         trpc.tournament.playersOut.queryKey({ tournamentId }),
         (cache) => {
-          if (cache) return cache.filter((pl) => pl.id !== message.body.id);
+          if (cache) return cache.filter((pl) => pl.id !== body.id);
         },
       );
       queryClient.invalidateQueries({
@@ -63,42 +72,43 @@ export const handleSocketMessage = (
         queryKey: trpc.tournament.info.queryKey({ tournamentId }),
       });
       break;
+    }
+    case 'edit-team-player': {
+      const body = parsePlayerBody(message.body);
+      queryClient.cancelQueries({
+        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+      });
+      queryClient.setQueryData(
+        trpc.tournament.playersIn.queryKey({ tournamentId }),
+        (cache) => {
+          if (!cache) return cache;
+          const result = cache.map((p) =>
+            p.id === message.previousId ? body : p,
+          );
+          if (body.id !== message.previousId) {
+            return result.filter(
+              (p) => p.id !== body.id || (p.pairPlayers?.length ?? 0) > 0,
+            );
+          }
+          return result;
+        },
+      );
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
+      });
+      break;
+    }
     case 'remove-player':
       queryClient.cancelQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
       });
-      const addedPlayers = queryClient.getQueryData(
-        trpc.tournament.playersIn.queryKey({ tournamentId }),
-      );
-      if (!addedPlayers) break;
-      const removedPlayer = addedPlayers.find(
-        (player: PlayerTournamentModel) => player.id === message.id,
-      );
-
       queryClient.setQueryData(
         trpc.tournament.playersIn.queryKey({ tournamentId }),
         (cache) => cache && cache.filter((player) => player.id !== message.id),
       );
-      if (removedPlayer) {
-        const removedPlayerDb: PlayerWithUsernameModel = {
-          id: removedPlayer.id,
-          nickname: removedPlayer.nickname,
-          realname: removedPlayer.realname ?? null,
-          rating: removedPlayer.rating,
-          ratingPeak: null,
-          clubId: '',
-          userId: null,
-          lastSeenAt: new Date(),
-          ratingDeviation: 0,
-          ratingVolatility: 0,
-          ratingLastUpdateAt: new Date(),
-          username: null,
-        };
-        queryClient.setQueryData(
-          trpc.tournament.playersOut.queryKey({ tournamentId }),
-          (cache) => cache && cache.concat(removedPlayerDb),
-        );
-      }
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
       });

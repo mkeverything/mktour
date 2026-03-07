@@ -21,9 +21,22 @@ export const tournamentSchema = createSelectSchema(tournaments, {
   format: tournamentFormatEnum,
   type: tournamentTypeEnum,
 });
+const pairMemberSchema = z.object({
+  id: z.string(),
+  nickname: z.string(),
+});
+
+const gamePairSideSchema = z.tuple([pairMemberSchema, pairMemberSchema]);
+
+export const gamePairMembersSchema = z.object({
+  white: gamePairSideSchema,
+  black: gamePairSideSchema,
+});
+
 export const gameSchema = createSelectSchema(games).extend({
   whiteNickname: z.string(),
   blackNickname: z.string(),
+  pairMembers: gamePairMembersSchema.nullable(),
   roundName: roundNameEnum.nullable(),
   result: gameResultEnum.nullable(),
 });
@@ -113,6 +126,46 @@ export const tournamentCreateInputSchema = z.object({
   date: z.string(),
 });
 
+export const addDoublesTeamSchema = z
+  .object({
+    nickname: z
+      .string()
+      .trim()
+      .min(2, { error: 'min nickname length' })
+      .max(30, { error: 'max nickname length' }),
+    firstPlayerId: z.string(),
+    secondPlayerId: z.string(),
+  })
+  .refine((value) => value.firstPlayerId !== value.secondPlayerId, {
+    path: ['secondPlayerId'],
+    message: 'team players should be different',
+  });
+
+export const editDoublesTeamSchema = z
+  .object({
+    currentTeamPlayerId: z.string(),
+    nickname: z
+      .string()
+      .trim()
+      .min(2, { error: 'min nickname length' })
+      .max(30, { error: 'max nickname length' }),
+    firstPlayerId: z.string(),
+    secondPlayerId: z.string(),
+  })
+  .refine((value) => value.firstPlayerId !== value.secondPlayerId, {
+    path: ['secondPlayerId'],
+    message: 'team players should be different',
+  });
+
+/** form schema: nickname optional (derive on submit when empty). api still requires min(2). */
+export const addDoublesTeamFormSchema = addDoublesTeamSchema.safeExtend({
+  nickname: z.string().trim().max(30, { error: 'max nickname length' }),
+});
+
+export const editDoublesTeamFormSchema = editDoublesTeamSchema.safeExtend({
+  nickname: z.string().trim().max(30, { error: 'max nickname length' }),
+});
+
 export type TournamentInfoModel = z.infer<typeof tournamentInfoSchema>;
 export type TournamentWithClubModel = z.infer<typeof tournamentWithClubSchema>;
 export type TournamentAuthStatusModel = z.infer<
@@ -127,8 +180,11 @@ export type TournamentCreateInputModel = z.infer<
 >;
 
 export type GameModel = z.infer<typeof gameSchema>;
+export type GamePairMembersModel = z.infer<typeof gamePairMembersSchema>;
 export type GameInsertModel = z.infer<typeof gamesInsertSchema>;
 export type GameUpdateModel = z.infer<typeof gamesUpdateSchema>;
+export type AddDoublesTeamModel = z.infer<typeof addDoublesTeamSchema>;
+export type EditDoublesTeamModel = z.infer<typeof editDoublesTeamSchema>;
 
 export type PlayerToTournamentModel = z.infer<typeof playerToTournamentSchema>;
 export type PlayerToTournamentInsertModel = z.infer<

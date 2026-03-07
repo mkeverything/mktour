@@ -129,7 +129,10 @@ export const generatePlayerModel = mock(() => {
     isOut: DEFAULT_IS_EXITED,
     place: DEFAULT_PLACE,
     pairingNumber: null,
+    addedAt: null,
+    teamNickname: null,
     username: null,
+    pairPlayers: null,
   };
 
   return randomPlayer;
