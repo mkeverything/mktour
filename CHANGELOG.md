@@ -1,3 +1,24 @@
+# [1.4.0](https://github.com/mkeverything/mktour/compare/v1.3.1...v1.4.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* drawer-headers when adding players to a double ([ea800de](https://github.com/mkeverything/mktour/commit/ea800de514ce01efc5278f2ac980d2254583640f))
+* not splitting cyrillic chars ([3d0d8e0](https://github.com/mkeverything/mktour/commit/3d0d8e00d0c3521051c45a1737779cf8e3ab2caf))
+* prevent recreating addedAt on edit 9which broke sorting) ([ddb9ef1](https://github.com/mkeverything/mktour/commit/ddb9ef1d3042657caa432e63cedcaa806e29c44d))
+* prevent weird states restoring nickname of added player ([de26f69](https://github.com/mkeverything/mktour/commit/de26f69e731e2396c4354dff50629d503d6fd624))
+* ptt timestamp `addedAt` is now created on the client ([026c901](https://github.com/mkeverything/mktour/commit/026c901ab89fd0049fb83fc860554491a3d7cb51))
+
+
+### Features
+
+*  club-scoped search ([1a1f16c](https://github.com/mkeverything/mktour/commit/1a1f16cbf66a85f10aa4b9a7007ff86d4ddeb9a0))
+* **doubles:** keep `add player drawer` open to select second player immediately after the first one ([7359667](https://github.com/mkeverything/mktour/commit/7359667c65171249853f56ee01c17c5a7ccbb05d))
+* implementation of doubles tournament ([8c6a3c5](https://github.com/mkeverything/mktour/commit/8c6a3c59e3b5d0dd29f735711bb284bb2b242fad))
+* key controls '<' and '>' to go through rounds ([9e34bb4](https://github.com/mkeverything/mktour/commit/9e34bb4361e112d01b051c161ec3858c7cec9e74))
+* optimistic updates and proper state managing for doubles tournament dashboard ([8b4b4eb](https://github.com/mkeverything/mktour/commit/8b4b4eb7cf844231292162cac7cae6d2e6e2c9d5))
+* websocket messages for doubles dashboard ([746b8b4](https://github.com/mkeverything/mktour/commit/746b8b47f133d15b13cd860df07790547d65beff))
+
 ## [1.3.1](https://github.com/mkeverything/mktour/compare/v1.3.0...v1.3.1) (2026-03-04)
 
 ### Bug Fixes
