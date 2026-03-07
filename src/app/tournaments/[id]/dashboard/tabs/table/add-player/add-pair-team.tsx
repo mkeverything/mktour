@@ -305,6 +305,10 @@ const AddPairTeam = ({
           onPlayerSelected={handlePlayerSelected}
           onPlayerCreated={handlePlayerCreated}
           showFakerButton={false}
+          excludePlayerIds={[
+            selectedPlayers.first?.id,
+            selectedPlayers.second?.id,
+          ].filter((id): id is string => id != null)}
         />
       </SideDrawer>
     </>

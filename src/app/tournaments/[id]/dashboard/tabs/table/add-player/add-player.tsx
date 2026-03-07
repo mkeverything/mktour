@@ -20,8 +20,10 @@ const AddPlayer = ({
   setValue,
   handleClose,
   onPlayerSelected,
+  excludePlayerIds,
 }: DrawerProps & {
   onPlayerSelected?: (_player: PlayerWithUsernameModel) => void;
+  excludePlayerIds?: string[];
 }) => {
   const { id } = useParams<{ id: string }>();
   const possiblePlayers = useTournamentPossiblePlayers(id);
@@ -33,8 +35,12 @@ const AddPlayer = ({
     sendJsonMessage,
   );
   const t = useTranslations('Tournament.AddPlayer');
+  const excludeSet = excludePlayerIds?.length
+    ? new Set(excludePlayerIds)
+    : null;
   const filteredPlayers =
     possiblePlayers.data?.filter((player) => {
+      if (excludeSet?.has(player.id)) return false;
       if (!value) return true;
 
       const search = value.toLowerCase();
@@ -113,7 +119,7 @@ const AddPlayer = ({
         placeholder={t('search')}
         onChange={(e) => setValue(e.target.value)}
       />
-      {possiblePlayers.data?.length === 0 && (
+      {filteredPlayers.length === 0 && (
         <p className="text-muted-foreground px-8 pt-8 text-center text-sm text-balance">
           {t('no players')}
         </p>

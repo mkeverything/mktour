@@ -18,6 +18,7 @@ const AddPlayerDrawerContent = ({
   onPlayerSelected,
   onPlayerCreated,
   showFakerButton = true,
+  excludePlayerIds,
 }: AddPlayerDrawerContentProps) => {
   const t = useTranslations('Tournament.AddPlayer');
 
@@ -56,6 +57,7 @@ const AddPlayerDrawerContent = ({
           setValue={setValue}
           handleClose={handleClose}
           onPlayerSelected={onPlayerSelected}
+          excludePlayerIds={excludePlayerIds}
         />
       )}
     </>
@@ -72,6 +74,7 @@ type AddPlayerDrawerContentProps = {
   onPlayerSelected?: (_player: PlayerWithUsernameModel) => void;
   onPlayerCreated?: (_player: PlayerWithUsernameModel) => void;
   showFakerButton?: boolean;
+  excludePlayerIds?: string[];
 };
 
 export default AddPlayerDrawerContent;
