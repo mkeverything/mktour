@@ -430,6 +430,7 @@
       "added players error": "простите! не получилось загрузить игроков",
       "loading": "идёт загрузка...",
       "name column": "имя <small>({count} {count, plural, one {игрок} few {игрока} many {игроков} other {игроков}})</small>",
+      "name column team": "имя <small>({count} {count, plural, one {команда} few {команды} many {команд} other {команд}})</small>",
       "Stats": {
         "full": {
           "wins": "победы",

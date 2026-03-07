@@ -429,6 +429,7 @@
       "added players error": "sorry! couldn't get added players from the server",
       "loading": "loading...",
       "name column": "name <small>({count} {count, plural, one {player} other {players}})</small>",
+      "name column team": "name <small>({count} {count, plural, one {team} other {teams}})</small>",
       "Stats": {
         "full": {
           "wins": "wins",
