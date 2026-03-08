@@ -154,7 +154,8 @@
     "dashboard": "no data",
     "user": "user not found",
     "no data": "no data",
-    "notifications": "no notifications"
+    "notifications": "no notifications",
+    "clubs": "no clubs yet"
   },
   "Profile": {
     "rating": "lichess blitz rating",

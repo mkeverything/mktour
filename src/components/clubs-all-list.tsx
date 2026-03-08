@@ -28,7 +28,7 @@ export default function ClubsAllList() {
   if (!clubs?.pages[0].clubs.length) {
     return (
       <div className="mk-list">
-        <Empty>no clubs yet</Empty>
+        <Empty messageId="clubs" />
       </div>
     );
   }
