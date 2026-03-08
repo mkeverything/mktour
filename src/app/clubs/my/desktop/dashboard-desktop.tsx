@@ -42,7 +42,7 @@ export default function ClubDashboardDesktop({
       <div className="mk-container">
         <ClubMain {...tabProps} />
       </div>
-      <div className="gap-mk-2 grid size-full auto-rows-[512px] grid-cols-3">
+      <div className="gap-mk-2 grid size-full auto-rows-[512px] grid-cols-3 px-8">
         <div className="gap-mk flex flex-col">
           <span className="text-sm">
             <FormattedMessage id="Club.Dashboard.tournaments" />
