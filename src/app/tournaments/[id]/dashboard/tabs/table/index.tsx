@@ -128,7 +128,7 @@ const TournamentTable: FC = ({}) => {
     ),
   };
 
-  const nameColumnIntl = `name column ${type !== 'solo' && 'team'}`;
+  const nameColumnIntl = type !== 'solo' ? 'name column team' : 'name column';
 
   return (
     <div className="mb-20 w-full">
