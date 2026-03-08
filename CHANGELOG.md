@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/mkeverything/mktour/compare/v1.5.0...v1.5.1) (2026-03-08)
+
+
+### Bug Fixes
+
+* missing intl ([c1cf1a3](https://github.com/mkeverything/mktour/commit/c1cf1a3624a2a3b9adf94f3c3c8f7f62a30e3804))
+
 # [1.5.0](https://github.com/mkeverything/mktour/compare/v1.4.1...v1.5.0) (2026-03-08)
 
 
