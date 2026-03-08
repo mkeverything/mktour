@@ -21,5 +21,5 @@ export function deriveTeamNickname(
     secondNickname.split(SEPARATOR_REGEX).filter(Boolean)[0]?.trim() ||
     secondNickname.trim() ||
     '?';
-  return `${firstPart} + ${secondPart}`.slice(0, MAX_TEAM_NICKNAME_LENGTH);
+  return `${firstPart}, ${secondPart}`.slice(0, MAX_TEAM_NICKNAME_LENGTH);
 }

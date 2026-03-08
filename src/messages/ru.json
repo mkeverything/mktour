@@ -430,6 +430,7 @@
       "added players error": "простите! не получилось загрузить игроков",
       "loading": "идёт загрузка...",
       "name column": "имя <small>({count} {count, plural, one {игрок} few {игрока} many {игроков} other {игроков}})</small>",
+      "name column team": "имя <small>({count} {count, plural, one {команда} few {команды} many {команд} other {команд}})</small>",
       "Stats": {
         "full": {
           "wins": "победы",
@@ -508,7 +509,18 @@
     "make tournament": "сделать турнир",
     "sign in with lichess": "войти через личес",
     "big text 1": "как провести шахматный турнир",
-    "big text 2": "как провести шахматный турнир проще всего"
+    "big text 2": "как провести шахматный турнир проще всего",
+    "featured tournaments": "избранные турниры",
+    "popular clubs": "популярные клубы",
+    "my clubs": "мои клубы",
+    "my tournaments": "мои турниры",
+    "upcoming tournaments": "предстоящие турниры",
+    "your club": "ваш клуб",
+    "recent tournaments": "недавние турниры",
+    "see all": "все",
+    "club dashboard": "панель клуба",
+    "new club": "новый клуб",
+    "quick links": "быстрые ссылки"
   },
   "TeamJoinToaster": {
     "user refused": "очень жаль... надеемся, что когда-нибудь вы к нам присоединитесь!",

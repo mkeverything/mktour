@@ -7,6 +7,10 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
+import { db } from '@/server/db';
+import { clubs } from '@/server/db/schema/clubs';
+import { players } from '@/server/db/schema/players';
+import { tournaments as tournamentsTable } from '@/server/db/schema/tournaments';
 import getAllClubManagers, {
   addClubManager,
   changeClubNotificationStatus,
@@ -47,15 +51,58 @@ import {
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
+import { count, desc, eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
 export const clubRouter = createTRPCRouter({
   all: publicProcedure
     .meta(meta.clubsAll)
+    .input(
+      z.object({
+        cursor: z.number().nullish(),
+        limit: z.number().min(1).max(100).optional().default(10),
+      }),
+    )
+    .output(
+      z.object({
+        clubs: z.array(clubsSelectSchema),
+        nextCursor: z.number().nullable(),
+      }),
+    )
+    .query(async ({ input }) => {
+      return await getAllClubs({
+        limit: input.limit,
+        cursor: input.cursor ?? undefined,
+      });
+    }),
+  publicPopular: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(10).optional().default(5),
+      }),
+    )
     .output(z.array(clubsSelectSchema))
-    .query(async () => {
-      return await getAllClubs();
+    .query(async ({ input }) => {
+      const { limit } = input;
+
+      const results = await db
+        .select({
+          id: clubs.id,
+          name: clubs.name,
+          description: clubs.description,
+          createdAt: clubs.createdAt,
+          lichessTeam: clubs.lichessTeam,
+          allowPlayersSetResults: clubs.allowPlayersSetResults,
+        })
+        .from(clubs)
+        .leftJoin(tournamentsTable, eq(clubs.id, tournamentsTable.clubId))
+        .leftJoin(players, eq(clubs.id, players.clubId))
+        .groupBy(clubs.id)
+        .orderBy(desc(count(tournamentsTable.id)), desc(count(players.id)))
+        .limit(limit);
+
+      return results;
     }),
   create: protectedProcedure
     .meta(meta.clubCreate)

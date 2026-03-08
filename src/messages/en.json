@@ -429,6 +429,7 @@
       "added players error": "sorry! couldn't get added players from the server",
       "loading": "loading...",
       "name column": "name <small>({count} {count, plural, one {player} other {players}})</small>",
+      "name column team": "name <small>({count} {count, plural, one {team} other {teams}})</small>",
       "Stats": {
         "full": {
           "wins": "wins",
@@ -507,7 +508,18 @@
     "make tournament": "make tournament",
     "sign in with lichess": "sign in with lichess",
     "big text 1": "organize any chess tournament",
-    "big text 2": "organize any chess tournament the easy way"
+    "big text 2": "organize any chess tournament the easy way",
+    "featured tournaments": "featured tournaments",
+    "popular clubs": "popular clubs",
+    "my clubs": "my clubs",
+    "my tournaments": "my tournaments",
+    "upcoming tournaments": "upcoming tournaments",
+    "your club": "your club",
+    "recent tournaments": "recent tournaments",
+    "see all": "see all",
+    "club dashboard": "club dashboard",
+    "new club": "new club",
+    "quick links": "quick links"
   },
   "TeamJoinToaster": {
     "user refused": "too bad... we hope you join us one day!",

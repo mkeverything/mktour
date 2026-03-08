@@ -59,6 +59,7 @@ const TournamentTable: FC = ({}) => {
   const hasStarted = !!tournament.data?.tournament.startedAt;
   const hasEnded = !!tournament.data?.tournament.closedAt;
   const { data: user } = useAuth();
+  const type = tournament.data?.tournament.type;
 
   const allGames = useTournamentGames(id);
 
@@ -127,6 +128,8 @@ const TournamentTable: FC = ({}) => {
     ),
   };
 
+  const nameColumnIntl = type !== 'solo' ? 'name column team' : 'name column';
+
   return (
     <div className="mb-20 w-full">
       <Table className="pt-0">
@@ -134,7 +137,7 @@ const TournamentTable: FC = ({}) => {
           <TableRow>
             <TableHeadStyled className="text-center">#</TableHeadStyled>
             <TableHeadStyled className="w-full min-w-10 p-0">
-              {t.rich('name column', {
+              {t.rich(nameColumnIntl, {
                 count: players.data?.length ?? 0,
                 small: (chunks) =>
                   !!players.data?.length && <small>{chunks}</small>,
@@ -273,7 +276,7 @@ const Status: FC<
       </div>
       {pairPlayers.length === 2 && (
         <small className="text-muted-foreground text-2xs truncate">
-          {pairPlayers[0].nickname} + {pairPlayers[1].nickname}
+          {pairPlayers[0].nickname}, {pairPlayers[1].nickname}
         </small>
       )}
     </div>
