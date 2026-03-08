@@ -115,7 +115,7 @@ const PlayerDrawer: FC<{
             <DestructiveButton
               hasEnded={hasEnded}
               hasStarted={hasStarted}
-              player={player}
+              // player={player}
               handleDelete={handleDelete}
               closeDrawer={closeDrawer}
             />
@@ -165,12 +165,13 @@ const DestructiveButton = ({
   hasStarted,
   handleDelete,
   closeDrawer,
+  // player,
 }: {
   hasEnded: boolean;
   hasStarted: boolean;
-  player: PlayerTournamentModel;
   handleDelete: () => void;
   closeDrawer: () => void;
+  // player: PlayerTournamentModel;
 }) => {
   if (hasEnded || hasStarted) return null; // FIXME add withdrawal option
   // if (hasEnded) return null;
