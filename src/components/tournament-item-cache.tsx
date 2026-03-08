@@ -46,7 +46,7 @@ const TournamentItemCacheIteratee = ({ club, tournament }: Props) => (
 type Props = { tournament: TournamentModel; club?: ClubModel };
 
 export default async function TournamentsAllCache() {
-  const allTournaments = await publicCaller.tournament.all();
+  const { tournaments: allTournaments } = await publicCaller.tournament.all({});
   cacheTag(CACHE_TAGS.ALL_TOURNAMENTS);
 
   return (

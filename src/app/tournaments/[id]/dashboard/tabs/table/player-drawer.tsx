@@ -3,10 +3,7 @@ import AddPairTeam, {
   type PairTeamInitialValues,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-pair-team';
 import PairPlayerCard from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
-import {
-  DeleteButton,
-  WithdrawButtonWithConfirmation,
-} from '@/app/tournaments/[id]/dashboard/tabs/table/destructive-buttons';
+import { DeleteButton } from '@/app/tournaments/[id]/dashboard/tabs/table/destructive-buttons';
 import FormattedMessage from '@/components/formatted-message';
 import { useTournamentEditPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-edit-pair-team';
 import {
@@ -65,7 +62,14 @@ const PlayerDrawer: FC<{
       <Content>
         <Header className="mx-auto">
           <div className="flex items-center justify-start gap-4">
-            <Title>{player.nickname}</Title>
+            <Title className="flex items-baseline gap-2">
+              {player.nickname}
+              {!isDoublesTeam && player.rating != null && (
+                <span className="text-muted-foreground text-sm font-normal">
+                  {player.rating}
+                </span>
+              )}
+            </Title>
             {canEditTeam && (
               <Button
                 size="icon"
@@ -111,7 +115,7 @@ const PlayerDrawer: FC<{
             <DestructiveButton
               hasEnded={hasEnded}
               hasStarted={hasStarted}
-              player={player}
+              // player={player}
               handleDelete={handleDelete}
               closeDrawer={closeDrawer}
             />
@@ -159,21 +163,27 @@ const PlayerDrawer: FC<{
 const DestructiveButton = ({
   hasEnded,
   hasStarted,
-  player,
   handleDelete,
   closeDrawer,
+  // player,
 }: {
   hasEnded: boolean;
   hasStarted: boolean;
-  player: PlayerTournamentModel;
   handleDelete: () => void;
   closeDrawer: () => void;
+  // player: PlayerTournamentModel;
 }) => {
-  if (hasEnded) return null;
-  // prettier-ignore
-  return hasStarted 
-      ? <WithdrawButtonWithConfirmation selectedPlayer={player} />
-      : <DeleteButton handleDelete={() => { closeDrawer(); handleDelete() }} />;
+  if (hasEnded || hasStarted) return null; // FIXME add withdrawal option
+  // if (hasEnded) return null;
+  // if (hasStarted) return <WithdrawButtonWithConfirmation selectedPlayer={player} />
+  return (
+    <DeleteButton
+      handleDelete={() => {
+        closeDrawer();
+        handleDelete();
+      }}
+    />
+  );
 };
 
 export default PlayerDrawer;
