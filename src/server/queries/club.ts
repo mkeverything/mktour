@@ -51,3 +51,24 @@ export const getUserClubPlayer = async ({
 
   return player ?? null;
 };
+
+export const getPublicPopularClubs = async (limit: number) => {
+  return await db
+    .select({
+      id: clubs.id,
+      name: clubs.name,
+      description: clubs.description,
+      createdAt: clubs.createdAt,
+      lichessTeam: clubs.lichessTeam,
+      // allowPlayersSetResults: clubs.allowPlayersSetResults, // this is internal setting, why to include here?
+    })
+    .from(clubs)
+    .leftJoin(tournamentsTable, eq(clubs.id, tournamentsTable.clubId))
+    .leftJoin(players, eq(clubs.id, players.clubId))
+    .groupBy(clubs.id)
+    .orderBy(
+      desc(countDistinct(tournamentsTable.id)),
+      desc(countDistinct(players.id)),
+    )
+    .limit(limit);
+};

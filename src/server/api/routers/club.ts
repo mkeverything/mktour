@@ -7,10 +7,6 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
-import { db } from '@/server/db';
-import { clubs } from '@/server/db/schema/clubs';
-import { players } from '@/server/db/schema/players';
-import { tournaments as tournamentsTable } from '@/server/db/schema/tournaments';
 import getAllClubManagers, {
   addClubManager,
   changeClubNotificationStatus,
@@ -25,6 +21,7 @@ import {
   getClubInfo,
   getClubPlayers,
   getUserClubPlayer,
+  getPublicPopularClubs,
 } from '@/server/queries/club';
 import getAllClubs from '@/server/queries/get-all-clubs';
 import getClubNotifications from '@/server/queries/get-club-notifications';
@@ -84,28 +81,7 @@ export const clubRouter = createTRPCRouter({
     )
     .output(z.array(clubsSelectSchema))
     .query(async ({ input }) => {
-      const { limit } = input;
-
-      const results = await db
-        .select({
-          id: clubs.id,
-          name: clubs.name,
-          description: clubs.description,
-          createdAt: clubs.createdAt,
-          lichessTeam: clubs.lichessTeam,
-          allowPlayersSetResults: clubs.allowPlayersSetResults,
-        })
-        .from(clubs)
-        .leftJoin(tournamentsTable, eq(clubs.id, tournamentsTable.clubId))
-        .leftJoin(players, eq(clubs.id, players.clubId))
-        .groupBy(clubs.id)
-        .orderBy(
-          desc(countDistinct(tournamentsTable.id)),
-          desc(countDistinct(players.id)),
-        )
-        .limit(limit);
-
-      return results;
+      return await getPublicPopularClubs(input.limit);
     }),
   create: protectedProcedure
     .meta(meta.clubCreate)
