@@ -99,7 +99,10 @@ export const clubRouter = createTRPCRouter({
         .leftJoin(tournamentsTable, eq(clubs.id, tournamentsTable.clubId))
         .leftJoin(players, eq(clubs.id, players.clubId))
         .groupBy(clubs.id)
-        .orderBy(desc(count(tournamentsTable.id)), desc(count(players.id)))
+        .orderBy(
+          desc(countDistinct(tournamentsTable.id)),
+          desc(countDistinct(players.id)),
+        )
         .limit(limit);
 
       return results;
