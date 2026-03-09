@@ -32,8 +32,12 @@ const fabTabMap: Record<DashboardContextType['currentTab'], ReactNode> = {
   table: <AddPlayerDrawer />,
   games: (
     <>
-      <ShuffleFab />
-      <AddPlayerDrawer fabId="tournament-add-player-fab" />
+      <div className="absolute right-0 bottom-18">
+        <ShuffleFab />
+      </div>
+      <div className="absolute right-0">
+        <AddPlayerDrawer />
+      </div>
     </>
   ),
 };

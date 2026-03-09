@@ -116,7 +116,7 @@ const GamesContent: FC<GamesContentProps> = ({
           <RoundBracketList games={roundGames ?? []} players={players} />
         )}
         {!tournament.startedAt && status === 'organizer' && (
-          <div className="absolute right-18 bottom-0">
+          <div className="absolute right-18 bottom-0 max-md:hidden">
             <AddPlayerDrawer fabId="tournament-add-player-fab" />
           </div>
         )}
