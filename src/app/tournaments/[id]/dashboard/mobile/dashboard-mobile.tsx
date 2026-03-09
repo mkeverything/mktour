@@ -73,11 +73,17 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
         setMockMode,
       }}
     >
-      <TabsContainer currentTab={currentTab} setCurrentTab={setCurrentTab} />
+      <TabsContainer
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        mockMode={mockMode}
+        setMockMode={setMockMode}
+      />
       <CarouselContainer
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         setScrolling={setScrolling}
+        mockMode={mockMode}
       />
       <FabProvider
         status={status}

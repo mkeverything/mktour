@@ -1,6 +1,9 @@
 'use client';
 
+import type { MockMode } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import EliminationBracketTree from '@/app/tournaments/[id]/dashboard/tabs/games/elimination-bracket-tree';
 import RoundActionButton from '@/app/tournaments/[id]/dashboard/tabs/games/round-action-button';
+import RoundBracketList from '@/app/tournaments/[id]/dashboard/tabs/games/round-bracket-list';
 import RoundGamesList from '@/app/tournaments/[id]/dashboard/tabs/games/round-games-list';
 import type { StandingsGroup } from '@/app/tournaments/[id]/dashboard/tabs/table/table-types';
 import { TournamentFormat } from '@/server/zod/enums';
@@ -10,12 +13,14 @@ import { FC, useMemo } from 'react';
 
 export interface GamesContentProps {
   roundGames: GameModel[] | undefined;
+  allGames?: GameModel[];
   standingsGroups: StandingsGroup[];
   players: PlayerTournamentModel[];
   roundNumber: number;
   tournament: TournamentModel | null | undefined;
   status: 'organizer' | 'player' | 'viewer';
   tournamentId: string;
+  mockMode: MockMode;
 }
 
 function filterGamesByGroup(
@@ -28,14 +33,19 @@ function filterGamesByGroup(
   );
 }
 
+const isElimination = (m: MockMode) =>
+  m === 'single_elim' || m === 'double_elim';
+
 const GamesContent: FC<GamesContentProps> = ({
   roundGames,
+  allGames,
   standingsGroups,
   players,
   roundNumber,
   tournament,
   status,
   tournamentId,
+  mockMode,
 }) => {
   const ongoingGames = useMemo(
     () => roundGames?.filter((g) => g.result === null).length ?? 0,
@@ -69,6 +79,9 @@ const GamesContent: FC<GamesContentProps> = ({
   );
 
   if (isGrouped) {
+    const GameList = isElimination(mockMode)
+      ? RoundBracketList
+      : RoundGamesList;
     return (
       <div className="mk-list px-mk md:px-mk-2 pt-2">
         {actionButton}
@@ -83,11 +96,26 @@ const GamesContent: FC<GamesContentProps> = ({
                 <h3 className="text-muted-foreground mb-2 text-sm font-medium">
                   {group.name}
                 </h3>
-                <RoundGamesList games={groupGames} players={group.players} />
+                <GameList games={groupGames} players={group.players} />
               </section>
             );
           })}
         </div>
+      </div>
+    );
+  }
+
+  if (isElimination(mockMode)) {
+    const treeGames =
+      allGames && allGames.length > 0 ? allGames : (roundGames ?? []);
+    return (
+      <div className="mk-list px-mk md:px-mk-2 pt-2">
+        {actionButton}
+        {treeGames.length > 0 ? (
+          <EliminationBracketTree games={treeGames} players={players} />
+        ) : (
+          <RoundBracketList games={roundGames ?? []} players={players} />
+        )}
       </div>
     );
   }

@@ -5,6 +5,7 @@ import GamesContent from '@/app/tournaments/[id]/dashboard/tabs/games/games-cont
 import RoundControls from '@/app/tournaments/[id]/dashboard/tabs/games/round-controls';
 import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
 import { generateMockGroups } from '@/app/tournaments/[id]/dashboard/tabs/standings-groups';
+import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
@@ -38,6 +39,9 @@ const Games: FC = () => {
     isLoading: isRoundLoading,
     isError: isRoundError,
   } = useTournamentRoundGames({ tournamentId: id, roundNumber: roundInView });
+  const { data: allGames } = useTournamentGames(id);
+  const isElimination =
+    mockMode === 'single_elim' || mockMode === 'double_elim';
   const t = useTranslations('Tournament.Round');
   const trpc = useTRPC();
   const now = new Date().getTime();
@@ -109,12 +113,14 @@ const Games: FC = () => {
       />
       <GamesContent
         roundGames={roundGames}
+        allGames={isElimination ? (allGames ?? undefined) : undefined}
         standingsGroups={standingsGroups}
         players={players}
         roundNumber={roundInView}
         tournament={data.tournament}
         status={status}
         tournamentId={id}
+        mockMode={mockMode}
       />
       {renderDrawer && <StartTournamentDrawer startedAt={startedAt} />}
     </div>

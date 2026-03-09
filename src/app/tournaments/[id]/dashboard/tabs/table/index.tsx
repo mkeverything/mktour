@@ -65,6 +65,10 @@ const TournamentTable: FC = () => {
     [players.data, mockMode],
   );
 
+  const isElimination =
+    mockMode === 'single_elim' || mockMode === 'double_elim';
+  if (isElimination) return null;
+
   const stats: Stat[] = STATS_WITH_TIEBREAK;
 
   if (players.isLoading || allGames.isLoading) {

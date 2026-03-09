@@ -17,6 +17,9 @@ import { TournamentAuthStatus } from '@/server/zod/enums';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
+const isElimination = (m: TabProps['mockMode']) =>
+  m === 'single_elim' || m === 'double_elim';
+
 const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   currentTab,
   session,
@@ -82,13 +85,15 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
           ref={containerRef}
           className="p-mk px-mk-2 flex flex-1 gap-2 overflow-hidden lg:flex-row"
         >
-          <Card className="bg-background relative size-full overflow-hidden">
-            <CardContent className="flex size-full flex-col overflow-y-auto p-0">
-              <TournamentTable />
-              <Fades from="from-background" to="to-background" />
-            </CardContent>
-            <AddPlayerDrawer />
-          </Card>
+          {!isElimination(mockMode) && (
+            <Card className="bg-background relative size-full overflow-hidden">
+              <CardContent className="flex size-full flex-col overflow-y-auto p-0">
+                <TournamentTable />
+                <Fades from="from-background" to="to-background" />
+              </CardContent>
+              <AddPlayerDrawer />
+            </Card>
+          )}
           <Card className="bg-background relative size-full overflow-hidden">
             <CardContent className="flex size-full flex-col overflow-y-auto p-0">
               <Games />

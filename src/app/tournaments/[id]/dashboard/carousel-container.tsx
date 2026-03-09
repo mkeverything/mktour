@@ -1,5 +1,5 @@
 import { DashboardContextType } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import tabs from '@/app/tournaments/[id]/dashboard/tabs';
+import { getTabsForMockMode } from '@/app/tournaments/[id]/dashboard/tabs';
 import useScrollableContainer from '@/components/hooks/use-scrollable-container';
 import {
   Carousel,
@@ -13,6 +13,7 @@ import {
   SetStateAction,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -20,27 +21,30 @@ const CarouselContainer: FC<CarouselProps> = ({
   currentTab,
   setCurrentTab,
   setScrolling,
+  mockMode,
 }) => {
   const [api, setApi] = useState<CarouselApi>();
-  const indexOfTab = tabs.findIndex((tab) => tab.title === currentTab);
+  const visibleTabs = useMemo(() => getTabsForMockMode(mockMode), [mockMode]);
+  const indexOfTab = visibleTabs.findIndex((tab) => tab.title === currentTab);
+  const indexToShow = indexOfTab >= 0 ? indexOfTab : 0;
 
   const handleSelect = useCallback(() => {
     if (!api) return;
     const num = api.selectedScrollSnap();
-    setCurrentTab(tabs[num].title);
-  }, [api, setCurrentTab]);
+    const tab = visibleTabs[num];
+    if (tab) setCurrentTab(tab.title as DashboardContextType['currentTab']);
+  }, [api, setCurrentTab, visibleTabs]);
 
   useEffect(() => {
     if (!api) return;
     api.on('select', handleSelect);
-    if (currentTab) api.scrollTo(indexOfTab);
-  }, [api, currentTab, indexOfTab, handleSelect]);
+    if (currentTab) api.scrollTo(indexToShow);
+  }, [api, currentTab, indexToShow, handleSelect]);
 
   return (
     <Carousel setApi={setApi} opts={{ loop: false }}>
-      {/* calculating content height to prevent carousel from overflow-y-scroll (screen - nav + controls) */}
       <CarouselContent className="h-[calc(100dvh-6rem)]">
-        {tabs.map((tab) => (
+        {visibleTabs.map((tab) => (
           <CarouselIteratee
             setScrolling={setScrolling}
             key={tab.title}
@@ -80,6 +84,7 @@ type CarouselProps = {
   currentTab: DashboardContextType['currentTab'];
   setCurrentTab: Dispatch<SetStateAction<DashboardContextType['currentTab']>>;
   setScrolling: Dispatch<SetStateAction<boolean>>;
+  mockMode: DashboardContextType['mockMode'];
 };
 
 export default CarouselContainer;

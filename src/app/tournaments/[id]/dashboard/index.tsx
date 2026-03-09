@@ -10,6 +10,9 @@ import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { TournamentAuthStatus } from '@/server/zod/enums';
 import { Dispatch, FC, SetStateAction, useContext, useState } from 'react';
 
+const isElimination = (m: MockMode) =>
+  m === 'single_elim' || m === 'double_elim';
+
 const Dashboard: FC<TournamentPageContentProps> = ({
   userId,
   session,
@@ -24,9 +27,12 @@ const Dashboard: FC<TournamentPageContentProps> = ({
   const { isDesktop } = useContext(MediaQueryContext);
   const Component = isDesktop ? DashboardDesktop : DashboardMobile;
 
+  const effectiveTab: DashboardContextType['currentTab'] =
+    isElimination(mockMode) && currentTab === 'table' ? 'games' : currentTab;
+
   return (
     <Component
-      currentTab={currentTab}
+      currentTab={effectiveTab}
       setCurrentTab={setCurrentTab}
       session={session}
       id={id}
