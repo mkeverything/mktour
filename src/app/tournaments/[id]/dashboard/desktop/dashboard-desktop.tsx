@@ -13,11 +13,12 @@ import Overlay from '@/components/overlay';
 import Fades from '@/components/ui-custom/fades';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { TournamentAuthStatus } from '@/server/zod/enums';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
-const isElimination = (m: TabProps['mockMode']) =>
+const isEliminationByMock = (m: TabProps['mockMode']) =>
   m === 'single_elim' || m === 'double_elim';
 
 const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
@@ -33,6 +34,7 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [roundInView, setRoundInView] = useState(currentRound || 1);
+  const { data: tournamentInfo } = useTournamentInfo(id);
   const { sendJsonMessage } = useDashboardWebsocket(
     session,
     id,
@@ -62,6 +64,11 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
     }
   };
 
+  const isEliminationFormat =
+    tournamentInfo?.tournament.format === 'single elimination' ||
+    tournamentInfo?.tournament.format === 'double elimination';
+  const hideTable = isEliminationFormat || isEliminationByMock(mockMode);
+
   return (
     <DashboardContext.Provider
       value={{
@@ -85,7 +92,7 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
           ref={containerRef}
           className="p-mk px-mk-2 flex flex-1 gap-2 overflow-hidden lg:flex-row"
         >
-          {!isElimination(mockMode) && (
+          {!hideTable && (
             <Card className="bg-background relative size-full overflow-hidden">
               <CardContent className="flex size-full flex-col overflow-y-auto p-0">
                 <TournamentTable />

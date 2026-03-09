@@ -9,7 +9,13 @@ import { useParams } from 'next/navigation';
 import { Dispatch, SetStateAction, useContext, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-const AddPlayerDrawer = () => {
+const AddPlayerDrawer = ({
+  fabId,
+  fabClassName,
+}: {
+  fabId?: string;
+  fabClassName?: string;
+}) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -56,9 +62,10 @@ const AddPlayerDrawer = () => {
     <>
       <Fab
         container={open || isAnimating ? document.body : undefined}
-        className={`${(open || isAnimating) && 'z-60 md:hidden'}`}
+        className={`${(open || isAnimating) && 'z-60 md:hidden'} ${fabClassName ?? ''}`}
         onClick={() => handleChange(!open)}
         icon={open ? X : UserPlus}
+        buttonProps={fabId ? { id: fabId } : undefined}
       />
       <SideDrawer
         open={open}

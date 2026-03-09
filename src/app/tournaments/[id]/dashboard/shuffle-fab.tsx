@@ -36,8 +36,7 @@ const ShuffleFab = () => {
   )
     return null;
 
-  if (players.data && players.data.length < 3)
-    return isDesktop ? null : <AddPlayerDrawer />;
+  if (players.data.length < 2) return isDesktop ? null : <AddPlayerDrawer />;
 
   const handleClick = () => {
     const newGames = generateRandomRoundGames({

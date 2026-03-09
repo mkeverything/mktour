@@ -11,11 +11,13 @@ const Fab: FC<FabProps> = ({
   disabled,
   container,
   className,
+  buttonProps,
 }) => {
   return (
     <PortalWrapper container={container}>
       <Button
-        className={`pointer-events-auto absolute right-4 bottom-4 z-40 size-16 rounded-full ${className}`}
+        {...buttonProps}
+        className={`pointer-events-auto absolute right-4 bottom-4 z-40 size-16 rounded-full ${className} ${buttonProps?.className ?? ''}`}
         variant="secondary"
         size="icon"
         onClick={onClick}
@@ -41,6 +43,10 @@ type FabProps = {
   disabled?: boolean;
   container?: HTMLElement | null;
   className?: React.ComponentProps<'button'>['className'];
+  buttonProps?: Omit<
+    React.ComponentProps<typeof Button>,
+    'onClick' | 'disabled' | 'size' | 'variant'
+  >;
 };
 
 export default Fab;

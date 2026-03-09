@@ -1,8 +1,9 @@
 'use client';
 
 import BracketGameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-game-item';
+import BracketGhostItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-ghost-item';
 import { PlayerTournamentModel } from '@/server/zod/players';
-import { GameModel } from '@/server/zod/tournaments';
+import type { GameModel } from '@/server/zod/tournaments';
 import { FC, useMemo } from 'react';
 
 export interface EliminationBracketTreeProps {
@@ -23,61 +24,245 @@ function groupGamesByRound(games: GameModel[]): Map<number, GameModel[]> {
   return byRound;
 }
 
+type RoundSlot = GameModel | null;
+
+function nextPowerOf2(n: number): number {
+  if (n <= 1) return 1;
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+}
+
+function countRoundsUpToFinal(firstSlotCount: number): number {
+  if (firstSlotCount <= 1) return 2;
+  let depth = 0;
+  let s = firstSlotCount;
+  while (s > 1) {
+    s = Math.floor(s / 2);
+    depth += 1;
+  }
+  return depth + 1;
+}
+
+function buildRoundSlots(byRound: Map<number, GameModel[]>): RoundSlot[][] {
+  const roundNumbers = [...byRound.keys()];
+  const minRound = roundNumbers.length > 0 ? Math.min(...roundNumbers) : 1;
+  const firstRoundGames = byRound.get(minRound) ?? [];
+  const firstSlotCount = Math.max(
+    2,
+    nextPowerOf2(Math.max(firstRoundGames.length, 1)),
+  );
+  const numRounds = countRoundsUpToFinal(firstSlotCount);
+  const rows: RoundSlot[][] = [];
+
+  const firstRow: RoundSlot[] = [...firstRoundGames];
+  while (firstRow.length < firstSlotCount) firstRow.push(null);
+  rows.push(firstRow);
+
+  let prevSlotCount = firstSlotCount;
+  for (let r = 1; r < numRounds; r++) {
+    const roundNum = minRound + r;
+    const games = byRound.get(roundNum) ?? [];
+    const isLastRound = r === numRounds - 1;
+    const slotCount = isLastRound
+      ? 2
+      : Math.max(1, Math.floor(prevSlotCount / 2));
+
+    const row: RoundSlot[] = [];
+    if (isLastRound && slotCount === 2) {
+      const finalGame = games.find((g) => g.roundName === 'final') ?? null;
+      const thirdGame =
+        games.find((g) => g.roundName === 'match_for_third') ?? null;
+      row.push(finalGame, thirdGame);
+    } else {
+      for (let i = 0; i < slotCount; i++) {
+        row.push(games[i] ?? null);
+      }
+    }
+    rows.push(row);
+    prevSlotCount = slotCount;
+  }
+  return rows;
+}
+
+function BracketConnectorHorizontal({
+  fromSlotCount,
+  toSlotCount,
+  className,
+}: {
+  fromSlotCount: number;
+  toSlotCount: number;
+  className?: string;
+}) {
+  const fromSlotHeight = 100 / fromSlotCount;
+  const toSlotHeight = 100 / toSlotCount;
+  const paths: string[] = [];
+  const midX = 50;
+  if (fromSlotCount === toSlotCount) {
+    if (fromSlotCount === 2) {
+      paths.push(
+        `M 0 25 L ${midX} 25 L ${midX} 50 L 100 25`,
+        `M 0 75 L ${midX} 75 L ${midX} 50 L 100 75`,
+      );
+    } else {
+      for (let i = 0; i < fromSlotCount; i++) {
+        const cy = (i + 0.5) * fromSlotHeight;
+        paths.push(`M 0 ${cy} L 100 ${cy}`);
+      }
+    }
+  } else {
+    for (let t = 0; t < toSlotCount; t++) {
+      const fromTop = (2 * t + 0.5) * fromSlotHeight;
+      const fromBottom = (2 * t + 1.5) * fromSlotHeight;
+      const toCenter = (t + 0.5) * toSlotHeight;
+      paths.push(
+        `M 0 ${fromTop} L ${midX} ${fromTop} L ${midX} ${toCenter} L 100 ${toCenter}`,
+        `M 0 ${fromBottom} L ${midX} ${fromBottom} L ${midX} ${toCenter}`,
+      );
+    }
+  }
+  return (
+    <div className={className} role="presentation">
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="text-muted-foreground/40 h-full w-full min-w-[32px]"
+      >
+        {paths.map((d, i) => (
+          <path
+            key={i}
+            d={d}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.5"
+            strokeDasharray="3 2"
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+const ROUND_LABELS: Record<string, string> = {
+  '1/128': '1/128',
+  '1/64': '1/64',
+  '1/32': '1/32',
+  '1/16': '1/16',
+  '1/8': '1/8',
+  quarterfinal: 'quarterfinal',
+  semifinal: 'semifinal',
+  final: 'final',
+  match_for_third: '3rd place',
+};
+
+function roundColumnLabel(
+  roundIndex: number,
+  slots: RoundSlot[],
+  roundNumber: number,
+): string {
+  const game = slots.find((s): s is GameModel => s !== null);
+  const name = game?.roundName;
+  if (name && name in ROUND_LABELS) return ROUND_LABELS[name];
+  return `round ${roundNumber}`;
+}
+
 const EliminationBracketTree: FC<EliminationBracketTreeProps> = ({
   games,
   players,
 }) => {
   const byRound = useMemo(() => groupGamesByRound(games), [games]);
-  const sortedRounds = useMemo(
-    () => [...byRound.keys()].sort((a, b) => a - b),
-    [byRound],
-  );
-  const maxCols = useMemo(() => {
-    const firstRound = sortedRounds[0];
-    if (firstRound === undefined) return 1;
-    return byRound.get(firstRound)?.length ?? 1;
-  }, [byRound, sortedRounds]);
+  const roundSlots = useMemo(() => buildRoundSlots(byRound), [byRound]);
 
-  if (sortedRounds.length === 0) return null;
+  if (roundSlots.length === 0) return null;
+
+  const roundNumbers = useMemo(() => {
+    const keys = [...byRound.keys()];
+    const minR = keys.length > 0 ? Math.min(...keys) : 1;
+    return Array.from({ length: roundSlots.length }, (_, i) => minR + i);
+  }, [byRound, roundSlots.length]);
+
+  const ITEM_H = 52;
+  const GAP = 8;
+  const baseSlots = roundSlots[0]?.length ?? 1;
+  const baseHeight = baseSlots * ITEM_H + Math.max(0, baseSlots - 1) * GAP;
 
   return (
-    <div
-      className="grid w-full gap-x-4 gap-y-6 py-2"
-      style={{
-        gridTemplateColumns: `repeat(${maxCols}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${sortedRounds.length}, auto)`,
-      }}
-    >
-      {sortedRounds.map((roundNum, rowIndex) => {
-        const roundGames = byRound.get(roundNum) ?? [];
-        const span = maxCols / roundGames.length;
-        return roundGames.map((game, i) => (
-          <div
-            key={game.id}
-            className="flex justify-center"
-            style={{
-              gridColumn: `${i * span + 1} / span ${span}`,
-              gridRow: rowIndex + 1,
-            }}
-          >
-            <div className="w-full max-w-[200px]">
-              <BracketGameItem
-                id={game.id}
-                result={game.result}
-                playerLeft={{
-                  whiteId: game.whiteId,
-                  whiteNickname: game.whiteNickname,
-                }}
-                playerRight={{
-                  blackId: game.blackId,
-                  blackNickname: game.blackNickname,
-                }}
-                roundNumber={game.roundNumber}
-              />
+    <div className="w-full overflow-auto py-2">
+      <div
+        className="inline-flex min-h-0 flex-row items-stretch gap-0"
+        style={{ minWidth: 'max-content' }}
+      >
+        {roundSlots.map((slots, colIndex) => {
+          const roundNum = roundNumbers[colIndex];
+          const isLast = colIndex === roundSlots.length - 1;
+          const nextSlotCount = isLast
+            ? 0
+            : (roundSlots[colIndex + 1]?.length ?? 0);
+          const label = roundColumnLabel(colIndex, slots, roundNum);
+          return (
+            <div key={colIndex} className="flex flex-row items-stretch gap-0">
+              <div className="flex min-w-[200px] flex-col gap-2 px-1">
+                <div className="text-muted-foreground shrink-0 px-1 pb-1 text-center text-xs font-medium">
+                  {label}
+                </div>
+                <div
+                  className="relative w-full max-w-[200px]"
+                  style={{ height: baseHeight }}
+                >
+                  {slots.map((slot, rowIndex) => {
+                    const yPct = ((rowIndex + 0.5) / slots.length) * 100;
+                    return (
+                      <div
+                        key={rowIndex}
+                        className="absolute right-0 left-0"
+                        style={{
+                          top: `${yPct}%`,
+                          transform: 'translateY(-50%)',
+                        }}
+                      >
+                        {slot ? (
+                          <BracketGameItem
+                            id={slot.id}
+                            result={slot.result}
+                            playerLeft={{
+                              whiteId: slot.whiteId,
+                              whiteNickname: slot.whiteNickname,
+                            }}
+                            playerRight={{
+                              blackId: slot.blackId,
+                              blackNickname: slot.blackNickname,
+                            }}
+                            roundNumber={slot.roundNumber}
+                          />
+                        ) : (
+                          <BracketGhostItem
+                            className={
+                              colIndex === 0
+                                ? 'pointer-events-none opacity-0'
+                                : undefined
+                            }
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {!isLast && nextSlotCount > 0 && (
+                <div className="grid w-10 shrink-0 grid-rows-[auto_1fr] gap-2">
+                  <div className="h-[18px]" />
+                  <BracketConnectorHorizontal
+                    fromSlotCount={slots.length}
+                    toSlotCount={nextSlotCount}
+                    className="h-full w-full"
+                  />
+                </div>
+              )}
             </div>
-          </div>
-        ));
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

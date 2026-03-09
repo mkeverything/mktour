@@ -40,8 +40,13 @@ const Games: FC = () => {
     isError: isRoundError,
   } = useTournamentRoundGames({ tournamentId: id, roundNumber: roundInView });
   const { data: allGames } = useTournamentGames(id);
+  const isEliminationFormat =
+    data?.tournament.format === 'single elimination' ||
+    data?.tournament.format === 'double elimination';
   const isElimination =
-    mockMode === 'single_elim' || mockMode === 'double_elim';
+    isEliminationFormat ||
+    mockMode === 'single_elim' ||
+    mockMode === 'double_elim';
   const t = useTranslations('Tournament.Round');
   const trpc = useTRPC();
   const now = new Date().getTime();
@@ -121,6 +126,7 @@ const Games: FC = () => {
         status={status}
         tournamentId={id}
         mockMode={mockMode}
+        isElimination={isElimination}
       />
       {renderDrawer && <StartTournamentDrawer startedAt={startedAt} />}
     </div>

@@ -21,6 +21,7 @@ export interface GamesContentProps {
   status: 'organizer' | 'player' | 'viewer';
   tournamentId: string;
   mockMode: MockMode;
+  isElimination: boolean;
 }
 
 function filterGamesByGroup(
@@ -29,12 +30,9 @@ function filterGamesByGroup(
 ): GameModel[] {
   const playerIds = new Set(group.players.map((p) => p.id));
   return games.filter(
-    (g) => playerIds.has(g.whiteId) || playerIds.has(g.blackId),
+    (g) => playerIds.has(g.whiteId) && playerIds.has(g.blackId),
   );
 }
-
-const isElimination = (m: MockMode) =>
-  m === 'single_elim' || m === 'double_elim';
 
 const GamesContent: FC<GamesContentProps> = ({
   roundGames,
@@ -46,6 +44,7 @@ const GamesContent: FC<GamesContentProps> = ({
   status,
   tournamentId,
   mockMode,
+  isElimination,
 }) => {
   const ongoingGames = useMemo(
     () => roundGames?.filter((g) => g.result === null).length ?? 0,
@@ -79,9 +78,7 @@ const GamesContent: FC<GamesContentProps> = ({
   );
 
   if (isGrouped) {
-    const GameList = isElimination(mockMode)
-      ? RoundBracketList
-      : RoundGamesList;
+    const GameList = isElimination ? RoundBracketList : RoundGamesList;
     return (
       <div className="mk-list px-mk md:px-mk-2 pt-2">
         {actionButton}
@@ -105,13 +102,15 @@ const GamesContent: FC<GamesContentProps> = ({
     );
   }
 
-  if (isElimination(mockMode)) {
+  if (isElimination) {
     const treeGames =
       allGames && allGames.length > 0 ? allGames : (roundGames ?? []);
+    const hasAnyGames = treeGames.length > 0;
+
     return (
       <div className="mk-list px-mk md:px-mk-2 pt-2">
         {actionButton}
-        {treeGames.length > 0 ? (
+        {hasAnyGames ? (
           <EliminationBracketTree games={treeGames} players={players} />
         ) : (
           <RoundBracketList games={roundGames ?? []} players={players} />
