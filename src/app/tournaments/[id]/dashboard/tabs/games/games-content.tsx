@@ -68,8 +68,6 @@ const GamesContent: FC<GamesContentProps> = ({
     />
   );
 
-  console.log(roundGames);
-
   if (isGrouped) {
     return (
       <div className="mk-list px-mk md:px-mk-2 pt-2">
