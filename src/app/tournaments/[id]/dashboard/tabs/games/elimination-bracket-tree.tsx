@@ -2,8 +2,7 @@
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import BracketGameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-game-item';
-import BracketGameItemEditable from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-game-item-editable';
-import BracketIncompleteItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-incomplete-item';
+import BracketEditableItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-editable-item';
 import BracketGhostItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-ghost-item';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { cn } from '@/lib/utils';
@@ -273,10 +272,10 @@ const EliminationBracketTree: FC<EliminationBracketTreeProps> = ({
                               roundNumber={slot.roundNumber}
                             />
                           ) : (
-                            <BracketGameItemEditable game={slot} />
+                            <BracketEditableItem game={slot} />
                           )
                         ) : byePlayer ? (
-                          <BracketIncompleteItem player={byePlayer} />
+                          <BracketEditableItem byePlayer={byePlayer} />
                         ) : (
                           <BracketGhostItem
                             className={cn(
