@@ -6,6 +6,15 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import z from 'zod';
 
 export const clubsSelectSchema = createSelectSchema(clubs);
+
+export const publicPopularClubSchema = clubsSelectSchema.pick({
+  id: true,
+  name: true,
+  description: true,
+  createdAt: true,
+  lichessTeam: true,
+});
+
 export const clubsToUsersSelectSchema = createSelectSchema(clubs_to_users, {
   status: statusInClubEnum,
 });

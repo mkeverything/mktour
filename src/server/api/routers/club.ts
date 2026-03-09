@@ -35,6 +35,7 @@ import {
   clubsInsertSchema,
   clubsSelectSchema,
   clubStatsSchema,
+  publicPopularClubSchema,
 } from '@/server/zod/clubs';
 import {
   clubIdInputSchema,
@@ -48,7 +49,6 @@ import {
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
-import { count, desc, eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
@@ -79,7 +79,7 @@ export const clubRouter = createTRPCRouter({
         limit: z.number().min(1).max(10).optional().default(5),
       }),
     )
-    .output(z.array(clubsSelectSchema))
+    .output(z.array(publicPopularClubSchema))
     .query(async ({ input }) => {
       return await getPublicPopularClubs(input.limit);
     }),

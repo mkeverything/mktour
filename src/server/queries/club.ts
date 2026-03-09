@@ -1,9 +1,10 @@
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
+import { tournaments } from '@/server/db/schema/tournaments';
 import { ClubModel } from '@/server/zod/clubs';
 import { PlayerModel } from '@/server/zod/players';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, countDistinct, desc, eq } from 'drizzle-orm';
 
 export const getClubInfo = async (id: ClubModel['id']) => {
   const data = (await db.select().from(clubs).where(eq(clubs.id, id)))?.at(0);
@@ -63,11 +64,11 @@ export const getPublicPopularClubs = async (limit: number) => {
       // allowPlayersSetResults: clubs.allowPlayersSetResults, // this is internal setting, why to include here?
     })
     .from(clubs)
-    .leftJoin(tournamentsTable, eq(clubs.id, tournamentsTable.clubId))
+    .leftJoin(tournaments, eq(clubs.id, tournaments.clubId))
     .leftJoin(players, eq(clubs.id, players.clubId))
     .groupBy(clubs.id)
     .orderBy(
-      desc(countDistinct(tournamentsTable.id)),
+      desc(countDistinct(tournaments.id)),
       desc(countDistinct(players.id)),
     )
     .limit(limit);
