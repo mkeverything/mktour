@@ -1,12 +1,16 @@
+import { caseWhen } from '@/lib/sql-case-when';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNotNull, isNull } from 'drizzle-orm';
 
-const ongoingFirst = sql`CASE WHEN ${tournaments.startedAt} IS NOT NULL AND ${tournaments.closedAt} IS NULL THEN 1 ELSE 0 END`;
+const ongoingFirst = caseWhen(
+  and(isNotNull(tournaments.startedAt), isNull(tournaments.closedAt)),
+  1,
+).else(0);
 
 export async function getPublicFeaturedTournaments(limit: number) {
   return await db
