@@ -3,6 +3,7 @@ import Graph from 'graphology';
 import type { ChessTournamentEntity } from '@/lib/pairing-generators/common-generator';
 import { getSwissColouredPair } from '@/lib/pairing-generators/swiss-generator/colouring';
 import { EDGE_WEIGHT_ATTRIBUTE } from '@/lib/pairing-generators/swiss-generator/matching/weighted-operations';
+import { compareNumeric } from '@/lib/pairing-generators/swiss-generator/ordering';
 import {
   canEntityReceivePAB,
   getTopscorers,
@@ -10,15 +11,12 @@ import {
   PAB_NODE_ID,
 } from '@/lib/pairing-generators/swiss-generator/quality-evaluation/evaluate';
 
-import type { WeightContext } from './types';
+import type { ScoreGroup, WeightContext } from './types';
 import type { CriterionMultipliers } from './weight-calculator';
 import {
   computePabEdgeWeight,
   computeRegularEdgeWeight,
 } from './weight-calculator';
-
-/** Maps score values to the count of players with that score. */
-type ScoregroupSizeMap = Map<number, number>;
 
 /** Default count when a scoregroup has not been seen yet. */
 const DEFAULT_SCOREGROUP_COUNT = 0;
@@ -27,25 +25,49 @@ const DEFAULT_SCOREGROUP_COUNT = 0;
 const GRAPH_TYPE = 'undirected' as const;
 
 /**
- * Computes the number of players at each score level.
+ * Compares two score groups by score in descending order (higher score first).
  *
- * Used by RANKING criterion to calculate ideal S1↔S2 pairing differences.
+ * Uses reversed argument order with compareNumeric for descending sort.
+ *
+ * @param firstGroup - First score group
+ * @param secondGroup - Second score group
+ * @returns Comparison result for sorting
+ */
+function compareScoreGroupByScoreDescending(
+  firstGroup: ScoreGroup,
+  secondGroup: ScoreGroup,
+): number {
+  return compareNumeric(secondGroup.score, firstGroup.score);
+}
+
+/**
+ * Computes score groups sorted descending by score.
+ *
+ * Counts players at each score level, then sorts brackets from highest to
+ * lowest score. Used by BRACKET_RANK (bracket index) and RANKING (group size).
  *
  * @param players - All players in the tournament
- * @returns Map from score to count of players with that score
+ * @returns Score groups sorted descending by score
  */
-function computeScoregroupSizes(
+function computeScoreGroups(
   players: readonly ChessTournamentEntity[],
-): ScoregroupSizeMap {
-  const sizes: ScoregroupSizeMap = new Map();
+): ScoreGroup[] {
+  const countByScore = new Map<number, number>();
 
   for (const player of players) {
     const currentCount =
-      sizes.get(player.entityScore) ?? DEFAULT_SCOREGROUP_COUNT;
-    sizes.set(player.entityScore, currentCount + 1);
+      countByScore.get(player.entityScore) ?? DEFAULT_SCOREGROUP_COUNT;
+    countByScore.set(player.entityScore, currentCount + 1);
   }
 
-  return sizes;
+  const scoreGroups: ScoreGroup[] = [];
+  for (const [score, count] of countByScore) {
+    scoreGroups.push({ score, count });
+  }
+
+  scoreGroups.sort(compareScoreGroupByScoreDescending);
+
+  return scoreGroups;
 }
 
 /**
@@ -61,7 +83,12 @@ export function createWeightContext(
   players: readonly ChessTournamentEntity[],
   roundNumber: number,
 ): WeightContext {
-  const scoregroupSizes = computeScoregroupSizes(players);
+  const scoreGroups = computeScoreGroups(players);
+
+  const scoregroupSizes = new Map<number, number>();
+  for (const group of scoreGroups) {
+    scoregroupSizes.set(group.score, group.count);
+  }
 
   return {
     roundNumber,
@@ -70,6 +97,8 @@ export function createWeightContext(
     maxPossibleScore: roundNumber - 1,
     hasOddPlayers: players.length % 2 === 1,
     scoregroupSizes,
+    scoreGroups,
+    numBrackets: scoreGroups.length,
   };
 }
 
