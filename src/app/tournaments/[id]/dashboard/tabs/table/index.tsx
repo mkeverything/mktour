@@ -8,7 +8,7 @@ import {
   STATS_WITH_TIEBREAK,
   type Stat,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/table-parts';
-import type { StandingsGroup } from '@/app/tournaments/[id]/dashboard/tabs/table/table-types';
+import { generateMockGroups } from '@/app/tournaments/[id]/dashboard/tabs/standings-groups';
 import { useTournamentRemovePlayer } from '@/components/hooks/mutation-hooks/use-tournament-remove-player';
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -30,7 +30,7 @@ const TournamentTable: FC = () => {
   const queryClient = useQueryClient();
   const players = useTournamentPlayers(id);
   const tournament = useTournamentInfo(id);
-  const { status, sendJsonMessage } = useContext(DashboardContext);
+  const { status, sendJsonMessage, mockMode } = useContext(DashboardContext);
   const removePlayers = useTournamentRemovePlayer(
     id,
     queryClient,
@@ -59,9 +59,10 @@ const TournamentTable: FC = () => {
     );
   }, [players.data, tournament.data, allGames.data, hasStarted]);
 
-  const standingsGroups = useMemo<StandingsGroup[] | null>(
-    () => generateMockGroups(players.data ?? []),
-    [players.data],
+  const standingsGroups = useMemo(
+    () =>
+      mockMode === 'group_stage' ? generateMockGroups(players.data ?? []) : [],
+    [players.data, mockMode],
   );
 
   const stats: Stat[] = STATS_WITH_TIEBREAK;
@@ -116,26 +117,6 @@ const TournamentTable: FC = () => {
     </div>
   );
 };
-
-function generateMockGroups(
-  players: PlayerTournamentModel[],
-): StandingsGroup[] {
-  const count = players.length > 1 ? players.length / 2 : 1;
-  const groups = players.reduce<StandingsGroup[]>((acc, player, index) => {
-    const groupIndex = Math.floor(index / count);
-    if (!acc[groupIndex]) {
-      acc[groupIndex] = {
-        id: groupIndex.toString(),
-        name: `Group ${groupIndex + 1}`,
-        players: [],
-        games: [],
-      };
-    }
-    acc[groupIndex].players.push(player);
-    return acc;
-  }, []);
-  return groups;
-}
 
 export type { StandingsGroup } from '@/app/tournaments/[id]/dashboard/tabs/table/table-types';
 export {

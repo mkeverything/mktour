@@ -407,7 +407,14 @@
       "number of rounds": "amount of rounds:",
       "unrated": "unrated",
       "save": "save",
-      "minimize": "minimize"
+      "minimize": "minimize",
+      "mock mode": "view mode",
+      "MockMode": {
+        "none": "real data",
+        "single_elim": "single elim (mock)",
+        "double_elim": "double elim (mock)",
+        "group_stage": "group stage (mock)"
+      }
     },
     "Results": {
       "1-0": "1 - 0",

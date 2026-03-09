@@ -25,6 +25,8 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   playerId,
   userId,
   currentRound,
+  mockMode,
+  setMockMode,
 }) => {
   const queryClient = useQueryClient();
   const [roundInView, setRoundInView] = useState(currentRound || 1);
@@ -69,6 +71,8 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
         selectedGameId,
         roundInView,
         setRoundInView,
+        mockMode,
+        setMockMode,
       }}
     >
       <Overlay open={!!selectedGameId} />

@@ -2,6 +2,8 @@ import { TournamentAuthStatus } from '@/server/zod/enums';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { createContext, Dispatch, SetStateAction } from 'react';
 
+export type MockMode = 'none' | 'single_elim' | 'double_elim' | 'group_stage';
+
 export const DashboardContext = createContext<DashboardContextType>({
   currentTab: 'main',
   sendJsonMessage: () => null,
@@ -12,6 +14,8 @@ export const DashboardContext = createContext<DashboardContextType>({
   setSelectedGameId: () => null,
   roundInView: 1,
   setRoundInView: () => null,
+  mockMode: 'none',
+  setMockMode: () => null,
 });
 
 export type DashboardContextType = {
@@ -24,4 +28,6 @@ export type DashboardContextType = {
   setSelectedGameId: Dispatch<SetStateAction<string | null>>;
   roundInView: number;
   setRoundInView: Dispatch<SetStateAction<number>>;
+  mockMode: MockMode;
+  setMockMode: Dispatch<SetStateAction<MockMode>>;
 };

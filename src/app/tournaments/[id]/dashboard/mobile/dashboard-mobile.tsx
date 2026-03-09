@@ -23,6 +23,8 @@ interface DashboardMobileProps {
   currentRound: number | null;
   currentTab: DashboardContextType['currentTab'];
   setCurrentTab: Dispatch<SetStateAction<DashboardContextType['currentTab']>>;
+  mockMode: DashboardContextType['mockMode'];
+  setMockMode: DashboardContextType['setMockMode'];
 }
 
 const fabTabMap: Record<DashboardContextType['currentTab'], ReactNode> = {
@@ -40,6 +42,8 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
   currentRound,
   currentTab,
   setCurrentTab,
+  mockMode,
+  setMockMode,
 }) => {
   const queryClient = useQueryClient();
   const [roundInView, setRoundInView] = useState(currentRound || 1);
@@ -65,6 +69,8 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
         selectedGameId,
         roundInView,
         setRoundInView,
+        mockMode,
+        setMockMode,
       }}
     >
       <TabsContainer currentTab={currentTab} setCurrentTab={setCurrentTab} />

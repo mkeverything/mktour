@@ -1,30 +1,43 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import GamesContent from '@/app/tournaments/[id]/dashboard/tabs/games/games-content';
 import RoundControls from '@/app/tournaments/[id]/dashboard/tabs/games/round-controls';
-import RoundItem from '@/app/tournaments/[id]/dashboard/tabs/games/round-item';
 import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
+import { generateMockGroups } from '@/app/tournaments/[id]/dashboard/tabs/standings-groups';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
+import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import Overlay from '@/components/overlay';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, useContext } from 'react';
+import { FC, useContext, useMemo } from 'react';
 
 const Games: FC = () => {
-  const { currentTab, roundInView, setRoundInView, selectedGameId } =
-    useContext(DashboardContext);
+  const {
+    currentTab,
+    roundInView,
+    setRoundInView,
+    selectedGameId,
+    status,
+    mockMode,
+  } = useContext(DashboardContext);
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const { data, isError, isLoading } = useTournamentInfo(id);
   const {
     data: players,
-    isLoading: isPlayersloading,
+    isLoading: isPlayersLoading,
     isError: isPlayersError,
   } = useTournamentPlayers(id);
+  const {
+    data: roundGames,
+    isLoading: isRoundLoading,
+    isError: isRoundError,
+  } = useTournamentRoundGames({ tournamentId: id, roundNumber: roundInView });
   const t = useTranslations('Tournament.Round');
   const trpc = useTRPC();
   const now = new Date().getTime();
@@ -33,7 +46,12 @@ const Games: FC = () => {
     : 0;
   const renderDrawer = !startedAt || now - startedAt <= 5000;
 
-  if (isError || isPlayersError) {
+  const standingsGroups = useMemo(
+    () => (mockMode === 'group_stage' ? generateMockGroups(players ?? []) : []),
+    [players, mockMode],
+  );
+
+  if (isError || isPlayersError || isRoundError) {
     return (
       <div>
         <RoundControls
@@ -48,7 +66,8 @@ const Games: FC = () => {
 
   if (
     isLoading ||
-    isPlayersloading ||
+    isPlayersLoading ||
+    isRoundLoading ||
     queryClient.isMutating({
       mutationKey: trpc.tournament.saveRound.mutationKey(),
     }) > 1 ||
@@ -59,7 +78,7 @@ const Games: FC = () => {
         <RoundControls
           roundInView={roundInView}
           setRoundInView={setRoundInView}
-          currentRound={1}
+          currentRound={data?.tournament.ongoingRound ?? 1}
           currentTab={currentTab}
         />
         <div className="p-mk md:px-mk-2">
@@ -88,7 +107,15 @@ const Games: FC = () => {
         currentRound={data.tournament.ongoingRound}
         currentTab={currentTab}
       />
-      <RoundItem roundNumber={roundInView} />
+      <GamesContent
+        roundGames={roundGames}
+        standingsGroups={standingsGroups}
+        players={players}
+        roundNumber={roundInView}
+        tournament={data.tournament}
+        status={status}
+        tournamentId={id}
+      />
       {renderDrawer && <StartTournamentDrawer startedAt={startedAt} />}
     </div>
   );

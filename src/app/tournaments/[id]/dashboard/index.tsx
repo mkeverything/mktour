@@ -1,6 +1,9 @@
 'use client';
 
-import { DashboardContextType } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  type DashboardContextType,
+  type MockMode,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import DashboardDesktop from '@/app/tournaments/[id]/dashboard/desktop/dashboard-desktop';
 import DashboardMobile from '@/app/tournaments/[id]/dashboard/mobile/dashboard-mobile';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
@@ -17,6 +20,7 @@ const Dashboard: FC<TournamentPageContentProps> = ({
 }) => {
   const [currentTab, setCurrentTab] =
     useState<DashboardContextType['currentTab']>('main');
+  const [mockMode, setMockMode] = useState<MockMode>('none');
   const { isDesktop } = useContext(MediaQueryContext);
   const Component = isDesktop ? DashboardDesktop : DashboardMobile;
 
@@ -30,6 +34,8 @@ const Dashboard: FC<TournamentPageContentProps> = ({
       playerId={playerId}
       userId={userId}
       currentRound={currentRound}
+      mockMode={mockMode}
+      setMockMode={setMockMode}
     />
   );
 };
@@ -37,6 +43,8 @@ const Dashboard: FC<TournamentPageContentProps> = ({
 export type TabProps = {
   currentTab: DashboardContextType['currentTab'];
   setCurrentTab: Dispatch<SetStateAction<DashboardContextType['currentTab']>>;
+  mockMode: MockMode;
+  setMockMode: Dispatch<SetStateAction<MockMode>>;
   top?: string;
 };
 

@@ -1,7 +1,10 @@
 'use client';
 
 import { turboPascal } from '@/app/fonts';
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  type MockMode,
+  DashboardContext,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import ActionButtons from '@/app/tournaments/[id]/dashboard/tabs/main/action-buttons';
 import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tournament-info';
 import Center from '@/components/center';
@@ -10,6 +13,14 @@ import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
 import { InputGhost } from '@/components/ui-custom/input-ghost';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Maximize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -17,10 +28,17 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FC, useCallback, useContext, useState } from 'react';
 
+const MOCK_MODES: MockMode[] = [
+  'none',
+  'single_elim',
+  'double_elim',
+  'group_stage',
+];
+
 const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data, isLoading } = useTournamentInfo(tournamentId);
-  const { status } = useContext(DashboardContext);
+  const { status, mockMode, setMockMode } = useContext(DashboardContext);
   const tournamentTitle = data?.tournament.title;
   const fallbackTitle = useTournamentFallbackTitle(data?.tournament);
   const title = tournamentTitle || fallbackTitle;
@@ -53,6 +71,10 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
           />
         </div>
         <TournamentInfoList />
+        <MockModeSelect
+          value={mockMode}
+          onValueChange={(v) => setMockMode(v as MockMode)}
+        />
       </div>
       <div className="flex items-center">
         <Button
@@ -65,6 +87,35 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
         </Button>
         <ActionButtons status={status} tournament={data.tournament} />
       </div>
+    </div>
+  );
+};
+
+const MockModeSelect: FC<{
+  value: MockMode;
+  onValueChange: (value: MockMode) => void;
+}> = ({ value, onValueChange }) => {
+  const t = useTranslations('Tournament.Main');
+  return (
+    <div className="gap-mk p-mk flex items-center max-md:border-b md:pb-0">
+      <Label
+        htmlFor="mock-mode"
+        className="text-muted-foreground shrink-0 text-sm"
+      >
+        {t('mock mode')}
+      </Label>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger id="mock-mode" className="w-auto min-w-40">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {MOCK_MODES.map((mode) => (
+            <SelectItem key={mode} value={mode}>
+              {t(`MockMode.${mode}`)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };
