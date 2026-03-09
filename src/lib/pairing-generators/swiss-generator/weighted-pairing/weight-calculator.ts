@@ -478,7 +478,7 @@ export const C18: CriterionDefinition = {
   name: 'C18',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 11,
+  priority: 12,
   computePenalty: computeC18Penalty,
 };
 
@@ -495,7 +495,7 @@ export const C19: CriterionDefinition = {
   name: 'C19',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 12,
+  priority: 13,
   computePenalty: computeC19Penalty,
 };
 
@@ -512,7 +512,7 @@ export const C20: CriterionDefinition = {
   name: 'C20',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 13,
+  priority: 14,
   computePenalty: computeC20Penalty,
 };
 
@@ -1207,7 +1207,7 @@ export function computePabEdgeWeight(
 /**
  * Computes regular edge weight using all regular criteria.
  *
- * Sums weight contributions from SCORE_TIER, C10-C21, and RANKING.
+ * Sums weight contributions from BRACKET_RANK, SCORE_TIER, C10-C21, and RANKING.
  */
 export function computeRegularEdgeWeight(
   colouredPair: ColouredEntitiesPair,
