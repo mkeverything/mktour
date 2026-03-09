@@ -20,7 +20,7 @@ import {
   didUpfloat,
 } from '@/lib/pairing-generators/swiss-generator/quality-evaluation/ideal-computation';
 import type { MdpPairingFilterCriterion } from '@/lib/pairing-generators/swiss-generator/quality-evaluation/types';
-import type { ScoreGroup, WeightContext } from './types';
+import type { WeightContext } from './types';
 
 // ============================================================================
 // Edge Type Classification
@@ -74,7 +74,7 @@ export interface PabPenaltyInput extends BasePenaltyInput {
  * Input for computing penalty on a regular (player vs player) edge.
  *
  * Contains the coloured pair (whiteEntity/blackEntity) for evaluation.
- * All regular edge criteria (BRACKET_RANK, SCORE_TIER, C10-C21, RANKING) apply.
+ * All regular edge criteria (SCORE_TIER, C10-C21, RANKING) apply.
  */
 export interface RegularPenaltyInput extends BasePenaltyInput {
   /** The coloured pair being evaluated */
@@ -220,24 +220,6 @@ function getMdpScoreDiffPerEdgeMax(ctx: WeightContext): number {
 }
 
 /**
- * Computes max penalty for BRACKET_RANK (bracket index).
- *
- * The penalty is the ordinal index (0 = top bracket) of the higher-scored
- * player's bracket in the descending-sorted scoreGroups array.
- * Max penalty = numBrackets - 1 (bottom bracket).
- *
- * When numBrackets = 1, perEdgeMax = 0, so the criterion contributes zero
- * weight — all edges are equivalent on BRACKET_RANK. Correct: no bracket
- * differentiation needed with a single bracket.
- *
- * @param ctx - Weight context with tournament parameters
- * @returns Maximum possible bracket rank penalty per edge
- */
-function getBracketRankPerEdgeMax(ctx: WeightContext): number {
-  return Math.max(0, ctx.numBrackets - 1);
-}
-
-/**
  * Computes max penalty for RANKING (deviation from ideal S1↔S2 difference).
  *
  * The penalty is |actualDiff - idealDiff| where idealDiff = scoregroupSize / 2.
@@ -275,27 +257,6 @@ export const C5: CriterionDefinition = {
 };
 
 /**
- * BRACKET_RANK: Prioritise pairings in higher score brackets.
- *
- * FIDE Dutch processes brackets top-down — higher brackets are resolved first.
- * This criterion ensures that edges involving top-bracket players strictly
- * dominate edges in lower brackets via the mixed-radix encoding.
- *
- * Penalty = ordinal index of max(whiteScore, blackScore) in descending scoreGroups.
- * Top bracket = index 0 = penalty 0 (best). Bottom bracket = highest penalty.
- *
- * Applies to: Regular edges only.
- * Priority: 1 - Highest priority for regular edges.
- */
-export const BRACKET_RANK: CriterionDefinition = {
-  name: 'BRACKET_RANK',
-  getPerEdgeMax: getBracketRankPerEdgeMax,
-  appliesTo: EdgeType.Regular,
-  priority: 1,
-  computePenalty: computeBracketRankPenalty,
-};
-
-/**
  * SCORE_TIER: Minimise score difference between paired players.
  *
  * This criterion encodes FIDE C6-C8:
@@ -307,13 +268,13 @@ export const BRACKET_RANK: CriterionDefinition = {
  * pairings (penalty = score difference), we naturally achieve C6-C8.
  *
  * Applies to: Regular edges only.
- * Priority: 2.
+ * Priority: 1 - Highest priority for regular edges.
  */
 export const SCORE_TIER: CriterionDefinition = {
   name: 'SCORE_TIER',
   getPerEdgeMax: getScoreTierPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 2,
+  priority: 1,
   computePenalty: computeScoreTierPenalty,
 };
 
@@ -341,13 +302,13 @@ export const C9: CriterionDefinition = {
  * after colour assignment.
  *
  * Applies to: Regular edges only.
- * Priority: 4.
+ * Priority: 3.
  */
 export const C10: CriterionDefinition = {
   name: 'C10',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 4,
+  priority: 3,
   computePenalty: computeC10Penalty,
 };
 
@@ -357,13 +318,13 @@ export const C10: CriterionDefinition = {
  * FIDE: Topscorers should not play the same colour three times in a row.
  *
  * Applies to: Regular edges only.
- * Priority: 5.
+ * Priority: 4.
  */
 export const C11: CriterionDefinition = {
   name: 'C11',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 5,
+  priority: 4,
   computePenalty: computeC11Penalty,
 };
 
@@ -374,13 +335,13 @@ export const C11: CriterionDefinition = {
  * Preference determined by colourIndex sign.
  *
  * Applies to: Regular edges only.
- * Priority: 6.
+ * Priority: 5.
  */
 export const C12: CriterionDefinition = {
   name: 'C12',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 6,
+  priority: 5,
   computePenalty: computeC12Penalty,
 };
 
@@ -391,13 +352,13 @@ export const C12: CriterionDefinition = {
  * Violating strong preference is worse than mild preference.
  *
  * Applies to: Regular edges only.
- * Priority: 7.
+ * Priority: 6.
  */
 export const C13: CriterionDefinition = {
   name: 'C13',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 7,
+  priority: 6,
   computePenalty: computeC13Penalty,
 };
 
@@ -407,13 +368,13 @@ export const C13: CriterionDefinition = {
  * FIDE: Players who downfloated in round N-1 should not downfloat again.
  *
  * Applies to: Regular edges only.
- * Priority: 8.
+ * Priority: 7.
  */
 export const C14: CriterionDefinition = {
   name: 'C14',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 8,
+  priority: 7,
   computePenalty: computeC14Penalty,
 };
 
@@ -423,13 +384,13 @@ export const C14: CriterionDefinition = {
  * FIDE: Residents paired with MDPs should not have upfloated in round N-1.
  *
  * Applies to: Regular edges only.
- * Priority: 9.
+ * Priority: 8.
  */
 export const C15: CriterionDefinition = {
   name: 'C15',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 9,
+  priority: 8,
   computePenalty: computeC15Penalty,
 };
 
@@ -439,13 +400,13 @@ export const C15: CriterionDefinition = {
  * FIDE: Players who downfloated in round N-2 should not downfloat again.
  *
  * Applies to: Regular edges only.
- * Priority: 10.
+ * Priority: 9.
  */
 export const C16: CriterionDefinition = {
   name: 'C16',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 10,
+  priority: 9,
   computePenalty: computeC16Penalty,
 };
 
@@ -455,13 +416,13 @@ export const C16: CriterionDefinition = {
  * FIDE: Residents paired with MDPs should not have upfloated in round N-2.
  *
  * Applies to: Regular edges only.
- * Priority: 11.
+ * Priority: 10.
  */
 export const C17: CriterionDefinition = {
   name: 'C17',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 11,
+  priority: 10,
   computePenalty: computeC17Penalty,
 };
 
@@ -472,13 +433,13 @@ export const C17: CriterionDefinition = {
  * with their current opponent.
  *
  * Applies to: Regular edges only.
- * Priority: 12.
+ * Priority: 11.
  */
 export const C18: CriterionDefinition = {
   name: 'C18',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 12,
+  priority: 11,
   computePenalty: computeC18Penalty,
 };
 
@@ -489,13 +450,13 @@ export const C18: CriterionDefinition = {
  * with their current MDP opponent.
  *
  * Applies to: Regular edges only.
- * Priority: 13.
+ * Priority: 12.
  */
 export const C19: CriterionDefinition = {
   name: 'C19',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 13,
+  priority: 12,
   computePenalty: computeC19Penalty,
 };
 
@@ -506,13 +467,13 @@ export const C19: CriterionDefinition = {
  * with their current opponent.
  *
  * Applies to: Regular edges only.
- * Priority: 14.
+ * Priority: 13.
  */
 export const C20: CriterionDefinition = {
   name: 'C20',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 14,
+  priority: 13,
   computePenalty: computeC20Penalty,
 };
 
@@ -523,13 +484,13 @@ export const C20: CriterionDefinition = {
  * with their current MDP opponent.
  *
  * Applies to: Regular edges only.
- * Priority: 15.
+ * Priority: 14.
  */
 export const C21: CriterionDefinition = {
   name: 'C21',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 15,
+  priority: 14,
   computePenalty: computeC21Penalty,
 };
 
@@ -541,13 +502,13 @@ export const C21: CriterionDefinition = {
  * This is the lowest priority criterion.
  *
  * Applies to: Regular edges only.
- * Priority: 16 - Lowest priority.
+ * Priority: 15 - Lowest priority.
  */
 export const RANKING: CriterionDefinition = {
   name: 'RANKING',
   getPerEdgeMax: getRankingPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 16,
+  priority: 15,
   computePenalty: computeRankingPenalty,
 };
 
@@ -560,7 +521,6 @@ export const RANKING: CriterionDefinition = {
  */
 export const ALL_CRITERIA: readonly CriterionDefinition[] = [
   C5,
-  BRACKET_RANK,
   SCORE_TIER,
   C9,
   C10,
@@ -653,47 +613,6 @@ export function computeMultipliers(
   }
 
   return { multipliers, bases };
-}
-
-// ============================================================================
-// Penalty Computation - Bracket Rank
-// ============================================================================
-
-/** Sentinel value returned by findIndex when no element matches. */
-const INDEX_NOT_FOUND = -1;
-
-/**
- * Computes the bracket rank penalty for a player pair.
- *
- * Penalty = ordinal index of max(whiteScore, blackScore) in the descending-
- * sorted scoreGroups array. Top bracket (index 0) = penalty 0 (best).
- * Lower brackets get higher penalties, ensuring the blossom algorithm
- * prioritises pairings in higher score brackets.
- *
- * @param penaltyInput - Regular penalty input with colouredPair
- * @returns Bracket rank penalty (0 = top bracket, higher = worse)
- */
-export function computeBracketRankPenalty(penaltyInput: PenaltyInput): number {
-  if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('BRACKET_RANK requires regular penalty input');
-  }
-
-  const { whiteEntity, blackEntity } = penaltyInput.colouredPair;
-  const higherScore = Math.max(
-    whiteEntity.entityScore,
-    blackEntity.entityScore,
-  );
-  const { scoreGroups } = penaltyInput.context;
-
-  const bracketIndex = scoreGroups.findIndex(
-    (group: ScoreGroup) => group.score === higherScore,
-  );
-
-  if (bracketIndex === INDEX_NOT_FOUND) {
-    throw new Error(`Score group not found for score: ${higherScore}`);
-  }
-
-  return bracketIndex;
 }
 
 // ============================================================================
@@ -1207,7 +1126,7 @@ export function computePabEdgeWeight(
 /**
  * Computes regular edge weight using all regular criteria.
  *
- * Sums weight contributions from BRACKET_RANK, SCORE_TIER, C10-C21, and RANKING.
+ * Sums weight contributions from SCORE_TIER, C10-C21, and RANKING.
  */
 export function computeRegularEdgeWeight(
   colouredPair: ColouredEntitiesPair,
