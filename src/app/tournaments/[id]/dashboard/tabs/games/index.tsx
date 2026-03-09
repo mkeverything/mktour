@@ -64,6 +64,7 @@ const Games: FC = () => {
     return (
       <div>
         <RoundControls
+          format={mockMode || data?.tournament.format}
           roundInView={roundInView}
           setRoundInView={setRoundInView}
           currentRound={1}
@@ -85,6 +86,7 @@ const Games: FC = () => {
     return (
       <div>
         <RoundControls
+          format={mockMode || data?.tournament.format}
           roundInView={roundInView}
           setRoundInView={setRoundInView}
           currentRound={data?.tournament.ongoingRound ?? 1}
@@ -111,6 +113,7 @@ const Games: FC = () => {
     <div>
       <Overlay open={!!selectedGameId} />
       <RoundControls
+        format={mockMode || data?.tournament.format}
         roundInView={roundInView}
         setRoundInView={setRoundInView}
         currentRound={data.tournament.ongoingRound}

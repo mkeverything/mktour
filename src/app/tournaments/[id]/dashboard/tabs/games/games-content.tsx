@@ -108,7 +108,7 @@ const GamesContent: FC<GamesContentProps> = ({
     const hasAnyGames = treeGames.length > 0;
 
     return (
-      <div className="mk-list px-mk md:px-mk-2 relative pt-2">
+      <div className="mk-list px-mk md:px-mk-2 pt-2">
         {actionButton}
         {hasAnyGames ? (
           <EliminationBracketTree games={treeGames} players={players} />
@@ -116,7 +116,9 @@ const GamesContent: FC<GamesContentProps> = ({
           <RoundBracketList games={roundGames ?? []} players={players} />
         )}
         {!tournament.startedAt && status === 'organizer' && (
-          <AddPlayerDrawer fabId="tournament-add-player-fab" />
+          <div className="absolute right-18 bottom-0">
+            <AddPlayerDrawer fabId="tournament-add-player-fab" />
+          </div>
         )}
       </div>
     );

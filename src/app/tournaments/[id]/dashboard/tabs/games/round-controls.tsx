@@ -4,15 +4,18 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useHotkeys } from 'react-hotkeys-hook';
 
+import { MockMode } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { TournamentModel } from '@/server/zod/tournaments';
 
 const RoundControls: FC<RoundControlProps> = ({
   currentRound,
   roundInView,
   setRoundInView,
   currentTab,
+  format,
 }) => {
   const t = useTranslations('Tournament.Round');
   const { isDesktop } = useContext(MediaQueryContext);
@@ -48,6 +51,16 @@ const RoundControls: FC<RoundControlProps> = ({
     { enabled: shouldHandleArrows, enableOnFormTags: false },
     [shouldHandleArrows, roundInView, currentRound],
   );
+
+  if (
+    [
+      'single_elim',
+      'double_elim',
+      'single elimination',
+      'double elimination',
+    ].includes(format)
+  )
+    return null;
 
   return (
     <div className="bg-background/50 px-mk-2 sticky top-0 z-10 backdrop-blur-md">
@@ -100,6 +113,7 @@ interface RoundControlProps {
   roundInView: number;
   setRoundInView: Dispatch<SetStateAction<number>>;
   currentTab: 'main' | 'games' | 'table';
+  format: TournamentModel['format'] | MockMode;
 }
 
 export default RoundControls;
