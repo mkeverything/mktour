@@ -42,5 +42,5 @@ export const useClubScopedSearch = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId, queryClient, secondDebouncedSearch, trpc.search, type]);
 
-  return { data, search, setSearch };
+  return { data, search, setSearch, debouncedSearch };
 };

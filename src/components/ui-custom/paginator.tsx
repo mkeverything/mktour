@@ -20,7 +20,7 @@ const Paginator: FC<Props> = ({
         className="h-0 w-full -translate-y-[calc(var(--spacing-mk-card-height)+calc((var(--spacing-mk)*2)))]"
       />
       {isFetchingNextPage && (
-        <div className="-mt-18">
+        <div>
           <SkeletonList length={3} className="h-14 rounded-xl" />
         </div>
       )}
