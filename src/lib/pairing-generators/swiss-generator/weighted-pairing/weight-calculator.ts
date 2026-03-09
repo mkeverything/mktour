@@ -665,10 +665,10 @@ const INDEX_NOT_FOUND = -1;
 /**
  * Computes the bracket rank penalty for a player pair.
  *
- * Penalty = ordinal index of max(whiteScore, blackScore) in the descending-
- * sorted scoreGroups array. Top bracket (index 0) = penalty 0 (best).
- * Lower brackets get higher penalties, ensuring the blossom algorithm
- * prioritises pairings in higher score brackets.
+ * Penalty = ordinal index of min(whiteScore, blackScore) in the descending-
+ * sorted scoreGroups array. Using the lower score ensures same-bracket edges
+ * stay at their bracket level, while cross-bracket edges are penalised at the
+ * lower player's bracket. Top bracket (index 0) = penalty 0 (best).
  *
  * @param penaltyInput - Regular penalty input with colouredPair
  * @returns Bracket rank penalty (0 = top bracket, higher = worse)
@@ -679,18 +679,15 @@ export function computeBracketRankPenalty(penaltyInput: PenaltyInput): number {
   }
 
   const { whiteEntity, blackEntity } = penaltyInput.colouredPair;
-  const higherScore = Math.max(
-    whiteEntity.entityScore,
-    blackEntity.entityScore,
-  );
+  const lowerScore = Math.min(whiteEntity.entityScore, blackEntity.entityScore);
   const { scoreGroups } = penaltyInput.context;
 
   const bracketIndex = scoreGroups.findIndex(
-    (group: ScoreGroup) => group.score === higherScore,
+    (group: ScoreGroup) => group.score === lowerScore,
   );
 
   if (bracketIndex === INDEX_NOT_FOUND) {
-    throw new Error(`Score group not found for score: ${higherScore}`);
+    throw new Error(`Score group not found for score: ${lowerScore}`);
   }
 
   return bracketIndex;
