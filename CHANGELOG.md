@@ -1,3 +1,15 @@
+# [1.6.0](https://github.com/mkeverything/mktour/compare/v1.5.0...v1.6.0) (2026-03-09)
+
+
+### Bug Fixes
+
+* **swiss:** bump missed C18-C20 priority fields and update stale JSDoc ([dd2c930](https://github.com/mkeverything/mktour/commit/dd2c930bf98578ad1fe10a8750e58ac7400ac3fe)), closes [#66](https://github.com/mkeverything/mktour/issues/66)
+
+
+### Features
+
+* **swiss:** add BRACKET_RANK criterion for top-down bracket priority ([aac3222](https://github.com/mkeverything/mktour/commit/aac3222f42bbae98f24a61c7ea3029f996944302))
+
 # [1.5.0](https://github.com/mkeverything/mktour/compare/v1.4.1...v1.5.0) (2026-03-08)
 
 
