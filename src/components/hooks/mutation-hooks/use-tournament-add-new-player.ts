@@ -100,6 +100,10 @@ export const useTournamentAddNewPlayer = (
           [tournamentId, 'games', { roundNumber: 1 }],
           () => newGames.sort((a, b) => a.gameNumber - b.gameNumber),
         );
+        queryClient.setQueryData(
+          trpc.tournament.allGames.queryKey({ tournamentId }),
+          () => newGames.sort((a, b) => a.gameNumber - b.gameNumber),
+        );
       },
     }),
   );

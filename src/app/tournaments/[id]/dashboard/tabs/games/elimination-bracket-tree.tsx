@@ -1,10 +1,16 @@
 'use client';
 
+import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import BracketGameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-game-item';
+import BracketGameItemEditable from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-game-item-editable';
+import BracketIncompleteItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-incomplete-item';
 import BracketGhostItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/bracket-ghost-item';
+import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { cn } from '@/lib/utils';
 import { PlayerTournamentModel } from '@/server/zod/players';
 import type { GameModel } from '@/server/zod/tournaments';
-import { FC, useMemo } from 'react';
+import { useParams } from 'next/navigation';
+import { FC, useContext, useMemo } from 'react';
 
 export interface EliminationBracketTreeProps {
   games: GameModel[];
@@ -171,8 +177,26 @@ const EliminationBracketTree: FC<EliminationBracketTreeProps> = ({
   games,
   players,
 }) => {
+  const { id: tournamentId } = useParams<{ id: string }>();
+  const { data: tournamentInfo } = useTournamentInfo(tournamentId);
+  const { status } = useContext(DashboardContext);
+  const hasStarted = !!tournamentInfo?.tournament.startedAt;
+  const isOrganizer = status === 'organizer';
   const byRound = useMemo(() => groupGamesByRound(games), [games]);
   const roundSlots = useMemo(() => buildRoundSlots(byRound), [byRound]);
+
+  const unpairedPlayers = useMemo(() => {
+    if (hasStarted) return [];
+    const roundNumbers = [...byRound.keys()];
+    const minRound = roundNumbers.length > 0 ? Math.min(...roundNumbers) : 1;
+    const firstRoundGames = byRound.get(minRound) ?? [];
+    const pairedIds = new Set<string>();
+    for (const g of firstRoundGames) {
+      pairedIds.add(g.whiteId);
+      pairedIds.add(g.blackId);
+    }
+    return players.filter((p) => !pairedIds.has(p.id));
+  }, [byRound, players, hasStarted]);
 
   if (roundSlots.length === 0) return null;
 
@@ -194,6 +218,7 @@ const EliminationBracketTree: FC<EliminationBracketTreeProps> = ({
         style={{ minWidth: 'max-content' }}
       >
         {roundSlots.map((slots, colIndex) => {
+          let firstColumnExtraIndex = 0;
           const roundNum = roundNumbers[colIndex];
           const isLast = colIndex === roundSlots.length - 1;
           const nextSlotCount = isLast
@@ -211,6 +236,17 @@ const EliminationBracketTree: FC<EliminationBracketTreeProps> = ({
                   style={{ height: baseHeight }}
                 >
                   {slots.map((slot, rowIndex) => {
+                    let byePlayer: PlayerTournamentModel | null = null;
+                    if (
+                      !hasStarted &&
+                      colIndex === 0 &&
+                      !slot &&
+                      firstColumnExtraIndex < unpairedPlayers.length
+                    ) {
+                      byePlayer =
+                        unpairedPlayers[firstColumnExtraIndex] ?? null;
+                      firstColumnExtraIndex += 1;
+                    }
                     const yPct = ((rowIndex + 0.5) / slots.length) * 100;
                     return (
                       <div
@@ -222,26 +258,34 @@ const EliminationBracketTree: FC<EliminationBracketTreeProps> = ({
                         }}
                       >
                         {slot ? (
-                          <BracketGameItem
-                            id={slot.id}
-                            result={slot.result}
-                            playerLeft={{
-                              whiteId: slot.whiteId,
-                              whiteNickname: slot.whiteNickname,
-                            }}
-                            playerRight={{
-                              blackId: slot.blackId,
-                              blackNickname: slot.blackNickname,
-                            }}
-                            roundNumber={slot.roundNumber}
-                          />
+                          hasStarted ? (
+                            <BracketGameItem
+                              id={slot.id}
+                              result={slot.result}
+                              playerLeft={{
+                                whiteId: slot.whiteId,
+                                whiteNickname: slot.whiteNickname,
+                              }}
+                              playerRight={{
+                                blackId: slot.blackId,
+                                blackNickname: slot.blackNickname,
+                              }}
+                              roundNumber={slot.roundNumber}
+                            />
+                          ) : (
+                            <BracketGameItemEditable game={slot} />
+                          )
+                        ) : byePlayer ? (
+                          <BracketIncompleteItem player={byePlayer} />
                         ) : (
                           <BracketGhostItem
-                            className={
-                              colIndex === 0
-                                ? 'pointer-events-none opacity-0'
-                                : undefined
-                            }
+                            className={cn(
+                              colIndex === 0 && 'pointer-events-none opacity-0',
+                              !hasStarted &&
+                                isOrganizer &&
+                                colIndex !== 0 &&
+                                'hover:bg-muted/40 cursor-pointer',
+                            )}
                           />
                         )}
                       </div>

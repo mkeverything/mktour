@@ -30,7 +30,12 @@ interface DashboardMobileProps {
 const fabTabMap: Record<DashboardContextType['currentTab'], ReactNode> = {
   main: <AddPlayerDrawer />,
   table: <AddPlayerDrawer />,
-  games: <ShuffleFab />,
+  games: (
+    <>
+      <ShuffleFab />
+      <AddPlayerDrawer fabId="tournament-add-player-fab" />
+    </>
+  ),
 };
 
 const DashboardMobile: React.FC<DashboardMobileProps> = ({

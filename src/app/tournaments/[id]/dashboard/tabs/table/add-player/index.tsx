@@ -58,6 +58,8 @@ const AddPlayerDrawer = ({
   )
     return null;
 
+  const buttonId = fabId ?? 'tournament-add-player-fab';
+
   return (
     <>
       <Fab
@@ -65,7 +67,7 @@ const AddPlayerDrawer = ({
         className={`${(open || isAnimating) && 'z-60 md:hidden'} ${fabClassName ?? ''}`}
         onClick={() => handleChange(!open)}
         icon={open ? X : UserPlus}
-        buttonProps={fabId ? { id: fabId } : undefined}
+        buttonProps={{ id: buttonId }}
       />
       <SideDrawer
         open={open}

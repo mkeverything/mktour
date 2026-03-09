@@ -114,6 +114,10 @@ export const useTournamentRemovePlayer = (
             }),
             () => newGames.sort((a, b) => a.gameNumber - b.gameNumber),
           );
+          queryClient.setQueryData(
+            trpc.tournament.allGames.queryKey({ tournamentId }),
+            () => newGames.sort((a, b) => a.gameNumber - b.gameNumber),
+          );
         }
       },
     }),

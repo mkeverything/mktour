@@ -5,6 +5,7 @@ import EliminationBracketTree from '@/app/tournaments/[id]/dashboard/tabs/games/
 import RoundActionButton from '@/app/tournaments/[id]/dashboard/tabs/games/round-action-button';
 import RoundBracketList from '@/app/tournaments/[id]/dashboard/tabs/games/round-bracket-list';
 import RoundGamesList from '@/app/tournaments/[id]/dashboard/tabs/games/round-games-list';
+import AddPlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import type { StandingsGroup } from '@/app/tournaments/[id]/dashboard/tabs/table/table-types';
 import { TournamentFormat } from '@/server/zod/enums';
 import { PlayerTournamentModel } from '@/server/zod/players';
@@ -43,7 +44,6 @@ const GamesContent: FC<GamesContentProps> = ({
   tournament,
   status,
   tournamentId,
-  mockMode,
   isElimination,
 }) => {
   const ongoingGames = useMemo(
@@ -108,12 +108,15 @@ const GamesContent: FC<GamesContentProps> = ({
     const hasAnyGames = treeGames.length > 0;
 
     return (
-      <div className="mk-list px-mk md:px-mk-2 pt-2">
+      <div className="mk-list px-mk md:px-mk-2 relative pt-2">
         {actionButton}
         {hasAnyGames ? (
           <EliminationBracketTree games={treeGames} players={players} />
         ) : (
           <RoundBracketList games={roundGames ?? []} players={players} />
+        )}
+        {!tournament.startedAt && status === 'organizer' && (
+          <AddPlayerDrawer fabId="tournament-add-player-fab" />
         )}
       </div>
     );
