@@ -2,9 +2,13 @@
 
 import Empty from '@/components/empty';
 import FormattedMessage from '@/components/formatted-message';
-import { useTournaments } from '@/components/hooks/query-hooks/use-tournaments';
+import {
+  TournamentsFilterInput,
+  useTournaments,
+} from '@/components/hooks/query-hooks/use-tournaments';
 import { useDebounce } from '@/components/hooks/use-debounce';
 import useOnReach from '@/components/hooks/use-on-reach';
+import { useTournamentsFilters } from '@/components/hooks/use-tournaments-filters';
 import SkeletonList from '@/components/skeleton-list';
 import TournamentItemIteratee from '@/components/tournament-item';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
@@ -38,63 +42,35 @@ import {
 import { ButtonProps } from '@base-ui/react';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Dispatch, FC, SetStateAction, useState } from 'react';
-
-type Rated = boolean | null;
+import { FC } from 'react';
 
 export default function TournamentsAllList() {
-  const [search, setSearch] = useState('');
-  const [rated, setRated] = useState<Rated>(null);
-  const [formats, setFormat] = useState<TournamentFormat[]>([]);
-  const [types, setType] = useState<TournamentType[]>([]);
-  const [status, setStatus] = useState<TournamentStatus[]>([]);
+  const { search, queryFilter, ...filters } = useTournamentsFilters();
+
+  const debouncedSearch = useDebounce(search, 300);
+  const queryFilterWithDebounce = {
+    ...queryFilter,
+    search: debouncedSearch.trim().length ? debouncedSearch : undefined,
+  };
 
   return (
     <div className="mk-list">
-      <Search
-        search={search}
-        formats={formats}
-        types={types}
-        status={status}
-        rated={rated}
-        setFormat={setFormat}
-        setType={setType}
-        setStatus={setStatus}
-        setSearch={setSearch}
-        setRated={setRated}
-      />
-      <Content
-        search={search}
-        formats={formats}
-        types={types}
-        status={status}
-        rated={rated}
-      />
+      <Search search={search} {...filters} />
+      <Content queryFilter={queryFilterWithDebounce} />
     </div>
   );
 }
 
-const Content: FC<ContentProps> = ({
-  search,
-  rated,
-  formats,
-  types,
-  status,
+const Content: FC<{ queryFilter: TournamentsFilterInput }> = ({
+  queryFilter,
 }) => {
-  const debouncedSearch = useDebounce(search, 300);
   const {
     data: tournaments,
     fetchNextPage,
     hasNextPage,
     isLoading,
     isFetchingNextPage,
-  } = useTournaments({
-    search: debouncedSearch.trim().length ? debouncedSearch : undefined,
-    rated: rated ?? undefined,
-    formats: formats.length ? formats : undefined,
-    types: types.length ? types : undefined,
-    statuses: status.length ? status : undefined,
-  });
+  } = useTournaments(queryFilter);
   const isEmpty = !tournaments?.pages[0].tournaments.length;
   const ref = useOnReach(fetchNextPage);
 
@@ -123,10 +99,12 @@ const Search: FC<SearchProps> = ({
   status,
   rated,
   setSearch,
-  setFormat,
-  setType,
+  setFormats,
+  setTypes,
   setStatus,
   setRated,
+  touched,
+  reset,
 }) => {
   const tCommon = useTranslations('Common');
   const tMakeTournament = useTranslations('MakeTournament');
@@ -137,21 +115,6 @@ const Search: FC<SearchProps> = ({
   const statusItems = Object.values(tournamentStatusEnum.enum);
 
   const ratedSelectValue = rated === null ? 'all' : rated ? 'rated' : 'unrated';
-
-  const handleReset = () => {
-    setSearch('');
-    setFormat([]);
-    setType([]);
-    setStatus([]);
-    setRated(null);
-  };
-
-  const touched =
-    !!search.length ||
-    !!formats.length ||
-    !!types.length ||
-    !!status.length ||
-    !!rated;
 
   return (
     <div className="gap-mk flex w-full flex-col pb-0">
@@ -187,7 +150,7 @@ const Search: FC<SearchProps> = ({
           multiple
           value={formats}
           onValueChange={(value: TournamentFormat[]) =>
-            setFormat(value as TournamentFormat[])
+            setFormats(value as TournamentFormat[])
           }
         >
           <ComboboxChips>
@@ -216,7 +179,7 @@ const Search: FC<SearchProps> = ({
           multiple
           value={types}
           onValueChange={(value: TournamentType[]) =>
-            setType(value as TournamentType[])
+            setTypes(value as TournamentType[])
           }
         >
           <ComboboxChips>
@@ -273,7 +236,7 @@ const Search: FC<SearchProps> = ({
             </ComboboxList>
           </ComboboxContent>
         </Combobox>
-        <ResetButton onClick={handleReset} touched={touched} />
+        <ResetButton onClick={reset} touched={touched} />
       </div>
     </div>
   );
@@ -297,14 +260,11 @@ type SearchProps = {
   formats: TournamentFormat[];
   types: TournamentType[];
   status: TournamentStatus[];
-  rated: Rated;
-  setFormat: Dispatch<SetStateAction<TournamentFormat[]>>;
-  setType: Dispatch<SetStateAction<TournamentType[]>>;
-  setStatus: Dispatch<SetStateAction<TournamentStatus[]>>;
-  setRated: Dispatch<SetStateAction<Rated>>;
+  rated: boolean | null;
+  setFormats: (value: TournamentFormat[]) => void;
+  setTypes: (value: TournamentType[]) => void;
+  setStatus: (value: TournamentStatus[]) => void;
+  setRated: (value: boolean | null) => void;
+  touched: boolean;
+  reset: () => void;
 };
-
-type ContentProps = Pick<
-  SearchProps,
-  'search' | 'formats' | 'types' | 'status' | 'rated'
->;
