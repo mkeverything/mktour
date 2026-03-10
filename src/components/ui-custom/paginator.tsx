@@ -16,10 +16,7 @@ const Paginator: FC<Props> = ({
 
   return (
     <div>
-      <div
-        ref={triggerRef}
-        className="h-0 w-full -translate-y-[calc(var(--spacing-mk-card-height)+calc((var(--spacing-mk)*2)))]"
-      />
+      <div ref={triggerRef} className="h-px w-full" />
       {isFetchingNextPage && skeleton}
     </div>
   );
