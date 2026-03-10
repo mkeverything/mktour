@@ -123,7 +123,7 @@ const Search: FC<SearchProps> = ({
         setSearch={setSearch}
         className="w-full"
       />
-      <div className="text-muted-foreground gap-mk flex w-full flex-1 grow flex-wrap text-xs">
+      <div className="text-muted-foreground gap-mk flex flex-wrap text-xs">
         <div className="grow">
           <Select
             value={ratedSelectValue}
