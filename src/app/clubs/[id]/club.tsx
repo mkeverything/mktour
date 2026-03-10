@@ -338,14 +338,13 @@ const ClubTournamentsSection: FC<{
               tournament={tournament}
             />
           ))}
-          {!isSearching && (
-            <Paginator
-              hasNextPage={tournamentsInfinite.hasNextPage}
-              isFetchingNextPage={tournamentsInfinite.isFetchingNextPage}
-              fetchNextPage={tournamentsInfinite.fetchNextPage}
-              skeleton={<SkeletonList card className="rounded-xl" length={3} />}
-            />
-          )}
+          <Paginator
+            disabled={debouncedSearch.length > 0}
+            hasNextPage={tournamentsInfinite.hasNextPage}
+            isFetchingNextPage={tournamentsInfinite.isFetchingNextPage}
+            fetchNextPage={tournamentsInfinite.fetchNextPage}
+            skeleton={<SkeletonList card className="rounded-xl" length={3} />}
+          />
         </div>
         {statusInClub && stats?.tournamentsCount === 0 && (
           <Button size="sm" variant="default" className="mt-2 w-full" asChild>

@@ -6,6 +6,7 @@ const Paginator: FC<Props> = ({
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
+  disabled,
   skeleton = <SkeletonList />,
 }) => {
   const triggerRef = useOnReach(() => {
@@ -14,6 +15,7 @@ const Paginator: FC<Props> = ({
     }
   });
 
+  if (disabled) return null;
   return (
     <div>
       <div ref={triggerRef} className="h-px w-full" />
@@ -26,6 +28,7 @@ type Props = {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
+  disabled?: boolean;
   skeleton?: ReactElement<typeof SkeletonList>;
 };
 
