@@ -42,7 +42,7 @@ export const useTournamentsFilters = () => {
       !!filters.formats.length ||
       !!filters.types.length ||
       !!filters.status.length ||
-      !!filters.rated
+      filters.rated !== null
     );
   }, [filters]);
 
