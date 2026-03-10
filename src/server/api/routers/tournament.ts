@@ -90,7 +90,7 @@ export const tournamentRouter = {
         cursor: input.cursor ?? undefined,
       });
     }),
-  publicFeatured: publicProcedure
+  publicFeatured: publicProcedure // TODO: currently not used + not included in openapi. use or remove
     .input(
       z.object({
         limit: z.number().min(1).max(10).optional().default(5),
