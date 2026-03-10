@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import type {
-  TournamentFormat,
+  TournamentFormatImplemented,
   TournamentStatus,
   TournamentType,
 } from '@/server/zod/enums';
@@ -20,7 +20,7 @@ export const useTournamentsFilters = () => {
     setFilters((prev) => ({ ...prev, rated }));
   }, []);
 
-  const setFormats = useCallback((formats: TournamentFormat[]) => {
+  const setFormats = useCallback((formats: TournamentFormatImplemented[]) => {
     setFilters((prev) => ({ ...prev, formats }));
   }, []);
 
@@ -79,7 +79,7 @@ export type Rated = boolean | null;
 type TournamentsFiltersState = {
   search: string;
   rated: Rated;
-  formats: TournamentFormat[];
+  formats: TournamentFormatImplemented[];
   types: TournamentType[];
   status: TournamentStatus[];
 };

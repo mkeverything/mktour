@@ -32,7 +32,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  tournamentFormatEnum,
+  implementedTournamentFormatEnum,
+  TournamentFormatImplemented,
   tournamentStatusEnum,
   tournamentTypeEnum,
   type TournamentFormat,
@@ -110,7 +111,7 @@ const Search: FC<SearchProps> = ({
   const tMakeTournament = useTranslations('MakeTournament');
   const tTournamentsAll = useTranslations('TournamentsAll');
 
-  const formatItems = Object.values(tournamentFormatEnum.enum);
+  const formatItems = Object.values(implementedTournamentFormatEnum.enum);
   const typeItems = Object.values(tournamentTypeEnum.enum);
   const statusItems = Object.values(tournamentStatusEnum.enum);
 
@@ -124,7 +125,7 @@ const Search: FC<SearchProps> = ({
         className="w-full"
       />
       <div className="text-muted-foreground gap-mk flex flex-wrap text-xs">
-        <div className="grow">
+        <div className="sm:grow">
           <Select
             value={ratedSelectValue}
             onValueChange={(value) => {
@@ -149,9 +150,7 @@ const Search: FC<SearchProps> = ({
           items={formatItems}
           multiple
           value={formats}
-          onValueChange={(value: TournamentFormat[]) =>
-            setFormats(value as TournamentFormat[])
-          }
+          onValueChange={setFormats}
         >
           <ComboboxChips>
             <ComboboxValue>
@@ -178,9 +177,7 @@ const Search: FC<SearchProps> = ({
           items={typeItems}
           multiple
           value={types}
-          onValueChange={(value: TournamentType[]) =>
-            setTypes(value as TournamentType[])
-          }
+          onValueChange={setTypes}
         >
           <ComboboxChips>
             <ComboboxValue>
@@ -209,9 +206,7 @@ const Search: FC<SearchProps> = ({
           items={statusItems}
           multiple
           value={status}
-          onValueChange={(value: TournamentStatus[]) =>
-            setStatus(value as TournamentStatus[])
-          }
+          onValueChange={setStatus}
         >
           <ComboboxChips>
             <ComboboxValue>
@@ -257,11 +252,11 @@ const ResetButton: FC<ButtonProps & { touched: boolean }> = ({
 type SearchProps = {
   search: string;
   setSearch: (value: string) => void;
-  formats: TournamentFormat[];
+  formats: TournamentFormatImplemented[];
   types: TournamentType[];
   status: TournamentStatus[];
   rated: boolean | null;
-  setFormats: (value: TournamentFormat[]) => void;
+  setFormats: (value: TournamentFormatImplemented[]) => void;
   setTypes: (value: TournamentType[]) => void;
   setStatus: (value: TournamentStatus[]) => void;
   setRated: (value: boolean | null) => void;

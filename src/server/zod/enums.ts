@@ -32,6 +32,11 @@ export const tournamentFormatEnum = z.enum([
   'double elimination',
 ]);
 
+export const implementedTournamentFormatEnum = z.enum([
+  tournamentFormatEnum.enum.swiss,
+  tournamentFormatEnum.enum['round robin'],
+]);
+
 export const tournamentAuthStatusEnum = z.enum([
   'organizer',
   'player',
@@ -61,6 +66,9 @@ export type StatusInClub = z.infer<typeof statusInClubEnum>;
 export type ClubNotificationEvent = z.infer<typeof clubNotificationEventEnum>;
 export type UserNotificationEvent = z.infer<typeof userNotificationEventEnum>;
 export type TournamentFormat = z.infer<typeof tournamentFormatEnum>;
+export type TournamentFormatImplemented = z.infer<
+  typeof implementedTournamentFormatEnum
+>;
 export type TournamentAuthStatus = z.infer<typeof tournamentAuthStatusEnum>;
 export type TournamentType = z.infer<typeof tournamentTypeEnum>;
 export type GameResult = z.infer<typeof gameResultEnum>;
