@@ -1446,6 +1446,7 @@ export async function updateSwissRoundsNumber({
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
+  if (tournament.closedAt) throw new Error('TOURNAMENT_ALREADY_FINISHED');
 
   const playerCount = await getTournamentPlayersCount(
     tournamentId,

@@ -24,6 +24,7 @@ export default function SwissRoundsNumber({
   const { mutate } = useSaveRoundsNumberMutation(queryClient, sendJsonMessage);
 
   const isOrganizer = status === 'organizer';
+  const isFinished = !!data?.tournament.closedAt;
   const currentValue = data?.tournament.roundsNumber ?? 1;
   const playerCount = players?.length ?? 0;
   const minValue = 1;
@@ -48,7 +49,7 @@ export default function SwissRoundsNumber({
     mutate({ tournamentId, roundsNumber: newValue });
   };
 
-  if (!isOrganizer) {
+  if (!isOrganizer || isFinished) {
     return <span className={className}>{boundedCurrentValue}</span>;
   }
 
