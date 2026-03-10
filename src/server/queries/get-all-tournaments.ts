@@ -12,12 +12,12 @@ import {
   and,
   desc,
   eq,
+  ilike,
   inArray,
   isNotNull,
   isNull,
   lt,
   or,
-  sql,
 } from 'drizzle-orm';
 import { cacheTag } from 'next/cache';
 
@@ -44,8 +44,8 @@ export default async function getAllTournaments({
   if (trimmedSearch) {
     const searchPattern = `%${trimmedSearch}%`;
     const searchCondition = or(
-      sql`lower(${tournaments.title}) like lower(${searchPattern})`,
-      sql`lower(${clubs.name}) like lower(${searchPattern})`,
+      ilike(tournaments.title, searchPattern),
+      ilike(clubs.name, searchPattern),
     );
     if (searchCondition) whereConditions.push(searchCondition);
   }
