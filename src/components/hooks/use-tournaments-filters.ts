@@ -38,7 +38,6 @@ export const useTournamentsFilters = () => {
 
   const touched = useMemo(() => {
     return (
-      !!filters.search.length ||
       !!filters.formats.length ||
       !!filters.types.length ||
       !!filters.status.length ||
