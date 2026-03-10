@@ -20,8 +20,8 @@ import getAllClubManagers, {
 import {
   getClubInfo,
   getClubPlayers,
-  getUserClubPlayer,
   getPublicPopularClubs,
+  getUserClubPlayer,
 } from '@/server/queries/club';
 import getAllClubs from '@/server/queries/get-all-clubs';
 import getClubNotifications from '@/server/queries/get-club-notifications';
@@ -73,7 +73,7 @@ export const clubRouter = createTRPCRouter({
         cursor: input.cursor ?? undefined,
       });
     }),
-  publicPopular: publicProcedure
+  publicPopular: publicProcedure // TODO: currently not used + not included in openapi. use or remove
     .input(
       z.object({
         limit: z.number().min(1).max(10).optional().default(5),

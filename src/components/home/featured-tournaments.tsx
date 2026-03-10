@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { FC } from 'react';
 
 const FeaturedTournaments: FC<{ limit?: number }> = ({ limit = 5 }) => {
+  // TODO: not used anywhere. use or remove
   const { data: tournaments, isLoading } = usePublicFeaturedTournaments(limit);
 
   if (isLoading) {
