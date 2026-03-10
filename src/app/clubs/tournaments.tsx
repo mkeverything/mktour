@@ -6,7 +6,7 @@ import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tour
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
 import SkeletonList from '@/components/skeleton-list';
 import TournamentItemIteratee from '@/components/tournament-item';
-import ClubSearchInput from '@/components/ui-custom/club-search-input';
+import SearchInput from '@/components/ui-custom/search-input';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -45,7 +45,7 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
 
   return (
     <div className="mk-list">
-      <ClubSearchInput search={search} setSearch={setSearch} />
+      <SearchInput search={search} setSearch={setSearch} />
       {tournaments.map((props) => (
         <TournamentItemIteratee key={props.id} tournament={props} />
       ))}
