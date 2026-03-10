@@ -1,3 +1,32 @@
+# [1.6.0](https://github.com/mkeverything/mktour/compare/v1.5.0...v1.6.0) (2026-03-09)
+
+
+### Bug Fixes
+
+* **swiss:** bump missed C18-C20 priority fields and update stale JSDoc ([dd2c930](https://github.com/mkeverything/mktour/commit/dd2c930bf98578ad1fe10a8750e58ac7400ac3fe)), closes [#66](https://github.com/mkeverything/mktour/issues/66)
+
+
+### Features
+
+* **swiss:** add BRACKET_RANK criterion for top-down bracket priority ([aac3222](https://github.com/mkeverything/mktour/commit/aac3222f42bbae98f24a61c7ea3029f996944302))
+
+# [1.5.0](https://github.com/mkeverything/mktour/compare/v1.4.1...v1.5.0) (2026-03-08)
+
+
+### Bug Fixes
+
+* hide withdrawal from tournament button ([923b1d0](https://github.com/mkeverything/mktour/commit/923b1d03bf2b14c5586e55aeea9af536de8f6980))
+* missing cacheTag in get-all-tournaments.ts ([52e1db8](https://github.com/mkeverything/mktour/commit/52e1db8d94ddba08db18c5efcaab9e4ca4718186))
+* missing intl ([c1cf1a3](https://github.com/mkeverything/mktour/commit/c1cf1a3624a2a3b9adf94f3c3c8f7f62a30e3804))
+
+
+### Features
+
+* display ratings in tournament dashboard ([0fdd19c](https://github.com/mkeverything/mktour/commit/0fdd19ce018989b51b1114ed7c94c3c2e693dd64))
+* infinite scroll in clubs/all ([78e1ee2](https://github.com/mkeverything/mktour/commit/78e1ee267ff4e1658521516c46f6319dcd0ee880))
+* infinite scroll in tournaments/all ([344dbc2](https://github.com/mkeverything/mktour/commit/344dbc24c184415630477141c318388d18b4898f))
+* recent tournaments on front page ([313a77d](https://github.com/mkeverything/mktour/commit/313a77d2e1e3a2dbc55af3cb31e5be2d588d852a))
+
 # [1.5.0](https://github.com/mkeverything/mktour/compare/v1.4.1...v1.5.0) (2026-03-08)
 
 
