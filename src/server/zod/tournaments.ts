@@ -80,6 +80,18 @@ export const tournamentWithClubSchema = z.object({
   club: clubsSelectSchema,
 });
 
+export const publicFeaturedTournamentSchema = z.object({
+  tournament: tournamentSchema.pick({
+    id: true,
+    title: true,
+    format: true,
+    type: true,
+    date: true,
+    rated: true,
+  }),
+  club: clubsSelectSchema.pick({ id: true, name: true }),
+});
+
 export const tournamentAuthStatusSchema = z.union([
   z.object({ status: z.literal('organizer') }),
   z.object({ status: z.literal('viewer') }),
@@ -168,6 +180,9 @@ export const editDoublesTeamFormSchema = editDoublesTeamSchema.safeExtend({
 
 export type TournamentInfoModel = z.infer<typeof tournamentInfoSchema>;
 export type TournamentWithClubModel = z.infer<typeof tournamentWithClubSchema>;
+export type PublicFeaturedTournamentModel = z.infer<
+  typeof publicFeaturedTournamentSchema
+>;
 export type TournamentAuthStatusModel = z.infer<
   typeof tournamentAuthStatusSchema
 >;

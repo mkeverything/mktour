@@ -1,5 +1,5 @@
 import useOnReach from '@/components/hooks/use-on-reach';
-import SkeletonList from '@/components/skeleton-list';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FC } from 'react';
 
 const Paginator: FC<Props> = ({
@@ -20,8 +20,10 @@ const Paginator: FC<Props> = ({
         className="h-0 w-full -translate-y-[calc(var(--spacing-mk-card-height)+calc((var(--spacing-mk)*2)))]"
       />
       {isFetchingNextPage && (
-        <div className="-mt-18">
-          <SkeletonList length={3} className="h-14 rounded-xl" />
+        <div className="flex flex-col gap-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-14 rounded-xl" />
+          ))}
         </div>
       )}
     </div>
