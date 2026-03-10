@@ -5,7 +5,7 @@ export const useClubPlayers = (clubId: string) => {
   const trpc = useTRPC();
   return useInfiniteQuery(
     trpc.club.players.infiniteQueryOptions(
-      { clubId, cursor: undefined },
+      { clubId, cursor: undefined, limit: 10 },
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor,
       },
