@@ -1,11 +1,10 @@
-import ClubsAllList from '@/components/clubs-all-list';
-import { BASE_URL } from '@/lib/config/urls';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { getLocale, getTranslations } from 'next-intl/server';
-
+import ClubsAllList from '@/app/clubs/all/clubs-all-list';
 import ClubsIteratee from '@/app/clubs/all/clubs-list';
 import Center from '@/components/center';
+import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
+import type { Metadata, ResolvingMetadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
 export default async function ClubSettings() {
