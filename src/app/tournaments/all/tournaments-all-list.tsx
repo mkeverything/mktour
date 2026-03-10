@@ -9,9 +9,10 @@ import {
 import { useDebounce } from '@/components/hooks/use-debounce';
 import useOnReach from '@/components/hooks/use-on-reach';
 import { useTournamentsFilters } from '@/components/hooks/use-tournaments-filters';
+import { MediaQueryContext } from '@/components/providers/media-query-context';
 import SkeletonList from '@/components/skeleton-list';
 import TournamentItemIteratee from '@/components/tournament-item';
-import ClubSearchInput from '@/components/ui-custom/club-search-input';
+import SearchInput from '@/components/ui-custom/search-input';
 import { Button } from '@/components/ui/button';
 import {
   Combobox,
@@ -41,9 +42,9 @@ import {
   type TournamentType,
 } from '@/server/zod/enums';
 import { ButtonProps } from '@base-ui/react';
-import { X } from 'lucide-react';
+import { Filter, FilterX, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { FC } from 'react';
+import { FC, useContext, useState } from 'react';
 
 export default function TournamentsAllList() {
   const { search, queryFilter, ...filters } = useTournamentsFilters();
@@ -55,7 +56,7 @@ export default function TournamentsAllList() {
   };
 
   return (
-    <div className="mk-list">
+    <div className="mk-list gap-mk-2">
       <Search search={search} {...filters} />
       <Content queryFilter={queryFilterWithDebounce} />
     </div>
@@ -117,15 +118,36 @@ const Search: FC<SearchProps> = ({
 
   const ratedSelectValue = rated === null ? 'all' : rated ? 'rated' : 'unrated';
 
+  const { isMobile } = useContext(MediaQueryContext);
+
+  const [visible, setVisible] = useState(!isMobile);
+
+  const handleVisibleChange = () => {
+    if (!visible) setVisible(true);
+    else {
+      setVisible(false);
+      reset();
+    }
+  };
+
   return (
-    <div className="gap-mk flex w-full flex-col pb-0">
-      <ClubSearchInput
-        search={search}
-        setSearch={setSearch}
-        className="w-full"
-      />
-      <div className="text-muted-foreground gap-mk flex flex-wrap text-xs">
-        <div className="sm:grow">
+    <div
+      className={`${visible ? 'gap-mk' : 'gap-0'} relative flex h-fit w-full flex-col transition-all duration-300`}
+    >
+      <SearchInput search={search} setSearch={setSearch} className="w-full" />
+      <Button
+        onClick={handleVisibleChange}
+        variant="ghost"
+        className="text-muted-foreground absolute top-0 right-0 block md:hidden"
+      >
+        {visible ? <FilterX /> : <Filter />}
+      </Button>
+      <div
+        className={`text-muted-foreground gap-mk flex flex-wrap overflow-hidden text-xs transition-all duration-300 ${
+          visible ? 'max-h-dvh opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div>
           <Select
             value={ratedSelectValue}
             onValueChange={(value) => {
@@ -152,7 +174,7 @@ const Search: FC<SearchProps> = ({
           value={formats}
           onValueChange={setFormats}
         >
-          <ComboboxChips>
+          <ComboboxChips className="grow">
             <ComboboxValue>
               {formats.map((item) => (
                 <ComboboxChip key={item}>{tMakeTournament(item)}</ComboboxChip>
@@ -179,7 +201,7 @@ const Search: FC<SearchProps> = ({
           value={types}
           onValueChange={setTypes}
         >
-          <ComboboxChips>
+          <ComboboxChips className="grow">
             <ComboboxValue>
               {types.map((item) => (
                 <ComboboxChip key={item}>
@@ -208,7 +230,7 @@ const Search: FC<SearchProps> = ({
           value={status}
           onValueChange={setStatus}
         >
-          <ComboboxChips>
+          <ComboboxChips className="grow">
             <ComboboxValue>
               {status.map((item) => (
                 <ComboboxChip key={item}>
