@@ -40,7 +40,13 @@ import {
   playerIdInputSchema,
   tournamentIdInputSchema,
 } from '@/server/zod/common';
-import { gameResultEnum, TournamentFormat } from '@/server/zod/enums';
+import {
+  gameResultEnum,
+  tournamentFormatEnum,
+  TournamentFormat,
+  tournamentStatusEnum,
+  tournamentTypeEnum,
+} from '@/server/zod/enums';
 import {
   playerFormSchema,
   playersSelectSchema,
@@ -76,6 +82,11 @@ export const tournamentRouter = {
       z.object({
         cursor: z.number().nullish(),
         limit: z.number().min(1).max(100).optional().default(10),
+        search: z.string().trim().max(100).optional(),
+        rated: z.boolean().nullable().optional(),
+        formats: z.array(tournamentFormatEnum).optional(),
+        types: z.array(tournamentTypeEnum).optional(),
+        statuses: z.array(tournamentStatusEnum).optional(),
       }),
     )
     .output(
@@ -88,6 +99,13 @@ export const tournamentRouter = {
       return await getAllTournaments({
         limit: input.limit,
         cursor: input.cursor ?? undefined,
+        filter: {
+          search: input.search,
+          rated: input.rated ?? undefined,
+          formats: input.formats,
+          types: input.types,
+          statuses: input.statuses,
+        },
       });
     }),
   publicFeatured: publicProcedure // TODO: currently not used + not included in openapi. use or remove

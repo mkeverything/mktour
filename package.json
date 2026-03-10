@@ -29,6 +29,7 @@
     "check": "bunx tsc --noEmit && bun lint && bun test"
   },
   "dependencies": {
+    "@base-ui/react": "^1.2.0",
     "@hookform/resolvers": "^5.2.2",
     "@libsql/client": "^0.17.0",
     "@lucia-auth/adapter-drizzle": "^1.1.0",

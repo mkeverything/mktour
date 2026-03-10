@@ -54,6 +54,8 @@ export const roundNameEnum = z.enum([
   '1/128',
 ]);
 
+export const tournamentStatusEnum = z.enum(['upcoming', 'ongoing', 'finished']);
+
 export type AffiliationStatus = z.infer<typeof affiliationStatusEnum>;
 export type StatusInClub = z.infer<typeof statusInClubEnum>;
 export type ClubNotificationEvent = z.infer<typeof clubNotificationEventEnum>;
@@ -63,3 +65,4 @@ export type TournamentAuthStatus = z.infer<typeof tournamentAuthStatusEnum>;
 export type TournamentType = z.infer<typeof tournamentTypeEnum>;
 export type GameResult = z.infer<typeof gameResultEnum>;
 export type RoundName = z.infer<typeof roundNameEnum>;
+export type TournamentStatus = z.infer<typeof tournamentStatusEnum>;
