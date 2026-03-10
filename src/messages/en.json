@@ -492,7 +492,7 @@
     "formats": "formats",
     "types": "types",
     "status": {
-      "title": "статус",
+      "title": "status",
       "upcoming": "upcoming",
       "ongoing": "ongoing",
       "finished": "finished"
