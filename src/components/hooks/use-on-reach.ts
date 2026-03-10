@@ -7,7 +7,7 @@ const useOnReach = (handler: () => void) => {
 
   useEffect(() => {
     if (isInView) handler();
-  });
+  }, [handler, isInView]);
 
   return ref;
 };
