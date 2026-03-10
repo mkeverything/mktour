@@ -6,6 +6,10 @@ import type {
 } from '@/server/zod/enums';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
+export const useTournaments = (filter: TournamentsFilterInput) => {
+  // ... (unchanged)
+};
+
 export type TournamentsFilterInput = {
   search?: string;
   rated?: boolean | null;
