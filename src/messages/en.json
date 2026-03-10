@@ -285,7 +285,7 @@
       "no description": "no description",
       "lichess team": "lichess team",
       "createdAt": "created: {date}",
-      "tournaments": "club tournaments",
+      "tournaments": "tournaments",
       "players": "players",
       "most active": "most active players",
       "yourPlayer": "your player in this club",
@@ -555,7 +555,7 @@
   "About": {
     "title": "about mktour",
     "description": "open-source chess tournament management platform",
-    "intro": "mktour is a free, open-source platform designed to make organizing chess tournaments simple and efficient. fast, simple and clear.",
+    "intro": "mktour is a free, open-source platform designed for organizing offline chess tournaments. it's fast, simple and clear",
     "contact": {
       "title": "get in touch",
       "lichess": "lichess team",
