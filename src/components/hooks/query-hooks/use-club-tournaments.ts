@@ -1,7 +1,14 @@
 import { useTRPC } from '@/components/trpc/client';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 export const useClubTournaments = (clubId: string) => {
-  const trpc = useTRPC(); // TODO: use infinite query
-  return useQuery(trpc.club.tournaments.queryOptions({ clubId }));
+  const trpc = useTRPC();
+  return useInfiniteQuery(
+    trpc.club.tournaments.infiniteQueryOptions(
+      { clubId, cursor: undefined, limit: 10 },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+      },
+    ),
+  );
 };

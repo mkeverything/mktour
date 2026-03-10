@@ -132,10 +132,25 @@ export const clubRouter = createTRPCRouter({
     }),
   tournaments: publicProcedure
     .meta(meta.clubTournaments)
-    .input(clubIdInputSchema)
-    .output(z.array(tournamentSchema))
+    .input(
+      z.object({
+        clubId: clubIdInputSchema.shape.clubId,
+        cursor: z.number().nullish(),
+        limit: z.number().min(1).max(100).optional().default(10),
+      }),
+    )
+    .output(
+      z.object({
+        tournaments: z.array(tournamentSchema),
+        nextCursor: z.number().nullable(),
+      }),
+    )
     .query(async (opts) => {
-      return await getClubTournaments(opts.input.clubId);
+      return await getClubTournaments(
+        opts.input.clubId,
+        opts.input.limit,
+        opts.input.cursor,
+      );
     }),
   affiliatedUsers: publicProcedure
     .meta(meta.clubAffiliatedUsers)
