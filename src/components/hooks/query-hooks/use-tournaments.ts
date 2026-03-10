@@ -7,18 +7,6 @@ import type {
 import { useInfiniteQuery } from '@tanstack/react-query';
 
 export const useTournaments = (filter: TournamentsFilterInput) => {
-  // ... (unchanged)
-};
-
-export type TournamentsFilterInput = {
-  search?: string;
-  rated?: boolean | null;
-  formats?: TournamentFormat[];
-  types?: TournamentType[];
-  statuses?: TournamentStatus[];
-};
-
-export const useTournaments = (filter: TournamentsFilterInput) => {
   const trpc = useTRPC();
   return useInfiniteQuery(
     trpc.tournament.all.infiniteQueryOptions(
@@ -35,4 +23,12 @@ export const useTournaments = (filter: TournamentsFilterInput) => {
       },
     ),
   );
+};
+
+export type TournamentsFilterInput = {
+  search?: string;
+  rated?: boolean | null;
+  formats?: TournamentFormat[];
+  types?: TournamentType[];
+  statuses?: TournamentStatus[];
 };
