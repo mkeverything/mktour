@@ -41,10 +41,9 @@ import {
   type TournamentStatus,
   type TournamentType,
 } from '@/server/zod/enums';
-import { ButtonProps } from '@base-ui/react';
 import { Filter, FilterX, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { FC, useContext, useState } from 'react';
+import { ComponentProps, FC, useContext, useState } from 'react';
 
 export default function TournamentsAllList() {
   const { search, queryFilter, ...filters } = useTournamentsFilters();
@@ -259,7 +258,7 @@ const Search: FC<SearchProps> = ({
   );
 };
 
-const ResetButton: FC<ButtonProps & { touched: boolean }> = ({
+const ResetButton: FC<ComponentProps<'button'> & { touched: boolean }> = ({
   onClick,
   touched,
 }) => {
