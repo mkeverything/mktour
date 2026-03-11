@@ -8,13 +8,12 @@ import {
   useUserNotificationsCounter,
 } from '@/components/hooks/query-hooks/use-user-notifications';
 import { UserNotificationLi } from '@/components/notification-items';
-import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
+import SkeletonList from '@/components/skeleton-list';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnyUserNotificationExtended } from '@/types/notifications';
 import { LucideCheckCheck } from 'lucide-react';
-import { FC } from 'react';
 
 const UserNotifications = () => {
   const {
@@ -32,7 +31,7 @@ const UserNotifications = () => {
     return (
       <div className="mk-container mk-list mt-mk gap-4">
         <Skeleton className="ml-mk-2 h-4 w-32" />
-        <UserNotificationsSkeletonList />
+        {skeletonList}
       </div>
     );
 
@@ -69,7 +68,7 @@ const UserNotifications = () => {
         hasNextPage={hasNextPage}
         fetchNextPage={fetchNextPage}
         isFetchingNextPage={isFetchingNextPage}
-        skeleton={<UserNotificationsSkeletonList />}
+        skeleton={skeletonList}
       />
     </div>
   );
@@ -80,8 +79,6 @@ const NotificationItemIteratee = (data: AnyUserNotificationExtended) => {
   return <UserNotificationLi key={data.notification.id} {...data} />;
 };
 
-const UserNotificationsSkeletonList: FC<SkeletonListProps> = () => (
-  <SkeletonList className="h-19" />
-);
+const skeletonList = <SkeletonList className="h-19" />;
 
 export default UserNotifications;
