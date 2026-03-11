@@ -7,12 +7,13 @@ import FormattedMessage from '@/components/formatted-message';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
-import SkeletonList from '@/components/skeleton-list';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
@@ -43,7 +44,12 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
     !useSearch &&
     (playersInfinite.status === 'pending' || playersInfinite.status === 'error')
   ) {
-    return <SkeletonList length={4} className="h-14 rounded-xl" />;
+    return (
+      <div className="mk-list pt-0">
+        <Skeleton className="h-9 rounded-md" />
+        <ClubPlayersSkeletonList />
+      </div>
+    );
   }
 
   return (
@@ -64,13 +70,13 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
               : t('Empty.players')}
           </Empty>
         )}
-        {!useSearch && players.length > 0 && (
-          <Paginator
-            hasNextPage={playersInfinite.hasNextPage}
-            isFetchingNextPage={playersInfinite.isFetchingNextPage}
-            fetchNextPage={playersInfinite.fetchNextPage}
-          />
-        )}
+        <Paginator
+          disabled={useSearch}
+          hasNextPage={playersInfinite.hasNextPage}
+          isFetchingNextPage={playersInfinite.isFetchingNextPage}
+          fetchNextPage={playersInfinite.fetchNextPage}
+          skeleton={<ClubPlayersSkeletonList length={3} />}
+        />
       </div>
     </div>
   );
@@ -125,5 +131,9 @@ const PlayerItem: FC<{
     </ComboModal.Root>
   );
 };
+
+const ClubPlayersSkeletonList: FC<SkeletonListProps> = ({ length }) => (
+  <SkeletonList length={length} className="h-14" />
+);
 
 export default ClubPlayersList;

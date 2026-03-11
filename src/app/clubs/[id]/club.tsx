@@ -4,15 +4,16 @@ import AffiliatedPlayerCard from '@/app/clubs/[id]/affiliated-player-card';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
-import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
-import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
+import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import SkeletonList from '@/components/skeleton-list';
 import TournamentItemIteratee from '@/components/tournament-item';
 import { useTRPC } from '@/components/trpc/client';
+import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import HalfCard from '@/components/ui-custom/half-card';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
-import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -298,14 +299,17 @@ const ClubTournamentsSection: FC<{
     clubId,
     type: 'tournaments',
   });
-  const { data: tournamentsPage } = useClubTournaments(clubId);
+  const tournamentsInfinite = useClubTournaments(clubId);
   const t = useTranslations();
   const { data: stats } = useClubStats(clubId);
 
   const isSearching = debouncedSearch.length > 0;
+  const tournamentsFromPage =
+    tournamentsInfinite?.data?.pages.flatMap((p) => p.tournaments) ?? [];
+
   const tournaments = isSearching
     ? (searchResults?.tournaments ?? [])
-    : (tournamentsPage ?? []);
+    : tournamentsFromPage;
 
   return (
     <Card className="flex max-h-[512px] flex-col">
@@ -334,6 +338,13 @@ const ClubTournamentsSection: FC<{
               tournament={tournament}
             />
           ))}
+          <Paginator
+            disabled={debouncedSearch.length > 0}
+            hasNextPage={tournamentsInfinite.hasNextPage}
+            isFetchingNextPage={tournamentsInfinite.isFetchingNextPage}
+            fetchNextPage={tournamentsInfinite.fetchNextPage}
+            skeleton={<SkeletonList card length={3} />}
+          />
         </div>
         {statusInClub && stats?.tournamentsCount === 0 && (
           <Button size="sm" variant="default" className="mt-2 w-full" asChild>
@@ -401,6 +412,9 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
                 hasNextPage={playersInfinite.hasNextPage}
                 isFetchingNextPage={playersInfinite.isFetchingNextPage}
                 fetchNextPage={playersInfinite.fetchNextPage}
+                skeleton={
+                  <SkeletonList card className="h-14 rounded-xl" length={3} />
+                }
               />
             )}
           </div>

@@ -1,4 +1,4 @@
-import ClubsAllList from '@/components/clubs-all-list';
+import ClubsAllList from '@/app/clubs/all/clubs-all-list';
 import { BASE_URL } from '@/lib/config/urls';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
