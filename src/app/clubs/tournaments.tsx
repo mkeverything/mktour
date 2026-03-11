@@ -70,7 +70,7 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={fetchNextPage}
-        skeleton={<SkeletonList card className="rounded-xl" length={3} />}
+        skeleton={<SkeletonList card length={3} />}
       />
       {statusInClub && stats?.tournamentsCount === 0 && <MakeTournament />}
     </div>

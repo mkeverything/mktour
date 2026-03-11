@@ -6,7 +6,7 @@ import {
   AffiliationNotificationLi,
   NotificationItem,
 } from '@/components/notification-items';
-import SkeletonList from '@/components/skeleton-list';
+import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import Paginator from '@/components/ui-custom/paginator';
 import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
 import { RichTagsFunction, useTranslations } from 'next-intl';
@@ -26,7 +26,7 @@ const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
   } = useClubNotifications(selectedClub);
 
   if (!notifications) return null;
-  if (isLoading) return skeleton;
+  if (isLoading) return <ClubsNotificationsSkeletonList />;
   if (status === 'error') return <p>{error.message}</p>;
 
   const allNotifications = notifications.pages.flatMap(
@@ -47,7 +47,7 @@ const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={fetchNextPage}
-        skeleton={skeleton}
+        skeleton={<ClubsNotificationsSkeletonList length={3} />}
       />
     </div>
   );
@@ -141,7 +141,9 @@ const Notification: FC<{
   }
 };
 
-const skeleton = <SkeletonList className="h-19" />;
+const ClubsNotificationsSkeletonList: FC<SkeletonListProps> = ({ length }) => (
+  <SkeletonList length={length} className="h-19" />
+);
 
 type NotificationTranslator = (
   key: ClubNotificationExtendedModel['event'],

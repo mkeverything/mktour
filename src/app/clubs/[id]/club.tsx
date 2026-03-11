@@ -343,7 +343,7 @@ const ClubTournamentsSection: FC<{
             hasNextPage={tournamentsInfinite.hasNextPage}
             isFetchingNextPage={tournamentsInfinite.isFetchingNextPage}
             fetchNextPage={tournamentsInfinite.fetchNextPage}
-            skeleton={<SkeletonList card className="rounded-xl" length={3} />}
+            skeleton={<SkeletonList card length={3} />}
           />
         </div>
         {statusInClub && stats?.tournamentsCount === 0 && (
