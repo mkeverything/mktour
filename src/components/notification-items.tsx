@@ -196,7 +196,12 @@ const ToggleIsSeen: FC<{ notificationId: string; isSeen: boolean }> = ({
   const icon = isSeen ? <EyeOff /> : <Eye />;
 
   return (
-    <Button size="icon-lg" variant="ghost" onClick={onClick}>
+    <Button
+      size="icon-lg"
+      variant="ghost"
+      className="text-muted-foreground"
+      onClick={onClick}
+    >
       {icon}
     </Button>
   );
