@@ -1,6 +1,6 @@
 import useOnReach from '@/components/hooks/use-on-reach';
 import SkeletonList from '@/components/skeleton-list';
-import { FC, ReactElement } from 'react';
+import { FC, ReactNode } from 'react';
 
 const Paginator: FC<Props> = ({
   hasNextPage,
@@ -29,7 +29,7 @@ type Props = {
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   disabled?: boolean;
-  skeleton?: ReactElement<typeof SkeletonList>;
+  skeleton?: ReactNode;
 };
 
 export default Paginator;
