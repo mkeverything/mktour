@@ -7,7 +7,7 @@ const Paginator: FC<Props> = ({
   isFetchingNextPage,
   fetchNextPage,
   disabled,
-  skeleton = <SkeletonList />,
+  skeleton = <SkeletonList length={3} />,
 }) => {
   const triggerRef = useOnReach(() => {
     if (hasNextPage && !isFetchingNextPage) {

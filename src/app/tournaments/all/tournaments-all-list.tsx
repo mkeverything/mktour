@@ -2,10 +2,9 @@
 
 import Empty from '@/components/empty';
 import { useTournaments } from '@/components/hooks/query-hooks/use-tournaments';
-import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
+import SkeletonList from '@/components/skeleton-list';
 import TournamentItemIteratee from '@/components/tournament-item';
 import Paginator from '@/components/ui-custom/paginator';
-import { FC } from 'react';
 
 export default function TournamentsAllList() {
   const {
@@ -16,7 +15,7 @@ export default function TournamentsAllList() {
     isFetchingNextPage,
   } = useTournaments();
 
-  if (isLoading) return <TournamentsAllSkeletonList />;
+  if (isLoading) return skeletonList;
 
   if (!tournaments?.pages[0].tournaments.length) {
     return <Empty messageId="tournaments" />;
@@ -35,12 +34,10 @@ export default function TournamentsAllList() {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={fetchNextPage}
-        skeleton={<TournamentsAllSkeletonList length={3} />}
+        skeleton={skeletonList}
       />
     </div>
   );
 }
 
-const TournamentsAllSkeletonList: FC<SkeletonListProps> = ({ length }) => (
-  <SkeletonList length={length} className="h-26 sm:h-22" />
-);
+const skeletonList = <SkeletonList className="h-26 sm:h-22" />;
