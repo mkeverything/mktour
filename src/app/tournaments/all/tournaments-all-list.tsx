@@ -125,7 +125,7 @@ const Search: FC<SearchProps> = ({
     if (!visible) setVisible(true);
     else {
       setVisible(false);
-      reset();
+      reset(true);
     }
   };
 
@@ -252,7 +252,7 @@ const Search: FC<SearchProps> = ({
             </ComboboxList>
           </ComboboxContent>
         </Combobox>
-        <ResetButton onClick={reset} touched={touched} />
+        <ResetButton onClick={() => reset()} touched={touched} />
       </div>
     </div>
   );
@@ -282,5 +282,5 @@ type SearchProps = {
   setStatus: (value: TournamentStatus[]) => void;
   setRated: (value: boolean | null) => void;
   touched: boolean;
-  reset: () => void;
+  reset: (preserveSearch?: boolean | undefined) => void;
 };

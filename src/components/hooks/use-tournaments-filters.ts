@@ -32,9 +32,15 @@ export const useTournamentsFilters = () => {
     setFilters((prev) => ({ ...prev, status }));
   }, []);
 
-  const reset = useCallback(() => {
-    setFilters(DEFAULT_FILTERS);
-  }, []);
+  const reset = useCallback(
+    (preserveSearch?: boolean | undefined) => {
+      const values = preserveSearch
+        ? { ...DEFAULT_FILTERS, search: filters.search }
+        : DEFAULT_FILTERS;
+      setFilters(values);
+    },
+    [filters.search],
+  );
 
   const touched = useMemo(() => {
     return (
