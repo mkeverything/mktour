@@ -40,6 +40,7 @@ import {
 import {
   clubIdInputSchema,
   notificationIdInputSchema,
+  paginatedInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
 import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
@@ -52,15 +53,14 @@ import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
+const clubPaginatedInputSchema = clubIdInputSchema.extend({
+  ...paginatedInputSchema.shape,
+});
+
 export const clubRouter = createTRPCRouter({
   all: publicProcedure
     .meta(meta.clubsAll)
-    .input(
-      z.object({
-        cursor: z.number().nullish(),
-        limit: z.number().min(1).max(100).optional().default(10),
-      }),
-    )
+    .input(paginatedInputSchema)
     .output(
       z.object({
         clubs: z.array(clubsSelectSchema),
@@ -110,13 +110,7 @@ export const clubRouter = createTRPCRouter({
     }),
   players: publicProcedure
     .meta(meta.clubPlayers)
-    .input(
-      z.object({
-        clubId: clubIdInputSchema.shape.clubId,
-        cursor: z.number().nullish(),
-        limit: z.number().min(1).max(100).optional().default(10),
-      }),
-    )
+    .input(clubPaginatedInputSchema)
     .output(
       z.object({
         players: z.array(playersSelectSchema),
@@ -132,13 +126,7 @@ export const clubRouter = createTRPCRouter({
     }),
   tournaments: publicProcedure
     .meta(meta.clubTournaments)
-    .input(
-      z.object({
-        clubId: clubIdInputSchema.shape.clubId,
-        cursor: z.number().nullish(),
-        limit: z.number().min(1).max(100).optional().default(10),
-      }),
-    )
+    .input(clubPaginatedInputSchema)
     .output(
       z.object({
         tournaments: z.array(tournamentSchema),
