@@ -5,24 +5,6 @@
  */
 
 // ============================================================================
-// Score Group
-// ============================================================================
-
-/**
- * A score bracket with its player count.
- *
- * Stored in descending score order within WeightContext.scoreGroups.
- * Used by BRACKET_RANK (bracket index) and RANKING (group size).
- */
-export interface ScoreGroup {
-  /** The score value for this bracket */
-  readonly score: number;
-
-  /** Number of players with this score */
-  readonly count: number;
-}
-
-// ============================================================================
 // Weight Context
 // ============================================================================
 
@@ -48,10 +30,4 @@ export interface WeightContext {
 
   /** Map from score to count of players with that score (for RANKING criterion) */
   readonly scoregroupSizes: ReadonlyMap<number, number>;
-
-  /** Score brackets sorted descending by score (for BRACKET_RANK criterion) */
-  readonly scoreGroups: readonly ScoreGroup[];
-
-  /** Number of distinct score brackets: scoreGroups.length */
-  readonly numBrackets: number;
 }
