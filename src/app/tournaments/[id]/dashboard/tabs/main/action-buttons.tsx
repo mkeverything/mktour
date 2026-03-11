@@ -3,17 +3,21 @@ import DeleteTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/d
 import ResetTournamentPButton from '@/app/tournaments/[id]/dashboard/tabs/main/reset-players-button';
 import ResetTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/reset-tournament-button';
 import StartTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/start-tournament-button';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { TournamentAuthStatus } from '@/server/zod/enums';
 import { TournamentModel } from '@/server/zod/tournaments';
+import { MoreVertical } from 'lucide-react';
 import { FC } from 'react';
 
-const ActionButtonsRoot: FC<{
-  status: TournamentAuthStatus;
+export const DestructiveTournamentButtons: FC<{
   tournament: TournamentModel;
-}> = ({ status, tournament }) => {
-  if (status !== 'organizer') return null;
-
-  const { closedAt, roundsNumber, ongoingRound, startedAt } = tournament;
+}> = ({ tournament }) => {
+  const { closedAt, startedAt } = tournament;
 
   if (closedAt) {
     return (
@@ -24,24 +28,64 @@ const ActionButtonsRoot: FC<{
     );
   }
 
-  if (startedAt && roundsNumber === ongoingRound) {
-    return (
-      <>
-        <FinishTournamentButton lastRoundNumber={roundsNumber} />
-        <ResetTournamentButton />
-      </>
-    );
+  if (startedAt) {
+    return <ResetTournamentButton />;
   }
-
-  if (startedAt) return <ResetTournamentButton />;
 
   return (
     <>
-      <StartTournamentButton />
       <DeleteTournamentButton />
       <ResetTournamentPButton />
     </>
   );
+};
+
+export const DestructiveTournamentButtonsDropdown: FC<{
+  tournament: TournamentModel;
+  className?: string;
+}> = ({ tournament, className }) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className={className} asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          aria-label="tournament destructive actions"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <div className="flex flex-col gap-1 p-1">
+          <DestructiveTournamentButtons tournament={tournament} />
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const ActionButtonsRoot: FC<{
+  status: TournamentAuthStatus;
+  tournament: TournamentModel;
+}> = ({ status, tournament }) => {
+  if (status !== 'organizer') return null;
+
+  const { closedAt, roundsNumber, ongoingRound, startedAt } = tournament;
+
+  if (closedAt) {
+    return null;
+  }
+
+  if (startedAt && roundsNumber === ongoingRound) {
+    return <FinishTournamentButton lastRoundNumber={roundsNumber} />;
+  }
+
+  if (!startedAt) {
+    return <StartTournamentButton />;
+  }
+
+  return null;
 };
 
 const ActionButtons: FC<{

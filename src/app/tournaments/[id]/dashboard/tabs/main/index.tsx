@@ -2,7 +2,9 @@
 
 import { turboPascal } from '@/app/fonts';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import ActionButtons from '@/app/tournaments/[id]/dashboard/tabs/main/action-buttons';
+import ActionButtons, {
+  DestructiveTournamentButtonsDropdown,
+} from '@/app/tournaments/[id]/dashboard/tabs/main/action-buttons';
 import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tournament-info';
 import Center from '@/components/center';
 import useTournamentEditTitle from '@/components/hooks/mutation-hooks/use-tournament-edit-title';
@@ -41,7 +43,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
     <div className="max-md:mk-container md:px-mk md:pl-mk-2 items-center md:flex md:justify-between">
       <div>
         <div
-          className={`p-mk flex items-center max-md:border-b max-md:pt-0 md:pb-0`}
+          className={`p-mk flex items-center justify-between max-md:border-b max-md:pt-0 md:pb-0`}
         >
           <InputGhost
             disabled={!canEditTitle}
@@ -50,6 +52,10 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
             onBlur={handleTitleUpdate}
             onChange={(event) => setControlledTitle(event.target.value)}
             className={`text-3xl ${turboPascal.className} truncate`}
+          />
+          <DestructiveTournamentButtonsDropdown
+            tournament={data.tournament}
+            className="md:hidden"
           />
         </div>
         <TournamentInfoList />
@@ -63,6 +69,10 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
         >
           <Maximize2 className="size-4" />
         </Button>
+        <DestructiveTournamentButtonsDropdown
+          tournament={data.tournament}
+          className="hidden md:flex"
+        />
         <ActionButtons status={status} tournament={data.tournament} />
       </div>
     </div>
