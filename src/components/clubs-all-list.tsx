@@ -3,8 +3,8 @@
 import ClubsIteratee from '@/app/clubs/all/clubs-list';
 import Empty from '@/components/empty';
 import { useClubs } from '@/components/hooks/query-hooks/use-clubs';
-import useOnReach from '@/components/hooks/use-on-reach';
 import SkeletonList from '@/components/skeleton-list';
+import Paginator from '@/components/ui-custom/paginator';
 
 export default function ClubsAllList() {
   const {
@@ -15,15 +15,7 @@ export default function ClubsAllList() {
     isFetchingNextPage,
   } = useClubs();
 
-  const ref = useOnReach(fetchNextPage);
-
-  if (isLoading) {
-    return (
-      <div className="mk-list">
-        <SkeletonList />
-      </div>
-    );
-  }
+  if (isLoading) return <SkeletonList className="h-18.5" />;
 
   if (!clubs?.pages[0].clubs.length) {
     return (
@@ -40,8 +32,11 @@ export default function ClubsAllList() {
           <ClubsIteratee clubs={page.clubs} />
         </div>
       ))}
-      {isFetchingNextPage && <SkeletonList />}
-      {hasNextPage && <div ref={ref} />}
+      <Paginator
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+      />
     </div>
   );
 }
