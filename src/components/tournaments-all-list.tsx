@@ -18,7 +18,7 @@ export default function TournamentsAllList() {
   const ref = useOnReach(fetchNextPage);
 
   if (isLoading) {
-    return <SkeletonList />;
+    return <SkeletonList className="h-26 sm:h-22" />;
   }
 
   if (!tournaments?.pages[0].tournaments.length) {

@@ -4,8 +4,8 @@ import { FC } from 'react';
 
 const SkeletonList: FC<{
   length?: number;
-  className?: string;
   card?: boolean;
+  className?: string;
 }> = ({ length, className, card }) => {
   const list = new Array(length || 5).fill('');
   const from = card ? 'from-card' : 'from-background';
@@ -15,7 +15,10 @@ const SkeletonList: FC<{
       <div className={`${from} absolute inset-0 w-full bg-linear-to-t`} />
       <div className="-z-10 flex flex-col gap-2">
         {list.map((_, i) => (
-          <Skeleton key={i} className={cn(`h-18 w-full`, className)} />
+          <Skeleton
+            key={i}
+            className={cn(`h-16 w-full rounded-xl`, className)}
+          />
         ))}
       </div>
     </div>
