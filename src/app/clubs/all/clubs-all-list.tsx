@@ -3,8 +3,9 @@
 import ClubsIteratee from '@/app/clubs/all/clubs-list';
 import Empty from '@/components/empty';
 import { useClubs } from '@/components/hooks/query-hooks/use-clubs';
-import SkeletonList from '@/components/skeleton-list';
+import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import Paginator from '@/components/ui-custom/paginator';
+import { FC } from 'react';
 
 export default function ClubsAllList() {
   const {
@@ -15,7 +16,7 @@ export default function ClubsAllList() {
     isFetchingNextPage,
   } = useClubs();
 
-  if (isLoading) return <SkeletonList className="h-18.5" />;
+  if (isLoading) return <ClubsAllSkeletonList />;
 
   if (!clubs?.pages[0].clubs.length) {
     return (
@@ -36,7 +37,12 @@ export default function ClubsAllList() {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         fetchNextPage={fetchNextPage}
+        skeleton={<ClubsAllSkeletonList length={3} />}
       />
     </div>
   );
 }
+
+const ClubsAllSkeletonList: FC<SkeletonListProps> = ({ length }) => (
+  <SkeletonList length={length} className="h-18.5" />
+);
