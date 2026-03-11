@@ -7,19 +7,19 @@ import FormattedMessage from '@/components/formatted-message';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
-import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
+import SkeletonList from '@/components/skeleton-list';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
+import { toast } from 'sonner';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   const t = useTranslations();
@@ -40,16 +40,13 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
     playersInfinite.data?.pages.flatMap((p) => p.players) ?? [];
   const players = useSearch ? (searchResults?.players ?? []) : playersFromPages;
 
-  if (
-    !useSearch &&
-    (playersInfinite.status === 'pending' || playersInfinite.status === 'error')
-  ) {
-    return (
-      <div className="mk-list pt-0">
-        <Skeleton className="h-9 rounded-md" />
-        <ClubPlayersSkeletonList />
-      </div>
-    );
+  if (!useSearch && playersInfinite.status === 'pending') {
+    return <SkeletonList length={4} className="h-14 rounded-xl" />;
+  }
+
+  if (!useSearch && playersInfinite.status === 'error') {
+    toast.error(playersInfinite.error.message);
+    return <p>{playersInfinite.error.message}</p>;
   }
 
   return (
