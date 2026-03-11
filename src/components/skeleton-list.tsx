@@ -2,8 +2,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { FC } from 'react';
 
-const SkeletonList: FC<SkeletonListProps> = ({ length, className, card }) => {
-  const list = new Array(length || 5).fill('');
+const SkeletonList: FC<SkeletonListProps> = ({
+  length = 5,
+  className,
+  card,
+}) => {
+  const list = new Array(length).fill('');
   const from = card ? 'from-card' : 'from-background';
 
   return (
