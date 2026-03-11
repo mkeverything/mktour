@@ -2,7 +2,7 @@
 
 import { db } from '@/server/db';
 import { tournaments } from '@/server/db/schema/tournaments';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, lt } from 'drizzle-orm';
 
 export const getClubTournaments = async (
   clubId: string,
@@ -12,19 +12,21 @@ export const getClubTournaments = async (
   const result = await db
     .select()
     .from(tournaments)
-    .where(eq(tournaments.clubId, clubId))
-    .orderBy(
-      desc(tournaments.createdAt),
-      desc(tournaments.startedAt),
-      desc(tournaments.closedAt),
+    .where(
+      cursor != null
+        ? and(
+            eq(tournaments.clubId, clubId),
+            lt(tournaments.createdAt, new Date(cursor)),
+          )
+        : eq(tournaments.clubId, clubId),
     )
-    .offset(cursor ?? 0)
+    .orderBy(desc(tournaments.createdAt))
     .limit(limit + 1);
 
   let nextCursor: number | null = null;
   if (result.length > limit) {
-    const currentCursor = cursor ?? 0;
-    nextCursor = currentCursor + limit;
+    const last = result[limit - 1];
+    nextCursor = last.createdAt.getTime();
   }
 
   return {
