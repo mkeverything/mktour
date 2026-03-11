@@ -44,8 +44,8 @@ export default async function getAllTournaments({
   if (trimmedSearch) {
     const searchPattern = `%${trimmedSearch}%`;
     const searchCondition = or(
-      ilike(tournaments.title, searchPattern),
-      ilike(clubs.name, searchPattern),
+      like(tournaments.title, searchPattern),
+      like(clubs.name, searchPattern),
     );
     if (searchCondition) whereConditions.push(searchCondition);
   }
