@@ -80,8 +80,8 @@ const NotificationItemIteratee = (data: AnyUserNotificationExtended) => {
   return <UserNotificationLi key={data.notification.id} {...data} />;
 };
 
-const UserNotificationsSkeletonList: FC<SkeletonListProps> = () => (
-  <SkeletonList className="h-19" />
+const UserNotificationsSkeletonList: FC<SkeletonListProps> = ({ length }) => (
+  <SkeletonList length={length} className="h-19" />
 );
 
 export default UserNotifications;
