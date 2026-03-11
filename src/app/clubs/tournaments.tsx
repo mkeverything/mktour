@@ -45,7 +45,7 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
 
   const tournaments = useSearch
     ? (searchResults?.tournaments ?? [])
-    : (tournamentsFromPage ?? []);
+    : tournamentsFromPage;
 
   if (!useSearch && isLoading) return <SkeletonList length={10} />;
   if (!useSearch && isError)

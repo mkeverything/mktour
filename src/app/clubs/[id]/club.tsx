@@ -309,7 +309,7 @@ const ClubTournamentsSection: FC<{
 
   const tournaments = isSearching
     ? (searchResults?.tournaments ?? [])
-    : (tournamentsFromPage ?? []);
+    : tournamentsFromPage;
 
   return (
     <Card className="flex max-h-[512px] flex-col">
