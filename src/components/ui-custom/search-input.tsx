@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ClassNameValue } from 'tailwind-merge';
 
-const ClubSearchInput: FC<{
+const SearchInput: FC<{
   search: string;
   setSearch: (_value: string) => void;
   className?: ClassNameValue;
@@ -26,4 +26,4 @@ const ClubSearchInput: FC<{
   );
 };
 
-export default ClubSearchInput;
+export default SearchInput;

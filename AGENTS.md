@@ -161,6 +161,7 @@ always run `bun check` before pushing. use single-file test when validating chan
 - **no capital letters** in ui text, comments, or prose — write everything lowercase unless technically required
 - no unnecessary comments in code
 - files: kebab-case (`user-profile.tsx`), components: PascalCase, variables: camelCase, constants: UPPER_SNAKE_CASE, types: PascalCase
+- **all type and interface declarations must be placed as close to the end of the file as possible, right before default export if there is one**
 - absolute imports: `@/` prefix (maps to `src/`)
 - import order: react → third-party → internal (blank lines between groups), use `import type` for type-only
 - server components by default; add `'use client'` only for interactive parts

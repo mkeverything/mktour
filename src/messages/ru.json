@@ -104,7 +104,8 @@
     "save": "сохранить",
     "settings": "настройки",
     "search": "поиск",
-    "profile": "профиль"
+    "profile": "профиль",
+    "all": "все"
   },
   "Menu": {
     "club": "клубы",
@@ -151,11 +152,13 @@
   "Empty": {
     "players": "в этом клубе ещё нет игроков",
     "tournaments": "здесь будут турниры клуба",
+    "tournamentsAll": "нет найденных турниров",
     "dashboard": "данные не получены",
     "user": "пользователь не найден",
     "no data": "нет данных",
     "notifications": "нет уведомлений",
-    "clubs": "клубов пока нет"
+    "clubs": "клубов пока нет",
+    "search": "ничего не найдено"
   },
   "Profile": {
     "edit": "редактировать",
@@ -483,6 +486,18 @@
   "Tournaments": {
     "no tournaments": "у вас пока нет никаких турниров",
     "make tournament": "сделать турнир"
+  },
+  "TournamentsAll": {
+    "filters": "фильтры",
+    "rated heading": "рейтинг",
+    "formats": "форматы",
+    "types": "типы",
+    "status": {
+      "title": "статус",
+      "upcoming": "предстоящие",
+      "ongoing": "идут",
+      "finished": "завершены"
+    }
   },
   "MakeTournament": {
     "making": "делаем...",

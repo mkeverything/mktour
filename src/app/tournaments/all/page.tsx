@@ -1,10 +1,9 @@
-import TournamentsAllList from '@/components/tournaments-all-list';
+import TournamentsAllList from '@/app/tournaments/all/tournaments-all-list';
+import TournamentsAllCache from '@/components/tournament-item-cache';
 import { BASE_URL } from '@/lib/config/urls';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
-
 import { Suspense } from 'react';
-import TournamentsAllCache from '@/components/tournament-item-cache';
 
 export default function Tournaments() {
   return (

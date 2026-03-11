@@ -104,7 +104,8 @@
     "save": "save",
     "settings": "settings",
     "search": "search",
-    "profile": "profile"
+    "profile": "profile",
+    "all": "all"
   },
   "Menu": {
     "club": "club",
@@ -151,11 +152,13 @@
   "Empty": {
     "players": "there are no players in this club yet",
     "tournaments": "there are no tournaments in this club yet",
+    "tournamentsAll": "no tournaments found",
     "dashboard": "no data",
     "user": "user not found",
     "no data": "no data",
     "notifications": "no notifications",
-    "clubs": "no clubs yet"
+    "clubs": "no clubs yet",
+    "search": "nothing was found"
   },
   "Profile": {
     "rating": "lichess blitz rating",
@@ -482,6 +485,18 @@
   "Tournaments": {
     "no tournaments": "you don't have any tournaments yet",
     "make tournament": "make tournament"
+  },
+  "TournamentsAll": {
+    "filters": "filters",
+    "rated heading": "rating",
+    "formats": "formats",
+    "types": "types",
+    "status": {
+      "title": "status",
+      "upcoming": "upcoming",
+      "ongoing": "ongoing",
+      "finished": "finished"
+    }
   },
   "MakeTournament": {
     "making": "making...",

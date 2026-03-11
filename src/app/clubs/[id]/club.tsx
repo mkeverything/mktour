@@ -4,16 +4,16 @@ import AffiliatedPlayerCard from '@/app/clubs/[id]/affiliated-player-card';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
-import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
-import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
+import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
 import TournamentItemIteratee from '@/components/tournament-item';
 import { useTRPC } from '@/components/trpc/client';
 import HalfCard from '@/components/ui-custom/half-card';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
-import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import Paginator from '@/components/ui-custom/paginator';
+import SearchInput from '@/components/ui-custom/search-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -317,7 +317,7 @@ const ClubTournamentsSection: FC<{
             ({stats?.tournamentsCount ?? 0})
           </span>
         </CardTitle>
-        <ClubSearchInput search={search} setSearch={setSearch} />
+        <SearchInput search={search} setSearch={setSearch} />
       </CardHeader>
       <CardContent className="overflow-y-auto pt-3">
         {!tournaments.length && (
@@ -380,7 +380,7 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
             </span>
           )}
         </CardTitle>
-        <ClubSearchInput search={search} setSearch={setSearch} />
+        <SearchInput search={search} setSearch={setSearch} />
       </CardHeader>
       <CardContent className="overflow-y-auto pt-3">
         {players.length === 0 && (
