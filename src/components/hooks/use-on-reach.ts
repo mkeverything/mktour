@@ -3,11 +3,20 @@ import { useEffect, useRef } from 'react';
 
 const useOnReach = (handler: () => void) => {
   const ref = useRef<HTMLDivElement | null>(null);
+  const handlerRef = useRef(handler);
   const isInView = useInView(ref, { margin: '300px' });
+  const wasInViewRef = useRef(false);
 
   useEffect(() => {
-    if (isInView) handler();
-  }, [handler, isInView]);
+    handlerRef.current = handler;
+  }, [handler]);
+
+  useEffect(() => {
+    if (isInView && !wasInViewRef.current) {
+      handlerRef.current();
+    }
+    wasInViewRef.current = isInView;
+  }, [isInView]);
 
   return ref;
 };
