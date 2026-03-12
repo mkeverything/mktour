@@ -7,33 +7,39 @@ import {
 } from '@/server/api/trpc';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
-import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import {
+  createTournament,
+  deleteTournament,
+  editTournamentTitle,
+  finishTournament,
+  resetTournament,
+  startTournament,
+  updateSwissRoundsNumber,
+} from '@/server/mutations/tournament-lifecycle';
+import {
   addDoublesTeam,
   addExistingPlayer,
   addNewPlayer,
-  createTournament,
-  deleteTournament,
   editDoublesTeam,
-  editTournamentTitle,
-  finishTournament,
-  getTournamentGames,
-  getTournamentPlayers,
-  getTournamentRoundGames,
   removePlayer,
-  resetTournament,
   resetTournamentPlayers,
+} from '@/server/mutations/tournament-players';
+import {
   saveRound,
   setTournamentGameResult,
-  startTournament,
-  updateSwissRoundsNumber,
-} from '@/server/mutations/tournament-managing';
+} from '@/server/mutations/tournament-games';
 import getAllTournaments from '@/server/queries/get-all-tournaments';
+import {
+  getTournamentGames,
+  getTournamentRoundGames,
+} from '@/server/queries/get-tournament-games';
+import { getTournamentPlayers } from '@/server/queries/get-tournament-players';
+import { getTournamentInfo } from '@/server/queries/get-tournament-info';
 import { getPublicFeaturedTournaments } from '@/server/queries/get-public-featured-tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import {
@@ -105,14 +111,8 @@ export const tournamentRouter = {
     .output(tournamentInfoSchema)
     .query(async (opts) => {
       const { input } = opts;
-      const [tournamentInfo] = await db
-        .select()
-        .from(tournaments)
-        .where(eq(tournaments.id, input.tournamentId))
-        .innerJoin(clubs, eq(tournaments.clubId, clubs.id));
-      if (!tournamentInfo) throw new Error('TOURNAMENT NOT FOUND');
+      const tournamentInfo = await getTournamentInfo(input.tournamentId);
       if (
-        // FIXME looks like weird shit but useful not to make decision rn about making roundsNUmber notNull() in the db lines 48-57
         tournamentInfo.tournament.format === 'swiss' &&
         tournamentInfo.tournament.roundsNumber === null
       ) {
