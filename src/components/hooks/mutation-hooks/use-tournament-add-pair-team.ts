@@ -1,3 +1,4 @@
+import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
 import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
@@ -5,21 +6,17 @@ import {
   PlayerTournamentModel,
   type PlayerWithUsernameModel,
 } from '@/server/zod/players';
-import { DashboardMessage } from '@/types/tournament-ws-events';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useContext } from 'react';
 import { toast } from 'sonner';
 
-export const useTournamentAddPairTeam = (
-  tournamentId: string,
-  queryClient: QueryClient,
-  sendJsonMessage: (_message: DashboardMessage) => void,
-) => {
+export const useTournamentAddPairTeam = (tournamentId: string) => {
+  const queryClient = useQueryClient();
+  const { sendJsonMessage } = useContext(DashboardContext);
   const trpc = useTRPC();
   const t = useTranslations('Tournament.AddPlayer');
   const saveRound = useSaveRound({
-    queryClient,
-    sendJsonMessage,
     isTournamentGoing: false,
   });
 

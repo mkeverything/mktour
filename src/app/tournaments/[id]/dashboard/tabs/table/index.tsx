@@ -18,7 +18,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PlayerTournamentModel } from '@/server/zod/players';
-import { useQueryClient } from '@tanstack/react-query';
 import { Flag, Scale, Trophy, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
@@ -43,15 +42,10 @@ import { UserModel } from '@/server/zod/users';
 
 const TournamentTable: FC = ({}) => {
   const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
   const players = useTournamentPlayers(id);
   const tournament = useTournamentInfo(id);
-  const { status, sendJsonMessage } = useContext(DashboardContext);
-  const removePlayers = useTournamentRemovePlayer(
-    id,
-    queryClient,
-    sendJsonMessage,
-  );
+  const { status } = useContext(DashboardContext);
+  const removePlayers = useTournamentRemovePlayer(id);
   const { userId } = useContext(DashboardContext);
   const t = useTranslations('Tournament.Table');
   const [selectedPlayer, setSelectedPlayer] =
