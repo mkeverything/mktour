@@ -2,6 +2,7 @@
 
 import { turboPascal } from '@/app/fonts';
 import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
+import CancelAffiliationByClub from '@/app/player/[id]/cancel-affiliation-by-club';
 import EditButton from '@/app/player/[id]/edit-button';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
@@ -279,7 +280,7 @@ const ClubProfilesCarousel: FC<{
         isOwner={isOwner}
         status={clubStatusMap.get(club.id) ?? null}
         canEdit={isOwner || viewerManagedClubIds.has(club.id)}
-        canEditRealname={viewerManagedClubIds.has(club.id)}
+        isClubAdmin={viewerManagedClubIds.has(club.id)}
         authStats={authStatsByPlayerId.get(player.id) ?? null}
         isAuthStatsPending={
           shouldRenderAuthStatsCard
@@ -303,7 +304,7 @@ const ClubProfilesCarousel: FC<{
               isOwner={isOwner}
               status={clubStatusMap.get(club.id) ?? null}
               canEdit={isOwner || viewerManagedClubIds.has(club.id)}
-              canEditRealname={viewerManagedClubIds.has(club.id)}
+              isClubAdmin={viewerManagedClubIds.has(club.id)}
               authStats={authStatsByPlayerId.get(player.id) ?? null}
               isAuthStatsPending={
                 shouldRenderAuthStatsCard
@@ -332,7 +333,7 @@ const ClubPlayerCard: FC<
     isOwner: boolean;
     status: StatusInClub | null;
     canEdit: boolean;
-    canEditRealname: boolean;
+    isClubAdmin: boolean;
     authStats: PlayerAuthStatsModel | null;
     isAuthStatsPending: boolean;
     renderAuthStatsCard: boolean;
@@ -344,7 +345,7 @@ const ClubPlayerCard: FC<
   isOwner,
   status,
   canEdit,
-  canEditRealname,
+  isClubAdmin,
   authStats,
   isAuthStatsPending,
   renderAuthStatsCard,
@@ -383,10 +384,19 @@ const ClubPlayerCard: FC<
               <EditButton
                 player={{ ...player, clubId: club.id }}
                 status={null}
-                canEditRealname={canEditRealname}
+                canEditRealname={isClubAdmin}
               />
             )}
-            {isOwner && <CancelAffiliationByUser playerId={player.id} />}
+            {isOwner ? (
+              <CancelAffiliationByUser playerId={player.id} />
+            ) : (
+              isClubAdmin && (
+                <CancelAffiliationByClub
+                  playerId={player.id}
+                  clubId={club.id}
+                />
+              )
+            )}
           </div>
         </div>
       </CardHeader>
