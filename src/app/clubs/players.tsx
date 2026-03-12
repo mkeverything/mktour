@@ -1,5 +1,6 @@
 'use client';
 
+import AddPlayerDrawer from '@/app/clubs/my/add-new-player';
 import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import EditPlayerForm from '@/app/player/[id]/player-form';
 import Empty from '@/components/empty';
@@ -54,7 +55,14 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
 
   return (
     <div className="mk-list">
-      <ClubSearchInput search={search} setSearch={setSearch} />
+      <div className="gap-mk flex">
+        <ClubSearchInput
+          search={search}
+          setSearch={setSearch}
+          className="w-full"
+        />
+        {statusInClub && <AddPlayerDrawer />}
+      </div>
       <div className="mk-list">
         {players.map((player) => (
           <PlayerItemIteratee
