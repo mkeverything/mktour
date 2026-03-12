@@ -43,7 +43,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   if (!data) return <Center>no data</Center>;
 
   return (
-    <div className="px-mk-2 grid grid-cols-1 md:grid-cols-2">
+    <div className="px-mk md:px-mk-2 flex flex-col md:grid md:grid-cols-2">
       <div className="col-span-2">
         <div
           className={`p-mk flex items-center justify-between max-md:border-b md:pb-0`}
@@ -63,8 +63,8 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
         </div>
       </div>
       <TournamentInfoList />
-      <div className="flex items-start justify-end md:items-end">
-        <div className="p-mk flex flex-wrap items-center justify-end">
+      <div className="flex w-full items-start justify-end md:col-span-1 md:items-end">
+        <div className="p-mk flex w-full flex-wrap items-center justify-end md:w-fit">
           <div className="gap-mk hidden items-center md:flex">
             <AddPlayerDrawer />
             <ShuffleButton />

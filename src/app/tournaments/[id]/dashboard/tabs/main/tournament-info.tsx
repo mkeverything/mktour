@@ -48,7 +48,7 @@ const TournamentInfoList = () => {
     formattedDate.charAt(0).toLowerCase() + formattedDate.slice(1);
 
   return (
-    <div className="md:text-muted-foreground gap-y-mk gap-x-mk-2 p-mk flex flex-wrap items-center text-xs">
+    <div className="md:text-muted-foreground gap-y-mk gap-x-mk-2 p-mk flex flex-col flex-wrap text-xs md:flex-row md:items-center">
       <InfoItem
         icon={HomeIcon}
         value={data.club?.name}

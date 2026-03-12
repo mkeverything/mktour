@@ -90,7 +90,7 @@ const ActionButtons: FC<{
   status: TournamentAuthStatus;
   tournament: TournamentModel;
 }> = (props) => (
-  <div className="flex flex-col gap-2 px-2 max-md:w-full md:max-w-md md:flex-row md:items-center">
+  <div className="flex flex-col gap-2 max-md:w-full md:max-w-md md:flex-row md:items-center md:px-2">
     <ActionButtonsRoot {...props} />
   </div>
 );
