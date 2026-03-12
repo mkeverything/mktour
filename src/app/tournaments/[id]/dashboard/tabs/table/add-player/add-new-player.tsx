@@ -121,9 +121,6 @@ const AddNewPlayer = ({
           form.reset(player, { keepDefaultValues: true });
           form.setFocus('nickname');
         },
-        onSuccess: () => {
-          toast.success(t('player added', { name: player.nickname }));
-        },
       },
     );
   }
