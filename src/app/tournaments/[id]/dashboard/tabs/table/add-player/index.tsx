@@ -1,9 +1,12 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import AddPlayerDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player-drawer-content';
 import AddPairTeam from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-pair-team';
+import AddPlayerDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player-drawer-content';
 import Fab from '@/components/fab';
+import FormattedMessage from '@/components/formatted-message';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { MediaQueryContext } from '@/components/providers/media-query-context';
 import SideDrawer from '@/components/ui-custom/side-drawer';
+import { Button } from '@/components/ui/button';
 import { UserPlus, X } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { Dispatch, SetStateAction, useContext, useState } from 'react';
@@ -16,6 +19,7 @@ const AddPlayerDrawer = () => {
   const [addingNewPlayer, setAddingNewPlayer] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const { status } = useContext(DashboardContext);
+  const { isDesktop } = useContext(MediaQueryContext);
 
   useHotkeys(
     'shift+equal',
@@ -52,14 +56,29 @@ const AddPlayerDrawer = () => {
   )
     return null;
 
+  const trigger = isDesktop ? (
+    <Button
+      variant="outline"
+      className="size-10 lg:w-fit"
+      onClick={() => handleChange(!open)}
+    >
+      <UserPlus />
+      <div className="hidden lg:block">
+        <FormattedMessage id="Tournament.AddPlayer.add player" />
+      </div>
+    </Button>
+  ) : (
+    <Fab
+      container={open || isAnimating ? document.body : undefined}
+      className={`${(open || isAnimating) && 'z-60 md:hidden'}`}
+      onClick={() => handleChange(!open)}
+      icon={open ? X : UserPlus}
+    />
+  );
+
   return (
     <>
-      <Fab
-        container={open || isAnimating ? document.body : undefined}
-        className={`${(open || isAnimating) && 'z-60 md:hidden'}`}
-        onClick={() => handleChange(!open)}
-        icon={open ? X : UserPlus}
-      />
+      {trigger}
       <SideDrawer
         open={open}
         setOpen={handleChange}

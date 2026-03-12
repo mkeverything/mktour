@@ -407,6 +407,7 @@
       "number of rounds": "amount of rounds:",
       "unrated": "unrated",
       "save": "save",
+      "fullscreen": "fullscreen mode",
       "minimize": "minimize"
     },
     "Results": {
@@ -458,6 +459,7 @@
     "AddPlayer": {
       "back": "back",
       "add new player": "add new player",
+      "add player": "add player",
       "name": "name",
       "estimated rating": "estimated rating",
       "save": "save",

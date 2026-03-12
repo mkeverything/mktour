@@ -5,7 +5,7 @@ import {
   DashboardContext,
   DashboardContextType,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import ShuffleFab from '@/app/tournaments/[id]/dashboard/shuffle-fab';
+import ShuffleButton from '@/app/tournaments/[id]/dashboard/shuffle-button';
 import TabsContainer from '@/app/tournaments/[id]/dashboard/tabs-container';
 import AddPlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
@@ -28,7 +28,7 @@ interface DashboardMobileProps {
 const fabTabMap: Record<DashboardContextType['currentTab'], ReactNode> = {
   main: <AddPlayerDrawer />,
   table: <AddPlayerDrawer />,
-  games: <ShuffleFab />,
+  games: <ShuffleButton />,
 };
 
 const DashboardMobile: React.FC<DashboardMobileProps> = ({

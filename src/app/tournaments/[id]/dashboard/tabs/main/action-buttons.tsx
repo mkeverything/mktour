@@ -3,12 +3,9 @@ import DeleteTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/d
 import ResetTournamentPButton from '@/app/tournaments/[id]/dashboard/tabs/main/reset-players-button';
 import ResetTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/reset-tournament-button';
 import StartTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/start-tournament-button';
+import ComboModal from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DialogTitle } from '@/components/ui/dialog';
 import { TournamentAuthStatus } from '@/server/zod/enums';
 import { TournamentModel } from '@/server/zod/tournaments';
 import { MoreVertical } from 'lucide-react';
@@ -40,13 +37,13 @@ export const DestructiveTournamentButtons: FC<{
   );
 };
 
-export const DestructiveTournamentButtonsDropdown: FC<{
+export const DestructiveTournamentButtonsComboModal: FC<{
   tournament: TournamentModel;
   className?: string;
 }> = ({ tournament, className }) => {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className={className} asChild>
+    <ComboModal.Root>
+      <ComboModal.Trigger className={className} asChild>
         <Button
           variant="ghost"
           size="icon"
@@ -55,13 +52,14 @@ export const DestructiveTournamentButtonsDropdown: FC<{
         >
           <MoreVertical className="h-4 w-4" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      </ComboModal.Trigger>
+      <ComboModal.Content>
+        <DialogTitle className="hidden" />
         <div className="flex flex-col gap-1 p-1">
           <DestructiveTournamentButtons tournament={tournament} />
         </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </ComboModal.Content>
+    </ComboModal.Root>
   );
 };
 
@@ -92,7 +90,7 @@ const ActionButtons: FC<{
   status: TournamentAuthStatus;
   tournament: TournamentModel;
 }> = (props) => (
-  <div className="flex flex-col gap-2 p-2 max-md:w-full md:max-w-md md:flex-row md:items-center">
+  <div className="flex flex-col gap-2 px-2 max-md:w-full md:max-w-md md:flex-row md:items-center">
     <ActionButtonsRoot {...props} />
   </div>
 );

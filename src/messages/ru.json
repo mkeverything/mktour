@@ -408,6 +408,7 @@
       "number of rounds": "количество туров:",
       "unrated": "не рейтинговый",
       "save": "сохранить",
+      "fullscreen": "развернуть на весь экран",
       "minimize": "свернуть"
     },
     "Results": {
@@ -459,6 +460,7 @@
     "AddPlayer": {
       "back": "назад",
       "add new player": "создать нового игрока",
+      "add player": "добавить игрока",
       "name": "имя",
       "estimated rating": "предполагаемый рейтинг",
       "save": "сохранить",
