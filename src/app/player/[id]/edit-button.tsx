@@ -30,10 +30,8 @@ const EditButton: FC<{
       </Trigger>
       <Content>
         <Header>
-          <Title className="pl-3">
-            {/* <FormattedMessage id="Common.edit" /> */}
-          </Title>
-          <Description hidden />
+          <Title />
+          <Description />
         </Header>
         <EditPlayerForm
           {...{

@@ -56,7 +56,7 @@ export default function ResetTournamentPButton() {
           {t('reset players')}
         </Button>
         <Close asChild>
-          <Button className="w-full" variant="outline">
+          <Button className="w-full" size="lg" variant="outline">
             {t('cancel')}
           </Button>
         </Close>

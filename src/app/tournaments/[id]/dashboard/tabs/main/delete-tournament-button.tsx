@@ -44,9 +44,7 @@ export default function DeleteTournamentButton() {
       <Content>
         <Header>
           <Title>{t('Delete.confirmation header')}</Title>
-          <Description className="text-balance">
-            {t.rich('Delete.confirmation body')}
-          </Description>
+          <Description>{t.rich('Delete.confirmation body')}</Description>
         </Header>
         <Button
           variant={'destructive'}

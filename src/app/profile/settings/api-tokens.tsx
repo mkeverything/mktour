@@ -4,10 +4,7 @@ import { LoadingSpinner } from '@/app/loading';
 import { useTokenGenerateMutation } from '@/components/hooks/mutation-hooks/use-token-generate';
 import { useTokenRevokeMutation } from '@/components/hooks/mutation-hooks/use-token-revoke';
 import { useTRPC } from '@/components/trpc/client';
-import ComboModal, {
-  Content,
-  Description,
-} from '@/components/ui-custom/combo-modal';
+import ComboModal, { Description } from '@/components/ui-custom/combo-modal';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -144,52 +141,46 @@ export default function ApiTokens() {
       </HalfCard>
 
       <ComboModal.Root open={open} onOpenChange={setOpen}>
-        <ComboModal.Title className="sr-only">
-          api token generated
-        </ComboModal.Title>
-        <Content>
-          <div className="flex flex-col gap-4">
-            <ComboModal.Header className="mx-0 p-0">
-              <Description className="text-left">
-                {t('modal description')}
-              </Description>
-            </ComboModal.Header>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Input
-                  readOnly
-                  value={
-                    isBlurred
-                      ? '••••••••••••••••••••••••••••••••'
-                      : generatedToken || ''
-                  }
-                  className="font-mono"
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsBlurred(!isBlurred)}
-                title={isBlurred ? 'reveal token' : 'hide token'}
-              >
-                {isBlurred ? (
-                  <Eye className="h-4 w-4" />
-                ) : (
-                  <EyeOff className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={copyToken}
-                title="copy to clipboard"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
+        <ComboModal.Content>
+          <ComboModal.Header>
+            <ComboModal.Title>{t('modal title')}</ComboModal.Title>
+            <Description>{t('modal description')}</Description>
+          </ComboModal.Header>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Input
+                readOnly
+                value={
+                  isBlurred
+                    ? '••••••••••••••••••••••••••••••••'
+                    : generatedToken || ''
+                }
+                className="font-mono"
+              />
             </div>
-            <p className="text-destructive text-sm">{t('modal warning')}</p>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsBlurred(!isBlurred)}
+              title={isBlurred ? 'reveal token' : 'hide token'}
+            >
+              {isBlurred ? (
+                <Eye className="h-4 w-4" />
+              ) : (
+                <EyeOff className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={copyToken}
+              title="copy to clipboard"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
           </div>
-        </Content>
+          <p className="text-destructive text-sm">{t('modal warning')}</p>
+        </ComboModal.Content>
       </ComboModal.Root>
     </div>
   );

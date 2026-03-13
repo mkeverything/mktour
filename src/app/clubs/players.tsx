@@ -4,7 +4,6 @@ import AddPlayerDrawer from '@/app/clubs/my/add-new-player';
 import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import EditPlayerForm from '@/app/player/[id]/player-form';
 import Empty from '@/components/empty';
-import FormattedMessage from '@/components/formatted-message';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
@@ -117,15 +116,16 @@ const PlayerItem: FC<{
         </Card>
       </ComboModal.Trigger>
       <ComboModal.Content>
-        <ComboModal.Title className="gap-mk-2 flex items-center pl-2">
-          <span>{nickname}</span>
-          <Link href={`/player/${player?.id}`}>
-            <Button variant="outline" className="">
-              <UserRound />
-              <FormattedMessage id="Tournament.Table.Player.profile" />
+        <ComboModal.Header>
+          <ComboModal.Title>
+            <Button variant="ghost" className="text-xl" asChild>
+              <Link href={`/player/${player?.id}`}>
+                <span>{nickname}</span>
+                <UserRound />
+              </Link>
             </Button>
-          </Link>
-        </ComboModal.Title>
+          </ComboModal.Title>
+        </ComboModal.Header>
         <EditPlayerForm
           clubId={player.clubId}
           player={player}

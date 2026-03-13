@@ -364,6 +364,7 @@
       "revoke": "revoke",
       "make": "make",
       "making": "making",
+      "modal title": "new token",
       "modal description": "this token will only be shown once. please copy it and store it securely. you will not be able to see it again.",
       "modal warning": "warning: this token gives full access to your account. do not share it with anyone.",
       "copied": "copied",
