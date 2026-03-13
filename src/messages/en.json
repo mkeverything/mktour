@@ -379,6 +379,7 @@
     },
     "Main": {
       "start tournament": "start tournament",
+      "settings": "settings",
       "reset progress": "reset progress",
       "reset players": "reset players",
       "confirmation header": "are you sure?",

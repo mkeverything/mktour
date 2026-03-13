@@ -29,7 +29,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const fallbackTitle = useTournamentFallbackTitle(data?.tournament);
   const title = tournamentTitle || fallbackTitle;
   const [controlledTitle, setControlledTitle] = useState(title);
-  const canEditTitle = status === 'organizer' && !data?.tournament.startedAt;
+  const isOrganizer = status === 'organizer';
   const t = useTranslations('Tournament.Main');
 
   const { mutate } = useTournamentEditTitle();
@@ -49,17 +49,19 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
           className={`p-mk flex items-center justify-between max-md:border-b md:pb-0`}
         >
           <InputGhost
-            disabled={!canEditTitle}
+            disabled={!isOrganizer}
             placeholder={fallbackTitle}
             value={controlledTitle}
             onBlur={handleTitleUpdate}
             onChange={(event) => setControlledTitle(event.target.value)}
             className={`text-3xl ${turboPascal.className} truncate`}
           />
-          <DestructiveTournamentButtonsComboModal
-            tournament={data.tournament}
-            className="md:hidden"
-          />
+          {isOrganizer && (
+            <DestructiveTournamentButtonsComboModal
+              tournament={data.tournament}
+              className="md:hidden"
+            />
+          )}
         </div>
       </div>
       <TournamentInfoList />
@@ -69,7 +71,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
             <AddPlayerDrawer />
             <ShuffleButton />
           </div>
-          <ActionButtons status={status} tournament={data.tournament} />
+          {isOrganizer && <ActionButtons tournament={data.tournament} />}
           <Button
             title={t('fullscreen')}
             className="text-muted-foreground hover:text-primary hidden justify-self-end md:flex"

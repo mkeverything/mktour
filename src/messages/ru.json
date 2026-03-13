@@ -380,6 +380,7 @@
     },
     "Main": {
       "start tournament": "начать турнир",
+      "settings": "настройки",
       "confirmation body": "все результаты игр будут удалены. турнир перейдет в состояние «не начался»",
       "confirmation header": "вы уверены?",
       "reset progress": "обнулить турнир",
