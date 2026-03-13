@@ -1,3 +1,53 @@
+# [1.7.0](https://github.com/mkeverything/mktour/compare/v1.6.0...v1.7.0) (2026-03-13)
+
+
+### Bug Fixes
+
+* **?:** define limit for clubPlayer query ([e01c453](https://github.com/mkeverything/mktour/commit/e01c45340e2fcdd7f0b2ced5c42708d4411dc1ea))
+* better paddings at tournament setting buttons ([6b2c676](https://github.com/mkeverything/mktour/commit/6b2c676feab89bf036bbd9d830ee2a246bd23bec))
+* club notifications short-circuit logic ([ec4da24](https://github.com/mkeverything/mktour/commit/ec4da24b8c442962a0319291543c52a18c80dc32))
+* club/my/tournaments pagination; minor ref ([6d8337d](https://github.com/mkeverything/mktour/commit/6d8337dbed89a1b7b20fbd8e2aead372ccf7feca))
+* clubs. publicPopular endpoint counting players and tmts together ([3a7d3e8](https://github.com/mkeverything/mktour/commit/3a7d3e83107af42a12377a5b89972ce3e8c95e17))
+* display actions only for organizers ([9cf9d3c](https://github.com/mkeverything/mktour/commit/9cf9d3c0892f611d187ccb186a17d23c541817af))
+* error handling to useclubPlayers query ([3615faf](https://github.com/mkeverything/mktour/commit/3615faf1995c9f760213201aa7ac9ae6a41aea09))
+* escape hotkey returns handleClose instead of calling it ([d89a006](https://github.com/mkeverything/mktour/commit/d89a0063abb91e319554993021e8796820589c7d))
+* handle side-types in sql-case-when (added type converter) ([f0e5933](https://github.com/mkeverything/mktour/commit/f0e59338c2c54746a2b07d5852432aeb68244b58))
+* handler unstable reference ([fc7b2f1](https://github.com/mkeverything/mktour/commit/fc7b2f1942ce86e314fbe1c4bd064fe7f1c820eb))
+* hardcoded query key bypasses tRPC cache ([f876ac9](https://github.com/mkeverything/mktour/commit/f876ac91fc0a40ecafd257f61063732460a9186e))
+* inconsistent empty-cache handling compared to sibling hooks ([0eb2290](https://github.com/mkeverything/mktour/commit/0eb229039d2b21997cb15dd4adfafa0d66cf5808))
+* inconsistent spacings in combomodal usage ([415070d](https://github.com/mkeverything/mktour/commit/415070d5335b03a9f11c9feaf12eb122ef11610d))
+* infinite query for players at club dashboard ([2908c36](https://github.com/mkeverything/mktour/commit/2908c364d0c9cb4c5b55bccaa8b9c952c22cdeb6))
+* minor UI ([c60c342](https://github.com/mkeverything/mktour/commit/c60c342a36c959e707b35e608a800a1a35481f9b))
+* missing dependecy array in useOnReach ([5138bb8](https://github.com/mkeverything/mktour/commit/5138bb8ee52cbff5c010ae869ddc3abb0615c822))
+* missing isOrganizer check for desktop tournament dashboard ([65468b6](https://github.com/mkeverything/mktour/commit/65468b6eea056e8ee42a70e51277d49a5215fc33))
+* missing opts in use-club-players prefetch ([4518eb6](https://github.com/mkeverything/mktour/commit/4518eb62d76ae0ef80c0d166abf722247aa2ff45))
+* missing prop ([eaf0d84](https://github.com/mkeverything/mktour/commit/eaf0d8486edc0ebe56b02d662585c486a4df81c3))
+* prefetching club tournaments ([05eaccb](https://github.com/mkeverything/mktour/commit/05eaccb9cce48b435a4101e53d96ee9a281e0bc4))
+* shuffle fab button now always means the same and is disabled if not enough players ([ed71177](https://github.com/mkeverything/mktour/commit/ed71177af9d54210c0db55414819080b7f39c8e1))
+* skeleton match club notifications items ([cebace4](https://github.com/mkeverything/mktour/commit/cebace45a488876d60215d7273305715e13800db))
+* skeleton match club players list; minor ref ([a6c0ae0](https://github.com/mkeverything/mktour/commit/a6c0ae0f4e499c5b2345a4acda5ee127d3b60131))
+* skeleton match clubs/all items ([f06c0d7](https://github.com/mkeverything/mktour/commit/f06c0d72ba02aa3f8abea9a8d6aacfd250de1c53))
+* skeleton match tournaments/all items ([64d23f0](https://github.com/mkeverything/mktour/commit/64d23f0a87bc16ff1fda99f412c04059a79db60d))
+* skeleton shadows in paginator ([02f897f](https://github.com/mkeverything/mktour/commit/02f897fde6c0fef11a6f4a3875cd0859be4c23a3))
+* **swiss:** bump missed C18-C20 priority fields and update stale JSDoc ([2270e41](https://github.com/mkeverything/mktour/commit/2270e41e120a75cb2172473125fea57f7094defb)), closes [#66](https://github.com/mkeverything/mktour/issues/66)
+* **swiss:** use min score for BRACKET_RANK penalty, not max ([aec5ae3](https://github.com/mkeverything/mktour/commit/aec5ae34673d3b19ccfcaddd955b7dcd043de4c6))
+
+
+### Features
+
+* bg card attribute for skeletonList ([d0c4334](https://github.com/mkeverything/mktour/commit/d0c43345d9c47bf95406cf4f78cef9181ee78763))
+* **club dashboard:** regular button instead of fab for adding new player ([9d84a20](https://github.com/mkeverything/mktour/commit/9d84a20639c64a5325a9a2460754843ae3c14d38))
+* disable changing swiss rounds number after tournament is finished ([73cb861](https://github.com/mkeverything/mktour/commit/73cb861ab6d06aa29ec11bf962bef7e28e5f497a))
+* pagination in clubs tournaments ([a8106fd](https://github.com/mkeverything/mktour/commit/a8106fdcae00ebe2f91eed8255e0934f4b1adc12))
+* separated destructive options in dropdown menu ([c68113b](https://github.com/mkeverything/mktour/commit/c68113b6ffbe84afbb60a3cf7d8cb33bccb7ed3f))
+* **swiss:** add BRACKET_RANK criterion for top-down bracket priority ([0fa19b2](https://github.com/mkeverything/mktour/commit/0fa19b2a7c8a5f9fa71e409ef9e8250cc322ef4d))
+* tournament dashboard UI updates ([7012775](https://github.com/mkeverything/mktour/commit/7012775bb51de0eb89cfdc7f64770d971c11f9d2))
+
+
+### Reverts
+
+* + in automated team nickname ([99ca7e8](https://github.com/mkeverything/mktour/commit/99ca7e842a83c401567c76d4b482f7f8dbad2829))
+
 # [1.6.0](https://github.com/mkeverything/mktour/compare/v1.5.0...v1.6.0) (2026-03-09)
 
 
