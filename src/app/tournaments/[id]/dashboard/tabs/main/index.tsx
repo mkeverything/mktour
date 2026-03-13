@@ -81,10 +81,12 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
           >
             <Maximize2 className="size-4" />
           </Button>
-          <DestructiveTournamentButtonsComboModal
-            tournament={data.tournament}
-            className="hidden md:flex"
-          />
+          {isOrganizer && (
+            <DestructiveTournamentButtonsComboModal
+              tournament={data.tournament}
+              className="hidden md:flex"
+            />
+          )}
         </div>
       </div>
     </div>
