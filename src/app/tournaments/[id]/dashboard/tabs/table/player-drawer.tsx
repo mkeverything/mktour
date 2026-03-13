@@ -60,7 +60,7 @@ const PlayerDrawer: FC<{
       }}
     >
       <Content>
-        <Header className="mx-auto">
+        <Header>
           <div className="flex items-center justify-start gap-4">
             <Title className="flex items-baseline gap-2">
               {player.nickname}

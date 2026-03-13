@@ -2,6 +2,7 @@ import { LoadingSpinner } from '@/app/loading';
 import Fab from '@/components/fab';
 import { usePlayerAddMutation } from '@/components/hooks/mutation-hooks/use-player-add';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { useTRPC } from '@/components/trpc/client';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Save, UserPlus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
 
@@ -50,14 +51,24 @@ const AddPlayerDrawer = () => {
     }
   };
 
+  const { isDesktop } = useContext(MediaQueryContext);
+
+  const trigger = isDesktop ? (
+    <Button onClick={() => handleChange(!open)}>
+      <UserPlus />
+    </Button>
+  ) : (
+    <Fab
+      container={open || isAnimating ? document.body : undefined}
+      className={`${(open || isAnimating) && 'z-100'} fixed right-4 bottom-4`}
+      onClick={() => handleChange(!open)}
+      icon={open ? X : UserPlus}
+    />
+  );
+
   return (
     <>
-      <Fab
-        container={open || isAnimating ? document.body : undefined}
-        className={`${(open || isAnimating) && 'z-100'} fixed right-4 bottom-4`}
-        onClick={() => handleChange(!open)}
-        icon={open ? X : UserPlus}
-      />
+      {trigger}
       <SideDrawer
         open={open}
         setOpen={handleChange}

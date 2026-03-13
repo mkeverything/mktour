@@ -22,8 +22,8 @@ const StartTournamentDrawer: FC<{
 
   return (
     <Root open={open}>
-      <Content className="flex flex-col">
-        <Header className="mb-mk">
+      <Content>
+        <Header>
           <Title>
             <FormattedMessage id="Tournament.Round.start tournament.title" />
           </Title>
@@ -33,7 +33,7 @@ const StartTournamentDrawer: FC<{
         </Header>
         <StartTournamentButton />
         <Close asChild>
-          <Button size="lg" variant="outline">
+          <Button size="lg" variant="outline" className="col-span-2">
             <FormattedMessage id="Common.cancel" />
           </Button>
         </Close>

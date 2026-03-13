@@ -5,7 +5,6 @@ import RichText from '@/components/rich-text';
 import ComboModal, {
   Close,
   Content,
-  Description,
   Header,
   Title,
   Trigger,
@@ -31,7 +30,6 @@ export default function DeleteUser({ userId }: { userId: string }) {
             <Content>
               <Header>
                 <Title>{t('confirmation header')}</Title>
-                <Description className="sr-only" />
                 <div className="text-muted-foreground text-sm">
                   <RichText>
                     {(tags) => t.rich('confirmation body', tags)}

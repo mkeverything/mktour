@@ -2,9 +2,12 @@ import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import Empty from '@/components/empty';
 import FormattedMessage from '@/components/formatted-message';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
+import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import SkeletonList from '@/components/skeleton-list';
 import TournamentItemIteratee from '@/components/tournament-item';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
+import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -20,24 +23,55 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
     data: searchResults,
     search,
     setSearch,
+    debouncedSearch,
   } = useClubScopedSearch({
     clubId: selectedClub,
     type: 'tournaments',
   });
+  const {
+    data: tournamentsPage,
+    isLoading,
+    isError,
+    failureReason,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useClubTournaments(selectedClub);
+
+  const useSearch = debouncedSearch.length > 0;
+
+  const tournamentsFromPage =
+    tournamentsPage?.pages.flatMap((p) => p.tournaments) ?? [];
+
+  const tournaments = useSearch
+    ? (searchResults?.tournaments ?? [])
+    : tournamentsFromPage;
+
+  if (!useSearch && isLoading) return <SkeletonList length={10} />;
+  if (!useSearch && isError)
+    return <p className="w-full">{failureReason?.message}</p>;
 
   return (
     <div className="mk-list">
       <ClubSearchInput search={search} setSearch={setSearch} />
-      {searchResults?.tournaments?.map((props) => (
-        <TournamentItemIteratee key={props.id} tournament={props} />
-      ))}
-      {!searchResults?.tournaments?.length && (
+
+      {!tournaments.length && (
         <Empty className="text-center text-balance">
           {stats?.tournamentsCount !== 0
             ? t('GlobalSearch.not found')
             : t('Empty.tournaments')}
         </Empty>
       )}
+      {tournaments.map((props) => (
+        <TournamentItemIteratee key={props.id} tournament={props} />
+      ))}
+      <Paginator
+        disabled={useSearch}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+        skeleton={<SkeletonList card length={3} />}
+      />
       {statusInClub && stats?.tournamentsCount === 0 && <MakeTournament />}
     </div>
   );

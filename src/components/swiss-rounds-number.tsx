@@ -24,6 +24,7 @@ export default function SwissRoundsNumber({
   const { mutate } = useSaveRoundsNumberMutation(queryClient, sendJsonMessage);
 
   const isOrganizer = status === 'organizer';
+  const isFinished = !!data?.tournament.closedAt;
   const currentValue = data?.tournament.roundsNumber ?? 1;
   const playerCount = players?.length ?? 0;
   const minValue = 1;
@@ -48,7 +49,7 @@ export default function SwissRoundsNumber({
     mutate({ tournamentId, roundsNumber: newValue });
   };
 
-  if (!isOrganizer) {
+  if (!isOrganizer || isFinished) {
     return <span className={className}>{boundedCurrentValue}</span>;
   }
 
@@ -62,7 +63,7 @@ export default function SwissRoundsNumber({
         disabled={!canDecrement}
         className={cn(
           'border-input bg-background hover:bg-accent hover:text-accent-foreground',
-          'flex size-8 items-center justify-center rounded border text-lg',
+          'flex size-6 items-center justify-center rounded border text-lg',
           'disabled:pointer-events-none disabled:opacity-50',
         )}
       >
@@ -70,7 +71,7 @@ export default function SwissRoundsNumber({
       </button>
       <div
         className={cn(
-          'border-input bg-background flex size-8 items-center justify-center rounded border text-center',
+          'border-input bg-background flex size-6 items-center justify-center rounded border text-center',
         )}
       >
         {boundedCurrentValue}
@@ -81,7 +82,7 @@ export default function SwissRoundsNumber({
         disabled={!canIncrement}
         className={cn(
           'border-input bg-background hover:bg-accent hover:text-accent-foreground',
-          'flex size-8 items-center justify-center rounded border text-lg',
+          'flex size-6 items-center justify-center rounded border text-lg',
           'disabled:pointer-events-none disabled:opacity-50',
         )}
       >

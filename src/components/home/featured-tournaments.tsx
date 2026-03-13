@@ -4,12 +4,13 @@ import FormattedMessage from '@/components/formatted-message';
 import { usePublicFeaturedTournaments } from '@/components/hooks/query-hooks/use-public-featured-tournaments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { TournamentWithClubModel } from '@/server/zod/tournaments';
+import { PublicFeaturedTournamentModel } from '@/server/zod/tournaments';
 import { Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { FC } from 'react';
 
 const FeaturedTournaments: FC<{ limit?: number }> = ({ limit = 5 }) => {
+  // TODO: not used anywhere. use or remove
   const { data: tournaments, isLoading } = usePublicFeaturedTournaments(limit);
 
   if (isLoading) {
@@ -42,7 +43,7 @@ const FeaturedTournaments: FC<{ limit?: number }> = ({ limit = 5 }) => {
   );
 };
 
-const TournamentLi = ({ tournament, club }: TournamentWithClubModel) => {
+const TournamentLi = ({ tournament, club }: PublicFeaturedTournamentModel) => {
   const title = tournament.title || tournament.format;
 
   return (

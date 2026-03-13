@@ -1,13 +1,16 @@
 'use client';
 
+import AddPlayerDrawer from '@/app/clubs/my/add-new-player';
 import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import EditPlayerForm from '@/app/player/[id]/player-form';
 import Empty from '@/components/empty';
-import FormattedMessage from '@/components/formatted-message';
+import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
+import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { StatusInClub } from '@/server/zod/enums';
@@ -16,6 +19,7 @@ import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
+import { toast } from 'sonner';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   const t = useTranslations();
@@ -24,29 +28,59 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
     data: searchResults,
     search,
     setSearch,
+    debouncedSearch,
   } = useClubScopedSearch({
     clubId: selectedClub,
     type: 'players',
   });
+  const playersInfinite = useClubPlayers(selectedClub);
+
+  const useSearch = debouncedSearch.length > 0;
+  const playersFromPages =
+    playersInfinite.data?.pages.flatMap((p) => p.players) ?? [];
+  const players = useSearch ? (searchResults?.players ?? []) : playersFromPages;
+
+  if (!useSearch && playersInfinite.status === 'pending') {
+    return <SkeletonList length={4} className="h-14 rounded-xl" />;
+  }
+
+  if (!useSearch && playersInfinite.status === 'error') {
+    toast.error(playersInfinite.error.message);
+    return <p>{playersInfinite.error.message}</p>;
+  }
 
   return (
     <div className="mk-list">
-      <ClubSearchInput search={search} setSearch={setSearch} />
+      <div className="gap-mk flex">
+        <ClubSearchInput
+          search={search}
+          setSearch={setSearch}
+          className="w-full"
+        />
+        {statusInClub && <AddPlayerDrawer />}
+      </div>
       <div className="mk-list">
-        {searchResults?.players?.map((player) => (
+        {players.map((player) => (
           <PlayerItemIteratee
             key={player.id}
             player={player}
             statusInClub={statusInClub}
           />
         ))}
-        {searchResults?.players?.length === 0 && (
+        {players.length === 0 && (
           <Empty className="text-center text-balance">
             {playersCount !== 0
               ? t('GlobalSearch.not found')
               : t('Empty.players')}
           </Empty>
         )}
+        <Paginator
+          disabled={useSearch}
+          hasNextPage={playersInfinite.hasNextPage}
+          isFetchingNextPage={playersInfinite.isFetchingNextPage}
+          fetchNextPage={playersInfinite.fetchNextPage}
+          skeleton={<ClubPlayersSkeletonList length={3} />}
+        />
       </div>
     </div>
   );
@@ -82,15 +116,16 @@ const PlayerItem: FC<{
         </Card>
       </ComboModal.Trigger>
       <ComboModal.Content>
-        <ComboModal.Title className="gap-mk-2 flex items-center pl-2">
-          <span>{nickname}</span>
-          <Link href={`/player/${player?.id}`}>
-            <Button variant="outline" className="">
-              <UserRound />
-              <FormattedMessage id="Tournament.Table.Player.profile" />
+        <ComboModal.Header>
+          <ComboModal.Title>
+            <Button variant="ghost" className="text-xl" asChild>
+              <Link href={`/player/${player?.id}`}>
+                <span>{nickname}</span>
+                <UserRound />
+              </Link>
             </Button>
-          </Link>
-        </ComboModal.Title>
+          </ComboModal.Title>
+        </ComboModal.Header>
         <EditPlayerForm
           clubId={player.clubId}
           player={player}
@@ -101,5 +136,9 @@ const PlayerItem: FC<{
     </ComboModal.Root>
   );
 };
+
+const ClubPlayersSkeletonList: FC<SkeletonListProps> = ({ length }) => (
+  <SkeletonList length={length} className="h-14" />
+);
 
 export default ClubPlayersList;

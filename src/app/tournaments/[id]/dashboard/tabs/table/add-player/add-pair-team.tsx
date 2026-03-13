@@ -1,4 +1,3 @@
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import AddPlayerDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player-drawer-content';
 import PairPlayerCard, {
   PairPlayerCardPlayer,
@@ -29,7 +28,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
 
@@ -77,12 +76,7 @@ const AddPairTeam = ({
   const t = useTranslations('Tournament.AddPlayer');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
-  const addPairTeam = useTournamentAddPairTeam(
-    tournamentId,
-    queryClient,
-    sendJsonMessage,
-  );
+  const addPairTeam = useTournamentAddPairTeam(tournamentId);
   const [activeSlot, setActiveSlot] = useState<PairSlot | null>(null);
   const [selectorValue, setSelectorValue] = useState('');
   const [selectorAddingNewPlayer, setSelectorAddingNewPlayer] = useState(false);

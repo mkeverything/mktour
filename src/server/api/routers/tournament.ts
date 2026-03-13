@@ -34,6 +34,7 @@ import {
   updateSwissRoundsNumber,
 } from '@/server/mutations/tournament-managing';
 import getAllTournaments from '@/server/queries/get-all-tournaments';
+import { getPublicFeaturedTournaments } from '@/server/queries/get-public-featured-tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import {
   playerIdInputSchema,
@@ -50,20 +51,13 @@ import {
   addDoublesTeamSchema,
   editDoublesTeamSchema,
   gameSchema,
+  publicFeaturedTournamentSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
   tournamentInfoSchema,
   tournamentWithClubSchema,
 } from '@/server/zod/tournaments';
-import {
-  and,
-  count,
-  desc,
-  eq,
-  getTableColumns,
-  isNull,
-  sql,
-} from 'drizzle-orm';
+import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
@@ -96,37 +90,15 @@ export const tournamentRouter = {
         cursor: input.cursor ?? undefined,
       });
     }),
-  publicFeatured: publicProcedure
+  publicFeatured: publicProcedure // TODO: currently not used + not included in openapi. use or remove
     .input(
       z.object({
         limit: z.number().min(1).max(10).optional().default(5),
       }),
     )
-    .output(z.array(tournamentWithClubSchema))
+    .output(z.array(publicFeaturedTournamentSchema))
     .query(async ({ input }) => {
-      const { limit } = input;
-
-      const results = await db
-        .select({
-          tournament: tournaments,
-          club: clubs,
-        })
-        .from(tournaments)
-        .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
-        .leftJoin(
-          players_to_tournaments,
-          eq(players_to_tournaments.tournamentId, tournaments.id),
-        )
-        .groupBy(tournaments.id)
-        .orderBy(
-          desc(
-            sql`CASE WHEN ${tournaments.startedAt} IS NOT NULL AND ${tournaments.closedAt} IS NULL THEN 1 ELSE 0 END`,
-          ),
-          desc(count(players_to_tournaments.id)),
-        )
-        .limit(limit);
-
-      return results;
+      return await getPublicFeaturedTournaments(input.limit);
     }),
   info: publicProcedure
     .input(tournamentIdInputSchema)

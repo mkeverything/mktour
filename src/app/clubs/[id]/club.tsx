@@ -3,14 +3,18 @@
 import AffiliatedPlayerCard from '@/app/clubs/[id]/affiliated-player-card';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
-import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
+import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import SkeletonList from '@/components/skeleton-list';
 import TournamentItemIteratee from '@/components/tournament-item';
 import { useTRPC } from '@/components/trpc/client';
+import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import HalfCard from '@/components/ui-custom/half-card';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
-import ClubSearchInput from '@/components/ui-custom/club-search-input';
+import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -290,12 +294,22 @@ const ClubTournamentsSection: FC<{
     data: searchResults,
     search,
     setSearch,
+    debouncedSearch,
   } = useClubScopedSearch({
     clubId,
     type: 'tournaments',
   });
+  const tournamentsInfinite = useClubTournaments(clubId);
   const t = useTranslations();
   const { data: stats } = useClubStats(clubId);
+
+  const isSearching = debouncedSearch.length > 0;
+  const tournamentsFromPage =
+    tournamentsInfinite?.data?.pages.flatMap((p) => p.tournaments) ?? [];
+
+  const tournaments = isSearching
+    ? (searchResults?.tournaments ?? [])
+    : tournamentsFromPage;
 
   return (
     <Card className="flex max-h-[512px] flex-col">
@@ -310,7 +324,7 @@ const ClubTournamentsSection: FC<{
         <ClubSearchInput search={search} setSearch={setSearch} />
       </CardHeader>
       <CardContent className="overflow-y-auto pt-3">
-        {!searchResults?.tournaments?.length && (
+        {!tournaments.length && (
           <p className="text-muted-foreground py-4 text-center text-sm">
             {stats?.tournamentsCount !== 0
               ? t('GlobalSearch.not found')
@@ -318,12 +332,19 @@ const ClubTournamentsSection: FC<{
           </p>
         )}
         <div className="flex flex-col gap-2">
-          {searchResults?.tournaments?.map((tournament) => (
+          {tournaments.map((tournament) => (
             <TournamentItemIteratee
               key={tournament.id}
               tournament={tournament}
             />
           ))}
+          <Paginator
+            disabled={debouncedSearch.length > 0}
+            hasNextPage={tournamentsInfinite.hasNextPage}
+            isFetchingNextPage={tournamentsInfinite.isFetchingNextPage}
+            fetchNextPage={tournamentsInfinite.fetchNextPage}
+            skeleton={<SkeletonList card length={3} />}
+          />
         </div>
         {statusInClub && stats?.tournamentsCount === 0 && (
           <Button size="sm" variant="default" className="mt-2 w-full" asChild>
@@ -342,12 +363,21 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
     data: searchResults,
     search,
     setSearch,
+    debouncedSearch,
   } = useClubScopedSearch({
     clubId,
     type: 'players',
   });
+  const playersInfinite = useClubPlayers(clubId);
   const t = useTranslations();
   const { playersCount } = useClubStats(clubId).data ?? {};
+
+  const isSearching = debouncedSearch.length > 0;
+  const playersFromPages =
+    playersInfinite.data?.pages.flatMap((p) => p.players) ?? [];
+  const players = isSearching
+    ? (searchResults?.players ?? [])
+    : playersFromPages;
 
   return (
     <Card className="flex max-h-[512px] flex-col">
@@ -364,7 +394,7 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
         <ClubSearchInput search={search} setSearch={setSearch} />
       </CardHeader>
       <CardContent className="overflow-y-auto pt-3">
-        {searchResults?.players?.length === 0 && (
+        {players.length === 0 && (
           <p className="text-muted-foreground py-4 text-center text-sm">
             {playersCount !== 0
               ? t('GlobalSearch.not found')
@@ -372,11 +402,21 @@ const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
           </p>
         )}
 
-        {searchResults?.players && searchResults.players.length > 0 && (
+        {players.length > 0 && (
           <div className="flex flex-col gap-2">
-            {searchResults?.players.map((player) => (
+            {players.map((player) => (
               <PlayerItem key={player.id} player={player} />
             ))}
+            {!isSearching && (
+              <Paginator
+                hasNextPage={playersInfinite.hasNextPage}
+                isFetchingNextPage={playersInfinite.isFetchingNextPage}
+                fetchNextPage={playersInfinite.fetchNextPage}
+                skeleton={
+                  <SkeletonList card className="h-14 rounded-xl" length={3} />
+                }
+              />
+            )}
           </div>
         )}
       </CardContent>
