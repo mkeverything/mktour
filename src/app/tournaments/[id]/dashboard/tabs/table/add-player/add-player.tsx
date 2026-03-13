@@ -63,7 +63,7 @@ const AddPlayer = ({
     mutate({ tournamentId: id, player, userId, addedAt });
   };
 
-  useHotkeys('escape', () => handleClose, { enableOnFormTags: true });
+  useHotkeys('escape', () => handleClose(), { enableOnFormTags: true });
   useHotkeys(
     'enter',
     () => {
