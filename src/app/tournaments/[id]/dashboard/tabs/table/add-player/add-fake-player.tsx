@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { newid } from '@/lib/utils';
 import { PlayerFormModel } from '@/server/zod/players';
 import { faker } from '@faker-js/faker';
-import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { FC, useContext } from 'react';
 
@@ -14,16 +13,10 @@ const AddFakerPlayer: FC<{ setOpen: (_arg: boolean) => void }> = ({
 }) => {
   const { id } = useParams<{ id: string }>();
   const tournament = useTournamentInfo(id);
-  const queryClient = useQueryClient();
   const returnToNewPlayer = () => null;
-  const { sendJsonMessage, userId } = useContext(DashboardContext);
+  const { userId } = useContext(DashboardContext);
   if (!userId) throw new Error('USERID_NOT_FOUND_IN_CONTEXT');
-  const { mutate } = useTournamentAddNewPlayer(
-    id,
-    queryClient,
-    sendJsonMessage,
-    returnToNewPlayer,
-  );
+  const { mutate } = useTournamentAddNewPlayer(id, returnToNewPlayer);
 
   const nickname =
     // eslint-disable-next-line

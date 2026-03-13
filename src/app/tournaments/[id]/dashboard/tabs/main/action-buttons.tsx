@@ -3,17 +3,17 @@ import DeleteTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/d
 import ResetTournamentPButton from '@/app/tournaments/[id]/dashboard/tabs/main/reset-players-button';
 import ResetTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/reset-tournament-button';
 import StartTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/start-tournament-button';
-import { TournamentAuthStatus } from '@/server/zod/enums';
+import ComboModal from '@/components/ui-custom/combo-modal';
+import { Button } from '@/components/ui/button';
 import { TournamentModel } from '@/server/zod/tournaments';
+import { MoreVertical } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 
-const ActionButtonsRoot: FC<{
-  status: TournamentAuthStatus;
+export const DestructiveTournamentButtons: FC<{
   tournament: TournamentModel;
-}> = ({ status, tournament }) => {
-  if (status !== 'organizer') return null;
-
-  const { closedAt, roundsNumber, ongoingRound, startedAt } = tournament;
+}> = ({ tournament }) => {
+  const { closedAt, startedAt } = tournament;
 
   if (closedAt) {
     return (
@@ -24,31 +24,71 @@ const ActionButtonsRoot: FC<{
     );
   }
 
-  if (startedAt && roundsNumber === ongoingRound) {
-    return (
-      <>
-        <FinishTournamentButton lastRoundNumber={roundsNumber} />
-        <ResetTournamentButton />
-      </>
-    );
+  if (startedAt) {
+    return <ResetTournamentButton />;
   }
-
-  if (startedAt) return <ResetTournamentButton />;
 
   return (
     <>
-      <StartTournamentButton />
       <DeleteTournamentButton />
       <ResetTournamentPButton />
     </>
   );
 };
 
+export const DestructiveTournamentButtonsComboModal: FC<{
+  tournament: TournamentModel;
+  className?: string;
+}> = ({ tournament, className }) => {
+  const t = useTranslations('Tournament.Main');
+  return (
+    <ComboModal.Root>
+      <ComboModal.Trigger className={className} asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="shrink-0"
+          aria-label="tournament settings"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </ComboModal.Trigger>
+      <ComboModal.Content>
+        <ComboModal.Header>
+          <ComboModal.Title>{t('settings')}</ComboModal.Title>
+        </ComboModal.Header>
+        <div className="flex flex-col gap-1 pt-4">
+          <DestructiveTournamentButtons tournament={tournament} />
+        </div>
+      </ComboModal.Content>
+    </ComboModal.Root>
+  );
+};
+
+const ActionButtonsRoot: FC<{
+  tournament: TournamentModel;
+}> = ({ tournament }) => {
+  const { closedAt, roundsNumber, ongoingRound, startedAt } = tournament;
+
+  if (closedAt) {
+    return null;
+  }
+
+  if (startedAt && roundsNumber === ongoingRound) {
+    return <FinishTournamentButton lastRoundNumber={roundsNumber} />;
+  }
+
+  if (!startedAt) {
+    return <StartTournamentButton />;
+  }
+
+  return null;
+};
+
 const ActionButtons: FC<{
-  status: TournamentAuthStatus;
   tournament: TournamentModel;
 }> = (props) => (
-  <div className="flex flex-col gap-2 p-2 max-md:w-full md:max-w-md md:flex-row md:items-center">
+  <div className="flex flex-col gap-2 max-md:w-full md:max-w-md md:flex-row md:items-center md:px-2">
     <ActionButtonsRoot {...props} />
   </div>
 );
