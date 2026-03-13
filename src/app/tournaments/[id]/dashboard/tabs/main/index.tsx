@@ -66,7 +66,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
       </div>
       <TournamentInfoList />
       <div className="flex w-full items-start justify-end md:col-span-1 md:items-end">
-        <div className="p-mk flex w-full flex-wrap items-center justify-end md:w-fit">
+        <div className="p-mk flex w-full flex-wrap items-center justify-end pr-0 md:w-fit">
           <div className="gap-mk hidden items-center md:flex">
             <AddPlayerDrawer />
             <ShuffleButton />

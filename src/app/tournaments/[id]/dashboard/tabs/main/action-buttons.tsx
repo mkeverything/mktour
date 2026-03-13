@@ -46,7 +46,7 @@ export const DestructiveTournamentButtonsComboModal: FC<{
       <ComboModal.Trigger className={className} asChild>
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           className="shrink-0"
           aria-label="tournament settings"
         >
