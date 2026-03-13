@@ -1,5 +1,4 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import AddPlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import Fab from '@/components/fab';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -41,14 +40,12 @@ const ShuffleButton = () => {
     </Button>
   ) : null;
 
-  const mobile = isSufficient ? (
+  const mobile = (
     <Fab
-      disabled={isPending}
+      disabled={isPending || !isSufficient}
       icon={!isPending ? Shuffle : Loader2}
       onClick={handleClick}
     />
-  ) : (
-    <AddPlayerDrawer />
   );
 
   const component = isDesktop ? desktop : mobile;
