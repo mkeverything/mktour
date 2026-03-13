@@ -41,13 +41,12 @@ jobs:
     needs: lint-and-check
     if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+          persist-credentials: true
       - name: Configure git identity
         run: |
           git config user.name "github-actions[bot]"
