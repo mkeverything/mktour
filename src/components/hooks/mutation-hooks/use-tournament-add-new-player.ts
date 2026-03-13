@@ -51,7 +51,12 @@ export const useTournamentAddNewPlayer = (
 
         queryClient.setQueryData(
           trpc.tournament.playersIn.queryKey({ tournamentId }),
-          (cache) => cache && cache.concat(newPlayer),
+          (cache: Array<PlayerTournamentModel> | undefined) => {
+            if (!cache) return [newPlayer];
+            if (cache.some((player) => player.id === newPlayer.id))
+              return cache;
+            return cache.concat(newPlayer);
+          },
         );
         return { previousState, newPlayer };
       },
