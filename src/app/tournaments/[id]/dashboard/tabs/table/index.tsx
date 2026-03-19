@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/table';
 import { PlayerTournamentModel } from '@/server/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
-import { Flag, Scale, Trophy, UserRound } from 'lucide-react';
+import { Scale, Trophy, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import {
@@ -287,13 +287,12 @@ const Status: FC<
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
       <div
-        className={`gap-mk flex min-w-0 items-center ${player.isOut && 'text-muted-foreground'}`}
+        className={`gap-mk flex min-w-0 items-center ${player.isOut && 'text-muted-foreground line-through'}`}
       >
         <span className="truncate">{children}</span>
         {player.username && (
           <UserRound className="text-muted-foreground size-4 shrink-0" />
         )}
-        {player.isOut && <Flag className="size-4 shrink-0" />}
       </div>
       {pairPlayers.length === 2 && (
         <small className="text-muted-foreground text-2xs truncate">
