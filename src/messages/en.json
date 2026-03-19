@@ -224,6 +224,7 @@
     "name": "what's their name?",
     "add-player-error": "sorry! couldn't add {player} to tournament",
     "remove-player-error": "sorry! couldn't remove {player} from tournament",
+    "withdraw-player-error": "sorry! couldn't withdraw {player} from tournament",
     "internal-error": "internal error: {error}",
     "max 50": "max 50 characters",
     "min nickname length": "nickname must be at least 3 characters long",
@@ -336,7 +337,8 @@
     "player has tournaments": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
     "club updated": "club updated",
     "tournament renamed": "tournament title has been updated",
-    "player result setting disabled": "club admins disabled player result submissions"
+    "player result setting disabled": "club admins disabled player result submissions",
+    "rounds number decreased automatically": "number of rounds was automatically decreased to {roundsNumber}"
   },
   "UserSettings": {
     "header": "settings",

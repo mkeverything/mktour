@@ -28,12 +28,8 @@ const AddPlayer = ({
   const { id } = useParams<{ id: string }>();
   const possiblePlayers = useTournamentPossiblePlayers(id);
   const queryClient = useQueryClient();
-  const { sendJsonMessage, userId } = useContext(DashboardContext);
-  const { mutate } = useTournamentAddExistingPlayer(
-    id,
-    queryClient,
-    sendJsonMessage,
-  );
+  const { userId } = useContext(DashboardContext);
+  const { mutate } = useTournamentAddExistingPlayer(id, queryClient);
   const t = useTranslations('Tournament.AddPlayer');
   const excludeSet = excludePlayerIds?.length
     ? new Set(excludePlayerIds)

@@ -5,7 +5,15 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { GameModel } from '@/server/zod/tournaments';
-import { and, countDistinct, eq, isNotNull, sql } from 'drizzle-orm';
+import {
+  and,
+  countDistinct,
+  eq,
+  isNotNull,
+  isNull,
+  or,
+  sql,
+} from 'drizzle-orm';
 
 export function compareTeamMembers<
   T extends { numberInTeam: number | null; id: string },
@@ -30,6 +38,7 @@ export async function getTournamentById(tournamentId: string) {
 export async function getTournamentPlayersCount(
   tournamentId: string,
   tournamentType?: string,
+  options?: { excludeOut?: boolean },
 ): Promise<number> {
   const type =
     tournamentType ??
@@ -37,6 +46,13 @@ export async function getTournamentPlayersCount(
       if (!t) throw new Error('TOURNAMENT NOT FOUND');
       return t.type;
     }));
+
+  const activePlayersCondition = options?.excludeOut
+    ? or(
+        isNull(players_to_tournaments.isOut),
+        eq(players_to_tournaments.isOut, false),
+      )
+    : undefined;
 
   if (type === 'doubles') {
     const [result] = await db
@@ -48,6 +64,7 @@ export async function getTournamentPlayersCount(
         and(
           eq(players_to_tournaments.tournamentId, tournamentId),
           isNotNull(players_to_tournaments.teamNickname),
+          ...(activePlayersCondition ? [activePlayersCondition] : []),
         ),
       );
 
@@ -57,7 +74,12 @@ export async function getTournamentPlayersCount(
   const [result] = await db
     .select({ playersCount: sql<number>`count(*)` })
     .from(players_to_tournaments)
-    .where(eq(players_to_tournaments.tournamentId, tournamentId));
+    .where(
+      and(
+        eq(players_to_tournaments.tournamentId, tournamentId),
+        ...(activePlayersCondition ? [activePlayersCondition] : []),
+      ),
+    );
 
   return Number(result?.playersCount ?? 0);
 }

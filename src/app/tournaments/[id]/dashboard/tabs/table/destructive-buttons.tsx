@@ -29,7 +29,8 @@ export const DeleteButton: FC<{ handleDelete: () => void }> = ({
 
 export const WithdrawButtonWithConfirmation: FC<{
   selectedPlayer: PlayerTournamentModel;
-}> = ({ selectedPlayer }) => (
+  handleWithdraw: () => void;
+}> = ({ selectedPlayer, handleWithdraw }) => (
   <Root>
     <Trigger asChild>
       <Button className="flex gap-2" size="lg" variant="outline">
@@ -49,7 +50,7 @@ export const WithdrawButtonWithConfirmation: FC<{
       <Button
         className="flex w-full gap-2"
         size="lg"
-        onClick={console.log} // FIXME handle Withdraw from tournament
+        onClick={handleWithdraw}
         variant="destructive"
       >
         <LogOut />

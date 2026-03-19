@@ -17,7 +17,7 @@ import {
   PlayerInsertModel,
   PlayerTournamentModel,
 } from '@/server/zod/players';
-import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { normalizeSwissRoundsNumber } from './tournament-lifecycle';
 
 export async function removePlayer({
@@ -526,4 +526,60 @@ export async function resetTournamentPlayers({
   await db
     .delete(players_to_tournaments)
     .where(eq(players_to_tournaments.tournamentId, tournamentId));
+}
+
+export async function withdrawPlayer({
+  tournamentId,
+  playerId,
+  userId,
+}: {
+  tournamentId: string;
+  playerId: string;
+  userId: string;
+}): Promise<{
+  roundsNumber: number | null;
+  roundsNumberAutoDecreased: boolean;
+}> {
+  const { user } = await validateRequest();
+  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
+  if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
+
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
+  if (!tournament.startedAt) throw new Error('TOURNAMENT_NOT_STARTED');
+  if (tournament.closedAt) throw new Error('TOURNAMENT_ALREADY_FINISHED');
+
+  await db.transaction(async (tx) => {
+    const updateResult = await tx
+      .update(players_to_tournaments)
+      .set({ isOut: true })
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          eq(players_to_tournaments.playerId, playerId),
+        ),
+      );
+
+    if (!updateResult.rowsAffected) {
+      throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+    }
+
+    await tx
+      .delete(games)
+      .where(
+        and(
+          eq(games.tournamentId, tournamentId),
+          isNull(games.result),
+          or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
+        ),
+      );
+  });
+
+  const normalizedRounds = await normalizeSwissRoundsNumber(tournamentId);
+
+  return {
+    roundsNumber: normalizedRounds?.roundsNumber ?? tournament.roundsNumber,
+    roundsNumberAutoDecreased: normalizedRounds?.wasChanged ?? false,
+  };
 }

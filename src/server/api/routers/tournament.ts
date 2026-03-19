@@ -28,6 +28,7 @@ import {
   editDoublesTeam,
   removePlayer,
   resetTournamentPlayers,
+  withdrawPlayer,
 } from '@/server/mutations/tournament-players';
 import {
   saveRound,
@@ -62,6 +63,8 @@ import {
   tournamentCreateInputSchema,
   tournamentInfoSchema,
   tournamentWithClubSchema,
+  withdrawTournamentPlayerResultSchema,
+  withdrawTournamentPlayerInputSchema,
 } from '@/server/zod/tournaments';
 import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
@@ -235,6 +238,13 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await removePlayer(input);
+    }),
+  withdrawPlayer: tournamentAdminProcedure
+    .input(withdrawTournamentPlayerInputSchema)
+    .output(withdrawTournamentPlayerResultSchema)
+    .mutation(async (opts) => {
+      const { input } = opts;
+      return await withdrawPlayer(input);
     }),
   setGameResult: protectedProcedure
     .input(

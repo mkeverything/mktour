@@ -1,5 +1,4 @@
 import { LoadingSpinner } from '@/app/loading';
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/use-tournament-add-new-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -25,8 +24,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useContext, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 
@@ -42,11 +41,9 @@ const AddNewPlayer = ({
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const createPlayer = useMutation(trpc.player.create.mutationOptions());
-  const { sendJsonMessage } = useContext(DashboardContext);
   const { mutate, isPending } = useTournamentAddNewPlayer(
     id,
     queryClient,
-    sendJsonMessage,
     returnToNewPlayer,
   );
   const t = useTranslations('Tournament.AddPlayer');
@@ -64,7 +61,10 @@ const AddNewPlayer = ({
     reValidateMode: 'onSubmit',
   });
 
-  const nickname = form.watch('nickname');
+  const nickname = useWatch({
+    control: form.control,
+    name: 'nickname',
+  });
 
   useEffect(() => {
     if (nickname === undefined) return;

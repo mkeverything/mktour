@@ -103,13 +103,19 @@ async function resolveTournamentRoundsNumber({
   throw new Error('UNSUPPORTED_TOURNAMENT_FORMAT');
 }
 
-export async function normalizeSwissRoundsNumber(tournamentId: string) {
+export async function normalizeSwissRoundsNumber(
+  tournamentId: string,
+): Promise<{
+  roundsNumber: number;
+  wasChanged: boolean;
+} | null> {
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament || tournament.format !== 'swiss') return;
+  if (!tournament || tournament.format !== 'swiss') return null;
 
   const playerCount = await getTournamentPlayersCount(
     tournamentId,
     tournament.type,
+    { excludeOut: !!tournament.startedAt },
   );
   const maxRounds = getSwissMaxRoundsNumber(playerCount);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
@@ -120,7 +126,7 @@ export async function normalizeSwissRoundsNumber(tournamentId: string) {
     maxRounds,
   );
 
-  await db
+  const updateResult = await db
     .update(tournaments)
     .set({ roundsNumber: normalizedRounds })
     .where(
@@ -132,6 +138,11 @@ export async function normalizeSwissRoundsNumber(tournamentId: string) {
         ),
       ),
     );
+
+  return {
+    roundsNumber: normalizedRounds,
+    wasChanged: updateResult.rowsAffected > 0,
+  };
 }
 
 async function updatePairingNumbers(tournamentId: string) {
@@ -292,6 +303,7 @@ export async function resetTournament({
         losses: 0,
         colorIndex: 0,
         place: null,
+        isOut: null,
       })
       .where(eq(players_to_tournaments.tournamentId, tournamentId));
 
@@ -429,6 +441,7 @@ export async function updateSwissRoundsNumber({
   const playerCount = await getTournamentPlayersCount(
     tournamentId,
     tournament.type,
+    { excludeOut: !!tournament.startedAt },
   );
   const maxRounds = getSwissMaxRoundsNumber(playerCount);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;

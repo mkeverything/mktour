@@ -26,7 +26,7 @@ export default function SwissRoundsNumber({
   const isOrganizer = status === 'organizer';
   const isFinished = !!data?.tournament.closedAt;
   const currentValue = data?.tournament.roundsNumber ?? 1;
-  const playerCount = players?.length ?? 0;
+  const playerCount = players?.filter((player) => !player.isOut)?.length ?? 0;
   const minValue = 1;
   const maxValue = getSwissMaxRoundsNumber(playerCount);
   const boundedCurrentValue = Math.min(

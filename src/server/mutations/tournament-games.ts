@@ -11,7 +11,7 @@ import {
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { GameModel } from '@/server/zod/tournaments';
 import { GameResult } from '@/server/zod/enums';
-import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { getPlayerResultDeltas } from './set-game-result-deltas';
 
 export async function saveRound({
@@ -27,6 +27,45 @@ export async function saveRound({
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const tournament = await db
+    .select({
+      format: tournaments.format,
+      type: tournaments.type,
+    })
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .then((rows) => rows.at(0));
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+
+  if (tournament.format === 'swiss') {
+    const activeParticipants = await db
+      .select({
+        playerId: players_to_tournaments.playerId,
+      })
+      .from(players_to_tournaments)
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          or(
+            isNull(players_to_tournaments.isOut),
+            eq(players_to_tournaments.isOut, false),
+          ),
+        ),
+      );
+
+    const activePlayerIds = new Set(
+      activeParticipants.map((participant) => participant.playerId),
+    );
+    const hasWithdrawnParticipant = newGames.some(
+      (game) =>
+        !activePlayerIds.has(game.whiteId) ||
+        !activePlayerIds.has(game.blackId),
+    );
+
+    if (hasWithdrawnParticipant) {
+      throw new Error('WITHDRAWN_PLAYER_IN_PAIRING');
+    }
+  }
   const existingDecidedGames = await db
     .select({ id: games.id })
     .from(games)
@@ -119,7 +158,10 @@ export async function setTournamentGameResult({
 
     const [whiteParticipant, blackParticipant] = await Promise.all([
       tx
-        .select({ teamNickname: players_to_tournaments.teamNickname })
+        .select({
+          teamNickname: players_to_tournaments.teamNickname,
+          isOut: players_to_tournaments.isOut,
+        })
         .from(players_to_tournaments)
         .where(
           and(
@@ -129,7 +171,10 @@ export async function setTournamentGameResult({
         )
         .then((rows) => rows.at(0)),
       tx
-        .select({ teamNickname: players_to_tournaments.teamNickname })
+        .select({
+          teamNickname: players_to_tournaments.teamNickname,
+          isOut: players_to_tournaments.isOut,
+        })
         .from(players_to_tournaments)
         .where(
           and(
@@ -139,6 +184,10 @@ export async function setTournamentGameResult({
         )
         .then((rows) => rows.at(0)),
     ]);
+
+    if (whiteParticipant?.isOut || blackParticipant?.isOut) {
+      throw new Error('WITHDRAWN_PLAYER_CANNOT_PLAY');
+    }
 
     if (authStatus.status === 'player') {
       if (!tournamentWithClub.allowPlayersSetResults) {

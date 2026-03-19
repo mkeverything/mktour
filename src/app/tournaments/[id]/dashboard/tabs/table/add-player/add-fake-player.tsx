@@ -16,12 +16,11 @@ const AddFakerPlayer: FC<{ setOpen: (_arg: boolean) => void }> = ({
   const tournament = useTournamentInfo(id);
   const queryClient = useQueryClient();
   const returnToNewPlayer = () => null;
-  const { sendJsonMessage, userId } = useContext(DashboardContext);
+  const { userId } = useContext(DashboardContext);
   if (!userId) throw new Error('USERID_NOT_FOUND_IN_CONTEXT');
   const { mutate } = useTournamentAddNewPlayer(
     id,
     queryClient,
-    sendJsonMessage,
     returnToNewPlayer,
   );
 

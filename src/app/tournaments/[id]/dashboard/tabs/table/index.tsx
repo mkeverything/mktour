@@ -7,6 +7,7 @@ import {
 } from '@/app/tournaments/[id]/dashboard/tabs/main/winners';
 import PlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/player-drawer';
 import { useTournamentRemovePlayer } from '@/components/hooks/mutation-hooks/use-tournament-remove-player';
+import { useTournamentWithdrawPlayer } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import {
@@ -46,12 +47,9 @@ const TournamentTable: FC = ({}) => {
   const queryClient = useQueryClient();
   const players = useTournamentPlayers(id);
   const tournament = useTournamentInfo(id);
-  const { status, sendJsonMessage } = useContext(DashboardContext);
-  const removePlayers = useTournamentRemovePlayer(
-    id,
-    queryClient,
-    sendJsonMessage,
-  );
+  const { status } = useContext(DashboardContext);
+  const removePlayers = useTournamentRemovePlayer(id, queryClient);
+  const withdrawPlayer = useTournamentWithdrawPlayer(id, queryClient);
   const { userId } = useContext(DashboardContext);
   const t = useTranslations('Tournament.Table');
   const [selectedPlayer, setSelectedPlayer] =
@@ -60,6 +58,14 @@ const TournamentTable: FC = ({}) => {
   const hasEnded = !!tournament.data?.tournament.closedAt;
   const { data: user } = useAuth();
   const type = tournament.data?.tournament.type;
+  const canWithdraw =
+    userId &&
+    status === 'organizer' &&
+    hasStarted &&
+    !hasEnded &&
+    tournament.data?.tournament.format === 'swiss' &&
+    selectedPlayer &&
+    !selectedPlayer.isOut;
 
   const allGames = useTournamentGames(id);
 
@@ -103,6 +109,19 @@ const TournamentTable: FC = ({}) => {
   const handleDelete = () => {
     if (userId && status === 'organizer' && !hasStarted && selectedPlayer) {
       removePlayers.mutate(
+        {
+          tournamentId: id,
+          playerId: selectedPlayer.id,
+          userId,
+        },
+        { onSuccess: () => setSelectedPlayer(null) },
+      );
+    }
+  };
+
+  const handleWithdraw = () => {
+    if (canWithdraw) {
+      withdrawPlayer.mutate(
         {
           tournamentId: id,
           playerId: selectedPlayer.id,
@@ -176,8 +195,10 @@ const TournamentTable: FC = ({}) => {
           player={selectedPlayer}
           setSelectedPlayer={setSelectedPlayer}
           handleDelete={handleDelete}
+          handleWithdraw={handleWithdraw}
           hasStarted={hasStarted}
           hasEnded={hasEnded}
+          format={tournament.data?.tournament.format ?? 'swiss'}
         />
       )}
     </div>

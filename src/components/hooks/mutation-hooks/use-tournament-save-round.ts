@@ -1,13 +1,14 @@
+import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTRPC } from '@/components/trpc/client';
-import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useContext } from 'react';
 import { toast } from 'sonner';
 
 export default function useSaveRound(props: SaveRoundMutationProps) {
   const t = useTranslations('Toasts');
   const trpc = useTRPC();
+  const { sendJsonMessage } = useContext(DashboardContext);
   return useMutation(
     trpc.tournament.saveRound.mutationOptions({
       onMutate: ({ tournamentId, roundNumber, newGames }) => {
@@ -37,7 +38,7 @@ export default function useSaveRound(props: SaveRoundMutationProps) {
       },
       onSuccess: (_data, { tournamentId, roundNumber, newGames }) => {
         if (props.queryClient.isMutating() === 1) {
-          props.sendJsonMessage({
+          sendJsonMessage({
             event: 'new-round',
             roundNumber,
             newGames,
@@ -85,12 +86,10 @@ export default function useSaveRound(props: SaveRoundMutationProps) {
 type SaveRoundMutationProps =
   | {
       queryClient: QueryClient;
-      sendJsonMessage: (_message: DashboardMessage) => void;
       isTournamentGoing: true;
       setRoundInView: Dispatch<SetStateAction<number>>;
     }
   | {
       queryClient: QueryClient;
-      sendJsonMessage: (_message: DashboardMessage) => void;
       isTournamentGoing: false;
     };

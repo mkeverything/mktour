@@ -57,6 +57,16 @@ export const playerTournamentUpdateSchema = createUpdateSchema(
   players_to_tournaments,
 );
 
+export const withdrawTournamentPlayerInputSchema = z.object({
+  tournamentId: z.string(),
+  playerId: z.string(),
+  userId: z.string(),
+});
+export const withdrawTournamentPlayerResultSchema = z.object({
+  roundsNumber: z.number().int().min(1).nullable(),
+  roundsNumberAutoDecreased: z.boolean(),
+});
+
 export const playerToTournamentSchema = playerTournamentSelectSchema
   .extend({
     tournament: tournamentSchema,

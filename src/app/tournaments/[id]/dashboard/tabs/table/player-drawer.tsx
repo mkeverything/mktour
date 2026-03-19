@@ -3,7 +3,10 @@ import AddPairTeam, {
   type PairTeamInitialValues,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-pair-team';
 import PairPlayerCard from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
-import { DeleteButton } from '@/app/tournaments/[id]/dashboard/tabs/table/destructive-buttons';
+import {
+  DeleteButton,
+  WithdrawButtonWithConfirmation,
+} from '@/app/tournaments/[id]/dashboard/tabs/table/destructive-buttons';
 import FormattedMessage from '@/components/formatted-message';
 import { useTournamentEditPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-edit-pair-team';
 import {
@@ -17,6 +20,7 @@ import {
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
 import { PlayerTournamentModel } from '@/server/zod/players';
+import { TournamentFormat } from '@/server/zod/enums';
 import { Pencil, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -27,9 +31,19 @@ const PlayerDrawer: FC<{
   player: PlayerTournamentModel;
   setSelectedPlayer: (_arg: null) => void;
   handleDelete: () => void;
+  handleWithdraw: () => void;
   hasEnded: boolean;
   hasStarted: boolean;
-}> = ({ player, setSelectedPlayer, hasEnded, hasStarted, handleDelete }) => {
+  format: TournamentFormat;
+}> = ({
+  player,
+  setSelectedPlayer,
+  hasEnded,
+  hasStarted,
+  handleDelete,
+  handleWithdraw,
+  format,
+}) => {
   const open = !!player;
   const { status, sendJsonMessage } = useContext(DashboardContext);
   const t = useTranslations('Tournament.AddPlayer');
@@ -115,8 +129,10 @@ const PlayerDrawer: FC<{
             <DestructiveButton
               hasEnded={hasEnded}
               hasStarted={hasStarted}
-              // player={player}
+              player={player}
+              format={format}
               handleDelete={handleDelete}
+              handleWithdraw={handleWithdraw}
               closeDrawer={closeDrawer}
             />
           )}
@@ -164,18 +180,32 @@ const DestructiveButton = ({
   hasEnded,
   hasStarted,
   handleDelete,
+  handleWithdraw,
   closeDrawer,
-  // player,
+  player,
+  format,
 }: {
   hasEnded: boolean;
   hasStarted: boolean;
   handleDelete: () => void;
+  handleWithdraw: () => void;
   closeDrawer: () => void;
-  // player: PlayerTournamentModel;
+  player: PlayerTournamentModel;
+  format: TournamentFormat;
 }) => {
-  if (hasEnded || hasStarted) return null; // FIXME add withdrawal option
-  // if (hasEnded) return null;
-  // if (hasStarted) return <WithdrawButtonWithConfirmation selectedPlayer={player} />
+  if (hasEnded) return null;
+  if (hasStarted && format === 'swiss' && !player.isOut) {
+    return (
+      <WithdrawButtonWithConfirmation
+        selectedPlayer={player}
+        handleWithdraw={() => {
+          closeDrawer();
+          handleWithdraw();
+        }}
+      />
+    );
+  }
+  if (hasStarted) return null;
   return (
     <DeleteButton
       handleDelete={() => {

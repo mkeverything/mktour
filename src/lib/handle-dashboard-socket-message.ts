@@ -116,6 +116,30 @@ export const handleSocketMessage = (
         queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
       });
       break;
+    case 'withdraw-player':
+      queryClient.cancelQueries({
+        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+      });
+      queryClient.setQueryData(
+        trpc.tournament.playersIn.queryKey({ tournamentId }),
+        (cache) =>
+          cache?.map((player) =>
+            player.id === message.id ? { ...player, isOut: true } : player,
+          ),
+      );
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.pathKey(),
+      });
+      break;
     case 'set-game-result':
       queryClient.setQueryData(
         trpc.tournament.roundGames.queryKey({

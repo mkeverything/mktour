@@ -19,10 +19,9 @@ const ShuffleFab = () => {
   const games = useTournamentRoundGames({ tournamentId, roundNumber: 1 });
   const { userId } = useContext(DashboardContext);
   const queryClient = useQueryClient();
-  const { sendJsonMessage, status } = useContext(DashboardContext);
+  const { status } = useContext(DashboardContext);
   const { isPending, mutate } = useSaveRound({
     queryClient,
-    sendJsonMessage,
     isTournamentGoing: false,
   });
   const { isDesktop } = useContext(MediaQueryContext);

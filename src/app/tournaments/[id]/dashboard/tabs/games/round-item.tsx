@@ -98,11 +98,10 @@ const NewRoundButton: FC<{
   const t = useTranslations('Tournament.Round');
   const { data: tournamentGames } = useTournamentGames(tournamentId);
   const queryClient = useQueryClient();
-  const { sendJsonMessage, setRoundInView } = useContext(DashboardContext);
+  const { setRoundInView } = useContext(DashboardContext);
 
   const { mutate, isPending: mutating } = useSaveRound({
     queryClient,
-    sendJsonMessage,
     isTournamentGoing: true,
     setRoundInView,
   });

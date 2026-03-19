@@ -10,6 +10,7 @@ type DashboardMessage =
       previousId: string;
     }
   | { event: 'remove-player'; id: string } // onError add-exidsting-player
+  | { event: 'withdraw-player'; id: string }
   | {
       event: 'set-game-result';
       gameId: string;

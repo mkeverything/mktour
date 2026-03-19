@@ -145,6 +145,28 @@ describe('calculatePlayerScore', () => {
     // score = 1 + 0 + 0 = 1
     expect(calculatePlayerScore(player, 2, games)).toBe(1);
   });
+
+  it('should not award bye points to withdrawn players', () => {
+    const player = makePlayer({
+      id: 'p1',
+      nickname: 'Alice',
+      wins: 1,
+      draws: 0,
+      losses: 0,
+      isOut: true,
+    });
+
+    const games = [
+      makeGame({
+        whiteId: 'p1',
+        blackId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+    ];
+
+    expect(calculatePlayerScore(player, 3, games)).toBe(1);
+  });
 });
 
 describe('calculateBerger (Sonneborn-Berger)', () => {
