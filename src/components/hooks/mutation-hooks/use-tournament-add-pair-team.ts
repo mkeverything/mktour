@@ -6,20 +6,17 @@ import {
   PlayerTournamentModel,
   type PlayerWithUsernameModel,
 } from '@/server/zod/players';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
 import { toast } from 'sonner';
 
-export const useTournamentAddPairTeam = (
-  tournamentId: string,
-  queryClient: QueryClient,
-) => {
+export const useTournamentAddPairTeam = (tournamentId: string) => {
+  const queryClient = useQueryClient();
+  const { sendJsonMessage } = useContext(DashboardContext);
   const trpc = useTRPC();
   const t = useTranslations('Tournament.AddPlayer');
-  const { sendJsonMessage } = useContext(DashboardContext);
   const saveRound = useSaveRound({
-    queryClient,
     isTournamentGoing: false,
   });
 

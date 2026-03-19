@@ -9,15 +9,16 @@ const clubQueryPrefetch = (clubId: string) => {
       {
         clubId,
       },
-      {
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
-      },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
     ),
   );
   prefetch(
-    trpc.club.tournaments.queryOptions({
-      clubId,
-    }),
+    trpc.club.tournaments.infiniteQueryOptions(
+      {
+        clubId,
+      },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+    ),
   );
 };
 

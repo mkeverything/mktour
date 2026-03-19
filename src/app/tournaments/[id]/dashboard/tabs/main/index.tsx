@@ -2,8 +2,12 @@
 
 import { turboPascal } from '@/app/fonts';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import ActionButtons from '@/app/tournaments/[id]/dashboard/tabs/main/action-buttons';
+import ShuffleButton from '@/app/tournaments/[id]/dashboard/shuffle-button';
+import ActionButtons, {
+  DestructiveTournamentButtonsComboModal,
+} from '@/app/tournaments/[id]/dashboard/tabs/main/action-buttons';
 import TournamentInfoList from '@/app/tournaments/[id]/dashboard/tabs/main/tournament-info';
+import AddPlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import Center from '@/components/center';
 import useTournamentEditTitle from '@/components/hooks/mutation-hooks/use-tournament-edit-title';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -25,7 +29,8 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const fallbackTitle = useTournamentFallbackTitle(data?.tournament);
   const title = tournamentTitle || fallbackTitle;
   const [controlledTitle, setControlledTitle] = useState(title);
-  const canEditTitle = status === 'organizer' && !data?.tournament.startedAt;
+  const isOrganizer = status === 'organizer';
+  const t = useTranslations('Tournament.Main');
 
   const { mutate } = useTournamentEditTitle();
 
@@ -38,32 +43,51 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   if (!data) return <Center>no data</Center>;
 
   return (
-    <div className="max-md:mk-container md:px-mk md:pl-mk-2 items-center md:flex md:justify-between">
-      <div>
+    <div className="px-mk md:px-mk-2 flex flex-col md:grid md:grid-cols-2">
+      <div className="col-span-2">
         <div
-          className={`p-mk flex items-center max-md:border-b max-md:pt-0 md:pb-0`}
+          className={`p-mk flex items-center justify-between max-md:border-b md:pb-0`}
         >
           <InputGhost
-            disabled={!canEditTitle}
+            disabled={!isOrganizer}
             placeholder={fallbackTitle}
             value={controlledTitle}
             onBlur={handleTitleUpdate}
             onChange={(event) => setControlledTitle(event.target.value)}
             className={`text-3xl ${turboPascal.className} truncate`}
           />
+          {isOrganizer && (
+            <DestructiveTournamentButtonsComboModal
+              tournament={data.tournament}
+              className="md:hidden"
+            />
+          )}
         </div>
-        <TournamentInfoList />
       </div>
-      <div className="flex items-center">
-        <Button
-          className="ml-mk text-muted-foreground hover:text-primary hidden justify-self-end md:flex"
-          variant="ghost"
-          size="icon-sm"
-          onClick={toggleFullscreen}
-        >
-          <Maximize2 className="size-4" />
-        </Button>
-        <ActionButtons status={status} tournament={data.tournament} />
+      <TournamentInfoList />
+      <div className="flex w-full items-start justify-end md:col-span-1 md:items-end">
+        <div className="p-mk flex w-full flex-wrap items-center justify-end pr-0 md:w-fit">
+          <div className="gap-mk hidden items-center md:flex">
+            <AddPlayerDrawer />
+            <ShuffleButton />
+          </div>
+          {isOrganizer && <ActionButtons tournament={data.tournament} />}
+          <Button
+            title={t('fullscreen')}
+            className="text-muted-foreground hover:text-primary hidden justify-self-end md:flex"
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleFullscreen}
+          >
+            <Maximize2 className="size-4" />
+          </Button>
+          {isOrganizer && (
+            <DestructiveTournamentButtonsComboModal
+              tournament={data.tournament}
+              className="hidden md:flex"
+            />
+          )}
+        </div>
       </div>
     </div>
   );

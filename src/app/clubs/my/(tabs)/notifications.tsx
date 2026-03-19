@@ -25,9 +25,9 @@ const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
     isLoading,
   } = useClubNotifications(selectedClub);
 
-  if (!notifications) return null;
   if (isLoading) return <ClubsNotificationsSkeletonList />;
   if (status === 'error') return <p>{error.message}</p>;
+  if (!notifications) return null;
 
   const allNotifications = notifications.pages.flatMap(
     (page) => page.notifications,

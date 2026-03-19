@@ -366,6 +366,7 @@
       "revoke": "revoke",
       "make": "make",
       "making": "making",
+      "modal title": "new token",
       "modal description": "this token will only be shown once. please copy it and store it securely. you will not be able to see it again.",
       "modal warning": "warning: this token gives full access to your account. do not share it with anyone.",
       "copied": "copied",
@@ -381,6 +382,7 @@
     },
     "Main": {
       "start tournament": "start tournament",
+      "settings": "settings",
       "reset progress": "reset progress",
       "reset players": "reset players",
       "confirmation header": "are you sure?",
@@ -409,6 +411,7 @@
       "number of rounds": "amount of rounds:",
       "unrated": "unrated",
       "save": "save",
+      "fullscreen": "fullscreen mode",
       "minimize": "minimize"
     },
     "Results": {
@@ -460,6 +463,7 @@
     "AddPlayer": {
       "back": "back",
       "add new player": "add new player",
+      "add player": "add player",
       "name": "name",
       "estimated rating": "estimated rating",
       "save": "save",

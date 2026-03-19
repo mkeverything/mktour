@@ -2,19 +2,16 @@ import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-con
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
 import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
 import { toast } from 'sonner';
 
-export const useTournamentRemovePlayer = (
-  tournamentId: string,
-  queryClient: QueryClient,
-) => {
-  const t = useTranslations('Errors');
+export const useTournamentRemovePlayer = (tournamentId: string) => {
+  const queryClient = useQueryClient();
   const { sendJsonMessage } = useContext(DashboardContext);
+  const t = useTranslations('Errors');
   const saveRound = useSaveRound({
-    queryClient,
     isTournamentGoing: false,
   });
   const trpc = useTRPC();

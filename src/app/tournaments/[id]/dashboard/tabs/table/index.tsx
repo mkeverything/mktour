@@ -48,7 +48,7 @@ const TournamentTable: FC = ({}) => {
   const players = useTournamentPlayers(id);
   const tournament = useTournamentInfo(id);
   const { status } = useContext(DashboardContext);
-  const removePlayers = useTournamentRemovePlayer(id, queryClient);
+  const removePlayers = useTournamentRemovePlayer(id);
   const withdrawPlayer = useTournamentWithdrawPlayer(id, queryClient);
   const { userId } = useContext(DashboardContext);
   const t = useTranslations('Tournament.Table');

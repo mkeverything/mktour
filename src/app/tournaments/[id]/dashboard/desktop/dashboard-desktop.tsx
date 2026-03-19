@@ -2,11 +2,9 @@
 
 import { TabProps } from '@/app/tournaments/[id]/dashboard';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import ShuffleFab from '@/app/tournaments/[id]/dashboard/shuffle-fab';
 import Games from '@/app/tournaments/[id]/dashboard/tabs/games';
 import Main from '@/app/tournaments/[id]/dashboard/tabs/main';
 import TournamentTable from '@/app/tournaments/[id]/dashboard/tabs/table';
-import AddPlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import FormattedMessage from '@/components/formatted-message';
 import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
 import Overlay from '@/components/overlay';
@@ -83,14 +81,12 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
               <TournamentTable />
               <Fades from="from-background" to="to-background" />
             </CardContent>
-            <AddPlayerDrawer />
           </Card>
           <Card className="bg-background relative size-full overflow-hidden">
             <CardContent className="flex size-full flex-col overflow-y-auto p-0">
               <Games />
               <Fades from="from-background" to="to-background" />
             </CardContent>
-            <ShuffleFab />
           </Card>
           {isFullscreen && (
             <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">

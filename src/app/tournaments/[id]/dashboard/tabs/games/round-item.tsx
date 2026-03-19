@@ -101,7 +101,6 @@ const NewRoundButton: FC<{
   const { setRoundInView } = useContext(DashboardContext);
 
   const { mutate, isPending: mutating } = useSaveRound({
-    queryClient,
     isTournamentGoing: true,
     setRoundInView,
   });

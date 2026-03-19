@@ -63,7 +63,7 @@ export default function SwissRoundsNumber({
         disabled={!canDecrement}
         className={cn(
           'border-input bg-background hover:bg-accent hover:text-accent-foreground',
-          'flex size-8 items-center justify-center rounded border text-lg',
+          'flex size-6 items-center justify-center rounded border text-lg',
           'disabled:pointer-events-none disabled:opacity-50',
         )}
       >
@@ -71,7 +71,7 @@ export default function SwissRoundsNumber({
       </button>
       <div
         className={cn(
-          'border-input bg-background flex size-8 items-center justify-center rounded border text-center',
+          'border-input bg-background flex size-6 items-center justify-center rounded border text-center',
         )}
       >
         {boundedCurrentValue}
@@ -82,7 +82,7 @@ export default function SwissRoundsNumber({
         disabled={!canIncrement}
         className={cn(
           'border-input bg-background hover:bg-accent hover:text-accent-foreground',
-          'flex size-8 items-center justify-center rounded border text-lg',
+          'flex size-6 items-center justify-center rounded border text-lg',
           'disabled:pointer-events-none disabled:opacity-50',
         )}
       >

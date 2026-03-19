@@ -43,7 +43,6 @@ const AddNewPlayer = ({
   const createPlayer = useMutation(trpc.player.create.mutationOptions());
   const { mutate, isPending } = useTournamentAddNewPlayer(
     id,
-    queryClient,
     returnToNewPlayer,
   );
   const t = useTranslations('Tournament.AddPlayer');

@@ -7,7 +7,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { PlayerWithUsernameModel } from '@/server/zod/players';
-import { useQueryClient } from '@tanstack/react-query';
 import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
@@ -27,9 +26,8 @@ const AddPlayer = ({
 }) => {
   const { id } = useParams<{ id: string }>();
   const possiblePlayers = useTournamentPossiblePlayers(id);
-  const queryClient = useQueryClient();
   const { userId } = useContext(DashboardContext);
-  const { mutate } = useTournamentAddExistingPlayer(id, queryClient);
+  const { mutate } = useTournamentAddExistingPlayer(id);
   const t = useTranslations('Tournament.AddPlayer');
   const excludeSet = excludePlayerIds?.length
     ? new Set(excludePlayerIds)
@@ -65,7 +63,7 @@ const AddPlayer = ({
     mutate({ tournamentId: id, player, userId, addedAt });
   };
 
-  useHotkeys('escape', () => handleClose, { enableOnFormTags: true });
+  useHotkeys('escape', () => handleClose(), { enableOnFormTags: true });
   useHotkeys(
     'enter',
     () => {
