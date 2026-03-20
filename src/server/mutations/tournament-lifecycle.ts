@@ -119,11 +119,13 @@ export async function normalizeSwissRoundsNumber(
   );
   const maxRounds = getSwissMaxRoundsNumber(playerCount);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
-  if (minRounds > maxRounds) throw new Error('INVALID_SWISS_ROUNDS_BOUNDS');
 
+  // once a tournament has reached a round, withdrawals must not lower the
+  // configured rounds below that already-started round.
+  const roundsUpperBound = Math.max(maxRounds, minRounds);
   const normalizedRounds = Math.min(
     Math.max(tournament.roundsNumber ?? minRounds, minRounds),
-    maxRounds,
+    roundsUpperBound,
   );
 
   const updateResult = await db

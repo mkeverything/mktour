@@ -91,6 +91,7 @@ export const useTournamentWithdrawPlayer = (
         }
       },
       onSuccess: (data, { playerId }) => {
+        sendJsonMessage({ event: 'withdraw-player', id: playerId });
         if (data.roundsNumberAutoDecreased && data.roundsNumber !== null) {
           toast.info(
             t('Toasts.rounds number decreased automatically', {
@@ -102,7 +103,6 @@ export const useTournamentWithdrawPlayer = (
             roundsNumber: data.roundsNumber,
           });
         }
-        sendJsonMessage({ event: 'withdraw-player', id: playerId });
       },
     }),
   );
