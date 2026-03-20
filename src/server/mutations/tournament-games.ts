@@ -56,14 +56,14 @@ export async function saveRound({
     const activePlayerIds = new Set(
       activeParticipants.map((participant) => participant.playerId),
     );
-    const hasWithdrawnParticipant = newGames.some(
+    const hasInvalidParticipant = newGames.some(
       (game) =>
         !activePlayerIds.has(game.whiteId) ||
         !activePlayerIds.has(game.blackId),
     );
 
-    if (hasWithdrawnParticipant) {
-      throw new Error('WITHDRAWN_PLAYER_IN_PAIRING');
+    if (hasInvalidParticipant) {
+      throw new Error('INVALID_PLAYER_IN_PAIRING');
     }
   }
   const existingDecidedGames = await db

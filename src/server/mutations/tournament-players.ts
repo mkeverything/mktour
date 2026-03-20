@@ -558,10 +558,28 @@ export async function withdrawPlayer({
         and(
           eq(players_to_tournaments.tournamentId, tournamentId),
           eq(players_to_tournaments.playerId, playerId),
+          or(
+            isNull(players_to_tournaments.isOut),
+            eq(players_to_tournaments.isOut, false),
+          ),
         ),
       );
 
     if (!updateResult.rowsAffected) {
+      const existingParticipant = await tx
+        .select({ isOut: players_to_tournaments.isOut })
+        .from(players_to_tournaments)
+        .where(
+          and(
+            eq(players_to_tournaments.tournamentId, tournamentId),
+            eq(players_to_tournaments.playerId, playerId),
+          ),
+        )
+        .then((rows) => rows.at(0));
+
+      if (existingParticipant?.isOut) {
+        throw new Error('PLAYER_ALREADY_WITHDRAWN');
+      }
       throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
     }
 
