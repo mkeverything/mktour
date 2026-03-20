@@ -456,7 +456,7 @@ export async function editDoublesTeam({
     throw new Error('PAIR_NICKNAME_TAKEN');
   }
 
-  const result = await db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     await tx
       .delete(players_to_tournaments)
       .where(
