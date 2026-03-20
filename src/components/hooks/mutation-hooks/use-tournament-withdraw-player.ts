@@ -2,16 +2,15 @@
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTRPC } from '@/components/trpc/client';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
 import { toast } from 'sonner';
 
-export const useTournamentWithdrawPlayer = (
-  tournamentId: string,
-  queryClient: QueryClient,
-) => {
-  const t = useTranslations();
+export const useTournamentWithdrawPlayer = (tournamentId: string) => {
+  const queryClient = useQueryClient();
+  const t = useTranslations('Errors');
+  const tToasts = useTranslations('Toasts');
   const trpc = useTRPC();
   const { sendJsonMessage } = useContext(DashboardContext);
 
@@ -44,6 +43,14 @@ export const useTournamentWithdrawPlayer = (
           );
         }
 
+        if (_err.message === 'WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT') {
+          toast.error(t('withdraw-player-rounds-error'), {
+            id: 'withdraw-player-rounds-error',
+            duration: 3000,
+          });
+          return;
+        }
+
         const player = context?.previousState?.find(
           (previousPlayer) => previousPlayer.id === playerId,
         );
@@ -61,7 +68,7 @@ export const useTournamentWithdrawPlayer = (
         }
 
         toast.error(
-          t('Errors.withdraw-player-error', {
+          t('withdraw-player-error', {
             player: player.nickname,
           }),
           {
@@ -94,7 +101,7 @@ export const useTournamentWithdrawPlayer = (
         sendJsonMessage({ event: 'withdraw-player', id: playerId });
         if (data.roundsNumberAutoDecreased && data.roundsNumber !== null) {
           toast.info(
-            t('Toasts.rounds number decreased automatically', {
+            tToasts('rounds number decreased automatically', {
               roundsNumber: data.roundsNumber,
             }),
           );

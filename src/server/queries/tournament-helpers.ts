@@ -29,9 +29,15 @@ export function compareTeamMembers<
   return a.id.localeCompare(b.id);
 }
 
-export async function getTournamentById(tournamentId: string) {
+export async function getTournamentById(
+  tournamentId: string,
+  database: Pick<typeof db, 'select'> = db,
+) {
   return (
-    await db.select().from(tournaments).where(eq(tournaments.id, tournamentId))
+    await database
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, tournamentId))
   ).at(0);
 }
 
@@ -39,10 +45,11 @@ export async function getTournamentPlayersCount(
   tournamentId: string,
   tournamentType?: string,
   options?: { excludeOut?: boolean },
+  database: Pick<typeof db, 'select'> = db,
 ): Promise<number> {
   const type =
     tournamentType ??
-    (await getTournamentById(tournamentId).then((t) => {
+    (await getTournamentById(tournamentId, database).then((t) => {
       if (!t) throw new Error('TOURNAMENT NOT FOUND');
       return t.type;
     }));
@@ -55,7 +62,7 @@ export async function getTournamentPlayersCount(
     : undefined;
 
   if (type === 'doubles') {
-    const [result] = await db
+    const [result] = await database
       .select({
         playersCount: countDistinct(players_to_tournaments.teamNickname),
       })
@@ -71,7 +78,7 @@ export async function getTournamentPlayersCount(
     return Number(result?.playersCount ?? 0);
   }
 
-  const [result] = await db
+  const [result] = await database
     .select({ playersCount: sql<number>`count(*)` })
     .from(players_to_tournaments)
     .where(

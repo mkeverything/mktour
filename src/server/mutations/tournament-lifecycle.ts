@@ -109,26 +109,36 @@ export async function normalizeSwissRoundsNumber(
   roundsNumber: number;
   wasChanged: boolean;
 } | null> {
-  const tournament = await getTournamentById(tournamentId);
+  return await normalizeSwissRoundsNumberInDatabase(tournamentId, db);
+}
+
+export async function normalizeSwissRoundsNumberInDatabase(
+  tournamentId: string,
+  database: Pick<typeof db, 'select' | 'update'>,
+): Promise<{
+  roundsNumber: number;
+  wasChanged: boolean;
+} | null> {
+  const tournament = await getTournamentById(tournamentId, database);
   if (!tournament || tournament.format !== 'swiss') return null;
 
   const playerCount = await getTournamentPlayersCount(
     tournamentId,
     tournament.type,
     { excludeOut: !!tournament.startedAt },
+    database,
   );
   const maxRounds = getSwissMaxRoundsNumber(playerCount);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
-
-  // once a tournament has reached a round, withdrawals must not lower the
-  // configured rounds below that already-started round.
-  const roundsUpperBound = Math.max(maxRounds, minRounds);
+  if (minRounds > maxRounds) {
+    throw new Error('WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT');
+  }
   const normalizedRounds = Math.min(
     Math.max(tournament.roundsNumber ?? minRounds, minRounds),
-    roundsUpperBound,
+    maxRounds,
   );
 
-  const updateResult = await db
+  const updateResult = await database
     .update(tournaments)
     .set({ roundsNumber: normalizedRounds })
     .where(

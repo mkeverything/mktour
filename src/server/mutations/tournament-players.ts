@@ -18,7 +18,10 @@ import {
   PlayerTournamentModel,
 } from '@/server/zod/players';
 import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
-import { normalizeSwissRoundsNumber } from './tournament-lifecycle';
+import {
+  normalizeSwissRoundsNumber,
+  normalizeSwissRoundsNumberInDatabase,
+} from './tournament-lifecycle';
 
 export async function removePlayer({
   tournamentId,
@@ -453,7 +456,7 @@ export async function editDoublesTeam({
     throw new Error('PAIR_NICKNAME_TAKEN');
   }
 
-  await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await tx
       .delete(players_to_tournaments)
       .where(
@@ -550,7 +553,7 @@ export async function withdrawPlayer({
   if (!tournament.startedAt) throw new Error('TOURNAMENT_NOT_STARTED');
   if (tournament.closedAt) throw new Error('TOURNAMENT_ALREADY_FINISHED');
 
-  await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const updateResult = await tx
       .update(players_to_tournaments)
       .set({ isOut: true })
@@ -592,12 +595,16 @@ export async function withdrawPlayer({
           or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
         ),
       );
+    const normalizedRounds = await normalizeSwissRoundsNumberInDatabase(
+      tournamentId,
+      tx,
+    );
+
+    return {
+      roundsNumber: normalizedRounds?.roundsNumber ?? tournament.roundsNumber,
+      roundsNumberAutoDecreased: normalizedRounds?.wasChanged ?? false,
+    };
   });
 
-  const normalizedRounds = await normalizeSwissRoundsNumber(tournamentId);
-
-  return {
-    roundsNumber: normalizedRounds?.roundsNumber ?? tournament.roundsNumber,
-    roundsNumberAutoDecreased: normalizedRounds?.wasChanged ?? false,
-  };
+  return result;
 }

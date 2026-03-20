@@ -19,7 +19,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PlayerTournamentModel } from '@/server/zod/players';
-import { useQueryClient } from '@tanstack/react-query';
 import { Scale, Trophy, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
@@ -44,12 +43,11 @@ import { UserModel } from '@/server/zod/users';
 
 const TournamentTable: FC = ({}) => {
   const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
   const players = useTournamentPlayers(id);
   const tournament = useTournamentInfo(id);
   const { status } = useContext(DashboardContext);
   const removePlayers = useTournamentRemovePlayer(id);
-  const withdrawPlayer = useTournamentWithdrawPlayer(id, queryClient);
+  const withdrawPlayer = useTournamentWithdrawPlayer(id);
   const { userId } = useContext(DashboardContext);
   const t = useTranslations('Tournament.Table');
   const [selectedPlayer, setSelectedPlayer] =
@@ -58,15 +56,6 @@ const TournamentTable: FC = ({}) => {
   const hasEnded = !!tournament.data?.tournament.closedAt;
   const { data: user } = useAuth();
   const type = tournament.data?.tournament.type;
-  const canWithdraw =
-    userId &&
-    status === 'organizer' &&
-    hasStarted &&
-    !hasEnded &&
-    tournament.data?.tournament.format === 'swiss' &&
-    selectedPlayer &&
-    !selectedPlayer.isOut;
-
   const allGames = useTournamentGames(id);
 
   const {
@@ -120,7 +109,15 @@ const TournamentTable: FC = ({}) => {
   };
 
   const handleWithdraw = () => {
-    if (canWithdraw) {
+    if (
+      userId &&
+      status === 'organizer' &&
+      hasStarted &&
+      !hasEnded &&
+      tournament.data?.tournament.format === 'swiss' &&
+      selectedPlayer &&
+      !selectedPlayer.isOut
+    ) {
       withdrawPlayer.mutate(
         {
           tournamentId: id,

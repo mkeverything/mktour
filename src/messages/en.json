@@ -225,6 +225,7 @@
     "add-player-error": "sorry! couldn't add {player} to tournament",
     "remove-player-error": "sorry! couldn't remove {player} from tournament",
     "withdraw-player-error": "sorry! couldn't withdraw {player} from tournament",
+    "withdraw-player-rounds-error": "can't withdraw player because too few rounds remains",
     "internal-error": "internal error: {error}",
     "max 50": "max 50 characters",
     "min nickname length": "nickname must be at least 3 characters long",
