@@ -13,6 +13,10 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import {
+  saveRound,
+  setTournamentGameResult,
+} from '@/server/mutations/tournament-games';
+import {
   createTournament,
   deleteTournament,
   editTournamentTitle,
@@ -30,19 +34,15 @@ import {
   resetTournamentPlayers,
   withdrawPlayer,
 } from '@/server/mutations/tournament-players';
-import {
-  saveRound,
-  setTournamentGameResult,
-} from '@/server/mutations/tournament-games';
 import getAllTournaments from '@/server/queries/get-all-tournaments';
+import { getPublicFeaturedTournaments } from '@/server/queries/get-public-featured-tournaments';
+import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import {
   getTournamentGames,
   getTournamentRoundGames,
 } from '@/server/queries/get-tournament-games';
-import { getTournamentPlayers } from '@/server/queries/get-tournament-players';
 import { getTournamentInfo } from '@/server/queries/get-tournament-info';
-import { getPublicFeaturedTournaments } from '@/server/queries/get-public-featured-tournaments';
-import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import { getTournamentPlayers } from '@/server/queries/get-tournament-players';
 import {
   playerIdInputSchema,
   tournamentIdInputSchema,
@@ -50,7 +50,6 @@ import {
 import { gameResultEnum, TournamentFormat } from '@/server/zod/enums';
 import {
   playerFormSchema,
-  playersSelectSchema,
   playersWithUsernameSchema,
   playerTournamentSchema,
 } from '@/server/zod/players';
@@ -63,8 +62,8 @@ import {
   tournamentCreateInputSchema,
   tournamentInfoSchema,
   tournamentWithClubSchema,
-  withdrawTournamentPlayerResultSchema,
   withdrawTournamentPlayerInputSchema,
+  withdrawTournamentPlayerResultSchema,
 } from '@/server/zod/tournaments';
 import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
@@ -187,7 +186,7 @@ export const tournamentRouter = {
   addExistingPlayer: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
-        player: playersSelectSchema,
+        player: playersWithUsernameSchema,
         userId: z.string(),
         addedAt: z.date().optional(),
       }),
