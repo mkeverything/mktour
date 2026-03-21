@@ -62,7 +62,7 @@ export const players_to_tournaments = sqliteTable(
     place: integer('place'),
     isOut: integer('is_out', { mode: 'boolean' }),
     pairingNumber: integer('pairing_number'),
-    addedAt: integer('added_at', { mode: 'timestamp' }),
+    addedAt: integer('added_at', { mode: 'timestamp_ms' }),
     teamNickname: text('team_nickname'),
     numberInTeam: integer('number_in_team'),
     newRating: integer('new_rating'),

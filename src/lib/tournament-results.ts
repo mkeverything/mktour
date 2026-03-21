@@ -174,7 +174,7 @@ function makePlayerComparator(
     const addedAtB = b.addedAt?.getTime() ?? 0;
     if (addedAtA !== addedAtB) return addedAtA - addedAtB;
 
-    return 0;
+    return a.id.localeCompare(b.id);
   };
 }
 
