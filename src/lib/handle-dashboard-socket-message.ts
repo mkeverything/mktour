@@ -2,8 +2,8 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
-import type { DashboardMessage } from '@/types/tournament-ws-events';
 import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
@@ -127,18 +127,7 @@ export const handleSocketMessage = (
             player.id === message.id ? { ...player, isOut: true } : player,
           ),
       );
-      queryClient.invalidateQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-      });
-      queryClient.invalidateQueries({
-        queryKey: trpc.tournament.info.queryKey({ tournamentId }),
-      });
-      queryClient.invalidateQueries({
-        queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
-      });
-      queryClient.invalidateQueries({
-        queryKey: trpc.tournament.pathKey(),
-      });
+      queryClient.invalidateQueries({ queryKey: trpc.tournament.pathKey() });
       break;
     case 'set-game-result':
       queryClient.setQueryData(

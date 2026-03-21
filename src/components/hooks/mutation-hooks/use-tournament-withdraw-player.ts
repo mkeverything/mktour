@@ -84,15 +84,6 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
           }) === 1
         ) {
           queryClient.invalidateQueries({
-            queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-          });
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.info.queryKey({ tournamentId }),
-          });
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
-          });
-          queryClient.invalidateQueries({
             queryKey: trpc.tournament.pathKey(),
           });
         }
