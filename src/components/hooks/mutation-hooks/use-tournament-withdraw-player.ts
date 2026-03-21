@@ -2,6 +2,7 @@
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTRPC } from '@/components/trpc/client';
+import { filterPendingGamesByPlayer } from '@/lib/utils';
 import type { GameModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -164,14 +165,3 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
     }),
   );
 };
-
-function filterPendingGamesByPlayer(
-  games: GameModel[] | undefined,
-  playerId: string,
-) {
-  return games?.filter(
-    (game) =>
-      game.result != null ||
-      (game.whiteId !== playerId && game.blackId !== playerId),
-  );
-}
