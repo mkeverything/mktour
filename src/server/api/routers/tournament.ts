@@ -7,35 +7,42 @@ import {
 } from '@/server/api/trpc';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
-import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import {
   players_to_tournaments,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import {
+  saveRound,
+  setTournamentGameResult,
+} from '@/server/mutations/tournament-games';
+import {
+  createTournament,
+  deleteTournament,
+  editTournamentTitle,
+  finishTournament,
+  resetTournament,
+  startTournament,
+  updateSwissRoundsNumber,
+} from '@/server/mutations/tournament-lifecycle';
+import {
   addDoublesTeam,
   addExistingPlayer,
   addNewPlayer,
-  createTournament,
-  deleteTournament,
   editDoublesTeam,
-  editTournamentTitle,
-  finishTournament,
-  getTournamentGames,
-  getTournamentPlayers,
-  getTournamentRoundGames,
   removePlayer,
-  resetTournament,
   resetTournamentPlayers,
-  saveRound,
-  setTournamentGameResult,
-  startTournament,
-  updateSwissRoundsNumber,
-} from '@/server/mutations/tournament-managing';
+  withdrawPlayer,
+} from '@/server/mutations/tournament-players';
 import getAllTournaments from '@/server/queries/get-all-tournaments';
 import { getPublicFeaturedTournaments } from '@/server/queries/get-public-featured-tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import {
+  getTournamentGames,
+  getTournamentRoundGames,
+} from '@/server/queries/get-tournament-games';
+import { getTournamentInfo } from '@/server/queries/get-tournament-info';
+import { getTournamentPlayers } from '@/server/queries/get-tournament-players';
 import {
   playerIdInputSchema,
   tournamentIdInputSchema,
@@ -43,7 +50,6 @@ import {
 import { gameResultEnum, TournamentFormat } from '@/server/zod/enums';
 import {
   playerFormSchema,
-  playersSelectSchema,
   playersWithUsernameSchema,
   playerTournamentSchema,
 } from '@/server/zod/players';
@@ -56,6 +62,8 @@ import {
   tournamentCreateInputSchema,
   tournamentInfoSchema,
   tournamentWithClubSchema,
+  withdrawTournamentPlayerInputSchema,
+  withdrawTournamentPlayerResultSchema,
 } from '@/server/zod/tournaments';
 import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
@@ -105,14 +113,8 @@ export const tournamentRouter = {
     .output(tournamentInfoSchema)
     .query(async (opts) => {
       const { input } = opts;
-      const [tournamentInfo] = await db
-        .select()
-        .from(tournaments)
-        .where(eq(tournaments.id, input.tournamentId))
-        .innerJoin(clubs, eq(tournaments.clubId, clubs.id));
-      if (!tournamentInfo) throw new Error('TOURNAMENT NOT FOUND');
+      const tournamentInfo = await getTournamentInfo(input.tournamentId);
       if (
-        // FIXME looks like weird shit but useful not to make decision rn about making roundsNUmber notNull() in the db lines 48-57
         tournamentInfo.tournament.format === 'swiss' &&
         tournamentInfo.tournament.roundsNumber === null
       ) {
@@ -184,7 +186,7 @@ export const tournamentRouter = {
   addExistingPlayer: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
-        player: playersSelectSchema,
+        player: playersWithUsernameSchema,
         userId: z.string(),
         addedAt: z.date().optional(),
       }),
@@ -235,6 +237,13 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await removePlayer(input);
+    }),
+  withdrawPlayer: tournamentAdminProcedure
+    .input(withdrawTournamentPlayerInputSchema)
+    .output(withdrawTournamentPlayerResultSchema)
+    .mutation(async (opts) => {
+      const { input } = opts;
+      return await withdrawPlayer(input);
     }),
   setGameResult: protectedProcedure
     .input(

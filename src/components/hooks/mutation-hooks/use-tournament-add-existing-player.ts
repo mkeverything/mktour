@@ -43,7 +43,7 @@ export const useTournamentAddExistingPlayer = (tournamentId: string) => {
           pairingNumber: null,
           addedAt: addedAt ?? null,
           teamNickname: null,
-          username: null,
+          username: player.username,
           pairPlayers: null,
         };
 

@@ -1,5 +1,6 @@
 /* eslint-disable */
 // FIXME eslint
+import { GameModel } from '@/server/zod/tournaments';
 import { ClassValue, clsx } from 'clsx';
 import { Clock, icons } from 'lucide-react';
 import { customAlphabet } from 'nanoid';
@@ -120,4 +121,15 @@ export function getSwissRecommendedRoundsNumber(players: number): number {
 export function getSwissMaxRoundsNumber(players: number): number {
   if (players <= 4) return Math.max(1, players - 1);
   return Math.max(1, players % 2 === 0 ? players - 3 : players - 2);
+}
+
+export function filterPendingGamesByPlayer(
+  games: GameModel[] | undefined,
+  playerId: string,
+) {
+  return games?.filter(
+    (game) =>
+      game.result != null ||
+      (game.whiteId !== playerId && game.blackId !== playerId),
+  );
 }

@@ -225,6 +225,8 @@
     "name": "как зовут человека?",
     "add-player-error": "простите! не получилось добавить в турнир игрока \"{player}\"",
     "remove-player-error": "простите! не удалось удалить игрока \"{player}\" из турнира",
+    "withdraw-player-error": "простите! не удалось выписать игрока \"{player}\" из турнира",
+    "withdraw-player-rounds-error": "нельзя выписать игрока: осталось слишком мало туров",
     "internal-error": "внутренняя ошибка: {error}",
     "max 50": "максимум 50 символов",
     "min nickname length": "минимум три буквы",
@@ -337,7 +339,8 @@
     "player has tournaments": "простите! нельзя удалять игрока, который участвовал в турнире. для этого придётся удалить турнир тоже",
     "club updated": "клуб обновлён",
     "tournament renamed": "название турнира сохранено",
-    "player result setting disabled": "админы клуба отключили возможность игрокам заносить результаты"
+    "player result setting disabled": "админы клуба отключили возможность игрокам заносить результаты",
+    "rounds number decreased automatically": "пришлось автоматически уменьшить количество туров до {roundsNumber}"
   },
   "UserSettings": {
     "header": "настройки",

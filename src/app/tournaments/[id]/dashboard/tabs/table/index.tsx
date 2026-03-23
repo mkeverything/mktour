@@ -7,6 +7,7 @@ import {
 } from '@/app/tournaments/[id]/dashboard/tabs/main/winners';
 import PlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/player-drawer';
 import { useTournamentRemovePlayer } from '@/components/hooks/mutation-hooks/use-tournament-remove-player';
+import { useTournamentWithdrawPlayer } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import {
@@ -18,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PlayerTournamentModel } from '@/server/zod/players';
-import { Flag, Scale, Trophy, UserRound } from 'lucide-react';
+import { Scale, Trophy, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import {
@@ -46,6 +47,7 @@ const TournamentTable: FC = ({}) => {
   const tournament = useTournamentInfo(id);
   const { status } = useContext(DashboardContext);
   const removePlayers = useTournamentRemovePlayer(id);
+  const withdrawPlayer = useTournamentWithdrawPlayer(id);
   const { userId } = useContext(DashboardContext);
   const t = useTranslations('Tournament.Table');
   const [selectedPlayer, setSelectedPlayer] =
@@ -54,7 +56,6 @@ const TournamentTable: FC = ({}) => {
   const hasEnded = !!tournament.data?.tournament.closedAt;
   const { data: user } = useAuth();
   const type = tournament.data?.tournament.type;
-
   const allGames = useTournamentGames(id);
 
   const {
@@ -97,6 +98,27 @@ const TournamentTable: FC = ({}) => {
   const handleDelete = () => {
     if (userId && status === 'organizer' && !hasStarted && selectedPlayer) {
       removePlayers.mutate(
+        {
+          tournamentId: id,
+          playerId: selectedPlayer.id,
+          userId,
+        },
+        { onSuccess: () => setSelectedPlayer(null) },
+      );
+    }
+  };
+
+  const handleWithdraw = () => {
+    if (
+      userId &&
+      status === 'organizer' &&
+      hasStarted &&
+      !hasEnded &&
+      tournament.data?.tournament.format === 'swiss' &&
+      selectedPlayer &&
+      !selectedPlayer.isOut
+    ) {
+      withdrawPlayer.mutate(
         {
           tournamentId: id,
           playerId: selectedPlayer.id,
@@ -170,8 +192,10 @@ const TournamentTable: FC = ({}) => {
           player={selectedPlayer}
           setSelectedPlayer={setSelectedPlayer}
           handleDelete={handleDelete}
+          handleWithdraw={handleWithdraw}
           hasStarted={hasStarted}
           hasEnded={hasEnded}
+          format={tournament.data?.tournament.format ?? 'swiss'}
         />
       )}
     </div>
@@ -260,13 +284,12 @@ const Status: FC<
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
       <div
-        className={`gap-mk flex min-w-0 items-center ${player.isOut && 'text-muted-foreground'}`}
+        className={`gap-mk flex min-w-0 items-center ${player.isOut && 'text-muted-foreground line-through'}`}
       >
         <span className="truncate">{children}</span>
         {player.username && (
           <UserRound className="text-muted-foreground size-4 shrink-0" />
         )}
-        {player.isOut && <Flag className="size-4 shrink-0" />}
       </div>
       {pairPlayers.length === 2 && (
         <small className="text-muted-foreground text-2xs truncate">

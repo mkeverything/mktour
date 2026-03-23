@@ -7,7 +7,13 @@ import {
   TournamentType,
 } from '@/server/zod/enums';
 import { relations } from 'drizzle-orm';
-import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from 'drizzle-orm/sqlite-core';
 
 export const tournaments = sqliteTable('tournament', {
   id: text('id').primaryKey(),
@@ -30,37 +36,44 @@ export const tournaments = sqliteTable('tournament', {
     .$default(() => true),
 });
 
-export const players_to_tournaments = sqliteTable('players_to_tournaments', {
-  // join table where single tournament participants are stored
-  id: text('id').primaryKey(),
-  playerId: text('player_id')
-    .notNull()
-    .references(() => players.id),
-  tournamentId: text('tournament_id')
-    .notNull()
-    .references(() => tournaments.id),
-  wins: integer('wins')
-    .$default(() => 0)
-    .notNull(),
-  losses: integer('losses')
-    .$default(() => 0)
-    .notNull(),
-  draws: integer('draws')
-    .$default(() => 0)
-    .notNull(),
-  colorIndex: integer('color_index')
-    .$default(() => 0)
-    .notNull(),
-  place: integer('place'),
-  isOut: integer('is_out', { mode: 'boolean' }),
-  pairingNumber: integer('pairing_number'),
-  addedAt: integer('added_at', { mode: 'timestamp' }),
-  teamNickname: text('team_nickname'),
-  numberInTeam: integer('number_in_team'),
-  newRating: integer('new_rating'),
-  newRatingDeviation: integer('new_rating_deviation'),
-  newVolatility: real('new_volatility'),
-});
+export const players_to_tournaments = sqliteTable(
+  'players_to_tournaments',
+  {
+    // join table where single tournament participants are stored
+    id: text('id').primaryKey(),
+    playerId: text('player_id')
+      .notNull()
+      .references(() => players.id),
+    tournamentId: text('tournament_id')
+      .notNull()
+      .references(() => tournaments.id),
+    wins: integer('wins')
+      .$default(() => 0)
+      .notNull(),
+    losses: integer('losses')
+      .$default(() => 0)
+      .notNull(),
+    draws: integer('draws')
+      .$default(() => 0)
+      .notNull(),
+    colorIndex: integer('color_index')
+      .$default(() => 0)
+      .notNull(),
+    place: integer('place'),
+    isOut: integer('is_out', { mode: 'boolean' }),
+    pairingNumber: integer('pairing_number'),
+    addedAt: integer('added_at', { mode: 'timestamp_ms' }),
+    teamNickname: text('team_nickname'),
+    numberInTeam: integer('number_in_team'),
+    newRating: integer('new_rating'),
+    newRatingDeviation: integer('new_rating_deviation'),
+    newVolatility: real('new_volatility'),
+  },
+  (table) => [
+    index('ptt_tournament_player_idx').on(table.tournamentId, table.playerId),
+    index('ptt_tournament_team_idx').on(table.tournamentId, table.teamNickname),
+  ],
+);
 
 export const games = sqliteTable('game', {
   id: text('id').primaryKey(),
