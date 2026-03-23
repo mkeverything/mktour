@@ -170,6 +170,15 @@ function makePlayerComparator(
 
     if (b.wins !== a.wins) return b.wins - a.wins;
 
+    if (a.pairingNumber !== null || b.pairingNumber !== null) {
+      const pairingNumberA = a.pairingNumber ?? Number.MAX_SAFE_INTEGER;
+      const pairingNumberB = b.pairingNumber ?? Number.MAX_SAFE_INTEGER;
+
+      if (pairingNumberA !== pairingNumberB) {
+        return pairingNumberA - pairingNumberB;
+      }
+    }
+
     const addedAtA = a.addedAt?.getTime() ?? 0;
     const addedAtB = b.addedAt?.getTime() ?? 0;
     if (addedAtA !== addedAtB) return addedAtA - addedAtB;
