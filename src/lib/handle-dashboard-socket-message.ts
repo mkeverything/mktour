@@ -3,6 +3,7 @@
 
 import { useTRPC } from '@/components/trpc/client';
 import { filterPendingGamesByPlayer } from '@/lib/utils';
+import { baselinePlayerSort } from '@/lib/tournament-results';
 import type { PlayerTournamentModel } from '@/server/zod/players';
 import type { GameModel } from '@/server/zod/tournaments';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
@@ -17,6 +18,12 @@ function parsePlayerBody(
     ...body,
     addedAt: body.addedAt != null ? new Date(body.addedAt as string) : null,
   };
+}
+
+function parsePlayersBody(
+  body: Array<PlayerTournamentModel & { addedAt?: Date | string | null }>,
+): PlayerTournamentModel[] {
+  return body.map(parsePlayerBody);
 }
 
 export const handleSocketMessage = (
@@ -36,7 +43,7 @@ export const handleSocketMessage = (
       queryClient.setQueryData(
         trpc.tournament.playersIn.queryKey({ tournamentId }),
         (cache) => {
-          if (cache) return cache.concat(body);
+          if (cache) return cache.concat(body).sort(baselinePlayerSort);
         },
       );
       queryClient.invalidateQueries({
@@ -55,7 +62,7 @@ export const handleSocketMessage = (
       queryClient.setQueryData(
         trpc.tournament.playersIn.queryKey({ tournamentId }),
         (cache) => {
-          if (cache) return cache.concat(body);
+          if (cache) return cache.concat(body).sort(baselinePlayerSort);
         },
       );
       queryClient.setQueryData(
@@ -88,11 +95,13 @@ export const handleSocketMessage = (
             p.id === message.previousId ? body : p,
           );
           if (body.id !== message.previousId) {
-            return result.filter(
-              (p) => p.id !== body.id || (p.pairPlayers?.length ?? 0) > 0,
-            );
+            return result
+              .filter(
+                (p) => p.id !== body.id || (p.pairPlayers?.length ?? 0) > 0,
+              )
+              .sort(baselinePlayerSort);
           }
-          return result;
+          return result.sort(baselinePlayerSort);
         },
       );
       queryClient.invalidateQueries({
@@ -118,6 +127,20 @@ export const handleSocketMessage = (
         queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
       });
       break;
+    case 'reorder-players': {
+      const body = parsePlayersBody(message.body);
+      queryClient.cancelQueries({
+        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+      });
+      queryClient.setQueryData(
+        trpc.tournament.playersIn.queryKey({ tournamentId }),
+        body,
+      );
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+      });
+      break;
+    }
     case 'withdraw-player':
       queryClient.cancelQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),

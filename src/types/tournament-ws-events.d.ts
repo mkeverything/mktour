@@ -9,6 +9,7 @@ type DashboardMessage =
       body: PlayerTournamentModel;
       previousId: string;
     }
+  | { event: 'reorder-players'; body: PlayerTournamentModel[] }
   | { event: 'remove-player'; id: string } // onError add-exidsting-player
   | { event: 'withdraw-player'; id: string }
   | {
