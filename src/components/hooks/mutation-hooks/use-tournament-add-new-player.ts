@@ -4,6 +4,7 @@ import { useTRPC } from '@/components/trpc/client';
 import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
 import { newid } from '@/lib/utils';
 import { PlayerFormModel, PlayerTournamentModel } from '@/server/zod/players';
+import { baselinePlayerSort } from '@/lib/tournament-results';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
@@ -30,6 +31,7 @@ export const useTournamentAddNewPlayer = (
           queryClient.getQueryData(
             trpc.tournament.playersIn.queryKey({ tournamentId }),
           );
+        const nextPairingNumber = previousState?.length ?? 0;
 
         const newPlayer: PlayerTournamentModel = {
           id: player.id ?? newid(),
@@ -42,7 +44,7 @@ export const useTournamentAddNewPlayer = (
           colorIndex: 0,
           place: null,
           isOut: null,
-          pairingNumber: null,
+          pairingNumber: nextPairingNumber,
           addedAt: addedAt ?? null,
           teamNickname: null,
           username: null,
@@ -55,7 +57,7 @@ export const useTournamentAddNewPlayer = (
             if (!cache) return [newPlayer];
             if (cache.some((player) => player.id === newPlayer.id))
               return cache;
-            return cache.concat(newPlayer);
+            return cache.concat(newPlayer).sort(baselinePlayerSort);
           },
         );
         return { previousState, newPlayer };

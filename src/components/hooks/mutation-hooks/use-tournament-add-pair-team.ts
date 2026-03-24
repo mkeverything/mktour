@@ -6,6 +6,7 @@ import {
   PlayerTournamentModel,
   type PlayerWithUsernameModel,
 } from '@/server/zod/players';
+import { baselinePlayerSort } from '@/lib/tournament-results';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
@@ -34,6 +35,7 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
           queryClient.getQueryData(
             trpc.tournament.playersIn.queryKey({ tournamentId }),
           );
+        const nextPairingNumber = previousState?.length ?? 0;
 
         const nicknameLower = nickname.toLowerCase();
         const isDuplicateNickname = previousState?.some(
@@ -77,7 +79,7 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
           colorIndex: 0,
           place: null,
           isOut: null,
-          pairingNumber: null,
+          pairingNumber: nextPairingNumber,
           addedAt: addedAt ?? null,
           teamNickname: nickname,
           username: null,
@@ -93,7 +95,7 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
             if (!cache) return [newPlayer];
             if (cache.some((player) => player.id === newPlayer.id))
               return cache;
-            return cache.concat(newPlayer);
+            return cache.concat(newPlayer).sort(baselinePlayerSort);
           },
         );
 

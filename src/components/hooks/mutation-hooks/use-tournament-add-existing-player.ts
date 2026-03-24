@@ -3,6 +3,7 @@ import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-
 import { useTRPC } from '@/components/trpc/client';
 import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
 import { PlayerTournamentModel } from '@/server/zod/players';
+import { baselinePlayerSort } from '@/lib/tournament-results';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
@@ -28,6 +29,7 @@ export const useTournamentAddExistingPlayer = (tournamentId: string) => {
         const previousState = queryClient.getQueryData(
           trpc.tournament.playersIn.queryKey({ tournamentId }),
         );
+        const nextPairingNumber = previousState?.length ?? 0;
 
         const newPlayer: PlayerTournamentModel = {
           id: player.id,
@@ -40,7 +42,7 @@ export const useTournamentAddExistingPlayer = (tournamentId: string) => {
           colorIndex: 0,
           place: null,
           isOut: null,
-          pairingNumber: null,
+          pairingNumber: nextPairingNumber,
           addedAt: addedAt ?? null,
           teamNickname: null,
           username: player.username,
@@ -52,7 +54,7 @@ export const useTournamentAddExistingPlayer = (tournamentId: string) => {
           (cache) => {
             if (!cache) return [newPlayer];
             if (cache.some((p) => p.id === newPlayer.id)) return cache;
-            return cache.concat(newPlayer);
+            return cache.concat(newPlayer).sort(baselinePlayerSort);
           },
         );
         queryClient.setQueryData(
