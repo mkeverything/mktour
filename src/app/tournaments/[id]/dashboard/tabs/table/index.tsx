@@ -27,8 +27,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  type SortedPlayersResult,
   sortPlayersByResultsWithMaps,
+  type SortedPlayersResult,
 } from '@/lib/tournament-results';
 import { PlayerTournamentModel } from '@/server/zod/players';
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react';

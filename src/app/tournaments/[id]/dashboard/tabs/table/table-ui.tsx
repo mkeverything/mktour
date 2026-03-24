@@ -66,7 +66,7 @@ export const PlayerTableRow: FC<{
         isDragSource ? 'opacity-30' : '',
         isDropTarget ? 'ring-ring/40 ring-1 ring-inset' : '',
         isOverlay
-          ? 'bg-background ring-border cursor-grabbing shadow-xl ring-1'
+          ? 'bg-background ring-border scale-[1.01] cursor-grabbing shadow-xl ring-1 backdrop-blur-2xl transition-transform sm:scale-none'
           : '',
       ]
         .filter(Boolean)
@@ -94,7 +94,9 @@ export const PlayerTableRow: FC<{
         </Status>
       </TableCellStyled>
       {stats.map((stat) => (
-        <StatCell key={stat}>{renderStat[stat](player)}</StatCell>
+        <StatCell key={stat} isOverlay={isOverlay} stat={stat}>
+          {renderStat[stat](player)}
+        </StatCell>
       ))}
     </TableRow>
   );
@@ -245,11 +247,20 @@ const TableHeadStyled: FC<PropsWithChildren & { className?: string }> = ({
   className,
 }) => <TableHead className={`h-11 ${className}`}>{children}</TableHead>;
 
-const StatCell: FC<PropsWithChildren> = ({ children }) => (
-  <TableCellStyled className="min-w-8 text-center font-medium">
-    {children}
-  </TableCellStyled>
-);
+const StatCell: FC<
+  PropsWithChildren & { isOverlay?: boolean; stat?: STAT }
+> = ({ children, isOverlay, stat }) => {
+  const isIcon = stat === 'score' || stat === 'tiebreak';
+  const overlayWidth = isIcon ? '' : 'sm:min-w-16';
+
+  return (
+    <TableCellStyled
+      className={`min-w-8 text-center font-medium ${isOverlay ? overlayWidth : ''}`}
+    >
+      {children}
+    </TableCellStyled>
+  );
+};
 
 const renderTextHead = (stat: Exclude<STAT, 'score' | 'tiebreak'>) => (
   <>
