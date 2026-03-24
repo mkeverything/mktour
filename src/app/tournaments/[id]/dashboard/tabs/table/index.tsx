@@ -7,7 +7,7 @@ import {
 } from '@/app/tournaments/[id]/dashboard/tabs/table/column-types';
 import PlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/player-drawer';
 import {
-  PlayerDragOverlay,
+  PlayerTableRow,
   SortableTableRow,
   TableLoading,
   TableStatsHeads,
@@ -181,18 +181,28 @@ const TournamentTable = () => {
             ))}
           </TableBody>
         </Table>
-        <DragOverlay>
+        <DragOverlay dropAnimation={null}>
           {activePlayer ? (
-            <PlayerDragOverlay
-              player={activePlayer}
-              index={
-                activePlayerId
-                  ? sortedPlayers.findIndex(
-                      (player) => player.id === activePlayerId,
-                    ) + 1
-                  : null
-              }
-            />
+            <Table className="bg-background">
+              <TableBody>
+                <PlayerTableRow
+                  canSort={canSort}
+                  hasEnded={hasEnded}
+                  index={
+                    activePlayerId
+                      ? sortedPlayers.findIndex(
+                          (player) => player.id === activePlayerId,
+                        )
+                      : 0
+                  }
+                  player={activePlayer}
+                  renderStat={statRenderers}
+                  stats={stats}
+                  user={user}
+                  isOverlay
+                />
+              </TableBody>
+            </Table>
           ) : null}
         </DragOverlay>
       </DragDropProvider>

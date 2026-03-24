@@ -22,16 +22,21 @@ import { FC, PropsWithChildren, ReactNode } from 'react';
 
 import { STAT } from './column-types';
 
-export const SortableTableRow: FC<{
+export const PlayerTableRow: FC<{
   canSort: boolean;
   index: number;
   player: PlayerTournamentModel;
   stats: STAT[];
   user: UserModel | null | undefined;
   hasEnded: boolean;
-  isSelected: boolean;
-  onSelect: () => void;
+  isSelected?: boolean;
+  onSelect?: () => void;
   renderStat: Record<STAT, (player: PlayerTournamentModel) => ReactNode>;
+  isDragSource?: boolean;
+  isDropTarget?: boolean;
+  tableRowRef?: React.Ref<HTMLTableRowElement>;
+  dragHandleRef?: React.Ref<HTMLDivElement>;
+  isOverlay?: boolean;
 }> = ({
   canSort,
   index,
@@ -42,17 +47,17 @@ export const SortableTableRow: FC<{
   isSelected,
   onSelect,
   renderStat,
+  isDragSource,
+  isDropTarget,
+  tableRowRef,
+  dragHandleRef,
+  isOverlay,
 }) => {
-  const { ref, handleRef, isDragSource, isDropTarget } = useSortable({
-    id: player.id,
-    index,
-    disabled: !canSort,
-  });
   const t = useTranslations('Tournament.Table');
 
   return (
     <TableRow
-      ref={ref}
+      ref={tableRowRef}
       onClick={onSelect}
       className={[
         player.username === user?.username ? 'bg-card/50 font-bold' : '',
@@ -60,6 +65,9 @@ export const SortableTableRow: FC<{
         canSort ? 'cursor-default' : '',
         isDragSource ? 'opacity-30' : '',
         isDropTarget ? 'ring-ring/40 ring-1 ring-inset' : '',
+        isOverlay
+          ? 'bg-background ring-border cursor-grabbing shadow-xl ring-1'
+          : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -67,20 +75,20 @@ export const SortableTableRow: FC<{
       {canSort && (
         <TableCellStyled className="font-small w-4 py-1 pr-0 pl-1 text-center">
           <div
-            ref={handleRef}
-            className="text-muted-foreground hover:text-foreground inline-flex size-full items-center justify-center px-1 py-2 hover:cursor-grab"
+            ref={dragHandleRef}
+            className={`text-muted-foreground hover:text-foreground inline-flex size-full items-center justify-center px-1 py-2 ${isOverlay ? 'cursor-grabbing' : 'hover:cursor-grab'}`}
           >
             <GripVertical className="size-3.5" />
             <span className="sr-only">{t('reorder')}</span>
           </div>
         </TableCellStyled>
       )}
-      <TableCell className="font-small text-center">
+      <TableCell className="font-small w-6 text-center">
         <Place player={player} hasEnded={hasEnded}>
           {index + 1}
         </Place>
       </TableCell>
-      <TableCellStyled className="font-small max-w-0 truncate pl-0">
+      <TableCellStyled className="font-small w-full max-w-0 min-w-10 truncate pl-0">
         <Status player={player} user={user}>
           {player.nickname}
         </Status>
@@ -92,26 +100,33 @@ export const SortableTableRow: FC<{
   );
 };
 
-export const PlayerDragOverlay: FC<{
+export const SortableTableRow: FC<{
+  canSort: boolean;
+  index: number;
   player: PlayerTournamentModel;
-  index: number | null;
-}> = ({ player, index }) => (
-  <div className="bg-background/95 border-border flex min-w-56 items-center gap-3 rounded-md border px-3 py-2 shadow-lg">
-    <div className="text-muted-foreground w-6 text-center text-sm">
-      {index ?? ''}
-    </div>
-    <div className="min-w-0 flex-1">
-      <div className="truncate text-sm font-medium">{player.nickname}</div>
-      {!!player.pairPlayers?.length && (
-        <div className="text-muted-foreground truncate text-xs">
-          {player.pairPlayers
-            .map((pairPlayer) => pairPlayer.nickname)
-            .join(', ')}
-        </div>
-      )}
-    </div>
-  </div>
-);
+  stats: STAT[];
+  user: UserModel | null | undefined;
+  hasEnded: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+  renderStat: Record<STAT, (player: PlayerTournamentModel) => ReactNode>;
+}> = (props) => {
+  const { ref, handleRef, isDragSource, isDropTarget } = useSortable({
+    id: props.player.id,
+    index: props.index,
+    disabled: !props.canSort,
+  });
+
+  return (
+    <PlayerTableRow
+      {...props}
+      tableRowRef={ref}
+      dragHandleRef={handleRef}
+      isDragSource={isDragSource}
+      isDropTarget={isDropTarget}
+    />
+  );
+};
 
 export const TableStatsHeads: FC<{ stats: STAT[] }> = ({ stats }) => {
   return (
