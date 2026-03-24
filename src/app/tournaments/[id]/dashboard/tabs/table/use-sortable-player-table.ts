@@ -1,10 +1,11 @@
 'use client';
 
 import {
-  reorderTournamentPlayersLocally,
+  reorderTournamentPlayersByIndex,
   useTournamentReorderPlayers,
 } from '@/components/hooks/mutation-hooks/use-tournament-reorder-players';
 import { PlayerTournamentModel } from '@/server/zod/players';
+import { isSortable } from '@dnd-kit/dom/sortable';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useParams } from 'next/navigation';
 import { ComponentProps, useState } from 'react';
@@ -16,7 +17,6 @@ export const useSortablePlayerTable = (
   const { id } = useParams<{ id: string }>();
   const reorderPlayers = useTournamentReorderPlayers(id);
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
-  const [lastOverPlayerId, setLastOverPlayerId] = useState<string | null>(null);
 
   const activePlayer =
     players.find((player) => player.id === activePlayerId) ?? null;
@@ -28,24 +28,6 @@ export const useSortablePlayerTable = (
   ) => {
     const activeId = event.operation.source?.id;
     setActivePlayerId(typeof activeId === 'string' ? activeId : null);
-    setLastOverPlayerId(null);
-  };
-
-  const handleDragOver = (
-    event: Parameters<
-      NonNullable<ComponentProps<typeof DragDropProvider>['onDragOver']>
-    >[0],
-  ) => {
-    const activeId = event.operation.source?.id;
-    const overId = event.operation.target?.id;
-
-    if (
-      typeof activeId === 'string' &&
-      typeof overId === 'string' &&
-      activeId !== overId
-    ) {
-      setLastOverPlayerId(overId);
-    }
   };
 
   const handleDragEnd = (
@@ -53,30 +35,22 @@ export const useSortablePlayerTable = (
       NonNullable<ComponentProps<typeof DragDropProvider>['onDragEnd']>
     >[0],
   ) => {
-    if (!canSort) return;
-
-    const activeId = event.operation.source?.id;
-    const currentOverId = event.operation.target?.id;
-    const overId =
-      typeof currentOverId === 'string' && currentOverId !== activeId
-        ? currentOverId
-        : lastOverPlayerId;
-
     setActivePlayerId(null);
-    setLastOverPlayerId(null);
 
-    if (
-      typeof activeId !== 'string' ||
-      typeof overId !== 'string' ||
-      activeId === overId
-    ) {
-      return;
-    }
+    if (!canSort || event.canceled) return;
 
-    const reorderedPlayers = reorderTournamentPlayersLocally(
+    const source = event.operation.source;
+    if (!source || !isSortable(source)) return;
+
+    const fromIndex = source.sortable.initialIndex;
+    const toIndex = source.sortable.index;
+
+    if (fromIndex === toIndex) return;
+
+    const reorderedPlayers = reorderTournamentPlayersByIndex(
       players,
-      activeId,
-      overId,
+      fromIndex,
+      toIndex,
     );
 
     if (reorderedPlayers === players) return;
@@ -91,7 +65,6 @@ export const useSortablePlayerTable = (
     activePlayer,
     activePlayerId,
     handleDragStart,
-    handleDragOver,
     handleDragEnd,
   };
 };

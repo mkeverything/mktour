@@ -80,13 +80,8 @@ const TournamentTable = () => {
     );
   }, [allGames.data, hasStarted, players.data, tournament.data]);
 
-  const {
-    activePlayer,
-    activePlayerId,
-    handleDragStart,
-    handleDragOver,
-    handleDragEnd,
-  } = useSortablePlayerTable(sortedPlayers, canSort);
+  const { activePlayer, activePlayerId, handleDragStart, handleDragEnd } =
+    useSortablePlayerTable(sortedPlayers, canSort);
 
   if (players.isLoading || allGames.isLoading) {
     return <TableLoading canSort={canSort} stats={stats} />;
@@ -153,11 +148,7 @@ const TournamentTable = () => {
 
   return (
     <div className="mb-20 w-full">
-      <DragDropProvider
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
+      <DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <Table className="pt-0">
           <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
             <TableRow>
