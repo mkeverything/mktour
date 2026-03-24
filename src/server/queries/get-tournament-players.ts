@@ -1,4 +1,7 @@
-import { sortPlayersByResults } from '@/lib/tournament-results';
+import {
+  sortPlayersByResults,
+  baselinePlayerSort,
+} from '@/lib/tournament-results';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
 import { players } from '@/server/db/schema/players';
@@ -128,8 +131,12 @@ export async function getTournamentPlayers(
 
   const [playerModels, allGames] = await Promise.all([
     getRawTournamentPlayers(id, tournament.type),
-    getTournamentGames(id),
+    tournament.startedAt ? getTournamentGames(id) : Promise.resolve([]),
   ]);
+
+  if (!tournament.startedAt) {
+    return playerModels.sort(baselinePlayerSort);
+  }
 
   return sortPlayersByResults(playerModels, tournament, allGames);
 }

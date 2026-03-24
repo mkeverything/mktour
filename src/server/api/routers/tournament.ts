@@ -31,6 +31,7 @@ import {
   addNewPlayer,
   editDoublesTeam,
   removePlayer,
+  reorderTournamentPlayers,
   resetTournamentPlayers,
   withdrawPlayer,
 } from '@/server/mutations/tournament-players';
@@ -58,6 +59,7 @@ import {
   editDoublesTeamSchema,
   gameSchema,
   publicFeaturedTournamentSchema,
+  reorderTournamentPlayersInputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
   tournamentInfoSchema,
@@ -237,6 +239,13 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await removePlayer(input);
+    }),
+  reorderPlayers: tournamentAdminProcedure
+    .input(reorderTournamentPlayersInputSchema)
+    .output(z.void())
+    .mutation(async (opts) => {
+      const { input } = opts;
+      await reorderTournamentPlayers(input);
     }),
   withdrawPlayer: tournamentAdminProcedure
     .input(withdrawTournamentPlayerInputSchema)

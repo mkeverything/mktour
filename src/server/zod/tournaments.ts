@@ -62,6 +62,10 @@ export const withdrawTournamentPlayerInputSchema = z.object({
   playerId: z.string(),
   userId: z.string(),
 });
+export const reorderTournamentPlayersInputSchema = z.object({
+  tournamentId: z.string(),
+  playerIds: z.array(z.string()).min(1),
+});
 export const withdrawTournamentPlayerResultSchema = z.object({
   roundsNumber: z.number().int().min(1).nullable(),
   roundsNumberAutoDecreased: z.boolean(),
@@ -195,6 +199,9 @@ export type PublicFeaturedTournamentModel = z.infer<
 >;
 export type TournamentAuthStatusModel = z.infer<
   typeof tournamentAuthStatusSchema
+>;
+export type ReorderTournamentPlayersInputModel = z.infer<
+  typeof reorderTournamentPlayersInputSchema
 >;
 export type TournamentModel = z.infer<typeof tournamentSchema>;
 export type TournamentInsertModel = z.infer<typeof tournamentsInsertSchema>;
