@@ -138,6 +138,7 @@ the spec file is generated from trpc router definitions and should never be manu
 bun dev                      # start dev server
 bun dev:test                 # dev with test database (MKTOURTEST=true)
 bun dev:local                # offline mode (OFFLINE=true, local sqld at :8080)
+mobile dev                   # prepare local-network mobile testing config (steps below)
 bun run build                # production build
 bun start                    # start production server
 bun check                    # typecheck + lint + tests (run before pushing)
@@ -153,6 +154,12 @@ bun db:studio                # open drizzle studio
 bun generate-erd             # generate entity-relationship diagram
 bun generate-openapi         # generate openapi spec
 ```
+
+`mobile dev` workflow:
+
+1. run `ifconfig | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | grep '^192\.168\.' | head -n 1` and take the resulting local ip address.
+2. replace `localhost` with that ip in `src/lib/config/urls.ts` for local dev urls.
+3. set `allowedDevOrigins: ["<the_ip>"]` in `nextConfig` in `next.config.mjs` (top-level config key, not experimental in next 16).
 
 always run `bun check` before pushing. use single-file test when validating changes.
 
