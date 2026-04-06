@@ -1,6 +1,7 @@
 import Loading from '@/app/loading';
 import JsonLd from '@/components/json-ld';
 import Navigation from '@/components/navigation';
+import PwaHead from '@/components/pwa-head';
 import ErrorFallback from '@/components/providers/error-boundary';
 import IntlProvider from '@/components/providers/intl-provider';
 import MediaQueryProvider from '@/components/providers/media-query-provider';
@@ -9,7 +10,6 @@ import { GlobalWebSocketProvider } from '@/components/providers/websocket-provid
 import { TRPCReactProvider } from '@/components/trpc/client';
 import { Toaster } from '@/components/ui/sonner';
 import { BASE_URL } from '@/lib/config/urls';
-import { applePwaSplashStartupImages } from '@/lib/splash-screens';
 import '@/styles/globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -46,6 +46,9 @@ async function LayoutContent({ children }: PropsWithChildren) {
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="ru" suppressHydrationWarning>
+      <head>
+        <PwaHead />
+      </head>
       <body className="small-scrollbar">
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <ThemeProvider
@@ -136,15 +139,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: t('homepage.description'),
       images: [`${baseUrl}/opengraph-image.png`],
     },
-    appleWebApp: {
-      capable: true,
-      statusBarStyle: 'black-translucent',
-      startupImage: applePwaSplashStartupImages(),
-    },
     formatDetection: { telephone: false },
-    other: {
-      'mobile-web-app-capable': 'yes',
-    },
   };
 }
 
