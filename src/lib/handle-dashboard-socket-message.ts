@@ -2,8 +2,10 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
-import type { DashboardMessage } from '@/types/tournament-ws-events';
+import { filterPendingGamesByPlayer } from '@/lib/utils';
 import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { GameModel } from '@/server/zod/tournaments';
+import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
@@ -115,6 +117,47 @@ export const handleSocketMessage = (
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
       });
+      break;
+    case 'withdraw-player':
+      queryClient.cancelQueries({
+        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+      });
+      queryClient.cancelQueries({
+        queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+      });
+      queryClient.setQueryData(
+        trpc.tournament.playersIn.queryKey({ tournamentId }),
+        (cache) =>
+          cache?.map((player) =>
+            player.id === message.id ? { ...player, isOut: true } : player,
+          ),
+      );
+      queryClient.setQueryData(
+        trpc.tournament.allGames.queryKey({ tournamentId }),
+        (cache: GameModel[] | undefined) =>
+          filterPendingGamesByPlayer(cache, message.id),
+      );
+      const ongoingRound =
+        queryClient.getQueryData(
+          trpc.tournament.info.queryKey({ tournamentId }),
+        )?.tournament.ongoingRound ?? null;
+      if (ongoingRound != null) {
+        const roundGamesKey = trpc.tournament.roundGames.queryKey({
+          tournamentId,
+          roundNumber: ongoingRound,
+        });
+        queryClient.cancelQueries({ queryKey: roundGamesKey });
+        queryClient.setQueryData(
+          roundGamesKey,
+          (cache: GameModel[] | undefined) =>
+            filterPendingGamesByPlayer(cache, message.id),
+        );
+        queryClient.invalidateQueries({ queryKey: roundGamesKey });
+      }
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({ queryKey: trpc.tournament.pathKey() });
       break;
     case 'set-game-result':
       queryClient.setQueryData(

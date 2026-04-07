@@ -124,6 +124,33 @@ describe('Swiss Generator Black-Box Tests', () => {
       const result = generateTournamentWithSeed(19);
       expect(result.roundsCompleted).toBe(result.roundsToTest);
     });
+
+    test('withdrawn player is excluded from future pairings', () => {
+      const players = Array.from({ length: 4 }, (_, index) => {
+        const player = generatePlayerModel();
+        player.pairingNumber = index;
+        return player;
+      });
+
+      const withdrawnPlayer = players[3];
+      withdrawnPlayer.isOut = true;
+
+      const round = generateWeightedSwissRound({
+        players,
+        games: [],
+        roundNumber: 1,
+        tournamentId: generateRandomDatabaseTournament().id,
+      });
+
+      expect(round).toHaveLength(1);
+      expect(
+        round.some(
+          (game) =>
+            game.whiteId === withdrawnPlayer.id ||
+            game.blackId === withdrawnPlayer.id,
+        ),
+      ).toBe(false);
+    });
   });
 
   describe.skip('Edge Cases: Small Tournament Failure Estimation', () => {

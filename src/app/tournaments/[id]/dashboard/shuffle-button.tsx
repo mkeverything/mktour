@@ -1,3 +1,4 @@
+import { LoadingSpinner } from '@/app/loading';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import Fab from '@/components/fab';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
@@ -36,7 +37,7 @@ const ShuffleButton = () => {
       size="icon-lg"
       variant="outline"
     >
-      {!isPending ? <Shuffle /> : <Loader2 />}
+      {!isPending ? <Shuffle /> : <LoadingSpinner />}
     </Button>
   ) : null;
 

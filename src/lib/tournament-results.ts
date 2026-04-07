@@ -32,7 +32,7 @@ export const calculatePlayerScore = (
   const wins = player.wins;
   const draws = player.draws * 0.5;
 
-  const byes = Math.max(0, roundNumber - playerGames.length);
+  const byes = player.isOut ? 0 : Math.max(0, roundNumber - playerGames.length);
 
   return wins + draws + byes;
 };
@@ -174,7 +174,7 @@ function makePlayerComparator(
     const addedAtB = b.addedAt?.getTime() ?? 0;
     if (addedAtA !== addedAtB) return addedAtA - addedAtB;
 
-    return 0;
+    return a.id.localeCompare(b.id);
   };
 }
 
