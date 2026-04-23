@@ -88,12 +88,12 @@ function buildSplashStartupImages(): { url: string; media: string }[] {
   for (const dims of Object.keys(SPLASH_BY_DIMS)) {
     const deviceMedia = SPLASH_BY_DIMS[dims];
     out.push({
-      url: `${SPLASH_DIR}/apple-splash-dark-${dims}.jpg`,
-      media: `(prefers-color-scheme: dark) and ${deviceMedia}`,
-    });
-    out.push({
       url: `${SPLASH_DIR}/apple-splash-${dims}.jpg`,
       media: deviceMedia,
+    });
+    out.push({
+      url: `${SPLASH_DIR}/apple-splash-dark-${dims}.jpg`,
+      media: `(prefers-color-scheme: dark) and ${deviceMedia}`,
     });
   }
   return out;
