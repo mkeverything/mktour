@@ -110,6 +110,11 @@ export const getClockIcon = (time: Date | null | undefined): FC => {
   return icons[clockIcon];
 };
 
+export function getRoundRobinRoundsNumber(playerCount: number) {
+  if (playerCount < 2) throw new Error('NOT_ENOUGH_PLAYERS');
+  return playerCount % 2 === 0 ? playerCount - 1 : playerCount;
+}
+
 export function getSwissRecommendedRoundsNumber(players: number): number {
   if (players < 2) return 1;
   if (players === 2) return 1;
