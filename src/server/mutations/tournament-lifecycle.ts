@@ -7,6 +7,7 @@ import {
   sortPlayersByResults,
 } from '@/lib/tournament-results';
 import {
+  getRoundRobinRoundsNumber,
   getSwissMaxRoundsNumber,
   getSwissRecommendedRoundsNumber,
   newid,
@@ -95,10 +96,7 @@ async function resolveTournamentRoundsNumber({
   }
   if (format === 'round robin') {
     const playersList = await getTournamentPlayers(tournamentId);
-    if (playersList.length < 2) throw new Error('NOT_ENOUGH_PLAYERS');
-    return playersList.length % 2 === 0
-      ? playersList.length
-      : playersList.length - 1;
+    return getRoundRobinRoundsNumber(playersList.length);
   }
   throw new Error('UNSUPPORTED_TOURNAMENT_FORMAT');
 }
