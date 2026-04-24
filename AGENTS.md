@@ -152,6 +152,9 @@ bun db:push                  # generate + run migrations
 bun db:studio                # open drizzle studio
 bun generate-erd             # generate entity-relationship diagram
 bun generate-openapi         # generate openapi spec
+bash .cursor/skills/mobile-dev/scripts/setup-mobile-dev.sh
+                             # mobile dev setup: detect 192.168 ip,
+                             # update local urls, set nextConfig.allowedDevOrigins
 ```
 
 always run `bun check` before pushing. use single-file test when validating changes.
