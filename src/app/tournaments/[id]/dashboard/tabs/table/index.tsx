@@ -8,7 +8,7 @@ import {
 import PlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/player-drawer';
 import { useTournamentRemovePlayer } from '@/components/hooks/mutation-hooks/use-tournament-remove-player';
 import { useTournamentWithdrawPlayer } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-player';
-import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import {
   Table,
@@ -23,9 +23,12 @@ import { Scale, Trophy, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import {
+  Dispatch,
   FC,
+  memo,
   PropsWithChildren,
   ReactNode,
+  SetStateAction,
   useContext,
   useMemo,
   useState,
@@ -44,7 +47,7 @@ import { UserModel } from '@/server/zod/users';
 const TournamentTable: FC = ({}) => {
   const { id } = useParams<{ id: string }>();
   const players = useTournamentPlayers(id);
-  const tournament = useTournamentInfo(id);
+  const tournament = useTournamentScoringInfo(id);
   const { status } = useContext(DashboardContext);
   const removePlayers = useTournamentRemovePlayer(id);
   const withdrawPlayer = useTournamentWithdrawPlayer(id);
@@ -52,10 +55,10 @@ const TournamentTable: FC = ({}) => {
   const t = useTranslations('Tournament.Table');
   const [selectedPlayer, setSelectedPlayer] =
     useState<PlayerTournamentModel | null>(null);
-  const hasStarted = !!tournament.data?.tournament.startedAt;
-  const hasEnded = !!tournament.data?.tournament.closedAt;
+  const hasStarted = !!tournament.data?.startedAt;
+  const hasEnded = !!tournament.data?.closedAt;
   const { data: user } = useAuth();
-  const type = tournament.data?.tournament.type;
+  const type = tournament.data?.type;
   const allGames = useTournamentGames(id);
 
   const {
@@ -71,8 +74,8 @@ const TournamentTable: FC = ({}) => {
       };
 
     const tournamentForScoring = {
-      format: tournament.data.tournament.format,
-      ongoingRound: hasStarted ? tournament.data.tournament.ongoingRound : 0,
+      format: tournament.data.format,
+      ongoingRound: hasStarted ? tournament.data.ongoingRound : 0,
     };
 
     return sortPlayersByResultsWithMaps(
@@ -83,6 +86,22 @@ const TournamentTable: FC = ({}) => {
   }, [players.data, tournament.data, allGames.data, hasStarted]);
 
   const stats: Stat[] = STATS_WITH_TIEBREAK;
+  const statRenderers = useMemo<
+    Record<Stat, (player: PlayerTournamentModel) => ReactNode>
+  >(
+    () => ({
+      wins: (p) => p.wins,
+      draws: (p) => p.draws,
+      losses: (p) => p.losses,
+      score: (p) => playerScoresMap.get(p.id),
+      tiebreak: (p) => (
+        <span className="text-muted-foreground">
+          {tiebreakScoresMap.get(p.id)}
+        </span>
+      ),
+    }),
+    [playerScoresMap, tiebreakScoresMap],
+  );
 
   if (players.isLoading || allGames.isLoading) {
     return <TableLoading stats={stats} />;
@@ -114,7 +133,7 @@ const TournamentTable: FC = ({}) => {
       status === 'organizer' &&
       hasStarted &&
       !hasEnded &&
-      tournament.data?.tournament.format === 'swiss' &&
+      tournament.data?.format === 'swiss' &&
       selectedPlayer &&
       !selectedPlayer.isOut
     ) {
@@ -127,21 +146,6 @@ const TournamentTable: FC = ({}) => {
         { onSuccess: () => setSelectedPlayer(null) },
       );
     }
-  };
-
-  const statRenderers: Record<
-    Stat,
-    (player: PlayerTournamentModel) => ReactNode
-  > = {
-    wins: (p) => p.wins,
-    draws: (p) => p.draws,
-    losses: (p) => p.losses,
-    score: (p) => playerScoresMap.get(p.id),
-    tiebreak: (p) => (
-      <span className="text-muted-foreground">
-        {tiebreakScoresMap.get(p.id)}
-      </span>
-    ),
   };
 
   const nameColumnIntl = type !== 'solo' ? 'name column team' : 'name column';
@@ -164,25 +168,17 @@ const TournamentTable: FC = ({}) => {
         </TableHeader>
         <TableBody>
           {sortedPlayers.map((player: PlayerTournamentModel, i: number) => (
-            <TableRow
+            <PlayerRow
               key={player.id}
-              onClick={() => setSelectedPlayer(player)}
-              className={`${player.username === user?.username && 'bg-card/50 font-bold'}`}
-            >
-              <TableCellStyled className={`font-small w-10 text-center`}>
-                <Place player={player} hasEnded={hasEnded}>
-                  {i + 1}
-                </Place>
-              </TableCellStyled>
-              <TableCellStyled className="font-small max-w-0 truncate pl-0">
-                <Status player={player} user={user}>
-                  {player.nickname}
-                </Status>
-              </TableCellStyled>
-              {stats.map((stat) => (
-                <Stat key={stat}>{statRenderers[stat](player)}</Stat>
-              ))}
-            </TableRow>
+              hasEnded={hasEnded}
+              index={i}
+              isSelected={selectedPlayer?.id === player.id}
+              player={player}
+              renderStat={statRenderers}
+              setSelectedPlayer={setSelectedPlayer}
+              stats={stats}
+              user={user}
+            />
           ))}
         </TableBody>
       </Table>
@@ -195,12 +191,58 @@ const TournamentTable: FC = ({}) => {
           handleWithdraw={handleWithdraw}
           hasStarted={hasStarted}
           hasEnded={hasEnded}
-          format={tournament.data?.tournament.format ?? 'swiss'}
+          format={tournament.data?.format ?? 'swiss'}
         />
       )}
     </div>
   );
 };
+
+const PlayerRow = memo(function PlayerRow({
+  hasEnded,
+  index,
+  isSelected,
+  player,
+  renderStat,
+  setSelectedPlayer,
+  stats,
+  user,
+}: {
+  hasEnded: boolean;
+  index: number;
+  isSelected: boolean;
+  player: PlayerTournamentModel;
+  renderStat: Record<Stat, (player: PlayerTournamentModel) => ReactNode>;
+  setSelectedPlayer: Dispatch<SetStateAction<PlayerTournamentModel | null>>;
+  stats: Stat[];
+  user: UserModel | null | undefined;
+}) {
+  return (
+    <TableRow
+      onClick={() => setSelectedPlayer(player)}
+      className={[
+        player.username === user?.username ? 'bg-card/50 font-bold' : '',
+        isSelected ? 'bg-card/70' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <TableCellStyled className="font-small w-10 text-center">
+        <Place player={player} hasEnded={hasEnded}>
+          {index + 1}
+        </Place>
+      </TableCellStyled>
+      <TableCellStyled className="font-small max-w-0 truncate pl-0">
+        <Status player={player} user={user}>
+          {player.nickname}
+        </Status>
+      </TableCellStyled>
+      {stats.map((stat) => (
+        <Stat key={stat}>{renderStat[stat](player)}</Stat>
+      ))}
+    </TableRow>
+  );
+});
 
 const TableStatsHeads: FC<{ stats: Stat[] }> = ({ stats }) => {
   return (
@@ -348,4 +390,4 @@ type Stat =
   | 'score'
   | 'tiebreak';
 
-export default TournamentTable;
+export default memo(TournamentTable);
