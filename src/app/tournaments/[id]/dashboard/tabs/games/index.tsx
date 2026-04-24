@@ -1,10 +1,14 @@
 'use client';
 
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  DashboardTabContext,
+  DashboardRoundContext,
+  SelectedGameContext,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import RoundControls from '@/app/tournaments/[id]/dashboard/tabs/games/round-controls';
 import RoundItem from '@/app/tournaments/[id]/dashboard/tabs/games/round-item';
 import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
-import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentGamesOverviewInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import Overlay from '@/components/overlay';
 import SkeletonList from '@/components/skeleton-list';
@@ -15,11 +19,12 @@ import { useParams } from 'next/navigation';
 import { FC, useContext } from 'react';
 
 const Games: FC = () => {
-  const { currentTab, roundInView, setRoundInView, selectedGameId } =
-    useContext(DashboardContext);
+  const { currentTab } = useContext(DashboardTabContext);
+  const { roundInView, setRoundInView } = useContext(DashboardRoundContext);
+  const { selectedGameId } = useContext(SelectedGameContext);
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
-  const { data, isError, isLoading } = useTournamentInfo(id);
+  const { data, isError, isLoading } = useTournamentGamesOverviewInfo(id);
   const {
     data: players,
     isLoading: isPlayersloading,
@@ -28,9 +33,7 @@ const Games: FC = () => {
   const t = useTranslations('Tournament.Round');
   const trpc = useTRPC();
   const now = new Date().getTime();
-  const startedAt = data?.tournament.startedAt
-    ? data.tournament.startedAt.getTime()
-    : 0;
+  const startedAt = data?.startedAt ? data.startedAt.getTime() : 0;
   const renderDrawer = !startedAt || now - startedAt <= 5000;
 
   if (isError || isPlayersError) {
@@ -85,7 +88,7 @@ const Games: FC = () => {
       <RoundControls
         roundInView={roundInView}
         setRoundInView={setRoundInView}
-        currentRound={data.tournament.ongoingRound}
+        currentRound={data.ongoingRound}
         currentTab={currentTab}
       />
       <RoundItem roundNumber={roundInView} />

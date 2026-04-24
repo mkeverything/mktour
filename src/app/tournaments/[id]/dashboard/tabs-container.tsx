@@ -1,7 +1,7 @@
 import { TabProps } from '@/app/tournaments/[id]/dashboard';
 import {
-  DashboardContext,
-  DashboardContextType,
+  DashboardTab,
+  SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import tabs from '@/app/tournaments/[id]/dashboard/tabs';
 import Overlay from '@/components/overlay';
@@ -10,18 +10,15 @@ import { useTranslations } from 'next-intl';
 import { FC, useContext, useRef } from 'react';
 
 const TabsContainer: FC<TabProps> = ({ currentTab, setCurrentTab }) => {
-  const value: DashboardContextType['currentTab'] = currentTab;
   const tabRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('Tournament.Tabs');
-  const { selectedGameId } = useContext(DashboardContext);
+  const { selectedGameId } = useContext(SelectedGameContext);
 
   return (
     <Tabs
       defaultValue="main"
-      onValueChange={(value) =>
-        setCurrentTab(value as DashboardContextType['currentTab'])
-      }
-      value={value}
+      onValueChange={(value) => setCurrentTab(value as DashboardTab)}
+      value={currentTab}
       className={`relative h-10 w-full rounded-none`}
     >
       <Overlay open={!!selectedGameId} />

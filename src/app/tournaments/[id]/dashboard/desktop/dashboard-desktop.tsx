@@ -1,7 +1,12 @@
 'use client';
 
 import { TabProps } from '@/app/tournaments/[id]/dashboard';
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  DashboardContext,
+  DashboardRoundContext,
+  DashboardTabContext,
+  SelectedGameContext,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import Games from '@/app/tournaments/[id]/dashboard/tabs/games';
 import Main from '@/app/tournaments/[id]/dashboard/tabs/main';
 import TournamentTable from '@/app/tournaments/[id]/dashboard/tabs/table';
@@ -13,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TournamentAuthStatus } from '@/server/zod/enums';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   currentTab,
@@ -32,9 +37,34 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
     queryClient,
     setRoundInView,
   );
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+
+  const dashboardValue = useMemo(
+    () => ({
+      sendJsonMessage,
+      status,
+      playerId,
+      userId,
+    }),
+    [playerId, sendJsonMessage, status, userId],
+  );
+  const tabValue = useMemo(() => ({ currentTab }), [currentTab]);
+  const roundValue = useMemo(
+    () => ({
+      roundInView,
+      setRoundInView,
+    }),
+    [roundInView, setRoundInView],
+  );
+  const selectedGameValue = useMemo(
+    () => ({
+      selectedGameId,
+      setSelectedGameId,
+    }),
+    [selectedGameId, setSelectedGameId],
+  );
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -46,61 +76,55 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
     };
   }, []);
 
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
     if (document.fullscreenElement) {
       await document.exitFullscreen();
     } else {
       await containerRef.current.requestFullscreen();
     }
-  };
+  }, []);
 
   return (
-    <DashboardContext.Provider
-      value={{
-        currentTab,
-        sendJsonMessage,
-        status,
-        playerId,
-        userId,
-        setSelectedGameId,
-        selectedGameId,
-        roundInView,
-        setRoundInView,
-      }}
-    >
-      <Overlay open={!!selectedGameId} />
-      <div className="h-mk-content-height relative inset-0 flex flex-col overflow-hidden">
-        <Main toggleFullscreen={toggleFullscreen} />
-        <div
-          ref={containerRef}
-          className="p-mk px-mk-2 flex flex-1 gap-2 overflow-hidden lg:flex-row"
-        >
-          <Card className="bg-background relative size-full overflow-hidden">
-            <CardContent className="flex size-full flex-col overflow-y-auto p-0">
-              <TournamentTable />
-              <Fades from="from-background" to="to-background" />
-            </CardContent>
-          </Card>
-          <Card className="bg-background relative size-full overflow-hidden">
-            <CardContent className="flex size-full flex-col overflow-y-auto p-0">
-              <Games />
-              <Fades from="from-background" to="to-background" />
-            </CardContent>
-          </Card>
-          {isFullscreen && (
-            <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
-              <Button
-                className="opacity-30 duration-500 hover:opacity-90"
-                variant="secondary"
-                onClick={toggleFullscreen}
+    <DashboardContext.Provider value={dashboardValue}>
+      <DashboardTabContext.Provider value={tabValue}>
+        <DashboardRoundContext.Provider value={roundValue}>
+          <SelectedGameContext.Provider value={selectedGameValue}>
+            <Overlay open={!!selectedGameId} />
+            <div className="h-mk-content-height relative inset-0 flex flex-col overflow-hidden">
+              <Main toggleFullscreen={toggleFullscreen} />
+              <div
+                ref={containerRef}
+                className="p-mk px-mk-2 flex flex-1 gap-2 overflow-hidden lg:flex-row"
               >
-                <FormattedMessage id="Tournament.Main.minimize" />
-              </Button>
+                <Card className="bg-background relative size-full overflow-hidden">
+                  <CardContent className="flex size-full flex-col overflow-y-auto p-0">
+                    <TournamentTable />
+                    <Fades from="from-background" to="to-background" />
+                  </CardContent>
+                </Card>
+                <Card className="bg-background relative size-full overflow-hidden">
+                  <CardContent className="flex size-full flex-col overflow-y-auto p-0">
+                    <Games />
+                    <Fades from="from-background" to="to-background" />
+                  </CardContent>
+                </Card>
+                {isFullscreen && (
+                  <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+                    <Button
+                      className="opacity-30 duration-500 hover:opacity-90"
+                      variant="secondary"
+                      onClick={toggleFullscreen}
+                    >
+                      <FormattedMessage id="Tournament.Main.minimize" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </div>
+          </SelectedGameContext.Provider>
+        </DashboardRoundContext.Provider>
+      </DashboardTabContext.Provider>
     </DashboardContext.Provider>
   );
 };
