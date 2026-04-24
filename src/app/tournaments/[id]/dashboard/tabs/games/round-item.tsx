@@ -1,6 +1,10 @@
 'use client';
 import { LoadingSpinner } from '@/app/loading';
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  DashboardContext,
+  DashboardRoundContext,
+  SelectedGameContext,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tournament-button';
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
@@ -22,7 +26,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, useContext } from 'react';
+import { Dispatch, FC, SetStateAction, useContext } from 'react';
 
 const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
@@ -37,6 +41,7 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
   const info = useTournamentInfo(tournamentId);
   const { data: players } = useTournamentPlayers(tournamentId);
   const { status } = useContext(DashboardContext);
+  const { selectedGameId, setSelectedGameId } = useContext(SelectedGameContext);
   const { sortedRound, ongoingGames } = useRoundData(round, players);
 
   if (isLoading || !info.data || !players)
@@ -69,8 +74,15 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
         renderFinishButton={renderFinishButton}
         format={format}
       />
-      {sortedRound.map((game, index) => {
-        return <GamesIteratee key={index} {...game} />;
+      {sortedRound.map((game) => {
+        return (
+          <GamesIteratee
+            key={game.id}
+            selected={selectedGameId === game.id}
+            setSelectedGameId={setSelectedGameId}
+            {...game}
+          />
+        );
       })}
     </div>
   );
@@ -98,7 +110,7 @@ const NewRoundButton: FC<{
   const t = useTranslations('Tournament.Round');
   const { data: tournamentGames } = useTournamentGames(tournamentId);
   const queryClient = useQueryClient();
-  const { setRoundInView } = useContext(DashboardContext);
+  const { setRoundInView } = useContext(DashboardRoundContext);
 
   const { mutate, isPending: mutating } = useSaveRound({
     isTournamentGoing: true,
@@ -171,13 +183,22 @@ const GamesIteratee = ({
   whiteId,
   blackId,
   roundNumber,
-}: GameModel) => (
+  selected,
+  setSelectedGameId,
+}: GameModel & {
+  selected: boolean;
+  setSelectedGameId: Dispatch<SetStateAction<string | null>>;
+}) => (
   <GameItem
     id={id}
     result={result}
-    playerLeft={{ whiteId, whiteNickname }}
-    playerRight={{ blackId, blackNickname }}
+    whiteId={whiteId}
+    whiteNickname={whiteNickname}
+    blackId={blackId}
+    blackNickname={blackNickname}
     roundNumber={roundNumber}
+    selected={selected}
+    setSelectedGameId={setSelectedGameId}
   />
 );
 

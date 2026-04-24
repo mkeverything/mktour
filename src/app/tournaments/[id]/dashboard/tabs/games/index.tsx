@@ -1,6 +1,10 @@
 'use client';
 
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  DashboardTabContext,
+  DashboardRoundContext,
+  SelectedGameContext,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import RoundControls from '@/app/tournaments/[id]/dashboard/tabs/games/round-controls';
 import RoundItem from '@/app/tournaments/[id]/dashboard/tabs/games/round-item';
 import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
@@ -15,8 +19,9 @@ import { useParams } from 'next/navigation';
 import { FC, useContext } from 'react';
 
 const Games: FC = () => {
-  const { currentTab, roundInView, setRoundInView, selectedGameId } =
-    useContext(DashboardContext);
+  const { currentTab } = useContext(DashboardTabContext);
+  const { roundInView, setRoundInView } = useContext(DashboardRoundContext);
+  const { selectedGameId } = useContext(SelectedGameContext);
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const { data, isError, isLoading } = useTournamentInfo(id);

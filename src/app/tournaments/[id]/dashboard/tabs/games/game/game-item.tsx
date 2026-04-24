@@ -4,53 +4,48 @@ import Result, {
   ResultProps,
 } from '@/app/tournaments/[id]/dashboard/tabs/games/game/result';
 import useTournamentSetGameResult from '@/components/hooks/mutation-hooks/use-tournament-set-game-result';
-import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentGameResultInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import useOutsideClick from '@/components/hooks/use-outside-click';
 import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GameResult } from '@/server/zod/enums';
-import { GameModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, useContext, useRef } from 'react';
+import { Dispatch, FC, memo, SetStateAction, useContext, useRef } from 'react';
 import { toast } from 'sonner';
 
 const GameItem: FC<GameProps> = ({
   id,
   result,
-  playerLeft,
-  playerRight,
+  whiteId,
+  whiteNickname,
+  blackId,
+  blackNickname,
   roundNumber,
+  selected,
+  setSelectedGameId,
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const t = useTranslations('Toasts');
-  const {
-    selectedGameId,
-    setSelectedGameId,
-    sendJsonMessage,
-    status,
-    playerId,
-    userId,
-  } = useContext(DashboardContext);
+  const { sendJsonMessage, status, playerId, userId } =
+    useContext(DashboardContext);
   const queryClient = useQueryClient();
   const mutation = useTournamentSetGameResult(queryClient, {
     tournamentId,
     sendJsonMessage,
   });
-  const { data } = useTournamentInfo(tournamentId);
+  const { data } = useTournamentGameResultInfo(tournamentId);
   const ref = useRef<HTMLDivElement>(null);
-  const hasStarted = !!data?.tournament.startedAt;
-  const selected = selectedGameId === id;
+  const hasStarted = !!data?.hasStarted;
   const isActive = selected && hasStarted;
   const muted = result && !selected;
-  const isClosed = !!data?.tournament.closedAt;
-  const allowPlayersSetResults = !!data?.club.allowPlayersSetResults;
+  const isClosed = !!data?.isClosed;
+  const allowPlayersSetResults = !!data?.allowPlayersSetResults;
   // players can only edit their own games, and only after tournament has started
-  const isPlayerInGame =
-    playerId === playerLeft.whiteId || playerId === playerRight.blackId;
+  const isPlayerInGame = playerId === whiteId || playerId === blackId;
   const canEdit =
     status === 'organizer' ||
     (status === 'player' && isPlayerInGame && hasStarted);
@@ -79,8 +74,8 @@ const GameItem: FC<GameProps> = ({
     if (selected && hasStarted && !mutation.isPending) {
       mutation.mutate({
         gameId: id,
-        whiteId: playerLeft.whiteId,
-        blackId: playerRight.blackId,
+        whiteId,
+        blackId,
         result: newResult,
         prevResult: result,
         tournamentId,
@@ -123,9 +118,9 @@ const GameItem: FC<GameProps> = ({
             isWinner={result === '1-0'}
             handleMutate={() => handleMutate('1-0')}
             selected={isActive}
-            nickname={playerLeft.whiteNickname}
+            nickname={whiteNickname}
             position={{ justify: 'justify-self-start', text: 'text-left' }}
-            className={`${playerId === playerLeft.whiteId && 'font-bold'}`}
+            className={`${playerId === whiteId && 'font-bold'}`}
           />
           <Button
             variant="ghost"
@@ -138,9 +133,9 @@ const GameItem: FC<GameProps> = ({
             isWinner={result === '0-1'}
             handleMutate={() => handleMutate('0-1')}
             selected={isActive}
-            nickname={playerRight.blackNickname}
+            nickname={blackNickname}
             position={{ justify: 'justify-self-end', text: 'text-right' }}
-            className={`${playerId === playerRight.blackId && 'font-bold'}`}
+            className={`${playerId === blackId && 'font-bold'}`}
           />
         </Card>
       </motion.div>
@@ -151,9 +146,13 @@ const GameItem: FC<GameProps> = ({
 type GameProps = {
   id: string;
   result: GameResult | null;
-  playerLeft: Pick<GameModel, 'whiteId' | 'whiteNickname'>;
-  playerRight: Pick<GameModel, 'blackId' | 'blackNickname'>;
+  whiteId: string;
+  whiteNickname: string;
+  blackId: string;
+  blackNickname: string;
   roundNumber: number;
+  selected: boolean;
+  setSelectedGameId: Dispatch<SetStateAction<string | null>>;
 };
 
-export default GameItem;
+export default memo(GameItem);

@@ -1,7 +1,10 @@
 'use client';
 
 import { LoadingSpinner } from '@/app/loading';
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  DashboardContext,
+  DashboardRoundContext,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentResetPlayers from '@/components/hooks/mutation-hooks/use-tournament-reset-players';
 import {
   Close,
@@ -22,7 +25,8 @@ import { useContext, useState } from 'react';
 export default function ResetTournamentPButton() {
   const { id: tournamentId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const { sendJsonMessage, setRoundInView } = useContext(DashboardContext);
+  const { sendJsonMessage } = useContext(DashboardContext);
+  const { setRoundInView } = useContext(DashboardRoundContext);
   const { mutate, isPending } = useTournamentResetPlayers(
     queryClient,
     sendJsonMessage,

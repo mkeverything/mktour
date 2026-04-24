@@ -1,4 +1,4 @@
-import { DashboardContextType } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { DashboardTab } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import tabs from '@/app/tournaments/[id]/dashboard/tabs';
 import useScrollableContainer from '@/components/hooks/use-scrollable-container';
 import {
@@ -77,8 +77,8 @@ const CarouselIteratee: FC<{
 };
 
 type CarouselProps = {
-  currentTab: DashboardContextType['currentTab'];
-  setCurrentTab: Dispatch<SetStateAction<DashboardContextType['currentTab']>>;
+  currentTab: DashboardTab;
+  setCurrentTab: Dispatch<SetStateAction<DashboardTab>>;
   setScrolling: Dispatch<SetStateAction<boolean>>;
 };
 
