@@ -26,7 +26,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { Dispatch, FC, SetStateAction, useContext } from 'react';
+import { Dispatch, FC, memo, SetStateAction, useContext } from 'react';
 
 const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
@@ -175,7 +175,7 @@ const ActionButton = ({
   return null;
 };
 
-const GamesIteratee = ({
+const GamesIteratee = memo(function GamesIteratee({
   id,
   result,
   whiteNickname,
@@ -188,19 +188,21 @@ const GamesIteratee = ({
 }: GameModel & {
   selected: boolean;
   setSelectedGameId: Dispatch<SetStateAction<string | null>>;
-}) => (
-  <GameItem
-    id={id}
-    result={result}
-    whiteId={whiteId}
-    whiteNickname={whiteNickname}
-    blackId={blackId}
-    blackNickname={blackNickname}
-    roundNumber={roundNumber}
-    selected={selected}
-    setSelectedGameId={setSelectedGameId}
-  />
-);
+}) {
+  return (
+    <GameItem
+      id={id}
+      result={result}
+      whiteId={whiteId}
+      whiteNickname={whiteNickname}
+      blackId={blackId}
+      blackNickname={blackNickname}
+      roundNumber={roundNumber}
+      selected={selected}
+      setSelectedGameId={setSelectedGameId}
+    />
+  );
+});
 
 type RoundItemProps = {
   roundNumber: number;
