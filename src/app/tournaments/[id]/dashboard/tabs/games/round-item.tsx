@@ -10,7 +10,7 @@ import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item
 import Center from '@/components/center';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
-import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentRoundProgressInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { useRoundData } from '@/components/hooks/use-round-data';
@@ -38,7 +38,7 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
     tournamentId,
     roundNumber,
   });
-  const info = useTournamentInfo(tournamentId);
+  const info = useTournamentRoundProgressInfo(tournamentId);
   const { data: players } = useTournamentPlayers(tournamentId);
   const { status } = useContext(DashboardContext);
   const { selectedGameId, setSelectedGameId } = useContext(SelectedGameContext);
@@ -54,7 +54,7 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
   if (isError) return <Center>error</Center>;
   if (!round) return <Center>no round</Center>;
 
-  const { ongoingRound, roundsNumber, closedAt, format } = info.data.tournament;
+  const { ongoingRound, roundsNumber, closedAt, format } = info.data;
   const renderFinishButton =
     status === 'organizer' && !closedAt && ongoingRound === roundsNumber;
   const renderNewRoundButton =

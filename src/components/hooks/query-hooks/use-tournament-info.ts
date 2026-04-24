@@ -49,6 +49,30 @@ export const useTournamentScoringInfo = (tournamentId: string) => {
   });
 };
 
+export const useTournamentGamesOverviewInfo = (tournamentId: string) => {
+  const trpc = useTRPC();
+  return useQuery({
+    ...trpc.tournament.info.queryOptions({ tournamentId }),
+    select: (data) => ({
+      ongoingRound: data.tournament.ongoingRound,
+      startedAt: data.tournament.startedAt,
+    }),
+  });
+};
+
+export const useTournamentRoundProgressInfo = (tournamentId: string) => {
+  const trpc = useTRPC();
+  return useQuery({
+    ...trpc.tournament.info.queryOptions({ tournamentId }),
+    select: (data) => ({
+      closedAt: data.tournament.closedAt,
+      format: data.tournament.format,
+      ongoingRound: data.tournament.ongoingRound,
+      roundsNumber: data.tournament.roundsNumber,
+    }),
+  });
+};
+
 export const useTournamentSwissRoundsInfo = (tournamentId: string) => {
   const trpc = useTRPC();
   return useQuery({
