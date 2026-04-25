@@ -3,7 +3,7 @@ import {
   LoadingElement,
 } from '@/app/tournaments/[id]/dashboard/tabs/main';
 import Winners from '@/app/tournaments/[id]/dashboard/tabs/main/winners';
-import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentSummaryInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import SwissRoundsNumber from '@/components/swiss-rounds-number';
 import {
   CalendarDays,
@@ -15,11 +15,12 @@ import {
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
+import { memo } from 'react';
 import { toast } from 'sonner';
 
 const TournamentInfoList = () => {
   const { id: tournamentId } = useParams<{ id: string }>();
-  const { data, isLoading, isError } = useTournamentInfo(tournamentId);
+  const { data, isLoading, isError } = useTournamentSummaryInfo(tournamentId);
   const t = useTranslations('Tournament.Main');
   const locale = useLocale();
 
@@ -33,7 +34,7 @@ const TournamentInfoList = () => {
   }
   if (!data) return 'tournament info is `undefined` somehow';
 
-  const dateArr = data.tournament.date.split('-');
+  const dateArr = data.date.split('-');
   const formattedDate = new Date(
     Number(dateArr[0]),
     Number(dateArr[1]) - 1, // month is 0-indexed 2025-01-01 is (2025, 0, 1) = first of january
@@ -51,12 +52,12 @@ const TournamentInfoList = () => {
     <div className="md:text-muted-foreground gap-y-mk gap-x-mk-2 p-mk flex flex-col flex-wrap text-xs md:flex-row md:items-center">
       <InfoItem
         icon={HomeIcon}
-        value={data.club?.name}
-        href={`/clubs/${data.club?.id}`}
+        value={data.clubName}
+        href={`/clubs/${data.clubId}`}
       />
-      <InfoItem icon={UserRound} value={t(`Types.${data.tournament.type}`)} />
-      <InfoItem icon={Dices} value={data.tournament.format} format={true} />
-      {data.tournament.format === 'swiss' && (
+      <InfoItem icon={UserRound} value={t(`Types.${data.type}`)} />
+      <InfoItem icon={Dices} value={data.format} format={true} />
+      {data.format === 'swiss' && (
         <div className="flex items-center gap-2">
           <Layers className="text-muted-foreground size-4" />
           <span>{t('number of rounds')}</span>
@@ -65,12 +66,12 @@ const TournamentInfoList = () => {
       )}
       <InfoItem
         icon={ChartNoAxesCombinedIcon}
-        value={data.tournament.rated ? t('rated') : t('unrated')}
+        value={data.rated ? t('rated') : t('unrated')}
       />
       <InfoItem icon={CalendarDays} value={decapitalizedWeekday} />
-      <Winners {...data} />
+      <Winners tournamentId={data.tournamentId} closedAt={data.closedAt} />
     </div>
   );
 };
 
-export default TournamentInfoList;
+export default memo(TournamentInfoList);

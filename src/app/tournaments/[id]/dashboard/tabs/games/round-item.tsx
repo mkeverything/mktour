@@ -1,12 +1,16 @@
 'use client';
 import { LoadingSpinner } from '@/app/loading';
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  DashboardContext,
+  DashboardRoundContext,
+  SelectedGameContext,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tournament-button';
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
-import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentRoundProgressInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { useRoundData } from '@/components/hooks/use-round-data';
@@ -22,7 +26,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, useContext } from 'react';
+import { Dispatch, FC, memo, SetStateAction, useContext } from 'react';
 
 const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
@@ -34,9 +38,10 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
     tournamentId,
     roundNumber,
   });
-  const info = useTournamentInfo(tournamentId);
+  const info = useTournamentRoundProgressInfo(tournamentId);
   const { data: players } = useTournamentPlayers(tournamentId);
   const { status } = useContext(DashboardContext);
+  const { selectedGameId, setSelectedGameId } = useContext(SelectedGameContext);
   const { sortedRound, ongoingGames } = useRoundData(round, players);
 
   if (isLoading || !info.data || !players)
@@ -49,7 +54,7 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
   if (isError) return <Center>error</Center>;
   if (!round) return <Center>no round</Center>;
 
-  const { ongoingRound, roundsNumber, closedAt, format } = info.data.tournament;
+  const { ongoingRound, roundsNumber, closedAt, format } = info.data;
   const renderFinishButton =
     status === 'organizer' && !closedAt && ongoingRound === roundsNumber;
   const renderNewRoundButton =
@@ -69,8 +74,15 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
         renderFinishButton={renderFinishButton}
         format={format}
       />
-      {sortedRound.map((game, index) => {
-        return <GamesIteratee key={index} {...game} />;
+      {sortedRound.map((game) => {
+        return (
+          <GamesIteratee
+            key={game.id}
+            selected={selectedGameId === game.id}
+            setSelectedGameId={setSelectedGameId}
+            {...game}
+          />
+        );
       })}
     </div>
   );
@@ -98,7 +110,7 @@ const NewRoundButton: FC<{
   const t = useTranslations('Tournament.Round');
   const { data: tournamentGames } = useTournamentGames(tournamentId);
   const queryClient = useQueryClient();
-  const { setRoundInView } = useContext(DashboardContext);
+  const { setRoundInView } = useContext(DashboardRoundContext);
 
   const { mutate, isPending: mutating } = useSaveRound({
     isTournamentGoing: true,
@@ -163,7 +175,7 @@ const ActionButton = ({
   return null;
 };
 
-const GamesIteratee = ({
+const GamesIteratee = memo(function GamesIteratee({
   id,
   result,
   whiteNickname,
@@ -171,15 +183,26 @@ const GamesIteratee = ({
   whiteId,
   blackId,
   roundNumber,
-}: GameModel) => (
-  <GameItem
-    id={id}
-    result={result}
-    playerLeft={{ whiteId, whiteNickname }}
-    playerRight={{ blackId, blackNickname }}
-    roundNumber={roundNumber}
-  />
-);
+  selected,
+  setSelectedGameId,
+}: GameModel & {
+  selected: boolean;
+  setSelectedGameId: Dispatch<SetStateAction<string | null>>;
+}) {
+  return (
+    <GameItem
+      id={id}
+      result={result}
+      whiteId={whiteId}
+      whiteNickname={whiteNickname}
+      blackId={blackId}
+      blackNickname={blackNickname}
+      roundNumber={roundNumber}
+      selected={selected}
+      setSelectedGameId={setSelectedGameId}
+    />
+  );
+});
 
 type RoundItemProps = {
   roundNumber: number;

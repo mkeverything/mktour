@@ -1,6 +1,9 @@
 'use client';
 
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import {
+  DashboardContext,
+  SelectedGameContext,
+} from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import StartTournamentButton from '@/app/tournaments/[id]/dashboard/tabs/main/start-tournament-button';
 import FormattedMessage from '@/components/formatted-message';
 import {
@@ -17,7 +20,8 @@ import { FC, useContext } from 'react';
 const StartTournamentDrawer: FC<{
   startedAt: number | undefined;
 }> = ({ startedAt }) => {
-  const { selectedGameId, status } = useContext(DashboardContext);
+  const { status } = useContext(DashboardContext);
+  const { selectedGameId } = useContext(SelectedGameContext);
   const open = !startedAt && !!selectedGameId && status === 'organizer';
 
   return (

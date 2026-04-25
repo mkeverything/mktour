@@ -16,7 +16,7 @@ import { useSortablePlayerTable } from '@/app/tournaments/[id]/dashboard/tabs/ta
 import { useTournamentRemovePlayer } from '@/components/hooks/mutation-hooks/use-tournament-remove-player';
 import { useTournamentWithdrawPlayer } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-player';
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
-import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import {
@@ -31,26 +31,35 @@ import {
   type SortedPlayersResult,
 } from '@/lib/tournament-results';
 import { PlayerTournamentModel } from '@/server/zod/players';
+import { UserModel } from '@/server/zod/users';
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { ReactNode, useContext, useMemo, useState } from 'react';
+import {
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  memo,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
 
 const TournamentTable = () => {
   const { id } = useParams<{ id: string }>();
   const players = useTournamentPlayers(id);
-  const tournament = useTournamentInfo(id);
+  const tournament = useTournamentScoringInfo(id);
   const { status, userId } = useContext(DashboardContext);
   const removePlayers = useTournamentRemovePlayer(id);
   const withdrawPlayer = useTournamentWithdrawPlayer(id);
   const t = useTranslations('Tournament.Table');
   const [selectedPlayer, setSelectedPlayer] =
     useState<PlayerTournamentModel | null>(null);
-  const hasStarted = !!tournament.data?.tournament.startedAt;
-  const hasEnded = !!tournament.data?.tournament.closedAt;
+  const hasStarted = !!tournament.data?.startedAt;
+  const hasEnded = !!tournament.data?.closedAt;
   const { data: user } = useAuth();
-  const type = tournament.data?.tournament.type;
+  const type = tournament.data?.type;
   const allGames = useTournamentGames(id);
   const stats = STATS_WITH_TIEBREAK;
   const canSort = status === 'organizer' && !hasStarted;
@@ -69,8 +78,8 @@ const TournamentTable = () => {
     }
 
     const tournamentForScoring = {
-      format: tournament.data.tournament.format,
-      ongoingRound: hasStarted ? tournament.data.tournament.ongoingRound : 0,
+      format: tournament.data.format,
+      ongoingRound: hasStarted ? tournament.data.ongoingRound : 0,
     };
 
     return sortPlayersByResultsWithMaps(
@@ -79,6 +88,23 @@ const TournamentTable = () => {
       allGames.data ?? [],
     );
   }, [allGames.data, hasStarted, players.data, tournament.data]);
+
+  const statRenderers = useMemo<
+    Record<STAT, (player: PlayerTournamentModel) => ReactNode>
+  >(
+    () => ({
+      wins: (player) => player.wins,
+      draws: (player) => player.draws,
+      losses: (player) => player.losses,
+      score: (player) => playerScoresMap.get(player.id),
+      tiebreak: (player) => (
+        <span className="text-muted-foreground">
+          {tiebreakScoresMap.get(player.id)}
+        </span>
+      ),
+    }),
+    [playerScoresMap, tiebreakScoresMap],
+  );
 
   const { activePlayer, activePlayerId, handleDragStart, handleDragEnd } =
     useSortablePlayerTable(sortedPlayers, canSort);
@@ -114,7 +140,7 @@ const TournamentTable = () => {
       status === 'organizer' &&
       hasStarted &&
       !hasEnded &&
-      tournament.data?.tournament.format === 'swiss' &&
+      tournament.data?.format === 'swiss' &&
       selectedPlayer &&
       !selectedPlayer.isOut
     ) {
@@ -127,21 +153,6 @@ const TournamentTable = () => {
         { onSuccess: () => setSelectedPlayer(null) },
       );
     }
-  };
-
-  const statRenderers: Record<
-    STAT,
-    (player: PlayerTournamentModel) => ReactNode
-  > = {
-    wins: (player) => player.wins,
-    draws: (player) => player.draws,
-    losses: (player) => player.losses,
-    score: (player) => playerScoresMap.get(player.id),
-    tiebreak: (player) => (
-      <span className="text-muted-foreground">
-        {tiebreakScoresMap.get(player.id)}
-      </span>
-    ),
   };
 
   const nameColumnIntl = type !== 'solo' ? 'name column team' : 'name column';
@@ -166,15 +177,15 @@ const TournamentTable = () => {
           </TableHeader>
           <TableBody>
             {sortedPlayers.map((player, index) => (
-              <SortableTableRow
+              <SortablePlayerRow
                 key={player.id}
                 canSort={canSort}
                 hasEnded={hasEnded}
                 index={index}
                 isSelected={selectedPlayer?.id === player.id}
-                onSelect={() => setSelectedPlayer(player)}
                 player={player}
                 renderStat={statRenderers}
+                setSelectedPlayer={setSelectedPlayer}
                 stats={stats}
                 user={user}
               />
@@ -215,11 +226,47 @@ const TournamentTable = () => {
           handleWithdraw={handleWithdraw}
           hasStarted={hasStarted}
           hasEnded={hasEnded}
-          format={tournament.data?.tournament.format ?? 'swiss'}
+          format={tournament.data?.format ?? 'swiss'}
         />
       )}
     </div>
   );
 };
 
-export default TournamentTable;
+const SortablePlayerRow = memo(function SortablePlayerRow({
+  canSort,
+  hasEnded,
+  index,
+  isSelected,
+  player,
+  renderStat,
+  setSelectedPlayer,
+  stats,
+  user,
+}: {
+  canSort: boolean;
+  hasEnded: boolean;
+  index: number;
+  isSelected: boolean;
+  player: PlayerTournamentModel;
+  renderStat: Record<STAT, (player: PlayerTournamentModel) => ReactNode>;
+  setSelectedPlayer: Dispatch<SetStateAction<PlayerTournamentModel | null>>;
+  stats: STAT[];
+  user: UserModel | null | undefined;
+}) {
+  return (
+    <SortableTableRow
+      canSort={canSort}
+      hasEnded={hasEnded}
+      index={index}
+      isSelected={isSelected}
+      onSelect={() => setSelectedPlayer(player)}
+      player={player}
+      renderStat={renderStat}
+      stats={stats}
+      user={user}
+    />
+  );
+});
+
+export default memo(TournamentTable);

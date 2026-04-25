@@ -19,6 +19,12 @@ allowed infra exceptions (non-domain): oauth callbacks/login routes, cron/migrat
 
 see `docs/architecture/type-contracts.md` for migration rules and enforcement checklist.
 
+## development flow
+
+- feature and project branches target `beta` for pull requests.
+- `main` accepts pull requests only from `beta`; do not open feature-branch prs directly into `main`.
+- if a user asks to create a feature-branch pr against `main`, confirm whether they meant `beta` before proceeding.
+
 ## architecture
 
 - next.js 16 app router with react 19, bun runtime
@@ -153,6 +159,9 @@ bun db:push                  # generate + run migrations
 bun db:studio                # open drizzle studio
 bun generate-erd             # generate entity-relationship diagram
 bun generate-openapi         # generate openapi spec
+bash .cursor/skills/mobile-dev/scripts/setup-mobile-dev.sh
+                             # mobile dev setup: detect 192.168 ip,
+                             # update local urls, set nextConfig.allowedDevOrigins
 ```
 
 `mobile dev` workflow:

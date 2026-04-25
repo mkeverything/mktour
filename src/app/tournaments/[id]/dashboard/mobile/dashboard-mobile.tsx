@@ -3,7 +3,10 @@
 import CarouselContainer from '@/app/tournaments/[id]/dashboard/carousel-container';
 import {
   DashboardContext,
-  DashboardContextType,
+  DashboardRoundContext,
+  DashboardTabContext,
+  DashboardTab,
+  SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import ShuffleButton from '@/app/tournaments/[id]/dashboard/shuffle-button';
 import TabsContainer from '@/app/tournaments/[id]/dashboard/tabs-container';
@@ -12,7 +15,7 @@ import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocke
 import FabProvider from '@/components/ui-custom/fab-provider';
 import { TournamentAuthStatus } from '@/server/zod/enums';
 import { useQueryClient } from '@tanstack/react-query';
-import { Dispatch, ReactNode, SetStateAction, useState } from 'react';
+import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from 'react';
 
 interface DashboardMobileProps {
   session: string | null;
@@ -21,11 +24,11 @@ interface DashboardMobileProps {
   playerId: string | null;
   userId: string | undefined;
   currentRound: number | null;
-  currentTab: DashboardContextType['currentTab'];
-  setCurrentTab: Dispatch<SetStateAction<DashboardContextType['currentTab']>>;
+  currentTab: DashboardTab;
+  setCurrentTab: Dispatch<SetStateAction<DashboardTab>>;
 }
 
-const fabTabMap: Record<DashboardContextType['currentTab'], ReactNode> = {
+const fabTabMap: Record<DashboardTab, ReactNode> = {
   main: <AddPlayerDrawer />,
   table: <AddPlayerDrawer />,
   games: <ShuffleButton />,
@@ -49,35 +52,57 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
     queryClient,
     setRoundInView,
   );
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const fabContent = fabTabMap[currentTab];
   const [scrolling, setScrolling] = useState(false);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+
+  const dashboardValue = useMemo(
+    () => ({
+      sendJsonMessage,
+      status,
+      playerId,
+      userId,
+    }),
+    [playerId, sendJsonMessage, status, userId],
+  );
+  const tabValue = useMemo(() => ({ currentTab }), [currentTab]);
+  const roundValue = useMemo(
+    () => ({
+      roundInView,
+      setRoundInView,
+    }),
+    [roundInView, setRoundInView],
+  );
+  const selectedGameValue = useMemo(
+    () => ({
+      selectedGameId,
+      setSelectedGameId,
+    }),
+    [selectedGameId, setSelectedGameId],
+  );
 
   return (
-    <DashboardContext.Provider
-      value={{
-        currentTab,
-        sendJsonMessage,
-        status,
-        playerId,
-        userId,
-        setSelectedGameId,
-        selectedGameId,
-        roundInView,
-        setRoundInView,
-      }}
-    >
-      <TabsContainer currentTab={currentTab} setCurrentTab={setCurrentTab} />
-      <CarouselContainer
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        setScrolling={setScrolling}
-      />
-      <FabProvider
-        status={status}
-        fabContent={fabContent}
-        scrolling={scrolling}
-      />
+    <DashboardContext.Provider value={dashboardValue}>
+      <DashboardTabContext.Provider value={tabValue}>
+        <DashboardRoundContext.Provider value={roundValue}>
+          <SelectedGameContext.Provider value={selectedGameValue}>
+            <TabsContainer
+              currentTab={currentTab}
+              setCurrentTab={setCurrentTab}
+            />
+            <CarouselContainer
+              currentTab={currentTab}
+              setCurrentTab={setCurrentTab}
+              setScrolling={setScrolling}
+            />
+            <FabProvider
+              status={status}
+              fabContent={fabContent}
+              scrolling={scrolling}
+            />
+          </SelectedGameContext.Provider>
+        </DashboardRoundContext.Provider>
+      </DashboardTabContext.Provider>
     </DashboardContext.Provider>
   );
 };
