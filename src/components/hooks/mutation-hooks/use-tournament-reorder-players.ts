@@ -1,18 +1,14 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
 import { buildPreStartRoundState } from '@/lib/pre-start-round';
 import { applyManualPlayerOrder } from '@/lib/reorder-tournament-players';
 import { type PlayerTournamentModel } from '@/server/zod/players';
 import { type GameModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useContext, useRef } from 'react';
-
-type ReorderVariables = {
-  tournamentId: string;
-  playerIds: string[];
-};
+import { useContext } from 'react';
 
 type ReorderContext = {
   optimisticGames?: GameModel[];
@@ -46,7 +42,9 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { sendJsonMessage } = useContext(DashboardContext);
-  const persistChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  const saveRound = useSaveRound({
+    isTournamentGoing: false,
+  });
 
   const playersQueryKey = trpc.tournament.playersIn.queryKey({ tournamentId });
   const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
@@ -54,9 +52,6 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
     roundNumber: 1,
   });
   const reorderMutationKey = trpc.tournament.reorderPlayers.mutationKey();
-  const reorderMutationOptions =
-    trpc.tournament.reorderPlayers.mutationOptions();
-  const saveRoundMutationOptions = trpc.tournament.saveRound.mutationOptions();
 
   const applyOptimisticReorder = async (
     playerIds: string[],
@@ -91,104 +86,76 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
     return context;
   };
 
-  return useMutation({
-    ...reorderMutationOptions,
-    mutationKey: reorderMutationKey,
-    mutationFn: (variables: ReorderVariables, mutationContext) => {
-      const persist = async () => {
+  return useMutation(
+    trpc.tournament.reorderPlayers.mutationOptions({
+      onMutate: ({ playerIds }) => applyOptimisticReorder(playerIds),
+      onError: (_error, _variables, context) => {
         if (
-          !reorderMutationOptions.mutationFn ||
-          !saveRoundMutationOptions.mutationFn
+          queryClient.isMutating({
+            mutationKey: reorderMutationKey,
+          }) !== 1
         ) {
-          throw new Error('missing tournament reorder mutation function');
+          return;
         }
 
-        await reorderMutationOptions.mutationFn(variables, mutationContext);
+        if (context?.previousState) {
+          queryClient.setQueryData(playersQueryKey, context.previousState);
+        }
+        if (context?.previousGames) {
+          queryClient.setQueryData(roundGamesQueryKey, context.previousGames);
+        }
+      },
+      onSuccess: (_data, variables, context) => {
+        if (
+          !context?.optimisticPlayers ||
+          queryClient.isMutating({
+            mutationKey: reorderMutationKey,
+          }) !== 1
+        ) {
+          return;
+        }
 
-        const context = buildOptimisticReorderContext(
+        const players =
           queryClient.getQueryData<Array<PlayerTournamentModel>>(
             playersQueryKey,
-          ),
-          variables.playerIds,
-        );
+          ) ?? context.optimisticPlayers;
+        const preStartState = buildPreStartRoundState({
+          players,
+          tournamentId,
+        });
 
-        if (context.optimisticPlayers) {
-          const preStartState = buildPreStartRoundState({
-            players: context.optimisticPlayers,
-            tournamentId,
-          });
-
-          await saveRoundMutationOptions.mutationFn(
-            {
-              tournamentId: variables.tournamentId,
-              roundNumber: 1,
-              newGames: preStartState.games,
-            },
-            mutationContext,
-          );
+        sendJsonMessage({
+          event: 'reorder-players',
+          body: preStartState.players,
+        });
+        saveRound.mutate({
+          tournamentId: variables.tournamentId,
+          roundNumber: 1,
+          newGames: preStartState.games,
+        });
+        queryClient.setQueryData(roundGamesQueryKey, () => preStartState.games);
+      },
+      onSettled: () => {
+        if (
+          queryClient.isMutating({
+            mutationKey: reorderMutationKey,
+          }) !== 1
+        ) {
+          return;
         }
-      };
 
-      const nextPersist = persistChainRef.current
-        .catch(() => undefined)
-        .then(persist);
-
-      persistChainRef.current = nextPersist.catch(() => undefined);
-
-      return nextPersist;
-    },
-    onMutate: ({ playerIds }) => applyOptimisticReorder(playerIds),
-    onError: (_error, _variables, context) => {
-      if (
-        queryClient.isMutating({
-          mutationKey: reorderMutationKey,
-        }) !== 1
-      ) {
-        return;
-      }
-
-      if (context?.previousState) {
-        queryClient.setQueryData(playersQueryKey, context.previousState);
-      }
-      if (context?.previousGames) {
-        queryClient.setQueryData(roundGamesQueryKey, context.previousGames);
-      }
-    },
-    onSuccess: (_data, _variables, context) => {
-      if (
-        !context?.optimisticPlayers ||
-        queryClient.isMutating({
-          mutationKey: reorderMutationKey,
-        }) !== 1
-      ) {
-        return;
-      }
-
-      sendJsonMessage({
-        event: 'reorder-players',
-        body: context.optimisticPlayers,
-      });
-    },
-    onSettled: () => {
-      if (
-        queryClient.isMutating({
-          mutationKey: reorderMutationKey,
-        }) !== 1
-      ) {
-        return;
-      }
-
-      return Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: playersQueryKey,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: roundGamesQueryKey,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
-        }),
-      ]);
-    },
-  });
+        return Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: playersQueryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: roundGamesQueryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+          }),
+        ]);
+      },
+    }),
+  );
 };
