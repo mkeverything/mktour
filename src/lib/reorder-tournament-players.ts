@@ -22,3 +22,26 @@ export const applyManualPlayerOrder = (
     pairingNumber: index,
   }));
 };
+
+export const reorderTournamentPlayersByIndex = (
+  players: PlayerTournamentModel[],
+  fromIndex: number,
+  toIndex: number,
+): PlayerTournamentModel[] => {
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+    return players;
+  }
+
+  return applyManualPlayerOrder(arrayMove(players, fromIndex, toIndex));
+};
+
+export const reorderTournamentPlayersLocally = (
+  players: PlayerTournamentModel[],
+  activeId: string,
+  overId: string,
+): PlayerTournamentModel[] => {
+  const fromIndex = players.findIndex((player) => player.id === activeId);
+  const toIndex = players.findIndex((player) => player.id === overId);
+
+  return reorderTournamentPlayersByIndex(players, fromIndex, toIndex);
+};

@@ -1,9 +1,7 @@
 'use client';
 
-import {
-  reorderTournamentPlayersByIndex,
-  useTournamentReorderPlayers,
-} from '@/components/hooks/mutation-hooks/use-tournament-reorder-players';
+import { useTournamentReorderPlayers } from '@/components/hooks/mutation-hooks/use-tournament-reorder-players';
+import { reorderTournamentPlayersByIndex } from '@/lib/reorder-tournament-players';
 import { PlayerTournamentModel } from '@/server/zod/players';
 import { isSortable } from '@dnd-kit/dom/sortable';
 import { DragDropProvider } from '@dnd-kit/react';
