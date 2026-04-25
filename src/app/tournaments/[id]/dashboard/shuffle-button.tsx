@@ -1,13 +1,13 @@
 import { LoadingSpinner } from '@/app/loading';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import Fab from '@/components/fab';
-import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
+import { useTournamentReorderPlayers } from '@/components/hooks/mutation-hooks/use-tournament-reorder-players';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Button } from '@/components/ui/button';
-import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
+import { buildShuffledPreStartRoundState } from '@/lib/pre-start-round';
 import { PlayerTournamentModel } from '@/server/zod/players';
 import { GameModel, TournamentInfoModel } from '@/server/zod/tournaments';
 import { Loader2, Shuffle } from 'lucide-react';
@@ -62,26 +62,28 @@ const useShuffle = (): ShuffleProps => {
     tournamentId,
     roundNumber: 1,
   });
-  const { isPending, mutate } = useSaveRound({
-    isTournamentGoing: false,
-  });
+  const reorderPlayers = useTournamentReorderPlayers(tournamentId);
 
   const handleClick = () => {
     if (!players || !games) return null;
 
-    const newGames = generateRandomRoundGames({
-      players: players.map((player, i) => ({
-        ...player,
-        pairingNumber: i,
-      })),
-      games,
-      roundNumber: 1,
+    const preStartState = buildShuffledPreStartRoundState({
+      players,
       tournamentId,
     });
-    mutate({ tournamentId, newGames, roundNumber: 1 });
+    reorderPlayers.mutate({
+      tournamentId,
+      playerIds: preStartState.players.map((player) => player.id),
+    });
   };
 
-  return { isPending, handleClick, tournament, players, games };
+  return {
+    isPending: reorderPlayers.isPending,
+    handleClick,
+    tournament,
+    players,
+    games,
+  };
 };
 
 type ShuffleProps = {

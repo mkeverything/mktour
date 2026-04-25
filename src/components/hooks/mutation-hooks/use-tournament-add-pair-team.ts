@@ -1,12 +1,12 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
-import { generateRandomRoundGames } from '@/lib/pairing-generators/random-pairs-generator';
+import { generatePreStartRoundGames } from '@/lib/pre-start-round';
+import { baselinePlayerSort } from '@/lib/tournament-results';
 import {
   PlayerTournamentModel,
   type PlayerWithUsernameModel,
 } from '@/server/zod/players';
-import { baselinePlayerSort } from '@/lib/tournament-results';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
@@ -145,15 +145,8 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
             trpc.tournament.playersIn.queryKey({ tournamentId }),
           );
 
-          const newGames = generateRandomRoundGames({
-            players: players
-              ? players.map((player, i) => ({
-                  ...player,
-                  pairingNumber: i,
-                }))
-              : [],
-            games: [],
-            roundNumber: 1,
+          const newGames = generatePreStartRoundGames({
+            players: players ?? [],
             tournamentId,
           });
 
