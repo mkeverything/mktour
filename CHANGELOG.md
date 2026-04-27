@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/mkeverything/mktour/compare/v1.7.0...v1.7.1) (2026-04-27)
+
+
+### Bug Fixes
+
+* dumbest bug ever which confused even with odd when calculating roundsNumber for rr ([9aad408](https://github.com/mkeverything/mktour/commit/9aad40802177a1252123f67c3d5f398ff4b7d1fa))
+
 # [1.7.0](https://github.com/mkeverything/mktour/compare/v1.6.0...v1.7.0) (2026-03-13)
 
 
