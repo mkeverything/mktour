@@ -9,7 +9,7 @@ type PreStartRoundProps = {
   tournamentId: string;
 };
 
-type PreStartRoundState = {
+type PreStartRoundPairings = {
   players: PlayerTournamentModel[];
   games: GameModel[];
 };
@@ -23,10 +23,10 @@ export function assignPairingNumbers<T extends PlayerTournamentModel>(
   }));
 }
 
-export function buildPreStartRoundState({
+export function buildPreStartRoundPairings({
   players,
   tournamentId,
-}: PreStartRoundProps): PreStartRoundState {
+}: PreStartRoundProps): PreStartRoundPairings {
   const orderedPlayers = assignPairingNumbers(
     [...players].sort(baselinePlayerSort),
   );
@@ -44,13 +44,13 @@ export function buildPreStartRoundState({
 export function generatePreStartRoundGames(
   props: PreStartRoundProps,
 ): GameModel[] {
-  return buildPreStartRoundState(props).games;
+  return buildPreStartRoundPairings(props).games;
 }
 
-export function buildShuffledPreStartRoundState({
+export function buildShuffledPreStartRoundPairings({
   players,
   tournamentId,
-}: PreStartRoundProps): PreStartRoundState {
+}: PreStartRoundProps): PreStartRoundPairings {
   const shuffledPlayers = assignPairingNumbers(shuffle(players));
 
   const games = generateConsecutiveRoundGames({
@@ -66,5 +66,5 @@ export function buildShuffledPreStartRoundState({
 export function generateShuffledPreStartRoundGames(
   props: PreStartRoundProps,
 ): GameModel[] {
-  return buildShuffledPreStartRoundState(props).games;
+  return buildShuffledPreStartRoundPairings(props).games;
 }

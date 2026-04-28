@@ -3,7 +3,7 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
-import { buildPreStartRoundState } from '@/lib/pre-start-round';
+import { buildPreStartRoundPairings } from '@/lib/pre-start-round';
 import { applyManualPlayerOrder } from '@/lib/reorder-tournament-players';
 import { type PlayerTournamentModel } from '@/server/zod/players';
 import { type GameModel } from '@/server/zod/tournaments';
@@ -71,16 +71,16 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
     context.previousGames = previousGames;
 
     if (context.optimisticPlayers) {
-      const preStartState = buildPreStartRoundState({
+      const preStartPairings = buildPreStartRoundPairings({
         players: context.optimisticPlayers,
         tournamentId,
       });
 
-      context.optimisticPlayers = preStartState.players;
-      context.optimisticGames = preStartState.games;
+      context.optimisticPlayers = preStartPairings.players;
+      context.optimisticGames = preStartPairings.games;
 
-      queryClient.setQueryData(playersQueryKey, preStartState.players);
-      queryClient.setQueryData(roundGamesQueryKey, preStartState.games);
+      queryClient.setQueryData(playersQueryKey, preStartPairings.players);
+      queryClient.setQueryData(roundGamesQueryKey, preStartPairings.games);
     }
 
     return context;
@@ -119,21 +119,24 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
           queryClient.getQueryData<Array<PlayerTournamentModel>>(
             playersQueryKey,
           ) ?? context.optimisticPlayers;
-        const preStartState = buildPreStartRoundState({
+        const preStartPairings = buildPreStartRoundPairings({
           players,
           tournamentId,
         });
 
         sendJsonMessage({
           event: 'reorder-players',
-          body: preStartState.players,
+          body: preStartPairings.players,
         });
         saveRound.mutate({
           tournamentId: variables.tournamentId,
           roundNumber: 1,
-          newGames: preStartState.games,
+          newGames: preStartPairings.games,
         });
-        queryClient.setQueryData(roundGamesQueryKey, () => preStartState.games);
+        queryClient.setQueryData(
+          roundGamesQueryKey,
+          () => preStartPairings.games,
+        );
       },
       onSettled: () => {
         if (
