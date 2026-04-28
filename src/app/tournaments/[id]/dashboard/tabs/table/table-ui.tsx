@@ -20,18 +20,18 @@ import { GripVertical, Scale, Trophy, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren, ReactNode } from 'react';
 
-import { STAT } from './column-types';
+import { Stat } from './column-types';
 
 export const PlayerTableRow: FC<{
   canSort: boolean;
   index: number;
   player: PlayerTournamentModel;
-  stats: STAT[];
+  stats: Stat[];
   user: UserModel | null | undefined;
   hasEnded: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
-  renderStat: Record<STAT, (player: PlayerTournamentModel) => ReactNode>;
+  renderStat: Record<Stat, (player: PlayerTournamentModel) => ReactNode>;
   isDragSource?: boolean;
   isDropTarget?: boolean;
   tableRowRef?: React.Ref<HTMLTableRowElement>;
@@ -106,12 +106,12 @@ export const SortableTableRow: FC<{
   canSort: boolean;
   index: number;
   player: PlayerTournamentModel;
-  stats: STAT[];
+  stats: Stat[];
   user: UserModel | null | undefined;
   hasEnded: boolean;
   isSelected: boolean;
   onSelect: () => void;
-  renderStat: Record<STAT, (player: PlayerTournamentModel) => ReactNode>;
+  renderStat: Record<Stat, (player: PlayerTournamentModel) => ReactNode>;
 }> = (props) => {
   const { ref, handleRef, isDragSource, isDropTarget } = useSortable({
     id: props.player.id,
@@ -130,7 +130,7 @@ export const SortableTableRow: FC<{
   );
 };
 
-export const TableStatsHeads: FC<{ stats: STAT[] }> = ({ stats }) => {
+export const TableStatsHeads: FC<{ stats: Stat[] }> = ({ stats }) => {
   return (
     <>
       {stats.map((stat) => (
@@ -142,7 +142,7 @@ export const TableStatsHeads: FC<{ stats: STAT[] }> = ({ stats }) => {
   );
 };
 
-export const TableLoading: FC<{ canSort: boolean; stats: STAT[] }> = ({
+export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
   canSort,
   stats,
 }) => {
@@ -248,7 +248,7 @@ const TableHeadStyled: FC<PropsWithChildren & { className?: string }> = ({
 }) => <TableHead className={`h-11 ${className}`}>{children}</TableHead>;
 
 const StatCell: FC<
-  PropsWithChildren & { isOverlay?: boolean; stat?: STAT }
+  PropsWithChildren & { isOverlay?: boolean; stat?: Stat }
 > = ({ children, isOverlay, stat }) => {
   const isIcon = stat === 'score' || stat === 'tiebreak';
   const overlayWidth = isIcon ? '' : 'sm:min-w-16';
@@ -262,7 +262,7 @@ const StatCell: FC<
   );
 };
 
-const renderTextHead = (stat: Exclude<STAT, 'score' | 'tiebreak'>) => (
+const renderTextHead = (stat: Exclude<Stat, 'score' | 'tiebreak'>) => (
   <>
     <div className="block sm:hidden md:block xl:hidden">
       <FormattedMessage
@@ -277,7 +277,7 @@ const renderTextHead = (stat: Exclude<STAT, 'score' | 'tiebreak'>) => (
   </>
 );
 
-const statHeadRenderers: Record<STAT, React.ReactNode> = {
+const statHeadRenderers: Record<Stat, React.ReactNode> = {
   wins: renderTextHead('wins'),
   draws: renderTextHead('draws'),
   losses: renderTextHead('losses'),

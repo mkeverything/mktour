@@ -3,7 +3,7 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import {
   STATS_WITH_TIEBREAK,
-  type STAT,
+  type Stat,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/column-types';
 import PlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/player-drawer';
 import {
@@ -90,7 +90,7 @@ const TournamentTable = () => {
   }, [allGames.data, hasStarted, players.data, tournament.data]);
 
   const statRenderers = useMemo<
-    Record<STAT, (player: PlayerTournamentModel) => ReactNode>
+    Record<Stat, (player: PlayerTournamentModel) => ReactNode>
   >(
     () => ({
       wins: (player) => player.wins,
@@ -249,9 +249,9 @@ const SortablePlayerRow = memo(function SortablePlayerRow({
   index: number;
   isSelected: boolean;
   player: PlayerTournamentModel;
-  renderStat: Record<STAT, (player: PlayerTournamentModel) => ReactNode>;
+  renderStat: Record<Stat, (player: PlayerTournamentModel) => ReactNode>;
   setSelectedPlayer: Dispatch<SetStateAction<PlayerTournamentModel | null>>;
-  stats: STAT[];
+  stats: Stat[];
   user: UserModel | null | undefined;
 }) {
   return (
