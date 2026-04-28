@@ -11,13 +11,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
 
 type ReorderContext = {
-  optimisticGames?: GameModel[];
-  optimisticPlayers?: PlayerTournamentModel[];
+  newGames?: GameModel[];
+  newPlayers?: PlayerTournamentModel[];
   previousGames?: GameModel[];
   previousState?: PlayerTournamentModel[];
 };
 
-function buildOptimisticReorderContext(
+function buildReorderContext(
   players: PlayerTournamentModel[] | undefined,
   playerIds: string[],
 ): ReorderContext {
@@ -34,7 +34,7 @@ function buildOptimisticReorderContext(
 
   return {
     previousState: players,
-    optimisticPlayers: applyManualPlayerOrder(reorderedPlayers),
+    newPlayers: applyManualPlayerOrder(reorderedPlayers),
   };
 }
 
@@ -53,7 +53,7 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
   });
   const reorderMutationKey = trpc.tournament.reorderPlayers.mutationKey();
 
-  const applyOptimisticReorder = async (
+  const applyNewOrder = async (
     playerIds: string[],
   ): Promise<ReorderContext> => {
     await queryClient.cancelQueries({
@@ -67,17 +67,17 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
       queryClient.getQueryData<Array<PlayerTournamentModel>>(playersQueryKey);
     const previousGames =
       queryClient.getQueryData<Array<GameModel>>(roundGamesQueryKey);
-    const context = buildOptimisticReorderContext(previousState, playerIds);
+    const context = buildReorderContext(previousState, playerIds);
     context.previousGames = previousGames;
 
-    if (context.optimisticPlayers) {
+    if (context.newPlayers) {
       const preStartPairings = buildPreStartRoundPairings({
-        players: context.optimisticPlayers,
+        players: context.newPlayers,
         tournamentId,
       });
 
-      context.optimisticPlayers = preStartPairings.players;
-      context.optimisticGames = preStartPairings.games;
+      context.newPlayers = preStartPairings.players;
+      context.newGames = preStartPairings.games;
 
       queryClient.setQueryData(playersQueryKey, preStartPairings.players);
       queryClient.setQueryData(roundGamesQueryKey, preStartPairings.games);
@@ -88,7 +88,7 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
 
   return useMutation(
     trpc.tournament.reorderPlayers.mutationOptions({
-      onMutate: ({ playerIds }) => applyOptimisticReorder(playerIds),
+      onMutate: ({ playerIds }) => applyNewOrder(playerIds),
       onError: (_error, _variables, context) => {
         if (
           queryClient.isMutating({
@@ -107,8 +107,8 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
       },
       onSuccess: (_data, variables, context) => {
         if (
-          !context?.optimisticPlayers ||
-          !context.optimisticGames ||
+          !context?.newPlayers ||
+          !context.newGames ||
           queryClient.isMutating({
             mutationKey: reorderMutationKey,
           }) !== 1
@@ -118,12 +118,12 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
 
         sendJsonMessage({
           event: 'reorder-players',
-          body: context.optimisticPlayers,
+          body: context.newPlayers,
         });
         saveRound.mutate({
           tournamentId: variables.tournamentId,
           roundNumber: 1,
-          newGames: context.optimisticGames,
+          newGames: context.newGames,
         });
       },
       onSettled: () => {
