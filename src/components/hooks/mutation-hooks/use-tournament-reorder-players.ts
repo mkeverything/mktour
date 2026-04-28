@@ -108,6 +108,7 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
       onSuccess: (_data, variables, context) => {
         if (
           !context?.optimisticPlayers ||
+          !context.optimisticGames ||
           queryClient.isMutating({
             mutationKey: reorderMutationKey,
           }) !== 1
@@ -115,28 +116,15 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
           return;
         }
 
-        const players =
-          queryClient.getQueryData<Array<PlayerTournamentModel>>(
-            playersQueryKey,
-          ) ?? context.optimisticPlayers;
-        const preStartPairings = buildPreStartRoundPairings({
-          players,
-          tournamentId,
-        });
-
         sendJsonMessage({
           event: 'reorder-players',
-          body: preStartPairings.players,
+          body: context.optimisticPlayers,
         });
         saveRound.mutate({
           tournamentId: variables.tournamentId,
           roundNumber: 1,
-          newGames: preStartPairings.games,
+          newGames: context.optimisticGames,
         });
-        queryClient.setQueryData(
-          roundGamesQueryKey,
-          () => preStartPairings.games,
-        );
       },
       onSettled: () => {
         if (
@@ -147,17 +135,9 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
           return;
         }
 
-        return Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: playersQueryKey,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: roundGamesQueryKey,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
-          }),
-        ]);
+        return queryClient.invalidateQueries({
+          queryKey: playersQueryKey,
+        });
       },
     }),
   );
