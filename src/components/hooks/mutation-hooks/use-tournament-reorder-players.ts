@@ -53,42 +53,40 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
   });
   const reorderMutationKey = trpc.tournament.reorderPlayers.mutationKey();
 
-  const applyNewOrder = async (
-    playerIds: string[],
-  ): Promise<ReorderContext> => {
-    await queryClient.cancelQueries({
-      queryKey: playersQueryKey,
-    });
-    await queryClient.cancelQueries({
-      queryKey: roundGamesQueryKey,
-    });
-
-    const previousState =
-      queryClient.getQueryData<Array<PlayerTournamentModel>>(playersQueryKey);
-    const previousGames =
-      queryClient.getQueryData<Array<GameModel>>(roundGamesQueryKey);
-    const context = buildReorderContext(previousState, playerIds);
-    context.previousGames = previousGames;
-
-    if (context.newPlayers) {
-      const preStartPairings = buildPreStartRoundPairings({
-        players: context.newPlayers,
-        tournamentId,
-      });
-
-      context.newPlayers = preStartPairings.players;
-      context.newGames = preStartPairings.games;
-
-      queryClient.setQueryData(playersQueryKey, preStartPairings.players);
-      queryClient.setQueryData(roundGamesQueryKey, preStartPairings.games);
-    }
-
-    return context;
-  };
-
   return useMutation(
     trpc.tournament.reorderPlayers.mutationOptions({
-      onMutate: ({ playerIds }) => applyNewOrder(playerIds),
+      onMutate: async ({ playerIds }): Promise<ReorderContext> => {
+        await queryClient.cancelQueries({
+          queryKey: playersQueryKey,
+        });
+        await queryClient.cancelQueries({
+          queryKey: roundGamesQueryKey,
+        });
+
+        const previousState =
+          queryClient.getQueryData<Array<PlayerTournamentModel>>(
+            playersQueryKey,
+          );
+        const previousGames =
+          queryClient.getQueryData<Array<GameModel>>(roundGamesQueryKey);
+        const context = buildReorderContext(previousState, playerIds);
+        context.previousGames = previousGames;
+
+        if (context.newPlayers) {
+          const preStartPairings = buildPreStartRoundPairings({
+            players: context.newPlayers,
+            tournamentId,
+          });
+
+          context.newPlayers = preStartPairings.players;
+          context.newGames = preStartPairings.games;
+
+          queryClient.setQueryData(playersQueryKey, preStartPairings.players);
+          queryClient.setQueryData(roundGamesQueryKey, preStartPairings.games);
+        }
+
+        return context;
+      },
       onError: (_error, _variables, context) => {
         if (
           queryClient.isMutating({
