@@ -1,7 +1,5 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
-import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import { baselinePlayerSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { PlayerFormModel, PlayerTournamentModel } from '@/server/zod/players';
@@ -15,22 +13,22 @@ export const useTournamentAddNewPlayer = (
   returnToNewPlayer: (_player: PlayerFormModel & { id?: string }) => void,
 ) => {
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
   const t = useTranslations('Errors');
-  const saveRound = useSaveRound({
-    isTournamentGoing: false,
-  });
   const trpc = useTRPC();
+  const { sendJsonMessage } = useContext(DashboardContext);
+  const mutationKey = trpc.tournament.addNewPlayer.mutationKey();
+  const playersQueryKey = trpc.tournament.playersIn.queryKey({ tournamentId });
+  const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
+    tournamentId,
+    roundNumber: 1,
+  });
+
   return useMutation(
     trpc.tournament.addNewPlayer.mutationOptions({
       onMutate: async ({ player, addedAt }) => {
-        await queryClient.cancelQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-        });
+        await queryClient.cancelQueries({ queryKey: playersQueryKey });
         const previousState: Array<PlayerTournamentModel> | undefined =
-          queryClient.getQueryData(
-            trpc.tournament.playersIn.queryKey({ tournamentId }),
-          );
+          queryClient.getQueryData(playersQueryKey);
         const nextPairingNumber = previousState?.length ?? 0;
 
         const newPlayer: PlayerTournamentModel = {
@@ -52,11 +50,10 @@ export const useTournamentAddNewPlayer = (
         };
 
         queryClient.setQueryData(
-          trpc.tournament.playersIn.queryKey({ tournamentId }),
+          playersQueryKey,
           (cache: Array<PlayerTournamentModel> | undefined) => {
             if (!cache) return [newPlayer];
-            if (cache.some((player) => player.id === newPlayer.id))
-              return cache;
+            if (cache.some((p) => p.id === newPlayer.id)) return cache;
             return cache.concat(newPlayer).sort(baselinePlayerSort);
           },
         );
@@ -64,44 +61,31 @@ export const useTournamentAddNewPlayer = (
       },
       onError: (_err, data, context) => {
         if (context?.previousState) {
-          queryClient.setQueryData(
-            trpc.tournament.playersIn.queryKey({ tournamentId }),
-            context.previousState,
-          );
+          queryClient.setQueryData(playersQueryKey, context.previousState);
         }
         returnToNewPlayer(data.player);
         toast.error(t('add-player-error', { player: data.player.nickname }), {
           id: `add-player-error-${data.player.id}`,
         });
       },
-      onSettled: () => {
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.tournament.addNewPlayer.mutationKey(),
-          }) === 1
-        ) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-          });
-        }
-      },
-      onSuccess: (_err, _data, context) => {
-        sendJsonMessage({ event: 'add-new-player', body: context.newPlayer });
-        const players = queryClient.getQueryData(
-          trpc.tournament.playersIn.queryKey({ tournamentId }),
-        );
-        const newGames = generatePreStartRoundGames({
-          players: players ?? [],
-          tournamentId,
+      onSuccess: (data) => {
+        if (queryClient.isMutating({ mutationKey }) !== 1) return;
+        queryClient.setQueryData(playersQueryKey, data.players);
+        queryClient.setQueryData(roundGamesQueryKey, data.games);
+        sendJsonMessage({
+          event: 'prestart-round-updated',
+          players: data.players,
+          games: data.games,
+          roundNumber: 1,
         });
-        saveRound.mutate({ tournamentId, roundNumber: 1, newGames });
-        queryClient.setQueryData(
-          trpc.tournament.roundGames.queryKey({
-            tournamentId,
-            roundNumber: 1,
-          }),
-          () => newGames.sort((a, b) => a.gameNumber - b.gameNumber),
-        );
+      },
+      onSettled: () => {
+        if (queryClient.isMutating({ mutationKey }) !== 1) return;
+        queryClient.invalidateQueries({ queryKey: playersQueryKey });
+        queryClient.invalidateQueries({ queryKey: roundGamesQueryKey });
+        queryClient.invalidateQueries({
+          queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+        });
       },
     }),
   );

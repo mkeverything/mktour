@@ -1,7 +1,5 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
-import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import { baselinePlayerSort } from '@/lib/tournament-results';
 import {
   PlayerTournamentModel,
@@ -14,27 +12,27 @@ import { toast } from 'sonner';
 
 export const useTournamentAddPairTeam = (tournamentId: string) => {
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
   const trpc = useTRPC();
   const t = useTranslations('Tournament.AddPlayer');
-  const saveRound = useSaveRound({
-    isTournamentGoing: false,
+  const { sendJsonMessage } = useContext(DashboardContext);
+  const mutationKey = trpc.tournament.addPairTeam.mutationKey();
+  const playersQueryKey = trpc.tournament.playersIn.queryKey({ tournamentId });
+  const playersOutQueryKey = trpc.tournament.playersOut.queryKey({
+    tournamentId,
+  });
+  const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
+    tournamentId,
+    roundNumber: 1,
   });
 
   return useMutation(
     trpc.tournament.addPairTeam.mutationOptions({
       async onMutate({ nickname, firstPlayerId, secondPlayerId, addedAt }) {
-        await queryClient.cancelQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-        });
-        await queryClient.cancelQueries({
-          queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
-        });
+        await queryClient.cancelQueries({ queryKey: playersQueryKey });
+        await queryClient.cancelQueries({ queryKey: playersOutQueryKey });
 
         const previousState: Array<PlayerTournamentModel> | undefined =
-          queryClient.getQueryData(
-            trpc.tournament.playersIn.queryKey({ tournamentId }),
-          );
+          queryClient.getQueryData(playersQueryKey);
         const nextPairingNumber = previousState?.length ?? 0;
 
         const nicknameLower = nickname.toLowerCase();
@@ -50,7 +48,7 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
 
         const playersOut =
           queryClient.getQueryData<Array<PlayerWithUsernameModel>>(
-            trpc.tournament.playersOut.queryKey({ tournamentId }),
+            playersOutQueryKey,
           ) ?? [];
 
         const firstPlayer = playersOut.find(
@@ -90,17 +88,16 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
         };
 
         queryClient.setQueryData(
-          trpc.tournament.playersIn.queryKey({ tournamentId }),
+          playersQueryKey,
           (cache: Array<PlayerTournamentModel> | undefined) => {
             if (!cache) return [newPlayer];
-            if (cache.some((player) => player.id === newPlayer.id))
-              return cache;
+            if (cache.some((p) => p.id === newPlayer.id)) return cache;
             return cache.concat(newPlayer).sort(baselinePlayerSort);
           },
         );
 
         queryClient.setQueryData(
-          trpc.tournament.playersOut.queryKey({ tournamentId }),
+          playersOutQueryKey,
           (cache: Array<PlayerWithUsernameModel> | undefined) =>
             cache?.filter(
               (player) =>
@@ -112,10 +109,7 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
       },
       onError: (error, _data, context) => {
         if (context?.previousState) {
-          queryClient.setQueryData(
-            trpc.tournament.playersIn.queryKey({ tournamentId }),
-            context.previousState,
-          );
+          queryClient.setQueryData(playersQueryKey, context.previousState);
         }
 
         if (error.message === 'PAIR_NICKNAME_TAKEN') {
@@ -132,47 +126,25 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
         }
         toast.error(t('team add error'));
       },
-      onSuccess: (_result, _variables, context) => {
-        if (context?.newPlayer) {
-          sendJsonMessage({ event: 'add-new-player', body: context.newPlayer });
-        }
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.tournament.addPairTeam.mutationKey(),
-          }) === 1
-        ) {
-          const players = queryClient.getQueryData(
-            trpc.tournament.playersIn.queryKey({ tournamentId }),
-          );
-
-          const newGames = generatePreStartRoundGames({
-            players: players ?? [],
-            tournamentId,
-          });
-
-          saveRound.mutate({ tournamentId, roundNumber: 1, newGames });
-          queryClient.setQueryData(
-            trpc.tournament.roundGames.queryKey({
-              tournamentId,
-              roundNumber: 1,
-            }),
-            () => newGames.sort((a, b) => a.gameNumber - b.gameNumber),
-          );
-        }
+      onSuccess: (data) => {
+        if (queryClient.isMutating({ mutationKey }) !== 1) return;
+        queryClient.setQueryData(playersQueryKey, data.players);
+        queryClient.setQueryData(roundGamesQueryKey, data.games);
+        sendJsonMessage({
+          event: 'prestart-round-updated',
+          players: data.players,
+          games: data.games,
+          roundNumber: 1,
+        });
       },
       onSettled: () => {
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.tournament.addPairTeam.mutationKey(),
-          }) === 1
-        ) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-          });
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
-          });
-        }
+        if (queryClient.isMutating({ mutationKey }) !== 1) return;
+        queryClient.invalidateQueries({ queryKey: playersQueryKey });
+        queryClient.invalidateQueries({ queryKey: playersOutQueryKey });
+        queryClient.invalidateQueries({ queryKey: roundGamesQueryKey });
+        queryClient.invalidateQueries({
+          queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+        });
       },
     }),
   );

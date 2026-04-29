@@ -1,19 +1,14 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTRPC } from '@/components/trpc/client';
-import { buildPreStartRoundPairings } from '@/lib/pre-start-round';
 import { applyManualPlayerOrder } from '@/lib/reorder-tournament-players';
 import { type PlayerTournamentModel } from '@/server/zod/players';
-import { type GameModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
 
 type ReorderContext = {
-  newGames?: GameModel[];
   newPlayers?: PlayerTournamentModel[];
-  previousGames?: GameModel[];
   previousState?: PlayerTournamentModel[];
 };
 
@@ -42,9 +37,6 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { sendJsonMessage } = useContext(DashboardContext);
-  const saveRound = useSaveRound({
-    isTournamentGoing: false,
-  });
 
   const playersQueryKey = trpc.tournament.playersIn.queryKey({ tournamentId });
   const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
@@ -67,22 +59,10 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
           queryClient.getQueryData<Array<PlayerTournamentModel>>(
             playersQueryKey,
           );
-        const previousGames =
-          queryClient.getQueryData<Array<GameModel>>(roundGamesQueryKey);
         const context = buildReorderContext(previousState, playerIds);
-        context.previousGames = previousGames;
 
         if (context.newPlayers) {
-          const preStartPairings = buildPreStartRoundPairings({
-            players: context.newPlayers,
-            tournamentId,
-          });
-
-          context.newPlayers = preStartPairings.players;
-          context.newGames = preStartPairings.games;
-
-          queryClient.setQueryData(playersQueryKey, preStartPairings.players);
-          queryClient.setQueryData(roundGamesQueryKey, preStartPairings.games);
+          queryClient.setQueryData(playersQueryKey, context.newPlayers);
         }
 
         return context;
@@ -99,14 +79,9 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
         if (context?.previousState) {
           queryClient.setQueryData(playersQueryKey, context.previousState);
         }
-        if (context?.previousGames) {
-          queryClient.setQueryData(roundGamesQueryKey, context.previousGames);
-        }
       },
-      onSuccess: (_data, variables, context) => {
+      onSuccess: (data) => {
         if (
-          !context?.newPlayers ||
-          !context.newGames ||
           queryClient.isMutating({
             mutationKey: reorderMutationKey,
           }) !== 1
@@ -114,14 +89,13 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
           return;
         }
 
+        queryClient.setQueryData(playersQueryKey, data.players);
+        queryClient.setQueryData(roundGamesQueryKey, data.games);
         sendJsonMessage({
-          event: 'reorder-players',
-          body: context.newPlayers,
-        });
-        saveRound.mutate({
-          tournamentId: variables.tournamentId,
+          event: 'prestart-round-updated',
+          players: data.players,
+          games: data.games,
           roundNumber: 1,
-          newGames: context.newGames,
         });
       },
       onSettled: () => {
@@ -133,8 +107,14 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
           return;
         }
 
-        return queryClient.invalidateQueries({
+        queryClient.invalidateQueries({
           queryKey: playersQueryKey,
+        });
+        queryClient.invalidateQueries({
+          queryKey: roundGamesQueryKey,
+        });
+        return queryClient.invalidateQueries({
+          queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
         });
       },
     }),

@@ -1,6 +1,4 @@
 import { generateConsecutiveRoundGames } from '@/lib/pairing-generators/consecutive-pairs-generator';
-import { baselinePlayerSort } from '@/lib/tournament-results';
-import { shuffle } from '@/lib/utils';
 import type { PlayerTournamentModel } from '@/server/zod/players';
 import type { GameModel } from '@/server/zod/tournaments';
 
@@ -9,12 +7,7 @@ type PreStartRoundProps = {
   tournamentId: string;
 };
 
-type PreStartRoundPairings = {
-  players: PlayerTournamentModel[];
-  games: GameModel[];
-};
-
-export function assignPairingNumbers<T extends PlayerTournamentModel>(
+function assignPairingNumbers<T extends PlayerTournamentModel>(
   players: T[],
 ): Array<T & { pairingNumber: number }> {
   return players.map((player, index) => ({
@@ -23,48 +16,18 @@ export function assignPairingNumbers<T extends PlayerTournamentModel>(
   }));
 }
 
-export function buildPreStartRoundPairings({
+/**
+ * builds round-1 games from a player list whose order is already canonical.
+ * pairing numbers are reassigned 0..n-1 in input order before generation.
+ */
+export function generatePreStartRoundGames({
   players,
   tournamentId,
-}: PreStartRoundProps): PreStartRoundPairings {
-  const orderedPlayers = assignPairingNumbers(
-    [...players].sort(baselinePlayerSort),
-  );
-
-  const games = generateConsecutiveRoundGames({
-    players: orderedPlayers,
+}: PreStartRoundProps): GameModel[] {
+  return generateConsecutiveRoundGames({
+    players: assignPairingNumbers(players),
     games: [],
     roundNumber: 1,
     tournamentId,
   });
-
-  return { players: orderedPlayers, games };
-}
-
-export function generatePreStartRoundGames(
-  props: PreStartRoundProps,
-): GameModel[] {
-  return buildPreStartRoundPairings(props).games;
-}
-
-export function buildShuffledPreStartRoundPairings({
-  players,
-  tournamentId,
-}: PreStartRoundProps): PreStartRoundPairings {
-  const shuffledPlayers = assignPairingNumbers(shuffle(players));
-
-  const games = generateConsecutiveRoundGames({
-    players: shuffledPlayers,
-    games: [],
-    roundNumber: 1,
-    tournamentId,
-  });
-
-  return { players: shuffledPlayers, games };
-}
-
-export function generateShuffledPreStartRoundGames(
-  props: PreStartRoundProps,
-): GameModel[] {
-  return buildShuffledPreStartRoundPairings(props).games;
 }

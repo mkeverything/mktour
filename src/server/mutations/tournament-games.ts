@@ -11,8 +11,47 @@ import {
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { GameModel } from '@/server/zod/tournaments';
 import { GameResult } from '@/server/zod/enums';
-import { and, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
 import { getPlayerResultDeltas } from './set-game-result-deltas';
+
+export async function replaceRoundGames({
+  tournamentId,
+  roundNumber,
+  newGames,
+}: {
+  tournamentId: string;
+  roundNumber: number;
+  newGames: GameModel[];
+}) {
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(games)
+      .where(
+        and(
+          eq(games.tournamentId, tournamentId),
+          eq(games.roundNumber, roundNumber),
+        ),
+      );
+
+    await tx
+      .update(tournaments)
+      .set({ ongoingRound: roundNumber })
+      .where(
+        and(
+          eq(tournaments.id, tournamentId),
+          ne(tournaments.ongoingRound, roundNumber),
+        ),
+      );
+
+    if (newGames.length === 0) return;
+    await tx.insert(games).values(
+      newGames.map((game) => {
+        const { blackNickname, whiteNickname, pairMembers, ...rest } = game;
+        return rest;
+      }),
+    );
+  });
+}
 
 export async function saveRound({
   tournamentId,
@@ -80,31 +119,7 @@ export async function saveRound({
   if (existingDecidedGames.length > 0) {
     throw new Error('ROUND_ALREADY_HAS_RESULTS');
   }
-  const cleanupPromises = [
-    db
-      .delete(games)
-      .where(
-        and(
-          eq(games.tournamentId, tournamentId),
-          eq(games.roundNumber, roundNumber),
-        ),
-      ),
-    db
-      .update(tournaments)
-      .set({ ongoingRound: roundNumber })
-      .where(eq(tournaments.id, tournamentId)),
-  ];
-
-  await Promise.all(cleanupPromises);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const insertPromises: Promise<any>[] = [];
-  newGames.forEach((game) => {
-    const { blackNickname, whiteNickname, pairMembers, ...newGame } = game;
-    insertPromises.push(db.insert(games).values(newGame));
-  });
-
-  await Promise.all(insertPromises);
+  await replaceRoundGames({ tournamentId, roundNumber, newGames });
 }
 
 export async function setTournamentGameResult({

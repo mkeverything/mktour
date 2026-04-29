@@ -56,6 +56,16 @@ export const playerTournamentInsertSchema = createInsertSchema(
 export const playerTournamentUpdateSchema = createUpdateSchema(
   players_to_tournaments,
 );
+export const playerTournamentOrderSchema = playerTournamentSelectSchema
+  .pick({
+    teamNickname: true,
+    numberInTeam: true,
+    pairingNumber: true,
+    addedAt: true,
+  })
+  .extend({
+    id: playerTournamentSelectSchema.shape.playerId,
+  });
 
 export const withdrawTournamentPlayerInputSchema = z.object({
   tournamentId: z.string(),
@@ -64,7 +74,7 @@ export const withdrawTournamentPlayerInputSchema = z.object({
 });
 export const reorderTournamentPlayersInputSchema = z.object({
   tournamentId: z.string(),
-  playerIds: z.array(z.string()).min(1),
+  playerIds: z.array(z.string()),
 });
 export const withdrawTournamentPlayerResultSchema = z.object({
   roundsNumber: z.number().int().min(1).nullable(),
@@ -224,4 +234,7 @@ export type PlayerToTournamentInsertModel = z.infer<
 >;
 export type PlayerToTournamentUpdateModel = z.infer<
   typeof playerTournamentUpdateSchema
+>;
+export type PlayerTournamentOrderModel = z.infer<
+  typeof playerTournamentOrderSchema
 >;

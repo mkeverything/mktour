@@ -35,17 +35,9 @@ import {
   TournamentModel,
   tournamentsInsertSchema,
 } from '@/server/zod/tournaments';
-import {
-  and,
-  eq,
-  inArray,
-  isNotNull,
-  isNull,
-  ne,
-  notInArray,
-  or,
-} from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
+import { reapplyPreStartOrder } from './tournament-player-order';
 
 export const createTournament = async (
   values: Omit<NewTournamentFormModel, 'date'> & {
@@ -155,92 +147,9 @@ export async function normalizeSwissRoundsNumberInDatabase(
   };
 }
 
-async function updatePairingNumbers(tournamentId: string) {
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  const gamesList = await getTournamentGames(tournamentId);
+async function preparePreStartPairings(tournamentId: string) {
+  const { games: gamesList } = await reapplyPreStartOrder(tournamentId);
   if (gamesList.length === 0) throw new Error('NO_GAMES_TO_START');
-
-  if (tournament.type === 'doubles') {
-    const participants = await db
-      .select({
-        playerId: players_to_tournaments.playerId,
-        teamNickname: players_to_tournaments.teamNickname,
-      })
-      .from(players_to_tournaments)
-      .where(eq(players_to_tournaments.tournamentId, tournamentId));
-
-    const teamByPlayerId = new Map<string, string>();
-    const allTeams = new Set<string>();
-    participants.forEach((participant) => {
-      if (!participant.teamNickname) return;
-      teamByPlayerId.set(participant.playerId, participant.teamNickname);
-      allTeams.add(participant.teamNickname);
-    });
-
-    const orderedTeams: string[] = [];
-    const pushTeam = (teamNickname: string | undefined) => {
-      if (!teamNickname || orderedTeams.includes(teamNickname)) return;
-      orderedTeams.push(teamNickname);
-    };
-
-    gamesList.forEach((game) => {
-      pushTeam(teamByPlayerId.get(game.whiteId));
-      pushTeam(teamByPlayerId.get(game.blackId));
-    });
-
-    allTeams.forEach((teamNickname) => pushTeam(teamNickname));
-
-    await Promise.all(
-      orderedTeams.map((teamNickname, index) =>
-        db
-          .update(players_to_tournaments)
-          .set({ pairingNumber: index })
-          .where(
-            and(
-              eq(players_to_tournaments.tournamentId, tournamentId),
-              eq(players_to_tournaments.teamNickname, teamNickname),
-            ),
-          ),
-      ),
-    );
-    return;
-  }
-
-  const playerIds = gamesList.reduce((acc, game) => {
-    if (game.result) throw new Error('RESULTS_PRESENT_BEFORE_TMT_START');
-    if (game.roundNumber !== 1) throw new Error('ROUND_NOT_FIRST_BEFORE_START');
-    acc.unshift(game.whiteId);
-    acc.push(game.blackId);
-    return acc;
-  }, [] as string[]);
-
-  const oddPlayerId = await db
-    .select({ playerId: players_to_tournaments.playerId })
-    .from(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.tournamentId, tournamentId),
-        notInArray(players_to_tournaments.playerId, playerIds),
-      ),
-    );
-  if (oddPlayerId.length === 1) {
-    playerIds.unshift(oddPlayerId[0].playerId);
-  }
-
-  const promises = playerIds.map((playerId, i) => {
-    return db
-      .update(players_to_tournaments)
-      .set({ pairingNumber: i })
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, playerId),
-        ),
-      );
-  });
-
-  await Promise.all(promises);
 }
 
 export async function startTournament({
@@ -262,18 +171,14 @@ export async function startTournament({
     roundsNumber,
   });
 
-  await Promise.all([
-    db
-      .update(tournaments)
-      .set({ startedAt, roundsNumber: finalRoundsNumber })
-      .where(
-        and(eq(tournaments.id, tournamentId), isNull(tournaments.startedAt)),
-      )
-      .then((value) => {
-        if (!value.rowsAffected) throw new Error('TOURNAMENT_ALREADY_GOING');
-      }),
-    updatePairingNumbers(tournamentId),
-  ]);
+  await preparePreStartPairings(tournamentId);
+  await db
+    .update(tournaments)
+    .set({ startedAt, roundsNumber: finalRoundsNumber })
+    .where(and(eq(tournaments.id, tournamentId), isNull(tournaments.startedAt)))
+    .then((value) => {
+      if (!value.rowsAffected) throw new Error('TOURNAMENT_ALREADY_GOING');
+    });
 }
 
 export async function resetTournament({

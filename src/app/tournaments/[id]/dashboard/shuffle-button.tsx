@@ -7,7 +7,7 @@ import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournam
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Button } from '@/components/ui/button';
-import { buildShuffledPreStartRoundPairings } from '@/lib/pre-start-round';
+import { shuffle } from '@/lib/utils';
 import { PlayerTournamentModel } from '@/server/zod/players';
 import { GameModel, TournamentInfoModel } from '@/server/zod/tournaments';
 import { Loader2, Shuffle } from 'lucide-react';
@@ -67,13 +67,9 @@ const useShuffle = (): ShuffleProps => {
   const handleClick = () => {
     if (!players || !games) return null;
 
-    const preStartPairings = buildShuffledPreStartRoundPairings({
-      players,
-      tournamentId,
-    });
     reorderPlayers.mutate({
       tournamentId,
-      playerIds: preStartPairings.players.map((player) => player.id),
+      playerIds: shuffle(players).map((player) => player.id),
     });
   };
 
