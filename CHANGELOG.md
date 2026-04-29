@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/mkeverything/mktour/compare/v1.7.2...v1.7.3) (2026-04-29)
+
+
+### Bug Fixes
+
+* urgent fix for team rr pairing ([dc2a50d](https://github.com/mkeverything/mktour/commit/dc2a50d675d8fd9a97e29e0853dcf00ae5b78234))
+
 ## [1.7.2](https://github.com/mkeverything/mktour/compare/v1.7.1...v1.7.2) (2026-04-29)
 
 
