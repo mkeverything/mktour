@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/mkeverything/mktour/compare/v1.7.1...v1.7.2) (2026-04-29)
+
+
+### Bug Fixes
+
+* urgent fix for pairings in doubles rr tmts ([2ed0fd9](https://github.com/mkeverything/mktour/commit/2ed0fd9d84d9158f881c1e8f53b5336f669c0d8a))
+
 ## [1.7.1](https://github.com/mkeverything/mktour/compare/v1.7.0...v1.7.1) (2026-04-27)
 
 
