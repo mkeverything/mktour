@@ -1354,6 +1354,7 @@ async function updatePairingNumbers(tournamentId: string) {
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   const games = await getTournamentGames(tournamentId);
   if (games.length === 0) throw new Error('NO_GAMES_TO_START');
+  const firstRoundGames = games.filter((game) => game.roundNumber === 1);
 
   if (tournament.type === 'doubles') {
     const participants = await db
@@ -1372,18 +1373,23 @@ async function updatePairingNumbers(tournamentId: string) {
       allTeams.add(participant.teamNickname);
     });
 
-    const orderedTeams: string[] = [];
-    const pushTeam = (teamNickname: string | undefined) => {
-      if (!teamNickname || orderedTeams.includes(teamNickname)) return;
-      orderedTeams.push(teamNickname);
-    };
-
-    games.forEach((game) => {
-      pushTeam(teamByPlayerId.get(game.whiteId));
-      pushTeam(teamByPlayerId.get(game.blackId));
-    });
-
-    allTeams.forEach((teamNickname) => pushTeam(teamNickname));
+    const orderedTeams = firstRoundGames.reduce((acc, game) => {
+      const whiteTeam = teamByPlayerId.get(game.whiteId);
+      const blackTeam = teamByPlayerId.get(game.blackId);
+      if (!whiteTeam || !blackTeam) throw new Error('TEAM_NOT_FOUND_FOR_GAME');
+      acc.unshift(whiteTeam);
+      acc.push(blackTeam);
+      return acc;
+    }, [] as string[]);
+    const orderedTeamsSet = new Set(orderedTeams);
+    const unpairedTeams = Array.from(allTeams).filter(
+      (teamNickname) => !orderedTeamsSet.has(teamNickname),
+    );
+    if (unpairedTeams.length === 1) {
+      orderedTeams.unshift(unpairedTeams[0]);
+    } else if (unpairedTeams.length > 1) {
+      throw new Error('TOO_MANY_UNPAIRED_TEAMS');
+    }
 
     await Promise.all(
       orderedTeams.map((teamNickname, index) =>
