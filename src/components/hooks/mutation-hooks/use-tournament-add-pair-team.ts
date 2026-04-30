@@ -1,6 +1,6 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useOptimisticPreStartRound } from '@/components/hooks/mutation-hooks/use-optimistic-pre-start-round';
 import { useTRPC } from '@/components/trpc/client';
-import { baselinePlayerSort } from '@/lib/tournament-results';
 import {
   PlayerTournamentModel,
   type PlayerWithUsernameModel,
@@ -15,7 +15,11 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
   const trpc = useTRPC();
   const t = useTranslations('Tournament.AddPlayer');
   const { sendJsonMessage } = useContext(DashboardContext);
-  const mutationKey = trpc.tournament.addPairTeam.mutationKey();
+  const {
+    applyOptimisticPreStartRound,
+    isOnlyPendingPreStartRoundMutation,
+    rollbackOptimisticPreStartRound,
+  } = useOptimisticPreStartRound(tournamentId);
   const playersQueryKey = trpc.tournament.playersIn.queryKey({ tournamentId });
   const playersOutQueryKey = trpc.tournament.playersOut.queryKey({
     tournamentId,
@@ -28,11 +32,14 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
   return useMutation(
     trpc.tournament.addPairTeam.mutationOptions({
       async onMutate({ nickname, firstPlayerId, secondPlayerId, addedAt }) {
-        await queryClient.cancelQueries({ queryKey: playersQueryKey });
         await queryClient.cancelQueries({ queryKey: playersOutQueryKey });
 
         const previousState: Array<PlayerTournamentModel> | undefined =
           queryClient.getQueryData(playersQueryKey);
+        const previousPlayersOut =
+          queryClient.getQueryData<Array<PlayerWithUsernameModel>>(
+            playersOutQueryKey,
+          );
         const nextPairingNumber = previousState?.length ?? 0;
 
         const nicknameLower = nickname.toLowerCase();
@@ -87,14 +94,10 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
           ],
         };
 
-        queryClient.setQueryData(
-          playersQueryKey,
-          (cache: Array<PlayerTournamentModel> | undefined) => {
-            if (!cache) return [newPlayer];
-            if (cache.some((p) => p.id === newPlayer.id)) return cache;
-            return cache.concat(newPlayer).sort(baselinePlayerSort);
-          },
-        );
+        const nextPlayers = previousState?.some((p) => p.id === newPlayer.id)
+          ? previousState
+          : (previousState ?? []).concat(newPlayer);
+        const context = await applyOptimisticPreStartRound(nextPlayers);
 
         queryClient.setQueryData(
           playersOutQueryKey,
@@ -105,11 +108,16 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
             ),
         );
 
-        return { previousState, newPlayer };
+        return { ...context, previousPlayersOut, newPlayer };
       },
       onError: (error, _data, context) => {
-        if (context?.previousState) {
-          queryClient.setQueryData(playersQueryKey, context.previousState);
+        rollbackOptimisticPreStartRound(context);
+
+        if (context?.previousPlayersOut) {
+          queryClient.setQueryData(
+            playersOutQueryKey,
+            context.previousPlayersOut,
+          );
         }
 
         if (error.message === 'PAIR_NICKNAME_TAKEN') {
@@ -127,7 +135,7 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
         toast.error(t('team add error'));
       },
       onSuccess: (data) => {
-        if (queryClient.isMutating({ mutationKey }) !== 1) return;
+        if (!isOnlyPendingPreStartRoundMutation()) return;
         queryClient.setQueryData(playersQueryKey, data.players);
         queryClient.setQueryData(roundGamesQueryKey, data.games);
         sendJsonMessage({
@@ -138,7 +146,7 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
         });
       },
       onSettled: () => {
-        if (queryClient.isMutating({ mutationKey }) !== 1) return;
+        if (!isOnlyPendingPreStartRoundMutation()) return;
         queryClient.invalidateQueries({ queryKey: playersQueryKey });
         queryClient.invalidateQueries({ queryKey: playersOutQueryKey });
         queryClient.invalidateQueries({ queryKey: roundGamesQueryKey });

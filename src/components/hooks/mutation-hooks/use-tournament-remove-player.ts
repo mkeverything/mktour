@@ -1,5 +1,7 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useOptimisticPreStartRound } from '@/components/hooks/mutation-hooks/use-optimistic-pre-start-round';
 import { useTRPC } from '@/components/trpc/client';
+import type { PlayerTournamentModel } from '@/server/zod/players';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
@@ -10,7 +12,11 @@ export const useTournamentRemovePlayer = (tournamentId: string) => {
   const t = useTranslations('Errors');
   const trpc = useTRPC();
   const { sendJsonMessage } = useContext(DashboardContext);
-  const mutationKey = trpc.tournament.removePlayer.mutationKey();
+  const {
+    applyOptimisticPreStartRound,
+    isOnlyPendingPreStartRoundMutation,
+    rollbackOptimisticPreStartRound,
+  } = useOptimisticPreStartRound(tournamentId);
   const playersQueryKey = trpc.tournament.playersIn.queryKey({ tournamentId });
   const playersOutQueryKey = trpc.tournament.playersOut.queryKey({
     tournamentId,
@@ -23,21 +29,19 @@ export const useTournamentRemovePlayer = (tournamentId: string) => {
   return useMutation(
     trpc.tournament.removePlayer.mutationOptions({
       onMutate: async ({ playerId }) => {
-        await queryClient.cancelQueries({ queryKey: playersQueryKey });
-        const previousState = queryClient.getQueryData(playersQueryKey);
+        await queryClient.cancelQueries({ queryKey: playersOutQueryKey });
+        const previousState =
+          queryClient.getQueryData<PlayerTournamentModel[]>(playersQueryKey);
+        const nextPlayers =
+          previousState?.filter((player) => player.id !== playerId) ?? [];
 
-        queryClient.setQueryData(
-          playersQueryKey,
-          (cache) => cache && cache.filter((player) => player.id !== playerId),
-        );
+        const context = await applyOptimisticPreStartRound(nextPlayers);
 
-        return { previousState };
+        return { ...context };
       },
       onError: (err, { playerId }, context) => {
-        if (context?.previousState) {
-          queryClient.setQueryData(playersQueryKey, context.previousState);
-        }
-        const player = context?.previousState?.find(
+        rollbackOptimisticPreStartRound(context);
+        const player = context?.previousPlayers?.find(
           (player) => player.id === playerId,
         );
         if (!player) {
@@ -56,7 +60,7 @@ export const useTournamentRemovePlayer = (tournamentId: string) => {
         });
       },
       onSuccess: (data) => {
-        if (queryClient.isMutating({ mutationKey }) !== 1) return;
+        if (!isOnlyPendingPreStartRoundMutation()) return;
         queryClient.setQueryData(playersQueryKey, data.players);
         queryClient.setQueryData(roundGamesQueryKey, data.games);
         sendJsonMessage({
@@ -67,7 +71,7 @@ export const useTournamentRemovePlayer = (tournamentId: string) => {
         });
       },
       onSettled: () => {
-        if (queryClient.isMutating({ mutationKey }) !== 1) return;
+        if (!isOnlyPendingPreStartRoundMutation()) return;
         queryClient.invalidateQueries({ queryKey: playersQueryKey });
         queryClient.invalidateQueries({ queryKey: playersOutQueryKey });
         queryClient.invalidateQueries({ queryKey: roundGamesQueryKey });

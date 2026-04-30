@@ -202,6 +202,8 @@ use react-query optimistic updates when the ui needs to feel instant. pattern:
 
 the `isMutating() === 1` check is required ONLY for mutations that do optimistic cache updates (onMutate with manual cache set). these create a gap between client and server state.
 
+do not add custom mutation queues, debounce layers, ref-based schedulers, or tanstack `scope` serialization for rapid interactions unless the user explicitly asks for serialized network writes. let mutations run concurrently so the latest request starts immediately; use optimistic cache updates plus grouped `isMutating` guards to avoid flicker and stale invalidations. serial queues make drag/reorder bursts feel slow because outdated intermediate states still have to finish.
+
 ```typescript
 onSettled: () => {
   if (

@@ -55,5 +55,4 @@ next-env.d.ts
 /public/workbox-*.js
 /public/splash_screens/
 
-PLAYERS_REORDER_DESCRIPTION.md
 PLAYERS_REORDER_ARCHITECTURE.md
