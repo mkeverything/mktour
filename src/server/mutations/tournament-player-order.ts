@@ -1,9 +1,10 @@
 'use server';
 
-import { baselinePlayerSort } from '@/lib/tournament-results';
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
+import { baselinePlayerSort } from '@/lib/tournament-results';
 import { db } from '@/server/db';
 import { players_to_tournaments } from '@/server/db/schema/tournaments';
+import { getTournamentRoundGames } from '@/server/queries/get-tournament-games';
 import { getTournamentPlayers } from '@/server/queries/get-tournament-players';
 import {
   compareTeamMembers,
@@ -97,8 +98,12 @@ export async function applyPreStartPlayerOrder({
   const players = await getTournamentPlayers(tournamentId);
   const games = generatePreStartRoundGames({ players, tournamentId });
   await replaceRoundGames({ tournamentId, roundNumber: 1, newGames: games });
+  const persistedGames = await getTournamentRoundGames({
+    tournamentId,
+    roundNumber: 1,
+  });
 
-  return { players, games };
+  return { players, games: persistedGames };
 }
 
 /**

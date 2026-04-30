@@ -72,9 +72,7 @@ export const useTournamentRemovePlayer = (tournamentId: string) => {
       },
       onSettled: () => {
         if (!isOnlyPendingPreStartRoundMutation()) return;
-        queryClient.invalidateQueries({ queryKey: playersQueryKey });
         queryClient.invalidateQueries({ queryKey: playersOutQueryKey });
-        queryClient.invalidateQueries({ queryKey: roundGamesQueryKey });
         queryClient.invalidateQueries({
           queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
         });

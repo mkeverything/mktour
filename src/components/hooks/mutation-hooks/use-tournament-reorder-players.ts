@@ -102,12 +102,6 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
         return;
       }
 
-      queryClient.invalidateQueries({
-        queryKey: playersQueryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: roundGamesQueryKey,
-      });
       return queryClient.invalidateQueries({
         queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
       });
