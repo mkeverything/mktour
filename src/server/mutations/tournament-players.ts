@@ -58,7 +58,7 @@ export async function removePlayer({
       .then((rows) => rows.at(0));
     if (!participant) throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
 
-    await db.transaction(async (tx) => {
+    return await db.transaction(async (tx) => {
       await tx
         .delete(games)
         .where(
@@ -87,21 +87,23 @@ export async function removePlayer({
             ),
           );
       }
+      await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+      return await reapplyPreStartOrder(tournamentId, tx);
     });
-    await normalizeSwissRoundsNumber(tournamentId);
-    return await reapplyPreStartOrder(tournamentId);
   }
 
-  await db
-    .delete(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.playerId, playerId),
-        eq(players_to_tournaments.tournamentId, tournamentId),
-      ),
-    );
-  await normalizeSwissRoundsNumber(tournamentId);
-  return await reapplyPreStartOrder(tournamentId);
+  return await db.transaction(async (tx) => {
+    await tx
+      .delete(players_to_tournaments)
+      .where(
+        and(
+          eq(players_to_tournaments.playerId, playerId),
+          eq(players_to_tournaments.tournamentId, tournamentId),
+        ),
+      );
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function addNewPlayer({
