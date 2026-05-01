@@ -21,11 +21,12 @@ import { eq } from 'drizzle-orm';
 export async function getRawTournamentPlayers(
   id: string,
   tournamentType?: string,
+  database: Pick<typeof db, 'select'> = db,
 ): Promise<Array<PlayerTournamentModel>> {
   let type = tournamentType;
   if (!type) {
     const tournament = (
-      await db
+      await database
         .select({ type: tournaments.type })
         .from(tournaments)
         .where(eq(tournaments.id, id))
@@ -35,7 +36,7 @@ export async function getRawTournamentPlayers(
     type = tournament.type;
   }
 
-  const playersDb = await db
+  const playersDb = await database
     .select({
       id: players.id,
       nickname: players.nickname,
@@ -121,8 +122,9 @@ export async function getRawTournamentPlayers(
 
 export async function getTournamentPlayers(
   id: string,
+  database: Pick<typeof db, 'select'> = db,
 ): Promise<Array<PlayerTournamentModel>> {
-  const [tournament] = await db
+  const [tournament] = await database
     .select()
     .from(tournaments)
     .where(eq(tournaments.id, id));
@@ -130,8 +132,10 @@ export async function getTournamentPlayers(
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
 
   const [playerModels, allGames] = await Promise.all([
-    getRawTournamentPlayers(id, tournament.type),
-    tournament.startedAt ? getTournamentGames(id) : Promise.resolve([]),
+    getRawTournamentPlayers(id, tournament.type, database),
+    tournament.startedAt
+      ? getTournamentGames(id, database)
+      : Promise.resolve([]),
   ]);
 
   if (!tournament.startedAt) {

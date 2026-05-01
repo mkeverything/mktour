@@ -101,8 +101,9 @@ export type DoublesTeamMembersMap = {
 
 export async function getDoublesTeamMembers(
   tournamentId: string,
+  database: Pick<typeof db, 'select'> = db,
 ): Promise<DoublesTeamMembersMap> {
-  const rows = await db
+  const rows = await database
     .select({
       playerId: players_to_tournaments.playerId,
       teamNickname: players_to_tournaments.teamNickname,
