@@ -77,10 +77,6 @@ export const useTournamentReorderPlayers = (tournamentId: string) => {
       return applyReorderOptimistically(playerIds);
     },
     onError: (_error, _variables, context) => {
-      if (!isOnlyPendingPreStartRoundMutation()) {
-        return;
-      }
-
       rollbackOptimisticPreStartRound(context);
     },
     onSuccess: (data) => {
