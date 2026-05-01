@@ -1,6 +1,6 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import { useTRPC } from '@/components/trpc/client';
 import { useOptimisticPreStartRound } from '@/components/hooks/mutation-hooks/use-optimistic-pre-start-round';
+import { useTRPC } from '@/components/trpc/client';
 import { newid } from '@/lib/utils';
 import { PlayerFormModel, PlayerTournamentModel } from '@/server/zod/players';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -84,6 +84,9 @@ export const useTournamentAddNewPlayer = (
         if (!isOnlyPendingPreStartRoundMutation()) return;
         queryClient.invalidateQueries({
           queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.tournament.info.queryKey({ tournamentId }),
         });
       },
     }),
