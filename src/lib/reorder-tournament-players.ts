@@ -34,14 +34,3 @@ export const reorderTournamentPlayersByIndex = (
 
   return applyManualPlayerOrder(arrayMove(players, fromIndex, toIndex));
 };
-
-export const reorderTournamentPlayersLocally = (
-  players: PlayerTournamentModel[],
-  activeId: string,
-  overId: string,
-): PlayerTournamentModel[] => {
-  const fromIndex = players.findIndex((player) => player.id === activeId);
-  const toIndex = players.findIndex((player) => player.id === overId);
-
-  return reorderTournamentPlayersByIndex(players, fromIndex, toIndex);
-};
