@@ -3,7 +3,7 @@ import { useOptimisticPreStartRound } from '@/components/hooks/mutation-hooks/us
 import { useTRPC } from '@/components/trpc/client';
 import {
   PlayerTournamentModel,
-  type PlayerWithUsernameModel,
+  PlayerWithUsernameModel,
 } from '@/server/zod/players';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -150,6 +150,9 @@ export const useTournamentAddPairTeam = (tournamentId: string) => {
         queryClient.invalidateQueries({ queryKey: playersOutQueryKey });
         queryClient.invalidateQueries({
           queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.tournament.info.queryKey({ tournamentId }),
         });
       },
     }),
