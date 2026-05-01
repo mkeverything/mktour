@@ -21,7 +21,7 @@
     "localdb:drop": "OFFLINE=true drizzle-kit drop",
     "localdb:studio": "OFFLINE=true drizzle-kit studio",
     "localdb:check": "OFFLINE=true drizzle-kit check",
-    "knip": "knip-bun",
+    "knip": "knip-bun --use-tsconfig-files",
     "generate-erd": "bun run src/lib/generate-erd.ts",
     "prepare": "husky",
     "generate-openapi": "bun run src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",

@@ -1,10 +1,11 @@
 {
+  "$schema": "https://unpkg.com/knip@5.88.1/schema.json",
   "ignore": [
     "./archive/**",
     "src/components/i18n.ts",
     "src/components/ui/**",
     "src/lib/utils.ts",
-    "**/_**",
-    "**.test.ts**"
+    "**/_*/**",
+    "**/*.{test,spec}.{ts,tsx}"
   ]
 }
