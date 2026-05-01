@@ -1,6 +1,7 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
+import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import {
   buildScoreMaps,
   hasSameStanding,
@@ -147,9 +148,17 @@ export async function normalizeSwissRoundsNumberInDatabase(
   };
 }
 
-async function preparePreStartPairings(tournamentId: string) {
-  const { games: gamesList } = await reapplyPreStartOrder(tournamentId);
-  if (gamesList.length === 0) throw new Error('NO_GAMES_TO_START');
+async function preparePreStartPairings(
+  tournamentId: string,
+  database: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
+) {
+  const players = await getTournamentPlayers(tournamentId, database);
+  const gamesList = generatePreStartRoundGames({ players, tournamentId });
+  if (gamesList.length === 0) {
+    throw new Error('NO_GAMES_TO_START');
+  }
+
+  await reapplyPreStartOrder(tournamentId, database);
 }
 
 export async function startTournament({
@@ -171,14 +180,16 @@ export async function startTournament({
     roundsNumber,
   });
 
-  await preparePreStartPairings(tournamentId);
-  await db
-    .update(tournaments)
-    .set({ startedAt, roundsNumber: finalRoundsNumber })
-    .where(and(eq(tournaments.id, tournamentId), isNull(tournaments.startedAt)))
-    .then((value) => {
-      if (!value.rowsAffected) throw new Error('TOURNAMENT_ALREADY_GOING');
-    });
+  await db.transaction(async (tx) => {
+    await preparePreStartPairings(tournamentId, tx);
+    const value = await tx
+      .update(tournaments)
+      .set({ startedAt, roundsNumber: finalRoundsNumber })
+      .where(
+        and(eq(tournaments.id, tournamentId), isNull(tournaments.startedAt)),
+      );
+    if (!value.rowsAffected) throw new Error('TOURNAMENT_ALREADY_GOING');
+  });
 }
 
 export async function resetTournament({

@@ -19,8 +19,9 @@ import { replaceRoundGames } from './tournament-games';
 export async function getTournamentOrderTargets(
   tournamentId: string,
   tournamentType: TournamentType,
+  database: Pick<typeof db, 'select'> = db,
 ): Promise<PlayerTournamentOrderModel[]> {
-  const participants = await db
+  const participants = await database
     .select({
       id: players_to_tournaments.playerId,
       teamNickname: players_to_tournaments.teamNickname,
@@ -59,10 +60,10 @@ async function persistTournamentOrder(
   tournamentId: string,
   tournamentType: TournamentType,
   orderedTargets: PlayerTournamentOrderModel[],
+  database: Pick<typeof db, 'update'>,
 ) {
   if (orderedTargets.length === 0) return;
-
-  const queries = orderedTargets.map((target, index) => {
+  for (const [index, target] of orderedTargets.entries()) {
     const whereClause =
       tournamentType === 'doubles' && target.teamNickname
         ? and(
@@ -74,33 +75,75 @@ async function persistTournamentOrder(
             eq(players_to_tournaments.playerId, target.id),
           );
 
-    return db
+    await database
       .update(players_to_tournaments)
       .set({ pairingNumber: index })
       .where(whereClause);
-  });
-
-  const [firstQuery, ...restQueries] = queries;
-  await db.batch([firstQuery, ...restQueries]);
+  }
 }
 
 export async function applyPreStartPlayerOrder({
   tournamentId,
   tournamentType,
   orderedTargets,
+  database,
 }: {
   tournamentId: string;
   tournamentType: TournamentType;
   orderedTargets: PlayerTournamentOrderModel[];
+  database?: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>;
 }): Promise<PreStartPlayerOrderResultModel> {
-  await persistTournamentOrder(tournamentId, tournamentType, orderedTargets);
+  const d = database ?? db;
+  const currentPlayers = await getTournamentPlayers(tournamentId, d);
+  const playersById = new Map(
+    currentPlayers.map((player) => [player.id, player]),
+  );
+  const orderedPlayers = orderedTargets
+    .map((target) => playersById.get(target.id))
+    .filter((player): player is (typeof currentPlayers)[number] => !!player);
+  if (orderedPlayers.length !== currentPlayers.length) {
+    throw new Error('INVALID_PLAYERS_ORDER');
+  }
+  const games = generatePreStartRoundGames({
+    players: orderedPlayers,
+    tournamentId,
+  });
 
-  const players = await getTournamentPlayers(tournamentId);
-  const games = generatePreStartRoundGames({ players, tournamentId });
-  await replaceRoundGames({ tournamentId, roundNumber: 1, newGames: games });
+  if (database) {
+    await persistTournamentOrder(
+      tournamentId,
+      tournamentType,
+      orderedTargets,
+      database,
+    );
+    await replaceRoundGames({
+      tournamentId,
+      roundNumber: 1,
+      newGames: games,
+      database,
+    });
+  } else {
+    await db.transaction(async (tx) => {
+      await persistTournamentOrder(
+        tournamentId,
+        tournamentType,
+        orderedTargets,
+        tx,
+      );
+      await replaceRoundGames({
+        tournamentId,
+        roundNumber: 1,
+        newGames: games,
+        database: tx,
+      });
+    });
+  }
+
+  const players = await getTournamentPlayers(tournamentId, d);
   const persistedGames = await getTournamentRoundGames({
     tournamentId,
     roundNumber: 1,
+    database: d,
   });
 
   return { players, games: persistedGames };
@@ -113,16 +156,20 @@ export async function applyPreStartPlayerOrder({
  */
 export async function reapplyPreStartOrder(
   tournamentId: string,
+  database?: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
 ): Promise<PreStartPlayerOrderResultModel> {
-  const tournament = await getTournamentById(tournamentId);
+  const d = database ?? db;
+  const tournament = await getTournamentById(tournamentId, d);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   const orderTargets = await getTournamentOrderTargets(
     tournamentId,
     tournament.type,
+    d,
   );
   return await applyPreStartPlayerOrder({
     tournamentId,
     tournamentType: tournament.type,
     orderedTargets: orderTargets,
+    database,
   });
 }

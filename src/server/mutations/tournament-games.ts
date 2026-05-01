@@ -18,13 +18,15 @@ export async function replaceRoundGames({
   tournamentId,
   roundNumber,
   newGames,
+  database,
 }: {
   tournamentId: string;
   roundNumber: number;
   newGames: GameModel[];
+  database?: Pick<typeof db, 'delete' | 'insert' | 'update'>;
 }) {
-  await db.transaction(async (tx) => {
-    await tx
+  const run = async (d: Pick<typeof db, 'delete' | 'insert' | 'update'>) => {
+    await d
       .delete(games)
       .where(
         and(
@@ -33,7 +35,7 @@ export async function replaceRoundGames({
         ),
       );
 
-    await tx
+    await d
       .update(tournaments)
       .set({ ongoingRound: roundNumber })
       .where(
@@ -44,13 +46,20 @@ export async function replaceRoundGames({
       );
 
     if (newGames.length === 0) return;
-    await tx.insert(games).values(
+    await d.insert(games).values(
       newGames.map((game) => {
         const { blackNickname, whiteNickname, pairMembers, ...rest } = game;
         return rest;
       }),
     );
-  });
+  };
+
+  if (database) {
+    await run(database);
+    return;
+  }
+
+  await db.transaction(async (tx) => run(tx));
 }
 
 export async function saveRound({
