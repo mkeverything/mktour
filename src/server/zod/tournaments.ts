@@ -74,7 +74,11 @@ export const withdrawTournamentPlayerInputSchema = z.object({
 });
 export const reorderTournamentPlayersInputSchema = z.object({
   tournamentId: z.string(),
-  playerIds: z.array(z.string()),
+  playerIds: z
+    .array(z.string())
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: 'player ids must be unique',
+    }),
 });
 export const withdrawTournamentPlayerResultSchema = z.object({
   roundsNumber: z.number().int().min(1).nullable(),
