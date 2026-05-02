@@ -72,7 +72,8 @@ export async function getPlayerStats(
       eq(players.id, players_to_tournaments.playerId),
     )
     .where(eq(players.clubId, player.clubId))
-    .groupBy(players.id);
+    .groupBy(players.id)
+    .orderBy(desc(players.lastSeenAt));
 
   const statsWithCalculations = clubPlayersStats.map((p) => {
     const wins = Number(p.wins ?? 0);

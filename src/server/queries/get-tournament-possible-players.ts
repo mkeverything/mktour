@@ -5,7 +5,7 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { PlayerModel } from '@/server/zod/players';
-import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, isNull } from 'drizzle-orm';
 
 export async function getTournamentPossiblePlayers(
   id: string,
@@ -31,7 +31,8 @@ export async function getTournamentPossiblePlayers(
         eq(players.clubId, tournament.clubId),
         isNull(players_to_tournaments.playerId),
       ),
-    );
+    )
+    .orderBy(desc(players.lastSeenAt));
 
   return result as Array<PlayerModel>;
 }

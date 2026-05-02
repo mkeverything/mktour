@@ -27,7 +27,7 @@ import {
 import { UserNotificationInsertModel } from '@/server/zod/notifications';
 import { PlayerEditModel, PlayerFormModel } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { and, eq, inArray, isNotNull, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
@@ -262,6 +262,7 @@ export const getClubAffiliatedUsers = async (clubId: string) => {
       .from(players)
       .where(eq(players.clubId, clubId))
       .innerJoin(users, eq(players.userId, users.id))
+      .orderBy(desc(players.lastSeenAt))
   ).map((el) => el.user);
 };
 

@@ -4,7 +4,7 @@ import { players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { SearchParamsModel } from '@/server/zod/search';
-import { and, eq, isNotNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, or, sql } from 'drizzle-orm';
 
 export async function globalSearch(params: SearchParamsModel) {
   const { query, filter } = params;
@@ -37,6 +37,7 @@ export async function globalSearch(params: SearchParamsModel) {
           eq(players.clubId, clubId),
         ),
       )
+      .orderBy(desc(players.lastSeenAt))
       .limit(15);
     return { players: playersResult };
   }
@@ -66,6 +67,7 @@ export async function globalSearch(params: SearchParamsModel) {
     .select()
     .from(players)
     .where(sql`lower(${players.nickname}) like lower(${queryStr})`)
+    .orderBy(desc(players.lastSeenAt))
     .limit(5);
   const usersDb = db
     .select()
