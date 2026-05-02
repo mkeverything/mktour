@@ -1,7 +1,6 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
-import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import {
   buildScoreMaps,
   hasSameStanding,
@@ -153,11 +152,9 @@ async function preparePreStartPairings(
   database: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
 ) {
   const players = await getTournamentPlayers(tournamentId, database);
-  const gamesList = generatePreStartRoundGames({ players, tournamentId });
-  if (gamesList.length === 0) {
-    throw new Error('NO_GAMES_TO_START');
+  if (players && players.length < 2) {
+    throw new Error('NOT_ENOUGH_PLAYERS');
   }
-
   await reapplyPreStartOrder(tournamentId, database);
 }
 
