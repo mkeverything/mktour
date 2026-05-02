@@ -155,7 +155,9 @@ async function preparePreStartPairings(
   if (players && players.length < 2) {
     throw new Error('NOT_ENOUGH_PLAYERS');
   }
-  await reapplyPreStartOrder(tournamentId, database);
+  await reapplyPreStartOrder(tournamentId, database, {
+    skipFinalReads: true,
+  });
 }
 
 export async function startTournament({

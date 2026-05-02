@@ -87,11 +87,13 @@ export async function applyPreStartPlayerOrder({
   tournamentType,
   orderedTargets,
   database,
+  skipFinalReads = false,
 }: {
   tournamentId: string;
   tournamentType: TournamentType;
   orderedTargets: PlayerTournamentOrderModel[];
   database?: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>;
+  skipFinalReads?: boolean;
 }): Promise<PreStartPlayerOrderResultModel> {
   const d = database ?? db;
   const currentPlayers = await getTournamentPlayers(tournamentId, d);
@@ -139,6 +141,10 @@ export async function applyPreStartPlayerOrder({
     });
   }
 
+  if (skipFinalReads) {
+    return { players: [], games: [] };
+  }
+
   const players = await getTournamentPlayers(tournamentId, d);
   const persistedGames = await getTournamentRoundGames({
     tournamentId,
@@ -157,6 +163,7 @@ export async function applyPreStartPlayerOrder({
 export async function reapplyPreStartOrder(
   tournamentId: string,
   database?: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
+  options?: { skipFinalReads?: boolean },
 ): Promise<PreStartPlayerOrderResultModel> {
   const d = database ?? db;
   const tournament = await getTournamentById(tournamentId, d);
@@ -171,5 +178,6 @@ export async function reapplyPreStartOrder(
     tournamentType: tournament.type,
     orderedTargets: orderTargets,
     database,
+    skipFinalReads: options?.skipFinalReads,
   });
 }
