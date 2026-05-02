@@ -155,15 +155,10 @@ export async function reorderTournamentPlayers({
   tournamentId,
   playerIds,
 }: ReorderTournamentPlayersInputModel): Promise<PreStartPlayerOrderResultModel> {
-  const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
 
-  const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer') throw new Error('NOT_ADMIN');
   const orderTargets = await getTournamentOrderTargets(
     tournamentId,
     tournament.type,
