@@ -1,3 +1,4 @@
+import { caseWhen } from '@/lib/sql-case-when';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
@@ -6,16 +7,7 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { PlayerAuthStatsModel, PlayerStatsModel } from '@/server/zod/players';
-import {
-  and,
-  count,
-  desc,
-  eq,
-  getTableColumns,
-  or,
-  sql,
-  sum,
-} from 'drizzle-orm';
+import { and, count, desc, eq, getTableColumns, or, sum } from 'drizzle-orm';
 
 // returns the last 5 tournaments a player participated in
 export async function getPlayersTournaments(
@@ -167,18 +159,24 @@ export async function getPlayerAuthStats({
   const headToHead = await db
     .select({
       playerWins: count(
-        sql`CASE
-          WHEN (${games.whiteId} = ${playerId} AND ${games.result} = '1-0')
-            OR (${games.blackId} = ${playerId} AND ${games.result} = '0-1')
-          THEN 1 END`,
+        caseWhen(
+          or(
+            and(eq(games.whiteId, playerId), eq(games.result, '1-0')),
+            and(eq(games.blackId, playerId), eq(games.result, '0-1')),
+          ),
+          1,
+        ).elseNull(),
       ),
       userWins: count(
-        sql`CASE
-          WHEN (${games.whiteId} = ${authPlayerId} AND ${games.result} = '1-0')
-            OR (${games.blackId} = ${authPlayerId} AND ${games.result} = '0-1')
-          THEN 1 END`,
+        caseWhen(
+          or(
+            and(eq(games.whiteId, authPlayerId), eq(games.result, '1-0')),
+            and(eq(games.blackId, authPlayerId), eq(games.result, '0-1')),
+          ),
+          1,
+        ).elseNull(),
       ),
-      draws: count(sql`CASE WHEN ${games.result} = '1/2-1/2' THEN 1 END`),
+      draws: count(caseWhen(eq(games.result, '1/2-1/2'), 1).elseNull()),
       totalGames: count(games.id),
     })
     .from(games)
