@@ -96,49 +96,42 @@ export async function applyPreStartPlayerOrder({
   skipFinalReads?: boolean;
 }): Promise<PreStartPlayerOrderResultModel> {
   const d = database ?? db;
-  const currentPlayers = await getTournamentPlayers(tournamentId, d);
-  const playersById = new Map(
-    currentPlayers.map((player) => [player.id, player]),
-  );
-  const orderedPlayers = orderedTargets
-    .map((target) => playersById.get(target.id))
-    .filter((player): player is (typeof currentPlayers)[number] => !!player);
-  if (orderedPlayers.length !== currentPlayers.length) {
-    throw new Error('INVALID_PLAYERS_ORDER');
-  }
-  const games = generatePreStartRoundGames({
-    players: orderedPlayers,
-    tournamentId,
-  });
 
-  if (database) {
+  async function readGenerateAndPersist(
+    dbLike: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
+  ) {
+    const currentPlayers = await getTournamentPlayers(tournamentId, dbLike);
+    const playersById = new Map(
+      currentPlayers.map((player) => [player.id, player]),
+    );
+    const orderedPlayers = orderedTargets
+      .map((target) => playersById.get(target.id))
+      .filter((player): player is (typeof currentPlayers)[number] => !!player);
+    if (orderedPlayers.length !== currentPlayers.length) {
+      throw new Error('INVALID_PLAYERS_ORDER');
+    }
+    const games = generatePreStartRoundGames({
+      players: orderedPlayers,
+      tournamentId,
+    });
     await persistTournamentOrder(
       tournamentId,
       tournamentType,
       orderedTargets,
-      database,
+      dbLike,
     );
     await replaceRoundGames({
       tournamentId,
       roundNumber: 1,
       newGames: games,
-      database,
+      database: dbLike,
     });
+  }
+
+  if (database) {
+    await readGenerateAndPersist(database);
   } else {
-    await db.transaction(async (tx) => {
-      await persistTournamentOrder(
-        tournamentId,
-        tournamentType,
-        orderedTargets,
-        tx,
-      );
-      await replaceRoundGames({
-        tournamentId,
-        roundNumber: 1,
-        newGames: games,
-        database: tx,
-      });
-    });
+    await db.transaction(async (tx) => readGenerateAndPersist(tx));
   }
 
   if (skipFinalReads) {
