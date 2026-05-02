@@ -1,3 +1,9 @@
+import { Suspense } from 'react';
+
+import { ChevronRight } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
+
 import MakeTournamentButton from '@/components/button-make-tournament';
 import TeamJoinToaster from '@/components/team-join-toaster';
 import TournamentItemIteratee from '@/components/tournament-item';
@@ -5,9 +11,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { publicCaller } from '@/server/api';
 import { TournamentWithClubModel } from '@/server/zod/tournaments';
-import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
-import { Suspense } from 'react';
 
 const RECENT_TOURNAMENTS_LIMIT = 5;
 
@@ -68,14 +71,9 @@ async function RecentTournamentsSection({
   if (!hasAnyTournaments) return null;
   return (
     <div className="mx-auto w-full max-w-lg">
-      <div className="flex w-full items-center justify-between gap-2">
-        <h2 className="text-muted-foreground text-sm font-medium">
-          {t('recent tournaments')}
-        </h2>
-        <Button variant="ghost" size="sm" asChild className="shrink-0">
-          <Link href="/tournaments/my">{t('see all')}</Link>
-        </Button>
-      </div>
+      <h2 className="text-muted-foreground mb-3 text-sm font-medium">
+        {t('recent tournaments')}
+      </h2>
       <ul className="flex w-full flex-col gap-2">
         {recentTournaments.map(({ tournament, club }) => (
           <li key={tournament.id}>
@@ -83,6 +81,14 @@ async function RecentTournamentsSection({
           </li>
         ))}
       </ul>
+      <div className="mt-2 flex w-full justify-end">
+        <Button variant="ghost" size="sm" asChild className="shrink-0 gap-1.5">
+          <Link href="/tournaments/my" className="inline-flex items-center">
+            {t('see all')}
+            <ChevronRight className="text-muted-foreground size-3.5" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
