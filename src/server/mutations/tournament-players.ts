@@ -1,11 +1,14 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
+import { normalizePlayerNickname } from '@/lib/player-nickname';
+import { lowerEq } from '@/lib/sql-sqlite-string';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import { games, players_to_tournaments } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import {
   AddDoublesTeamModel,
@@ -18,7 +21,8 @@ import {
   PlayerFormModel,
   PlayerInsertModel,
 } from '@/server/zod/players';
-import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
 import {
   normalizeSwissRoundsNumber,
   normalizeSwissRoundsNumberInDatabase,
@@ -127,9 +131,21 @@ export async function addNewPlayer({
   ).length;
 
   const playerId = player.id ?? newid();
+  const nickname = normalizePlayerNickname(player.nickname);
+  const taken = await playerExistsInClub({
+    nickname,
+    clubId: tournament.clubId,
+  });
+  if (taken) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'player exists error',
+    });
+  }
+
   await db
     .insert(players)
-    .values({ ...player, lastSeenAt: new Date(), id: playerId });
+    .values({ ...player, nickname, lastSeenAt: new Date(), id: playerId });
   const playerToTournament: PlayerToTournamentInsertModel = {
     playerId,
     tournamentId,
@@ -306,10 +322,7 @@ export async function addDoublesTeam({
     .where(
       and(
         eq(players_to_tournaments.tournamentId, tournamentId),
-        eq(
-          sql<string>`lower(${players_to_tournaments.teamNickname})`,
-          nickname.toLowerCase(),
-        ),
+        lowerEq(players_to_tournaments.teamNickname, nickname),
       ),
     )
     .limit(1);
@@ -474,10 +487,7 @@ export async function editDoublesTeam({
     .where(
       and(
         eq(players_to_tournaments.tournamentId, tournamentId),
-        eq(
-          sql<string>`lower(${players_to_tournaments.teamNickname})`,
-          nickname.toLowerCase(),
-        ),
+        lowerEq(players_to_tournaments.teamNickname, nickname),
         ne(players_to_tournaments.teamNickname, currentTeamNickname),
       ),
     )

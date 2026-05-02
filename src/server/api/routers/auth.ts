@@ -109,7 +109,12 @@ export const authRouter = {
       return await getTournamentsToUserClubsQuery({ userId: ctx.user.id });
     }),
   validatePlayerNickname: protectedProcedure
-    .input(z.object({ nickname: z.string(), clubId: z.string() }))
+    .input(
+      z.object({
+        nickname: z.string().trim().min(1),
+        clubId: z.string(),
+      }),
+    )
     .output(z.object({ valid: z.boolean() }))
     .query(async ({ input }) => {
       const player = await playerExistsInClub(input);

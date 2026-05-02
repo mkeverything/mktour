@@ -2,6 +2,7 @@
 
 import { getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
+import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
@@ -19,6 +20,7 @@ import { users } from '@/server/db/schema/users';
 import { getClubByLichessTeam } from '@/server/queries/get-club-by-lichess-team';
 import { getEmptyClub } from '@/server/queries/get-empty-club';
 import getStatusInClub from '@/server/queries/get-status-in-club';
+import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
 import {
   ClubEditModel,
   ClubFormModel,
@@ -27,6 +29,7 @@ import {
 import { UserNotificationInsertModel } from '@/server/zod/notifications';
 import { PlayerEditModel, PlayerFormModel } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
+import { TRPCError } from '@trpc/server';
 import { and, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
@@ -115,11 +118,24 @@ export const deleteClub = async ({
 };
 
 export const createPlayer = async (player: PlayerFormModel) => {
+  const nickname = normalizePlayerNickname(player.nickname);
+  const taken = await playerExistsInClub({
+    nickname,
+    clubId: player.clubId,
+  });
+  if (taken) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'player exists error',
+    });
+  }
+
   const newPlayer = (
     await db
       .insert(players)
       .values({
         ...player,
+        nickname,
         lastSeenAt: new Date(),
         id: newid(),
         ratingPeak: null,
@@ -161,6 +177,8 @@ export const editPlayer = async ({
     .from(players)
     .where(eq(players.id, id));
 
+  if (!player) throw new Error('PLAYER_NOT_FOUND');
+
   const isAffiliated = player.userId === user.id;
   const isClubAdmin = await getStatusInClub({
     userId: user.id,
@@ -177,6 +195,22 @@ export const editPlayer = async ({
     : {
         nickname: updates.nickname,
       };
+
+  if (payload.nickname !== undefined) {
+    payload.nickname = normalizePlayerNickname(payload.nickname);
+    const conflict = await playerExistsInClub({
+      nickname: payload.nickname,
+      clubId: player.clubId,
+      excludePlayerId: id,
+    });
+    if (conflict) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'player exists error',
+      });
+    }
+  }
+
   const hasAtLeastOneField = Object.values(payload).some(
     (value) => value !== undefined,
   );
