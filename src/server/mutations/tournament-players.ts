@@ -143,9 +143,6 @@ export async function addNewPlayer({
     });
   }
 
-  await db
-    .insert(players)
-    .values({ ...player, nickname, lastSeenAt: new Date(), id: playerId });
   const playerToTournament: PlayerToTournamentInsertModel = {
     playerId,
     tournamentId,
@@ -162,9 +159,15 @@ export async function addNewPlayer({
     newRatingDeviation: null,
     newVolatility: null,
   };
-  await db.insert(players_to_tournaments).values(playerToTournament);
-  await normalizeSwissRoundsNumber(tournamentId);
-  return await reapplyPreStartOrder(tournamentId);
+
+  return await db.transaction(async (tx) => {
+    await tx
+      .insert(players)
+      .values({ ...player, nickname, lastSeenAt: new Date(), id: playerId });
+    await tx.insert(players_to_tournaments).values(playerToTournament);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function reorderTournamentPlayers({
@@ -252,9 +255,11 @@ export async function addExistingPlayer({
     newRatingDeviation: null,
     newVolatility: null,
   };
-  await db.insert(players_to_tournaments).values(playerToTournament);
-  await normalizeSwissRoundsNumber(tournamentId);
-  return await reapplyPreStartOrder(tournamentId);
+  return await db.transaction(async (tx) => {
+    await tx.insert(players_to_tournaments).values(playerToTournament);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function addDoublesTeam({
@@ -374,11 +379,11 @@ export async function addDoublesTeam({
     },
   ];
 
-  await db.insert(players_to_tournaments).values(teamMembers);
-
-  await normalizeSwissRoundsNumber(tournamentId);
-
-  return await reapplyPreStartOrder(tournamentId);
+  return await db.transaction(async (tx) => {
+    await tx.insert(players_to_tournaments).values(teamMembers);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function editDoublesTeam({
