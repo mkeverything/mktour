@@ -40,3 +40,5 @@ export const getDatabase = () => {
 
 export const sqlite = getSqlite();
 export const db = getDatabase();
+
+export type Database = Pick<typeof db, 'select' | 'update'>;
