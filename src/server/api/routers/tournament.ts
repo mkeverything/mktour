@@ -31,6 +31,7 @@ import {
   addNewPlayer,
   editDoublesTeam,
   removePlayer,
+  reorderTournamentPlayers,
   resetTournamentPlayers,
   withdrawPlayer,
 } from '@/server/mutations/tournament-players';
@@ -52,12 +53,14 @@ import {
   playerFormSchema,
   playersWithUsernameSchema,
   playerTournamentSchema,
+  preStartPlayerOrderResultSchema,
 } from '@/server/zod/players';
 import {
   addDoublesTeamSchema,
   editDoublesTeamSchema,
   gameSchema,
   publicFeaturedTournamentSchema,
+  reorderTournamentPlayersInputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
   tournamentInfoSchema,
@@ -191,10 +194,10 @@ export const tournamentRouter = {
         addedAt: z.date().optional(),
       }),
     )
-    .output(z.void())
+    .output(preStartPlayerOrderResultSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      await addExistingPlayer(input);
+      return await addExistingPlayer(input);
     }),
   addNewPlayer: tournamentAdminProcedure
     .input(
@@ -203,10 +206,10 @@ export const tournamentRouter = {
         addedAt: z.date().optional(),
       }),
     )
-    .output(z.void())
+    .output(preStartPlayerOrderResultSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      await addNewPlayer(input);
+      return await addNewPlayer(input);
     }),
   addPairTeam: tournamentAdminProcedure
     .input(
@@ -214,7 +217,7 @@ export const tournamentRouter = {
         addDoublesTeamSchema.extend({ addedAt: z.date().optional() }),
       ),
     )
-    .output(playerTournamentSchema)
+    .output(preStartPlayerOrderResultSchema)
     .mutation(async (opts) => {
       const { input } = opts;
       return await addDoublesTeam(input);
@@ -233,10 +236,17 @@ export const tournamentRouter = {
         userId: z.string(),
       }),
     )
-    .output(z.void())
+    .output(preStartPlayerOrderResultSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      await removePlayer(input);
+      return await removePlayer(input);
+    }),
+  reorderPlayers: tournamentAdminProcedure
+    .input(reorderTournamentPlayersInputSchema)
+    .output(preStartPlayerOrderResultSchema)
+    .mutation(async (opts) => {
+      const { input } = opts;
+      return await reorderTournamentPlayers(input);
     }),
   withdrawPlayer: tournamentAdminProcedure
     .input(withdrawTournamentPlayerInputSchema)

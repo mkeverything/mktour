@@ -169,6 +169,33 @@ describe('calculatePlayerScore', () => {
   });
 });
 
+describe('sortPlayersByResults', () => {
+  it('prefers pairing number over addedAt when standings are equal', () => {
+    const players = [
+      makePlayer({
+        id: 'p1',
+        nickname: 'Alice',
+        pairingNumber: 1,
+        addedAt: new Date('2026-01-02T00:00:00.000Z'),
+      }),
+      makePlayer({
+        id: 'p2',
+        nickname: 'Bob',
+        pairingNumber: 0,
+        addedAt: new Date('2026-01-01T00:00:00.000Z'),
+      }),
+    ];
+
+    const sorted = sortPlayersByResults(
+      players,
+      { format: 'swiss', ongoingRound: 0 },
+      [],
+    );
+
+    expect(sorted.map((player) => player.id)).toEqual(['p2', 'p1']);
+  });
+});
+
 describe('calculateBerger (Sonneborn-Berger)', () => {
   it('should return 0 when no games are played', () => {
     const player = makePlayer({ id: 'p1', nickname: 'Alice' });

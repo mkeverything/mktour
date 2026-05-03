@@ -56,11 +56,29 @@ export const playerTournamentInsertSchema = createInsertSchema(
 export const playerTournamentUpdateSchema = createUpdateSchema(
   players_to_tournaments,
 );
+export const playerTournamentOrderSchema = playerTournamentSelectSchema
+  .pick({
+    teamNickname: true,
+    numberInTeam: true,
+    pairingNumber: true,
+    addedAt: true,
+  })
+  .extend({
+    id: playerTournamentSelectSchema.shape.playerId,
+  });
 
 export const withdrawTournamentPlayerInputSchema = z.object({
   tournamentId: z.string(),
   playerId: z.string(),
   userId: z.string(),
+});
+export const reorderTournamentPlayersInputSchema = z.object({
+  tournamentId: z.string(),
+  playerIds: z
+    .array(z.string())
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: 'player ids must be unique',
+    }),
 });
 export const withdrawTournamentPlayerResultSchema = z.object({
   roundsNumber: z.number().int().min(1).nullable(),
@@ -196,6 +214,9 @@ export type PublicFeaturedTournamentModel = z.infer<
 export type TournamentAuthStatusModel = z.infer<
   typeof tournamentAuthStatusSchema
 >;
+export type ReorderTournamentPlayersInputModel = z.infer<
+  typeof reorderTournamentPlayersInputSchema
+>;
 export type TournamentModel = z.infer<typeof tournamentSchema>;
 export type TournamentInsertModel = z.infer<typeof tournamentsInsertSchema>;
 export type TournamentUpdateModel = z.infer<typeof tournamentsUpdateSchema>;
@@ -217,4 +238,7 @@ export type PlayerToTournamentInsertModel = z.infer<
 >;
 export type PlayerToTournamentUpdateModel = z.infer<
   typeof playerTournamentUpdateSchema
+>;
+export type PlayerTournamentOrderModel = z.infer<
+  typeof playerTournamentOrderSchema
 >;

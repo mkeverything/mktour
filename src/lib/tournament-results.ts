@@ -149,6 +149,26 @@ export const buildScoreMaps = (
   return { playerScoresMap, tiebreakScoresMap };
 };
 
+export const baselinePlayerSort = (
+  a: Pick<PlayerTournamentModel, 'pairingNumber' | 'addedAt' | 'id'>,
+  b: Pick<PlayerTournamentModel, 'pairingNumber' | 'addedAt' | 'id'>,
+): number => {
+  if (a.pairingNumber !== null || b.pairingNumber !== null) {
+    const pairingNumberA = a.pairingNumber ?? Number.MAX_SAFE_INTEGER;
+    const pairingNumberB = b.pairingNumber ?? Number.MAX_SAFE_INTEGER;
+
+    if (pairingNumberA !== pairingNumberB) {
+      return pairingNumberA - pairingNumberB;
+    }
+  }
+
+  const addedAtA = a.addedAt?.getTime() ?? 0;
+  const addedAtB = b.addedAt?.getTime() ?? 0;
+  if (addedAtA !== addedAtB) return addedAtA - addedAtB;
+
+  return a.id.localeCompare(b.id);
+};
+
 /**
  * Sorts players by score → tiebreak → wins and returns the sorted array
  * along with the computed score maps.
@@ -170,11 +190,7 @@ function makePlayerComparator(
 
     if (b.wins !== a.wins) return b.wins - a.wins;
 
-    const addedAtA = a.addedAt?.getTime() ?? 0;
-    const addedAtB = b.addedAt?.getTime() ?? 0;
-    if (addedAtA !== addedAtB) return addedAtA - addedAtB;
-
-    return a.id.localeCompare(b.id);
+    return baselinePlayerSort(a, b);
   };
 }
 

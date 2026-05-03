@@ -144,6 +144,7 @@ the spec file is generated from trpc router definitions and should never be manu
 bun dev                      # start dev server
 bun dev:test                 # dev with test database (MKTOURTEST=true)
 bun dev:local                # offline mode (OFFLINE=true, local sqld at :8080)
+mobile dev                   # prepare local-network mobile testing config (steps below)
 bun run build                # production build
 bun start                    # start production server
 bun check                    # typecheck + lint + tests (run before pushing)
@@ -162,6 +163,12 @@ bash .cursor/skills/mobile-dev/scripts/setup-mobile-dev.sh
                              # mobile dev setup: detect 192.168 ip,
                              # update local urls, set nextConfig.allowedDevOrigins
 ```
+
+`mobile dev` workflow:
+
+1. run `ifconfig | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | grep '^192\.168\.' | head -n 1` and take the resulting local ip address.
+2. replace `localhost` with that ip in `src/lib/config/urls.ts` for local dev urls.
+3. set `allowedDevOrigins: ["<the_ip>"]` in `nextConfig` in `next.config.mjs` (top-level config key, not experimental in next 16).
 
 always run `bun check` before pushing. use single-file test when validating changes.
 
@@ -194,6 +201,8 @@ use react-query optimistic updates when the ui needs to feel instant. pattern:
 - onSettled: use `isMutating() === 1` check — invalidation only runs after the final concurrent mutation completes, preventing flicker during rapid clicks
 
 the `isMutating() === 1` check is required ONLY for mutations that do optimistic cache updates (onMutate with manual cache set). these create a gap between client and server state.
+
+do not add custom mutation queues, debounce layers, ref-based schedulers, or tanstack `scope` serialization for rapid interactions unless the user explicitly asks for serialized network writes. let mutations run concurrently so the latest request starts immediately; use optimistic cache updates plus grouped `isMutating` guards to avoid flicker and stale invalidations. serial queues make drag/reorder bursts feel slow because outdated intermediate states still have to finish.
 
 ```typescript
 onSettled: () => {
