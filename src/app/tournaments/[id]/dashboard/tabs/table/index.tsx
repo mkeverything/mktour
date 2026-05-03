@@ -62,7 +62,7 @@ const TournamentTable = () => {
   const type = tournament.data?.type;
   const allGames = useTournamentGames(id);
   const stats = STATS_WITH_TIEBREAK;
-  const canSort = status === 'organizer' && !hasStarted;
+  const canSort = false;
 
   const {
     players: sortedPlayers,

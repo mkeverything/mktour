@@ -69,6 +69,7 @@ export const useTournamentRoundProgressInfo = (tournamentId: string) => {
       format: data.tournament.format,
       ongoingRound: data.tournament.ongoingRound,
       roundsNumber: data.tournament.roundsNumber,
+      startedAt: data.tournament.startedAt,
     }),
   });
 };

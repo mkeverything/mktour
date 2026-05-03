@@ -10,11 +10,20 @@ import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GameResult } from '@/server/zod/enums';
+import { useDraggable, useDroppable } from '@dnd-kit/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { Dispatch, FC, memo, SetStateAction, useContext, useRef } from 'react';
+import {
+  Dispatch,
+  FC,
+  memo,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useRef,
+} from 'react';
 import { toast } from 'sonner';
 
 const GameItem: FC<GameProps> = ({
@@ -24,9 +33,16 @@ const GameItem: FC<GameProps> = ({
   whiteNickname,
   blackId,
   blackNickname,
+  blackDisplayId,
+  blackDisplayNickname,
+  blackSlotIndex,
+  canSortPlayers,
   roundNumber,
   selected,
   setSelectedGameId,
+  whiteDisplayId,
+  whiteDisplayNickname,
+  whiteSlotIndex,
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const t = useTranslations('Toasts');
@@ -112,15 +128,18 @@ const GameItem: FC<GameProps> = ({
         onClick={handleOpenGame}
       >
         <Card
-          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-4xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerInGame && 'border-3'}`}
+          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-4xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && !canSortPlayers && 'pointer-events-none'} ${isPlayerInGame && 'border-3'}`}
         >
-          <Player
+          <DraggableGamePlayer
+            canSort={canSortPlayers}
+            id={whiteId}
+            index={whiteSlotIndex}
             isWinner={result === '1-0'}
             handleMutate={() => handleMutate('1-0')}
             selected={isActive}
-            nickname={whiteNickname}
+            nickname={whiteDisplayNickname}
             position={{ justify: 'justify-self-start', text: 'text-left' }}
-            className={`${playerId === whiteId && 'font-bold'}`}
+            className={`${playerId === whiteDisplayId && 'font-bold'}`}
           />
           <Button
             variant="ghost"
@@ -129,17 +148,79 @@ const GameItem: FC<GameProps> = ({
           >
             <Result {...resultProps} selected={isActive} />
           </Button>
-          <Player
+          <DraggableGamePlayer
+            canSort={canSortPlayers}
+            id={blackId}
+            index={blackSlotIndex}
             isWinner={result === '0-1'}
             handleMutate={() => handleMutate('0-1')}
             selected={isActive}
-            nickname={blackNickname}
+            nickname={blackDisplayNickname}
             position={{ justify: 'justify-self-end', text: 'text-right' }}
-            className={`${playerId === blackId && 'font-bold'}`}
+            className={`${playerId === blackDisplayId && 'font-bold'}`}
           />
         </Card>
       </motion.div>
     </PortalWrapper>
+  );
+};
+
+const DraggableGamePlayer: FC<{
+  canSort: boolean;
+  className?: string;
+  handleMutate: () => void;
+  id: string;
+  index: number;
+  isWinner: boolean;
+  nickname: string | null;
+  position: {
+    justify: 'justify-self-start' | 'justify-self-end';
+    text: 'text-left' | 'text-right';
+  };
+  selected: boolean;
+}> = ({
+  canSort,
+  className,
+  handleMutate,
+  id,
+  index,
+  isWinner,
+  nickname,
+  position,
+  selected,
+}) => {
+  const drag = useDraggable({
+    id: `player:${id}`,
+    data: { playerId: id, slotIndex: index },
+    disabled: !canSort,
+    feedback: 'clone',
+  });
+  const drop = useDroppable({
+    id: `slot:${index}`,
+    data: { slotIndex: index },
+    disabled: !canSort,
+  });
+  const setPlayerRef = useCallback(
+    (element: HTMLButtonElement | null) => {
+      drag.ref(element);
+      drop.ref(element);
+    },
+    [drag, drop],
+  );
+
+  return (
+    <Player
+      canSort={canSort}
+      className={`${drop.isDropTarget && canSort ? 'ring-ring/40 ring-1 ring-inset' : ''} ${className}`}
+      dragHandleRef={drag.handleRef}
+      handleMutate={handleMutate}
+      isEmpty={!nickname}
+      isWinner={isWinner}
+      nickname={nickname}
+      playerRef={setPlayerRef}
+      position={position}
+      selected={selected}
+    />
   );
 };
 
@@ -148,8 +229,15 @@ type GameProps = {
   result: GameResult | null;
   whiteId: string;
   whiteNickname: string;
+  whiteDisplayId: string | null;
+  whiteDisplayNickname: string | null;
+  whiteSlotIndex: number;
   blackId: string;
   blackNickname: string;
+  blackDisplayId: string | null;
+  blackDisplayNickname: string | null;
+  blackSlotIndex: number;
+  canSortPlayers: boolean;
   roundNumber: number;
   selected: boolean;
   setSelectedGameId: Dispatch<SetStateAction<string | null>>;
