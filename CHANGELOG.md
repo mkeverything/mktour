@@ -5,6 +5,13 @@
 
 * fourth attempt to fix auth on webkit ([750fea0](https://github.com/mkeverything/mktour/commit/750fea052fbcd21bc71d1b02886d98b6e99caeec))
 
+## [1.8.1](https://github.com/mkeverything/mktour/compare/v1.8.0...v1.8.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* fourth attempt to fix auth on webkit ([750fea0](https://github.com/mkeverything/mktour/commit/750fea052fbcd21bc71d1b02886d98b6e99caeec))
+
 # [1.8.0](https://github.com/mkeverything/mktour/compare/v1.7.3...v1.8.0) (2026-05-04)
 
 
