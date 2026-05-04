@@ -10,8 +10,6 @@ import {
 } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { GameResult } from '@/server/zod/enums';
-import { and, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
-
 import { GameModel } from '@/server/zod/tournaments';
 import { and, eq, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
 import { getPlayerResultDeltas } from './set-game-result-deltas';

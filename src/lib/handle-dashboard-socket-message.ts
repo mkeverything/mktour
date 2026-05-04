@@ -2,9 +2,8 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
-import { settlePendingGamesAsForfeit } from '@/lib/utils';
-import { filterPendingGamesByPlayer } from '@/lib/utils';
 import { baselinePlayerSort } from '@/lib/tournament-results';
+import { settlePendingGamesAsForfeit } from '@/lib/utils';
 import type { PlayerTournamentModel } from '@/server/zod/players';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
