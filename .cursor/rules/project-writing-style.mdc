@@ -1,0 +1,11 @@
+---
+description: project writing style for generated text
+alwaysApply: true
+---
+
+# project writing style
+
+- use lowercase for generated prose unless capitalization is technically required.
+- this applies to code comments, documentation, pr titles, pr descriptions, commit bodies, issue text, and chat-proposed text intended for the project.
+- keep proper casing only for required identifiers, commands, paths, package names, acronyms, schema enum values, translation keys, and quoted text that must remain exact.
+- oxford english spelling required

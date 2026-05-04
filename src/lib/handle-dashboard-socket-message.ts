@@ -3,6 +3,8 @@
 
 import { useTRPC } from '@/components/trpc/client';
 import { settlePendingGamesAsForfeit } from '@/lib/utils';
+import { filterPendingGamesByPlayer } from '@/lib/utils';
+import { baselinePlayerSort } from '@/lib/tournament-results';
 import type { PlayerTournamentModel } from '@/server/zod/players';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
@@ -18,6 +20,12 @@ function parsePlayerBody(
   };
 }
 
+function parsePlayersBody(
+  body: Array<PlayerTournamentModel & { addedAt?: Date | string | null }>,
+): PlayerTournamentModel[] {
+  return body.map(parsePlayerBody);
+}
+
 export const handleSocketMessage = (
   message: DashboardMessage,
   queryClient: QueryClient,
@@ -27,53 +35,6 @@ export const handleSocketMessage = (
   trpc: ReturnType<typeof useTRPC>,
 ) => {
   switch (message.event) {
-    case 'add-new-player': {
-      const body = parsePlayerBody(message.body);
-      queryClient.cancelQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-      });
-      queryClient.setQueryData(
-        trpc.tournament.playersIn.queryKey({ tournamentId }),
-        (cache) => {
-          if (cache) return cache.concat(body);
-        },
-      );
-      queryClient.invalidateQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-      });
-      break;
-    }
-    case 'add-existing-player': {
-      const body = parsePlayerBody(message.body);
-      queryClient.cancelQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-      });
-      queryClient.cancelQueries({
-        queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
-      });
-      queryClient.setQueryData(
-        trpc.tournament.playersIn.queryKey({ tournamentId }),
-        (cache) => {
-          if (cache) return cache.concat(body);
-        },
-      );
-      queryClient.setQueryData(
-        trpc.tournament.playersOut.queryKey({ tournamentId }),
-        (cache) => {
-          if (cache) return cache.filter((pl) => pl.id !== body.id);
-        },
-      );
-      queryClient.invalidateQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-      });
-      queryClient.invalidateQueries({
-        queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
-      });
-      queryClient.invalidateQueries({
-        queryKey: trpc.tournament.info.queryKey({ tournamentId }),
-      });
-      break;
-    }
     case 'edit-team-player': {
       const body = parsePlayerBody(message.body);
       queryClient.cancelQueries({
@@ -87,11 +48,13 @@ export const handleSocketMessage = (
             p.id === message.previousId ? body : p,
           );
           if (body.id !== message.previousId) {
-            return result.filter(
-              (p) => p.id !== body.id || (p.pairPlayers?.length ?? 0) > 0,
-            );
+            return result
+              .filter(
+                (p) => p.id !== body.id || (p.pairPlayers?.length ?? 0) > 0,
+              )
+              .sort(baselinePlayerSort);
           }
-          return result;
+          return result.sort(baselinePlayerSort);
         },
       );
       queryClient.invalidateQueries({
@@ -102,21 +65,36 @@ export const handleSocketMessage = (
       });
       break;
     }
-    case 'remove-player':
+    case 'prestart-round-updated': {
+      const players = parsePlayersBody(message.players);
+      const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
+        tournamentId,
+        roundNumber: message.roundNumber,
+      });
       queryClient.cancelQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
       });
+      queryClient.cancelQueries({ queryKey: roundGamesQueryKey });
       queryClient.setQueryData(
         trpc.tournament.playersIn.queryKey({ tournamentId }),
-        (cache) => cache && cache.filter((player) => player.id !== message.id),
+        players,
       );
+      queryClient.setQueryData(roundGamesQueryKey, message.games);
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({ queryKey: roundGamesQueryKey });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
       });
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
       });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+      });
       break;
+    }
     case 'withdraw-player':
       queryClient.cancelQueries({
         queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),

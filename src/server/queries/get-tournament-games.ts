@@ -11,10 +11,11 @@ import { aliasedTable, and, eq, getTableColumns } from 'drizzle-orm';
 
 export async function getTournamentGames(
   tournamentId: string,
+  database: Pick<typeof db, 'select'> = db,
 ): Promise<GameModel[]> {
   const whitePlayer = aliasedTable(players, 'white_player');
   const blackPlayer = aliasedTable(players, 'black_player');
-  const gamesDb = await db
+  const gamesDb = await database
     .select({
       id: games.id,
       tournamentId: games.tournamentId,
@@ -38,23 +39,28 @@ export async function getTournamentGames(
   const sortedGames: GameModel[] = gamesDb
     .map((g) => ({ ...g, pairMembers: null }))
     .sort((a, b) => a.gameNumber - b.gameNumber);
-  const tournament = await getTournamentById(tournamentId);
+  const tournament = await getTournamentById(tournamentId, database);
   if (!tournament || tournament.type !== 'doubles') return sortedGames;
 
-  const doublesTeamMembers = await getDoublesTeamMembers(tournamentId);
+  const doublesTeamMembers = await getDoublesTeamMembers(
+    tournamentId,
+    database,
+  );
   return enrichGamesWithDoublesInfo(sortedGames, doublesTeamMembers);
 }
 
 export async function getTournamentRoundGames({
   tournamentId,
   roundNumber,
+  database = db,
 }: {
   tournamentId: string;
   roundNumber: number;
+  database?: Pick<typeof db, 'select'>;
 }): Promise<GameModel[]> {
   const whitePlayer = aliasedTable(players, 'white_player');
   const blackPlayer = aliasedTable(players, 'black_player');
-  const gamesDb = await db
+  const gamesDb = await database
     .select({
       ...getTableColumns(games),
       blackNickname: blackPlayer.nickname,
@@ -73,9 +79,12 @@ export async function getTournamentRoundGames({
   const sortedGames: GameModel[] = gamesDb
     .map((g) => ({ ...g, pairMembers: null }))
     .sort((a, b) => a.gameNumber - b.gameNumber);
-  const tournament = await getTournamentById(tournamentId);
+  const tournament = await getTournamentById(tournamentId, database);
   if (!tournament || tournament.type !== 'doubles') return sortedGames;
 
-  const doublesTeamMembers = await getDoublesTeamMembers(tournamentId);
+  const doublesTeamMembers = await getDoublesTeamMembers(
+    tournamentId,
+    database,
+  );
   return enrichGamesWithDoublesInfo(sortedGames, doublesTeamMembers);
 }

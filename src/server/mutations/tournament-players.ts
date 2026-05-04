@@ -12,11 +12,12 @@ import {
   AddDoublesTeamModel,
   EditDoublesTeamModel,
   PlayerToTournamentInsertModel,
+  ReorderTournamentPlayersInputModel,
 } from '@/server/zod/tournaments';
 import {
+  PreStartPlayerOrderResultModel,
   PlayerFormModel,
   PlayerInsertModel,
-  PlayerTournamentModel,
 } from '@/server/zod/players';
 import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { applyGameResult } from './tournament-games';
@@ -24,6 +25,11 @@ import {
   normalizeSwissRoundsNumber,
   normalizeSwissRoundsNumberInDatabase,
 } from './tournament-lifecycle';
+import {
+  applyPreStartPlayerOrder,
+  getTournamentOrderTargets,
+  reapplyPreStartOrder,
+} from './tournament-player-order';
 
 export async function removePlayer({
   tournamentId,
@@ -33,7 +39,7 @@ export async function removePlayer({
   tournamentId: string;
   playerId: string;
   userId: string;
-}) {
+}): Promise<PreStartPlayerOrderResultModel> {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
@@ -54,7 +60,7 @@ export async function removePlayer({
       .then((rows) => rows.at(0));
     if (!participant) throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
 
-    await db.transaction(async (tx) => {
+    return await db.transaction(async (tx) => {
       await tx
         .delete(games)
         .where(
@@ -83,20 +89,23 @@ export async function removePlayer({
             ),
           );
       }
+      await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+      return await reapplyPreStartOrder(tournamentId, tx);
     });
-    await normalizeSwissRoundsNumber(tournamentId);
-    return;
   }
 
-  await db
-    .delete(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.playerId, playerId),
-        eq(players_to_tournaments.tournamentId, tournamentId),
-      ),
-    );
-  await normalizeSwissRoundsNumber(tournamentId);
+  return await db.transaction(async (tx) => {
+    await tx
+      .delete(players_to_tournaments)
+      .where(
+        and(
+          eq(players_to_tournaments.playerId, playerId),
+          eq(players_to_tournaments.tournamentId, tournamentId),
+        ),
+      );
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function addNewPlayer({
@@ -107,7 +116,7 @@ export async function addNewPlayer({
   tournamentId: string;
   player: PlayerFormModel & { id?: string };
   addedAt?: Date;
-}) {
+}): Promise<PreStartPlayerOrderResultModel> {
   const now = addedAt ?? new Date();
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
@@ -115,6 +124,9 @@ export async function addNewPlayer({
   if (tournament.type === 'doubles') {
     throw new Error('DOUBLES_USE_PAIRS');
   }
+  const nextPairingNumber = (
+    await getTournamentOrderTargets(tournamentId, tournament.type)
+  ).length;
 
   const playerId = player.id ?? newid();
   await db
@@ -130,7 +142,7 @@ export async function addNewPlayer({
     colorIndex: 0,
     place: null,
     isOut: null,
-    pairingNumber: null,
+    pairingNumber: nextPairingNumber,
     addedAt: now,
     newRating: null,
     newRatingDeviation: null,
@@ -138,6 +150,49 @@ export async function addNewPlayer({
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
   await normalizeSwissRoundsNumber(tournamentId);
+  return await reapplyPreStartOrder(tournamentId);
+}
+
+export async function reorderTournamentPlayers({
+  tournamentId,
+  playerIds,
+}: ReorderTournamentPlayersInputModel): Promise<PreStartPlayerOrderResultModel> {
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+
+  const orderTargets = await getTournamentOrderTargets(
+    tournamentId,
+    tournament.type,
+  );
+
+  if (orderTargets.length !== playerIds.length) {
+    throw new Error('INVALID_PLAYERS_ORDER');
+  }
+
+  const orderTargetIds = new Set(
+    orderTargets.map((participant) => participant.id),
+  );
+  if (
+    playerIds.some((playerId) => !orderTargetIds.has(playerId)) ||
+    orderTargetIds.size !== playerIds.length
+  ) {
+    throw new Error('INVALID_PLAYERS_ORDER');
+  }
+
+  const orderTargetsById = new Map(
+    orderTargets.map((target) => [target.id, target]),
+  );
+
+  return await applyPreStartPlayerOrder({
+    tournamentId,
+    tournamentType: tournament.type,
+    orderedTargets: playerIds.map((playerId) => {
+      const target = orderTargetsById.get(playerId);
+      if (!target) throw new Error('INVALID_PLAYERS_ORDER');
+      return target;
+    }),
+  });
 }
 
 export async function addExistingPlayer({
@@ -150,7 +205,7 @@ export async function addExistingPlayer({
   player: PlayerInsertModel;
   userId: string;
   addedAt?: Date;
-}) {
+}): Promise<PreStartPlayerOrderResultModel> {
   const now = addedAt ?? new Date();
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
@@ -163,6 +218,9 @@ export async function addExistingPlayer({
   }
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
+  const nextPairingNumber = (
+    await getTournamentOrderTargets(tournamentId, tournament.type)
+  ).length;
 
   const playerToTournament: PlayerToTournamentInsertModel = {
     playerId: player.id,
@@ -174,7 +232,7 @@ export async function addExistingPlayer({
     colorIndex: 0,
     place: null,
     isOut: null,
-    pairingNumber: null,
+    pairingNumber: nextPairingNumber,
     addedAt: now,
     newRating: null,
     newRatingDeviation: null,
@@ -182,6 +240,7 @@ export async function addExistingPlayer({
   };
   await db.insert(players_to_tournaments).values(playerToTournament);
   await normalizeSwissRoundsNumber(tournamentId);
+  return await reapplyPreStartOrder(tournamentId);
 }
 
 export async function addDoublesTeam({
@@ -193,7 +252,7 @@ export async function addDoublesTeam({
 }: AddDoublesTeamModel & {
   tournamentId: string;
   addedAt?: Date;
-}): Promise<PlayerTournamentModel> {
+}): Promise<PreStartPlayerOrderResultModel> {
   const now = addedAt ?? new Date();
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
@@ -261,20 +320,9 @@ export async function addDoublesTeam({
     throw new Error('PAIR_NICKNAME_TAKEN');
   }
 
-  const selectedPlayersById = new Map(
-    selectedPlayers.map((each) => [each.id, each]),
-  );
-  const orderedPlayers = [firstPlayerId, secondPlayerId].map((id) => {
-    const player = selectedPlayersById.get(id);
-    if (!player) throw new Error('PAIR_PLAYERS_NOT_FOUND');
-    return player;
-  });
-  const leaderPlayerId = firstPlayerId;
-
-  const teamRating = Math.round(
-    orderedPlayers.reduce((acc, player) => acc + player.rating, 0) /
-      orderedPlayers.length,
-  );
+  const nextPairingNumber = (
+    await getTournamentOrderTargets(tournamentId, tournament.type)
+  ).length;
 
   const teamMembers: PlayerToTournamentInsertModel[] = [
     {
@@ -287,7 +335,7 @@ export async function addDoublesTeam({
       colorIndex: 0,
       place: null,
       isOut: null,
-      pairingNumber: null,
+      pairingNumber: nextPairingNumber,
       teamNickname: nickname,
       numberInTeam: 1,
       addedAt: now,
@@ -305,7 +353,7 @@ export async function addDoublesTeam({
       colorIndex: 0,
       place: null,
       isOut: null,
-      pairingNumber: null,
+      pairingNumber: nextPairingNumber,
       teamNickname: nickname,
       numberInTeam: 2,
       addedAt: now,
@@ -319,26 +367,7 @@ export async function addDoublesTeam({
 
   await normalizeSwissRoundsNumber(tournamentId);
 
-  return {
-    id: leaderPlayerId,
-    nickname,
-    realname: null,
-    rating: teamRating,
-    wins: 0,
-    draws: 0,
-    losses: 0,
-    colorIndex: 0,
-    isOut: null,
-    place: null,
-    pairingNumber: null,
-    addedAt: now,
-    teamNickname: nickname,
-    username: null,
-    pairPlayers: orderedPlayers.map((player) => ({
-      id: player.id,
-      nickname: player.nickname,
-    })),
-  };
+  return await reapplyPreStartOrder(tournamentId);
 }
 
 export async function editDoublesTeam({
@@ -366,6 +395,7 @@ export async function editDoublesTeam({
     .select({
       teamNickname: players_to_tournaments.teamNickname,
       addedAt: players_to_tournaments.addedAt,
+      pairingNumber: players_to_tournaments.pairingNumber,
     })
     .from(players_to_tournaments)
     .where(
@@ -381,6 +411,7 @@ export async function editDoublesTeam({
   }
   const currentTeamNickname = participant.teamNickname;
   const preservedAddedAt = participant.addedAt ?? new Date();
+  const preservedPairingNumber = participant.pairingNumber ?? 0;
 
   const selectedPlayers = await db
     .select({
@@ -490,7 +521,7 @@ export async function editDoublesTeam({
         colorIndex: 0,
         place: null,
         isOut: null,
-        pairingNumber: null,
+        pairingNumber: preservedPairingNumber,
         teamNickname: nickname,
         numberInTeam: 1,
         addedAt: preservedAddedAt,
@@ -508,7 +539,7 @@ export async function editDoublesTeam({
         colorIndex: 0,
         place: null,
         isOut: null,
-        pairingNumber: null,
+        pairingNumber: preservedPairingNumber,
         teamNickname: nickname,
         numberInTeam: 2,
         addedAt: preservedAddedAt,
