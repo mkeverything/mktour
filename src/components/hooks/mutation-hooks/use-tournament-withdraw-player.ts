@@ -2,7 +2,7 @@
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTRPC } from '@/components/trpc/client';
-import { filterPendingGamesByPlayer } from '@/lib/utils';
+import { settlePendingGamesAsForfeit } from '@/lib/utils';
 import type { GameModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -53,22 +53,27 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
               roundNumber: ongoingRound,
               data: previousRoundGames,
             };
-            queryClient.setQueryData(
-              roundGamesKey,
-              (cache: GameModel[] | undefined) =>
-                filterPendingGamesByPlayer(cache, playerId),
+            const nextRoundGames = settlePendingGamesAsForfeit(
+              previousRoundGames,
+              playerId,
             );
+            queryClient.setQueryData(roundGamesKey, nextRoundGames);
           }
         }
 
         const previousState = queryClient.getQueryData(
           trpc.tournament.playersIn.queryKey({ tournamentId }),
         );
-        queryClient.setQueryData(
-          trpc.tournament.allGames.queryKey({ tournamentId }),
-          (cache: GameModel[] | undefined) =>
-            filterPendingGamesByPlayer(cache, playerId),
-        );
+        if (previousAllGames !== undefined) {
+          const nextAllGames = settlePendingGamesAsForfeit(
+            previousAllGames,
+            playerId,
+          );
+          queryClient.setQueryData(
+            trpc.tournament.allGames.queryKey({ tournamentId }),
+            nextAllGames,
+          );
+        }
 
         queryClient.setQueryData(
           trpc.tournament.playersIn.queryKey({ tournamentId }),

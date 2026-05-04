@@ -2,10 +2,9 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
-import { filterPendingGamesByPlayer } from '@/lib/utils';
 import { baselinePlayerSort } from '@/lib/tournament-results';
+import { settlePendingGamesAsForfeit } from '@/lib/utils';
 import type { PlayerTournamentModel } from '@/server/zod/players';
-import type { GameModel } from '@/server/zod/tournaments';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';
@@ -109,11 +108,19 @@ export const handleSocketMessage = (
             player.id === message.id ? { ...player, isOut: true } : player,
           ),
       );
-      queryClient.setQueryData(
+      const currentAllGames = queryClient.getQueryData(
         trpc.tournament.allGames.queryKey({ tournamentId }),
-        (cache: GameModel[] | undefined) =>
-          filterPendingGamesByPlayer(cache, message.id),
       );
+      if (currentAllGames !== undefined) {
+        const nextAllGames = settlePendingGamesAsForfeit(
+          currentAllGames,
+          message.id,
+        );
+        queryClient.setQueryData(
+          trpc.tournament.allGames.queryKey({ tournamentId }),
+          nextAllGames,
+        );
+      }
       const ongoingRound =
         queryClient.getQueryData(
           trpc.tournament.info.queryKey({ tournamentId }),
@@ -124,11 +131,14 @@ export const handleSocketMessage = (
           roundNumber: ongoingRound,
         });
         queryClient.cancelQueries({ queryKey: roundGamesKey });
-        queryClient.setQueryData(
-          roundGamesKey,
-          (cache: GameModel[] | undefined) =>
-            filterPendingGamesByPlayer(cache, message.id),
-        );
+        const currentRoundGames = queryClient.getQueryData(roundGamesKey);
+        if (currentRoundGames !== undefined) {
+          const nextRoundGames = settlePendingGamesAsForfeit(
+            currentRoundGames,
+            message.id,
+          );
+          queryClient.setQueryData(roundGamesKey, nextRoundGames);
+        }
         queryClient.invalidateQueries({ queryKey: roundGamesKey });
       }
       queryClient.invalidateQueries({

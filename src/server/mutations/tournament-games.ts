@@ -1,7 +1,7 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
-import { db } from '@/server/db';
+import { db, type Database } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import {
   games,
@@ -240,79 +240,166 @@ export async function setTournamentGameResult({
       if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
     }
 
-    const nextResult: GameResult | null =
-      game.result === result ? null : result;
-    const deltas = getPlayerResultDeltas(game.result, nextResult);
-
-    const whitePlayerUpdate = await tx
-      .update(players_to_tournaments)
-      .set({
-        wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.white.wins}`,
-        draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.white.draws}`,
-        losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.white.losses}`,
-        colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.white.colorIndex}`,
-      })
-      .where(
-        whiteParticipant?.teamNickname
-          ? and(
-              eq(players_to_tournaments.tournamentId, tournamentId),
-              eq(
-                players_to_tournaments.teamNickname,
-                whiteParticipant.teamNickname,
-              ),
-            )
-          : and(
-              eq(players_to_tournaments.tournamentId, tournamentId),
-              eq(players_to_tournaments.playerId, game.whiteId),
-            ),
-      );
-    if (!whitePlayerUpdate.rowsAffected) {
-      throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+    let nextResult: GameResult | null;
+    if (game.result === result) {
+      nextResult = null;
+    } else {
+      nextResult = result;
     }
 
-    const blackPlayerUpdate = await tx
-      .update(players_to_tournaments)
-      .set({
-        wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.black.wins}`,
-        draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.black.draws}`,
-        losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.black.losses}`,
-      })
-      .where(
-        blackParticipant?.teamNickname
-          ? and(
-              eq(players_to_tournaments.tournamentId, tournamentId),
-              eq(
-                players_to_tournaments.teamNickname,
-                blackParticipant.teamNickname,
-              ),
-            )
-          : and(
-              eq(players_to_tournaments.tournamentId, tournamentId),
-              eq(players_to_tournaments.playerId, game.blackId),
-            ),
-      );
-    if (!blackPlayerUpdate.rowsAffected) {
-      throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
-    }
+    await applyGameResult({
+      database: tx,
+      tournamentId,
+      gameId,
+      whiteId: game.whiteId,
+      blackId: game.blackId,
+      prevResult: game.result,
+      nextResult,
+    });
+  });
+}
 
-    const currentResultCondition =
-      game.result === null
-        ? isNull(games.result)
-        : eq(games.result, game.result);
-    const gameUpdate = await tx
-      .update(games)
-      .set({
-        result: nextResult,
-        finishedAt: nextResult ? new Date() : null,
-      })
+/**
+ * Applies a game result inside a caller-owned transaction.
+ *
+ * Pure DB logic — no auth, no transaction wrapping, no isOut guard, no toggle.
+ * Callers (setTournamentGameResult, withdrawPlayer's forfeit loop) handle
+ * those concerns themselves.
+ *
+ * Steps (top-to-bottom):
+ *   1. Look up team nicknames for both participants in parallel.
+ *   2. Build participant match clauses — team-wide via teamNickname for
+ *      doubles, single-row by playerId for solo.
+ *   3. Compute wins/draws/losses/colorIndex deltas via getPlayerResultDeltas.
+ *   4. UPDATE white participant's stat counters with the deltas.
+ *   5. UPDATE black participant's stat counters with the deltas.
+ *   6. UPDATE the game row with nextResult and finishedAt, with optimistic
+ *      concurrency check on prevResult.
+ *
+ * `finishedAt` is set to now when nextResult is non-null, cleared when
+ * nextResult is null (the toggle-off case used by setTournamentGameResult).
+ */
+export async function applyGameResult({
+  database,
+  tournamentId,
+  gameId,
+  whiteId,
+  blackId,
+  prevResult,
+  nextResult,
+}: {
+  database: Database;
+  tournamentId: string;
+  gameId: string;
+  whiteId: string;
+  blackId: string;
+  prevResult: GameResult | null;
+  nextResult: GameResult | null;
+}): Promise<void> {
+  const [whiteParticipant, blackParticipant] = await Promise.all([
+    database
+      .select({ teamNickname: players_to_tournaments.teamNickname })
+      .from(players_to_tournaments)
       .where(
         and(
-          eq(games.id, gameId),
-          eq(games.tournamentId, tournamentId),
-          currentResultCondition,
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          eq(players_to_tournaments.playerId, whiteId),
         ),
-      );
-    if (!gameUpdate.rowsAffected)
-      throw new Error('CONCURRENT_GAME_RESULT_UPDATE');
-  });
+      )
+      .limit(1)
+      .then((rows) => rows.at(0)),
+    database
+      .select({ teamNickname: players_to_tournaments.teamNickname })
+      .from(players_to_tournaments)
+      .where(
+        and(
+          eq(players_to_tournaments.tournamentId, tournamentId),
+          eq(players_to_tournaments.playerId, blackId),
+        ),
+      )
+      .limit(1)
+      .then((rows) => rows.at(0)),
+  ]);
+
+  let whiteMatch;
+  if (whiteParticipant?.teamNickname) {
+    whiteMatch = and(
+      eq(players_to_tournaments.tournamentId, tournamentId),
+      eq(players_to_tournaments.teamNickname, whiteParticipant.teamNickname),
+    );
+  } else {
+    whiteMatch = and(
+      eq(players_to_tournaments.tournamentId, tournamentId),
+      eq(players_to_tournaments.playerId, whiteId),
+    );
+  }
+
+  let blackMatch;
+  if (blackParticipant?.teamNickname) {
+    blackMatch = and(
+      eq(players_to_tournaments.tournamentId, tournamentId),
+      eq(players_to_tournaments.teamNickname, blackParticipant.teamNickname),
+    );
+  } else {
+    blackMatch = and(
+      eq(players_to_tournaments.tournamentId, tournamentId),
+      eq(players_to_tournaments.playerId, blackId),
+    );
+  }
+
+  const deltas = getPlayerResultDeltas(prevResult, nextResult);
+
+  const whiteUpdate = await database
+    .update(players_to_tournaments)
+    .set({
+      wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.white.wins}`,
+      draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.white.draws}`,
+      losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.white.losses}`,
+      colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.white.colorIndex}`,
+    })
+    .where(whiteMatch);
+  if (!whiteUpdate.rowsAffected) {
+    throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+  }
+
+  const blackUpdate = await database
+    .update(players_to_tournaments)
+    .set({
+      wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.black.wins}`,
+      draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.black.draws}`,
+      losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.black.losses}`,
+      colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.black.colorIndex}`,
+    })
+    .where(blackMatch);
+  if (!blackUpdate.rowsAffected) {
+    throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+  }
+
+  let prevResultMatch;
+  if (prevResult === null) {
+    prevResultMatch = isNull(games.result);
+  } else {
+    prevResultMatch = eq(games.result, prevResult);
+  }
+
+  let finishedAt: Date | null;
+  if (nextResult === null) {
+    finishedAt = null;
+  } else {
+    finishedAt = new Date();
+  }
+
+  const gameUpdate = await database
+    .update(games)
+    .set({ result: nextResult, finishedAt })
+    .where(
+      and(
+        eq(games.id, gameId),
+        eq(games.tournamentId, tournamentId),
+        prevResultMatch,
+      ),
+    );
+  if (!gameUpdate.rowsAffected) {
+    throw new Error('CONCURRENT_GAME_RESULT_UPDATE');
+  }
 }
