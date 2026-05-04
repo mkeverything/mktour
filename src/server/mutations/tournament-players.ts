@@ -23,7 +23,7 @@ import {
   PlayerInsertModel,
 } from '@/server/zod/players';
 import { TRPCError } from '@trpc/server';
-import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
 import { applyGameResult } from './tournament-games';
 import {
   normalizeSwissRoundsNumber,
