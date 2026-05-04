@@ -174,7 +174,6 @@
     "alsoManages": "админ в:"
   },
   "Player": {
-    "last seen": "были на сайте: ",
     "never": "никогда",
     "delete": "удалить игрока",
     "nickname": "никнейм",
@@ -526,7 +525,7 @@
     "upcoming tournaments": "предстоящие турниры",
     "your club": "ваш клуб",
     "recent tournaments": "недавние турниры",
-    "see all": "все",
+    "see all": "ещё",
     "club dashboard": "панель клуба",
     "new club": "новый клуб",
     "quick links": "быстрые ссылки"

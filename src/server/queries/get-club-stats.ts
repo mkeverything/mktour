@@ -37,7 +37,10 @@ export async function getClubStats(clubId: string): Promise<ClubStatsModel> {
         )
         .where(eq(players.clubId, clubId))
         .groupBy(players.id)
-        .orderBy(desc(sql`count(${players_to_tournaments.id})`))
+        .orderBy(
+          desc(sql`count(${players_to_tournaments.id})`),
+          desc(players.lastSeenAt),
+        )
         .limit(5),
     ]);
 

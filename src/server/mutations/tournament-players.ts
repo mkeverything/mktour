@@ -1,11 +1,14 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
+import { normalizePlayerNickname } from '@/lib/player-nickname';
+import { lowerEq } from '@/lib/sql-sqlite-string';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import { games, players_to_tournaments } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import { GameResult } from '@/server/zod/enums';
 import {
@@ -19,7 +22,8 @@ import {
   PlayerFormModel,
   PlayerInsertModel,
 } from '@/server/zod/players';
-import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
 import { applyGameResult } from './tournament-games';
 import {
   normalizeSwissRoundsNumber,
@@ -129,9 +133,18 @@ export async function addNewPlayer({
   ).length;
 
   const playerId = player.id ?? newid();
-  await db
-    .insert(players)
-    .values({ ...player, lastSeenAt: new Date(), id: playerId });
+  const nickname = normalizePlayerNickname(player.nickname);
+  const taken = await playerExistsInClub({
+    nickname,
+    clubId: tournament.clubId,
+  });
+  if (taken) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'player exists error',
+    });
+  }
+
   const playerToTournament: PlayerToTournamentInsertModel = {
     playerId,
     tournamentId,
@@ -148,9 +161,15 @@ export async function addNewPlayer({
     newRatingDeviation: null,
     newVolatility: null,
   };
-  await db.insert(players_to_tournaments).values(playerToTournament);
-  await normalizeSwissRoundsNumber(tournamentId);
-  return await reapplyPreStartOrder(tournamentId);
+
+  return await db.transaction(async (tx) => {
+    await tx
+      .insert(players)
+      .values({ ...player, nickname, lastSeenAt: new Date(), id: playerId });
+    await tx.insert(players_to_tournaments).values(playerToTournament);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function reorderTournamentPlayers({
@@ -238,9 +257,11 @@ export async function addExistingPlayer({
     newRatingDeviation: null,
     newVolatility: null,
   };
-  await db.insert(players_to_tournaments).values(playerToTournament);
-  await normalizeSwissRoundsNumber(tournamentId);
-  return await reapplyPreStartOrder(tournamentId);
+  return await db.transaction(async (tx) => {
+    await tx.insert(players_to_tournaments).values(playerToTournament);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function addDoublesTeam({
@@ -308,10 +329,7 @@ export async function addDoublesTeam({
     .where(
       and(
         eq(players_to_tournaments.tournamentId, tournamentId),
-        eq(
-          sql<string>`lower(${players_to_tournaments.teamNickname})`,
-          nickname.toLowerCase(),
-        ),
+        lowerEq(players_to_tournaments.teamNickname, nickname),
       ),
     )
     .limit(1);
@@ -363,11 +381,11 @@ export async function addDoublesTeam({
     },
   ];
 
-  await db.insert(players_to_tournaments).values(teamMembers);
-
-  await normalizeSwissRoundsNumber(tournamentId);
-
-  return await reapplyPreStartOrder(tournamentId);
+  return await db.transaction(async (tx) => {
+    await tx.insert(players_to_tournaments).values(teamMembers);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function editDoublesTeam({
@@ -476,10 +494,7 @@ export async function editDoublesTeam({
     .where(
       and(
         eq(players_to_tournaments.tournamentId, tournamentId),
-        eq(
-          sql<string>`lower(${players_to_tournaments.teamNickname})`,
-          nickname.toLowerCase(),
-        ),
+        lowerEq(players_to_tournaments.teamNickname, nickname),
         ne(players_to_tournaments.teamNickname, currentTeamNickname),
       ),
     )

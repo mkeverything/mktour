@@ -173,7 +173,6 @@
     "alsoManages": "admin in:"
   },
   "Player": {
-    "last seen": "last seen: ",
     "never": "never",
     "delete": "delete player",
     "nickname": "username",

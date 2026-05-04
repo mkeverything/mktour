@@ -68,7 +68,7 @@ import {
   withdrawTournamentPlayerInputSchema,
   withdrawTournamentPlayerResultSchema,
 } from '@/server/zod/tournaments';
-import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
@@ -164,7 +164,8 @@ export const tournamentRouter = {
             eq(players.clubId, tournament.clubId),
             isNull(players_to_tournaments.playerId),
           ),
-        );
+        )
+        .orderBy(desc(players.lastSeenAt));
     }),
   roundGames: publicProcedure
     .input(
