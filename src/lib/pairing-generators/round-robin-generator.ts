@@ -7,7 +7,11 @@ import {
   makeNumberPairs,
   RoundProps,
 } from '@/lib/pairing-generators/common-generator';
-import { GameModel } from '@/server/zod/tournaments';
+import {
+  buildPairingToCircleSeatTable,
+  circleSeatForPairingNumber,
+} from '@/lib/round-robin-pairing-numbers';
+import type { GameModel } from '@/server/zod/tournaments';
 
 const INITIAL_ROUND_NUMBER = 1;
 
@@ -29,6 +33,15 @@ export function generateRoundRobinRound({
   const matchedEntities = players.map((player) =>
     convertPlayerToEntity(player, games),
   );
+
+  const playerCount = matchedEntities.length;
+  const circleSeatByPairingNumber = buildPairingToCircleSeatTable(playerCount);
+  for (const entity of matchedEntities) {
+    entity.pairingNumber = circleSeatForPairingNumber(
+      circleSeatByPairingNumber,
+      entity.pairingNumber,
+    );
+  }
 
   // generating set of base matches
   const entitiesMatchingsGenerated = generateRoundPairs(
