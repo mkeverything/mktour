@@ -2,15 +2,17 @@
 
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { PlayerTournamentModel } from '@/server/zod/players';
-import { TournamentInfoModel } from '@/server/zod/tournaments';
 import Link from 'next/link';
 import { FC } from 'react';
 
-const Winners: FC<TournamentInfoModel> = ({ tournament }) => {
-  const { data: players } = useTournamentPlayers(tournament.id);
+const Winners: FC<{
+  closedAt: Date | null;
+  tournamentId: string;
+}> = ({ closedAt, tournamentId }) => {
+  const { data: players } = useTournamentPlayers(tournamentId);
   const winners = groupWinnersByPlace(players);
 
-  if (!winners || !tournament.closedAt) return null;
+  if (!winners || !closedAt) return null;
   return (
     <div className="flex flex-col gap-4 md:hidden">
       {Object.entries(winners).map(([place, players]) => (

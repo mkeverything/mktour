@@ -2,76 +2,84 @@
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import {
-  Medal,
-  medalColour,
-} from '@/app/tournaments/[id]/dashboard/tabs/main/winners';
+  STATS_WITH_TIEBREAK,
+  type Stat,
+} from '@/app/tournaments/[id]/dashboard/tabs/table/column-types';
 import PlayerDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/player-drawer';
+import {
+  PlayerTableRow,
+  SortableTableRow,
+  TableLoading,
+  TableStatsHeads,
+} from '@/app/tournaments/[id]/dashboard/tabs/table/table-ui';
+import { useSortablePlayerTable } from '@/app/tournaments/[id]/dashboard/tabs/table/use-sortable-player-table';
 import { useTournamentRemovePlayer } from '@/components/hooks/mutation-hooks/use-tournament-remove-player';
-import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentWithdrawPlayer } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-player';
+import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
+import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
+import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  sortPlayersByResultsWithMaps,
+  type SortedPlayersResult,
+} from '@/lib/tournament-results';
 import { PlayerTournamentModel } from '@/server/zod/players';
-import { Flag, Scale, Trophy, UserRound } from 'lucide-react';
+import { UserModel } from '@/server/zod/users';
+import { DragDropProvider, DragOverlay } from '@dnd-kit/react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import {
-  FC,
-  PropsWithChildren,
+  Dispatch,
   ReactNode,
+  SetStateAction,
+  memo,
   useContext,
   useMemo,
   useState,
 } from 'react';
 import { toast } from 'sonner';
 
-import FormattedMessage from '@/components/formatted-message';
-import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
-import { useAuth } from '@/components/hooks/query-hooks/use-user';
-import {
-  type SortedPlayersResult,
-  sortPlayersByResultsWithMaps,
-} from '@/lib/tournament-results';
-import { UserModel } from '@/server/zod/users';
-
-const TournamentTable: FC = ({}) => {
+const TournamentTable = () => {
   const { id } = useParams<{ id: string }>();
   const players = useTournamentPlayers(id);
-  const tournament = useTournamentInfo(id);
-  const { status } = useContext(DashboardContext);
+  const tournament = useTournamentScoringInfo(id);
+  const { status, userId } = useContext(DashboardContext);
   const removePlayers = useTournamentRemovePlayer(id);
-  const { userId } = useContext(DashboardContext);
+  const withdrawPlayer = useTournamentWithdrawPlayer(id);
   const t = useTranslations('Tournament.Table');
   const [selectedPlayer, setSelectedPlayer] =
     useState<PlayerTournamentModel | null>(null);
-  const hasStarted = !!tournament.data?.tournament.startedAt;
-  const hasEnded = !!tournament.data?.tournament.closedAt;
+  const hasStarted = !!tournament.data?.startedAt;
+  const hasEnded = !!tournament.data?.closedAt;
   const { data: user } = useAuth();
-  const type = tournament.data?.tournament.type;
-
+  const type = tournament.data?.type;
   const allGames = useTournamentGames(id);
+  const stats = STATS_WITH_TIEBREAK;
+  const canSort = status === 'organizer' && !hasStarted;
 
   const {
     players: sortedPlayers,
     playerScoresMap,
     tiebreakScoresMap,
   } = useMemo<SortedPlayersResult>(() => {
-    if (!players.data || !tournament.data)
+    if (!players.data || !tournament.data) {
       return {
         players: [],
         playerScoresMap: new Map(),
         tiebreakScoresMap: new Map(),
       };
+    }
 
     const tournamentForScoring = {
-      format: tournament.data.tournament.format,
-      ongoingRound: hasStarted ? tournament.data.tournament.ongoingRound : 0,
+      format: tournament.data.format,
+      ongoingRound: hasStarted ? tournament.data.ongoingRound : 0,
     };
 
     return sortPlayersByResultsWithMaps(
@@ -79,19 +87,38 @@ const TournamentTable: FC = ({}) => {
       tournamentForScoring,
       allGames.data ?? [],
     );
-  }, [players.data, tournament.data, allGames.data, hasStarted]);
+  }, [allGames.data, hasStarted, players.data, tournament.data]);
 
-  const stats: Stat[] = STATS_WITH_TIEBREAK;
+  const statRenderers = useMemo<
+    Record<Stat, (player: PlayerTournamentModel) => ReactNode>
+  >(
+    () => ({
+      wins: (player) => player.wins,
+      draws: (player) => player.draws,
+      losses: (player) => player.losses,
+      score: (player) => playerScoresMap.get(player.id),
+      tiebreak: (player) => (
+        <span className="text-muted-foreground">
+          {tiebreakScoresMap.get(player.id)}
+        </span>
+      ),
+    }),
+    [playerScoresMap, tiebreakScoresMap],
+  );
+
+  const { activePlayer, activePlayerId, handleDragStart, handleDragEnd } =
+    useSortablePlayerTable(sortedPlayers, canSort);
 
   if (players.isLoading || allGames.isLoading) {
-    return <TableLoading stats={stats} />;
+    return <TableLoading canSort={canSort} stats={stats} />;
   }
+
   if (players.isError) {
     toast.error(t('added players error'), {
       id: 'query-added-players',
       duration: 3000,
     });
-    return <TableLoading stats={stats} />;
+    return <TableLoading canSort={canSort} stats={stats} />;
   }
 
   const handleDelete = () => {
@@ -107,222 +134,139 @@ const TournamentTable: FC = ({}) => {
     }
   };
 
-  const statRenderers: Record<
-    Stat,
-    (player: PlayerTournamentModel) => ReactNode
-  > = {
-    wins: (p) => p.wins,
-    draws: (p) => p.draws,
-    losses: (p) => p.losses,
-    score: (p) => playerScoresMap.get(p.id),
-    tiebreak: (p) => (
-      <span className="text-muted-foreground">
-        {tiebreakScoresMap.get(p.id)}
-      </span>
-    ),
+  const handleWithdraw = () => {
+    if (
+      userId &&
+      status === 'organizer' &&
+      hasStarted &&
+      !hasEnded &&
+      tournament.data?.format === 'swiss' &&
+      selectedPlayer &&
+      !selectedPlayer.isOut
+    ) {
+      withdrawPlayer.mutate(
+        {
+          tournamentId: id,
+          playerId: selectedPlayer.id,
+          userId,
+        },
+        { onSuccess: () => setSelectedPlayer(null) },
+      );
+    }
   };
 
   const nameColumnIntl = type !== 'solo' ? 'name column team' : 'name column';
 
   return (
     <div className="mb-20 w-full">
-      <Table className="pt-0">
-        <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
-          <TableRow>
-            <TableHeadStyled className="text-center">#</TableHeadStyled>
-            <TableHeadStyled className="w-full min-w-10 p-0">
-              {t.rich(nameColumnIntl, {
-                count: players.data?.length ?? 0,
-                small: (chunks) =>
-                  !!players.data?.length && <small>{chunks}</small>,
-              })}
-            </TableHeadStyled>
-            <TableStatsHeads stats={stats} />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedPlayers.map((player: PlayerTournamentModel, i: number) => (
-            <TableRow
-              key={player.id}
-              onClick={() => setSelectedPlayer(player)}
-              className={`${player.username === user?.username && 'bg-card/50 font-bold'}`}
-            >
-              <TableCellStyled className={`font-small w-10 text-center`}>
-                <Place player={player} hasEnded={hasEnded}>
-                  {i + 1}
-                </Place>
-              </TableCellStyled>
-              <TableCellStyled className="font-small max-w-0 truncate pl-0">
-                <Status player={player} user={user}>
-                  {player.nickname}
-                </Status>
-              </TableCellStyled>
-              {stats.map((stat) => (
-                <Stat key={stat}>{statRenderers[stat](player)}</Stat>
-              ))}
+      <DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <Table className="pt-0">
+          <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
+            <TableRow>
+              {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
+              <TableHead className="h-11 w-6 p-0 text-center">#</TableHead>
+              <TableHead className="h-11 w-full min-w-10 p-0">
+                {t.rich(nameColumnIntl, {
+                  count: players.data?.length ?? 0,
+                  small: (chunks) =>
+                    !!players.data?.length && <small>{chunks}</small>,
+                })}
+              </TableHead>
+              <TableStatsHeads stats={stats} />
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {sortedPlayers.map((player, index) => (
+              <SortablePlayerRow
+                key={player.id}
+                canSort={canSort}
+                hasEnded={hasEnded}
+                index={index}
+                isSelected={selectedPlayer?.id === player.id}
+                player={player}
+                renderStat={statRenderers}
+                setSelectedPlayer={setSelectedPlayer}
+                stats={stats}
+                user={user}
+              />
+            ))}
+          </TableBody>
+        </Table>
+        <DragOverlay dropAnimation={null}>
+          {activePlayer ? (
+            <Table className="bg-background">
+              <TableBody>
+                <PlayerTableRow
+                  canSort={canSort}
+                  hasEnded={hasEnded}
+                  index={
+                    activePlayerId
+                      ? sortedPlayers.findIndex(
+                          (player) => player.id === activePlayerId,
+                        )
+                      : 0
+                  }
+                  player={activePlayer}
+                  renderStat={statRenderers}
+                  stats={stats}
+                  user={user}
+                  isOverlay
+                />
+              </TableBody>
+            </Table>
+          ) : null}
+        </DragOverlay>
+      </DragDropProvider>
       {selectedPlayer && (
         <PlayerDrawer
           key={selectedPlayer.id}
           player={selectedPlayer}
           setSelectedPlayer={setSelectedPlayer}
           handleDelete={handleDelete}
+          handleWithdraw={handleWithdraw}
           hasStarted={hasStarted}
           hasEnded={hasEnded}
+          format={tournament.data?.format ?? 'swiss'}
         />
       )}
     </div>
   );
 };
 
-const TableStatsHeads: FC<{ stats: Stat[] }> = ({ stats }) => {
+const SortablePlayerRow = memo(function SortablePlayerRow({
+  canSort,
+  hasEnded,
+  index,
+  isSelected,
+  player,
+  renderStat,
+  setSelectedPlayer,
+  stats,
+  user,
+}: {
+  canSort: boolean;
+  hasEnded: boolean;
+  index: number;
+  isSelected: boolean;
+  player: PlayerTournamentModel;
+  renderStat: Record<Stat, (player: PlayerTournamentModel) => ReactNode>;
+  setSelectedPlayer: Dispatch<SetStateAction<PlayerTournamentModel | null>>;
+  stats: Stat[];
+  user: UserModel | null | undefined;
+}) {
   return (
-    <>
-      {stats.map((stat) => (
-        <TableHeadStyled key={stat} className="text-center">
-          {statHeadRenderers[stat]}
-        </TableHeadStyled>
-      ))}
-    </>
+    <SortableTableRow
+      canSort={canSort}
+      hasEnded={hasEnded}
+      index={index}
+      isSelected={isSelected}
+      onSelect={() => setSelectedPlayer(player)}
+      player={player}
+      renderStat={renderStat}
+      stats={stats}
+      user={user}
+    />
   );
-};
+});
 
-const TableLoading: FC<{ stats: Stat[] }> = ({ stats }) => {
-  return (
-    <div className="h-full w-full items-center justify-center overflow-hidden">
-      <span className="sr-only">
-        <FormattedMessage id="Tournament.Table.loading" />
-      </span>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHeadStyled className="text-center">#</TableHeadStyled>
-            <TableHeadStyled className="w-full min-w-10 p-0">
-              <FormattedMessage id="Player.name" />
-            </TableHeadStyled>
-            <TableStatsHeads stats={stats} />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array(20)
-            .fill(0)
-            .map((_, i) => (
-              <TableRow key={i}>
-                <TableCellStyled className="font-small w-10 text-center">
-                  <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
-                </TableCellStyled>
-                <TableCellStyled className="font-small max-w-0 truncate pl-0">
-                  <div className="bg-muted h-4 w-40 animate-pulse rounded" />
-                </TableCellStyled>
-                {Array(stats.length)
-                  .fill(0)
-                  .map((_, j) => (
-                    <TableCellStyled
-                      key={j}
-                      className="min-w-8 text-center font-medium"
-                    >
-                      <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
-                    </TableCellStyled>
-                  ))}
-              </TableRow>
-            ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-};
-
-const Place: FC<
-  { player: PlayerTournamentModel; hasEnded: boolean } & PropsWithChildren
-> = ({ player, hasEnded, children }) => {
-  const place = player.place;
-
-  if (!place || !hasEnded) return children;
-
-  return place > 3 ? (
-    place
-  ) : (
-    <Medal className={`${medalColour[place - 1]} size-4`} />
-  );
-};
-
-const Status: FC<
-  {
-    player: PlayerTournamentModel;
-    user: UserModel | null | undefined;
-  } & PropsWithChildren
-> = ({ player, children }) => {
-  const pairPlayers = player.pairPlayers ?? [];
-
-  return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <div
-        className={`gap-mk flex min-w-0 items-center ${player.isOut && 'text-muted-foreground'}`}
-      >
-        <span className="truncate">{children}</span>
-        {player.username && (
-          <UserRound className="text-muted-foreground size-4 shrink-0" />
-        )}
-        {player.isOut && <Flag className="size-4 shrink-0" />}
-      </div>
-      {pairPlayers.length === 2 && (
-        <small className="text-muted-foreground text-2xs truncate">
-          {pairPlayers[0].nickname}, {pairPlayers[1].nickname}
-        </small>
-      )}
-    </div>
-  );
-};
-
-const TableCellStyled: FC<PropsWithChildren & { className?: string }> = ({
-  children,
-  className,
-}) => <TableCell className={`p-3 ${className}`}>{children}</TableCell>;
-
-const TableHeadStyled: FC<PropsWithChildren & { className?: string }> = ({
-  children,
-  className,
-}) => <TableHead className={`h-11 ${className}`}>{children}</TableHead>;
-
-const Stat: FC<PropsWithChildren> = ({ children }) => (
-  <TableCellStyled className="min-w-8 text-center font-medium">
-    {children}
-  </TableCellStyled>
-);
-
-const renderTextHead = (stat: Exclude<Stat, 'score' | 'tiebreak'>) => (
-  <>
-    <div className="block sm:hidden md:block xl:hidden">
-      <FormattedMessage id={`Tournament.Table.Stats.short.${stat}`} />
-    </div>
-    <div className="hidden sm:block md:hidden xl:block">
-      <FormattedMessage id={`Tournament.Table.Stats.full.${stat}`} />
-    </div>
-  </>
-);
-
-const statHeadRenderers: Record<Stat, React.ReactNode> = {
-  wins: renderTextHead('wins'),
-  draws: renderTextHead('draws'),
-  losses: renderTextHead('losses'),
-  score: <Trophy className="m-auto size-3.5" />,
-  tiebreak: <Scale className="m-auto size-4" />,
-};
-
-const STATS_WITH_TIEBREAK: Stat[] = [
-  'wins',
-  'draws',
-  'losses',
-  'score',
-  'tiebreak',
-];
-
-type Stat =
-  | keyof Pick<PlayerTournamentModel, 'wins' | 'draws' | 'losses'>
-  | 'score'
-  | 'tiebreak';
-
-export default TournamentTable;
+export default memo(TournamentTable);

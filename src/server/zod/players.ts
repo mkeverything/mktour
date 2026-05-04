@@ -1,7 +1,7 @@
 import { affiliations, players } from '@/server/db/schema/players';
 import { players_to_tournaments } from '@/server/db/schema/tournaments';
 import { affiliationStatusEnum } from '@/server/zod/enums';
-import { tournamentSchema } from '@/server/zod/tournaments';
+import { gameSchema, tournamentSchema } from '@/server/zod/tournaments';
 import {
   createInsertSchema,
   createSelectSchema,
@@ -32,6 +32,7 @@ export const playersInsertSchema = createInsertSchema(players, {
       }),
   nickname: (s) =>
     s
+      .trim()
       .min(3, {
         error: 'min nickname length',
       })
@@ -77,6 +78,7 @@ export const playerEditSchema = playersUpdateSchema
     id: z.string(),
     nickname: z
       .string()
+      .trim()
       .min(2, { error: 'min nickname length' })
       .max(30, { error: 'max nickname length' })
       .optional(),
@@ -116,6 +118,11 @@ export const playerTournamentSchema = playersToTournamentsSelectSchema
       .nullable(),
   });
 
+export const preStartPlayerOrderResultSchema = z.object({
+  players: z.array(playerTournamentSchema),
+  games: z.array(gameSchema),
+});
+
 export const playerStatsSchema = z.object({
   tournamentsPlayed: z.object({
     value: z.number(),
@@ -141,6 +148,9 @@ export const playerAuthStatsSchema = z.object({
 });
 
 export type PlayerTournamentModel = z.infer<typeof playerTournamentSchema>;
+export type PreStartPlayerOrderResultModel = z.infer<
+  typeof preStartPlayerOrderResultSchema
+>;
 
 export type AffiliationModel = z.infer<typeof affiliationsSelectSchema>;
 export type AffiliationInsertModel = z.infer<typeof affiliationsInsertSchema>;

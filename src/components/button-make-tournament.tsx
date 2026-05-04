@@ -1,14 +1,26 @@
-import { Button } from '@/components/ui/button';
+import type { ClassValue } from 'clsx';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
 // import { Link } from 'next-view-transitions';
 
-export default async function MakeTournamentButton() {
+type MakeTournamentButtonProps = {
+  className?: ClassValue;
+};
+
+export default async function MakeTournamentButton({
+  className,
+}: MakeTournamentButtonProps) {
   const t = await getTranslations();
   return (
     <Button
-      className="m-auto flex h-28 min-h-28 w-full max-w-md flex-col gap-2 font-bold"
+      className={cn(
+        'm-auto flex h-28 min-h-28 w-full max-w-md flex-col gap-2 font-bold',
+        className,
+      )}
       variant="default"
       asChild
     >

@@ -28,6 +28,18 @@ const SWISS_PLAYER_NUMBER_FAKEOPTS = {
   max: 32,
 };
 
+/** Smallest player count where mid-tournament withdrawal still produces a real pairing (1 game + 1 PAB). */
+const WITHDRAWAL_TEST_PLAYER_COUNT = 4;
+
+/** Index of the player that gets withdrawn in withdrawal scenarios — the last one by pairing number. */
+const WITHDRAWN_PLAYER_INDEX = WITHDRAWAL_TEST_PLAYER_COUNT - 1;
+
+/** Round number used when testing withdrawal between two played rounds. */
+const SECOND_ONGOING_ROUND = INITIAL_ONGOING_ROUND + 1;
+
+/** Per FIDE C.04.3 §C.5, at most one PAB per round per bracket — and exactly one when the active count is odd. */
+const EXPECTED_PAB_COUNT_FOR_ODD_ACTIVE = 1;
+
 /**
  * Generates a complete Swiss tournament with the given seed
  * @param seed - Random seed for deterministic generation
@@ -123,6 +135,101 @@ describe('Swiss Generator Black-Box Tests', () => {
     test('Seed 19: completes all test rounds', () => {
       const result = generateTournamentWithSeed(19);
       expect(result.roundsCompleted).toBe(result.roundsToTest);
+    });
+
+    test('withdrawn player is excluded from future pairings', () => {
+      const players = Array.from({ length: 4 }, (_, index) => {
+        const player = generatePlayerModel();
+        player.pairingNumber = index;
+        return player;
+      });
+
+      const withdrawnPlayer = players[3];
+      withdrawnPlayer.isOut = true;
+
+      const round = generateWeightedSwissRound({
+        players,
+        games: [],
+        roundNumber: 1,
+        tournamentId: generateRandomDatabaseTournament().id,
+      });
+
+      expect(round).toHaveLength(1);
+      expect(
+        round.some(
+          (game) =>
+            game.whiteId === withdrawnPlayer.id ||
+            game.blackId === withdrawnPlayer.id,
+        ),
+      ).toBe(false);
+    });
+
+    test('odd active count after withdrawal yields exactly one PAB recipient', () => {
+      const players = Array.from(
+        { length: WITHDRAWAL_TEST_PLAYER_COUNT },
+        (_, index) => {
+          const player = generatePlayerModel();
+          player.pairingNumber = index;
+          return player;
+        },
+      );
+
+      players[WITHDRAWN_PLAYER_INDEX].isOut = true;
+
+      const round = generateWeightedSwissRound({
+        players,
+        games: [],
+        roundNumber: INITIAL_ONGOING_ROUND,
+        tournamentId: generateRandomDatabaseTournament().id,
+      });
+
+      const activeIds = players
+        .filter((player) => !player.isOut)
+        .map((player) => player.id);
+      const pairedIds = new Set(
+        round.flatMap((game) => [game.whiteId, game.blackId]),
+      );
+      const pabRecipients = activeIds.filter((id) => !pairedIds.has(id));
+
+      expect(pabRecipients).toHaveLength(EXPECTED_PAB_COUNT_FOR_ODD_ACTIVE);
+    });
+
+    test('withdrawal between rounds keeps the withdrawn player out of the next pairing', () => {
+      const players = Array.from(
+        { length: WITHDRAWAL_TEST_PLAYER_COUNT },
+        (_, index) => {
+          const player = generatePlayerModel();
+          player.pairingNumber = index;
+          return player;
+        },
+      );
+      const tournamentId = generateRandomDatabaseTournament().id;
+
+      const firstRound = generateWeightedSwissRound({
+        players,
+        games: [],
+        roundNumber: INITIAL_ONGOING_ROUND,
+        tournamentId,
+      });
+      firstRound.forEach(fillRandomResult);
+
+      const withdrawnPlayer = players[WITHDRAWN_PLAYER_INDEX];
+      withdrawnPlayer.isOut = true;
+
+      const secondRound = generateWeightedSwissRound({
+        players: updatePlayerScores(players, firstRound),
+        games: firstRound,
+        roundNumber: SECOND_ONGOING_ROUND,
+        tournamentId,
+      });
+
+      expect(
+        secondRound.some(
+          (game) =>
+            game.whiteId === withdrawnPlayer.id ||
+            game.blackId === withdrawnPlayer.id,
+        ),
+      ).toBe(false);
     });
   });
 

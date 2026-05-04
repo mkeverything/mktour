@@ -51,6 +51,7 @@ export function generateSwissRound({
   roundNumber,
   tournamentId,
 }: RoundProps): GameModel[] {
+  players = players.filter((player) => !player.isOut);
   games = games?.filter((game) => game.roundNumber !== roundNumber) ?? [];
 
   // checking if the set of layers is even, if not, making it even with a smart alg
@@ -451,6 +452,7 @@ export function generateWeightedSwissRound({
   roundNumber,
   tournamentId,
 }: RoundProps): GameModel[] {
+  players = players.filter((player) => !player.isOut);
   // Filter out any games from the current round (in case of re-generation)
   const filteredGames =
     games?.filter((game) => game.roundNumber !== roundNumber) ?? [];

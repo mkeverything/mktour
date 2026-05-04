@@ -1,15 +1,20 @@
 import { GameResult } from '@/server/zod/enums';
 import { PlayerTournamentModel } from '@/server/zod/players';
+import { GameModel } from '@/server/zod/tournaments';
 
 type DashboardMessage =
-  | { event: 'add-existing-player'; body: PlayerTournamentModel }
-  | { event: 'add-new-player'; body: PlayerTournamentModel }
   | {
       event: 'edit-team-player';
       body: PlayerTournamentModel;
       previousId: string;
     }
-  | { event: 'remove-player'; id: string } // onError add-exidsting-player
+  | {
+      event: 'prestart-round-updated';
+      players: PlayerTournamentModel[];
+      games: GameModel[];
+      roundNumber: 1;
+    }
+  | { event: 'withdraw-player'; id: string }
   | {
       event: 'set-game-result';
       gameId: string;

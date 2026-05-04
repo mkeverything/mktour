@@ -25,7 +25,7 @@ import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 
@@ -60,7 +60,10 @@ const AddNewPlayer = ({
     reValidateMode: 'onSubmit',
   });
 
-  const nickname = form.watch('nickname');
+  const nickname = useWatch({
+    control: form.control,
+    name: 'nickname',
+  });
 
   useEffect(() => {
     if (nickname === undefined) return;
@@ -116,9 +119,6 @@ const AddNewPlayer = ({
         onError: () => {
           form.reset(player, { keepDefaultValues: true });
           form.setFocus('nickname');
-        },
-        onSuccess: () => {
-          toast.success(t('player added', { name: player.nickname }));
         },
       },
     );

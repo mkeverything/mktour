@@ -19,7 +19,14 @@ import { Maximize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FC, useCallback, useContext, useState } from 'react';
+import {
+  ChangeEvent,
+  FC,
+  memo,
+  useCallback,
+  useContext,
+  useState,
+} from 'react';
 
 const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
@@ -34,6 +41,13 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
 
   const { mutate } = useTournamentEditTitle();
 
+  const handleTitleChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setControlledTitle(event.target.value);
+    },
+    [],
+  );
+
   const handleTitleUpdate = useCallback(() => {
     if (controlledTitle !== tournamentTitle)
       mutate({ tournamentId, title: controlledTitle });
@@ -45,24 +59,14 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   return (
     <div className="px-mk md:px-mk-2 flex flex-col md:grid md:grid-cols-2">
       <div className="col-span-2">
-        <div
-          className={`p-mk flex items-center justify-between max-md:border-b md:pb-0`}
-        >
-          <InputGhost
-            disabled={!isOrganizer}
-            placeholder={fallbackTitle}
-            value={controlledTitle}
-            onBlur={handleTitleUpdate}
-            onChange={(event) => setControlledTitle(event.target.value)}
-            className={`text-3xl ${turboPascal.className} truncate`}
-          />
-          {isOrganizer && (
-            <DestructiveTournamentButtonsComboModal
-              tournament={data.tournament}
-              className="md:hidden"
-            />
-          )}
-        </div>
+        <TournamentTitle
+          controlledTitle={controlledTitle}
+          fallbackTitle={fallbackTitle}
+          handleTitleChange={handleTitleChange}
+          handleTitleUpdate={handleTitleUpdate}
+          isOrganizer={isOrganizer}
+          tournament={data.tournament}
+        />
       </div>
       <TournamentInfoList />
       <div className="flex w-full items-start justify-end md:col-span-1 md:items-end">
@@ -139,4 +143,43 @@ export const LoadingElement = () => {
   );
 };
 
-export default Main;
+const TournamentTitle = memo(function TournamentTitle({
+  controlledTitle,
+  fallbackTitle,
+  handleTitleChange,
+  handleTitleUpdate,
+  isOrganizer,
+  tournament,
+}: {
+  controlledTitle: string;
+  fallbackTitle: string;
+  handleTitleChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  handleTitleUpdate: () => void;
+  isOrganizer: boolean;
+  tournament: Parameters<
+    typeof DestructiveTournamentButtonsComboModal
+  >[0]['tournament'];
+}) {
+  return (
+    <div
+      className={`p-mk flex items-center justify-between max-md:border-b md:pb-0`}
+    >
+      <InputGhost
+        disabled={!isOrganizer}
+        placeholder={fallbackTitle}
+        value={controlledTitle}
+        onBlur={handleTitleUpdate}
+        onChange={handleTitleChange}
+        className={`text-3xl ${turboPascal.className} truncate`}
+      />
+      {isOrganizer && (
+        <DestructiveTournamentButtonsComboModal
+          tournament={tournament}
+          className="md:hidden"
+        />
+      )}
+    </div>
+  );
+});
+
+export default memo(Main);

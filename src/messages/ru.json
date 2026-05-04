@@ -174,7 +174,6 @@
     "alsoManages": "админ в:"
   },
   "Player": {
-    "last seen": "были на сайте: ",
     "never": "никогда",
     "delete": "удалить игрока",
     "nickname": "никнейм",
@@ -225,6 +224,8 @@
     "name": "как зовут человека?",
     "add-player-error": "простите! не получилось добавить в турнир игрока \"{player}\"",
     "remove-player-error": "простите! не удалось удалить игрока \"{player}\" из турнира",
+    "withdraw-player-error": "простите! не удалось выписать игрока \"{player}\" из турнира",
+    "withdraw-player-rounds-error": "нельзя выписать игрока: осталось слишком мало туров",
     "internal-error": "внутренняя ошибка: {error}",
     "max 50": "максимум 50 символов",
     "min nickname length": "минимум три буквы",
@@ -337,7 +338,8 @@
     "player has tournaments": "простите! нельзя удалять игрока, который участвовал в турнире. для этого придётся удалить турнир тоже",
     "club updated": "клуб обновлён",
     "tournament renamed": "название турнира сохранено",
-    "player result setting disabled": "админы клуба отключили возможность игрокам заносить результаты"
+    "player result setting disabled": "админы клуба отключили возможность игрокам заносить результаты",
+    "rounds number decreased automatically": "пришлось автоматически уменьшить количество туров до {roundsNumber}"
   },
   "UserSettings": {
     "header": "настройки",
@@ -433,6 +435,7 @@
     "Table": {
       "added players error": "простите! не получилось загрузить игроков",
       "loading": "идёт загрузка...",
+      "reorder": "изменить порядок",
       "name column": "имя <small>({count} {count, plural, one {игрок} few {игрока} many {игроков} other {игроков}})</small>",
       "name column team": "имя <small>({count} {count, plural, one {команда} few {команды} many {команд} other {команд}})</small>",
       "Stats": {
@@ -522,7 +525,7 @@
     "upcoming tournaments": "предстоящие турниры",
     "your club": "ваш клуб",
     "recent tournaments": "недавние турниры",
-    "see all": "все",
+    "see all": "ещё",
     "club dashboard": "панель клуба",
     "new club": "новый клуб",
     "quick links": "быстрые ссылки"
