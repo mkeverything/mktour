@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/mkeverything/mktour/compare/v1.8.0...v1.8.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* round-robin generator correctly handles first consecutive round ([b83f2c3](https://github.com/mkeverything/mktour/commit/b83f2c3b25ec18610a11f68a1614581cce6a7398))
+
 # [1.8.0](https://github.com/mkeverything/mktour/compare/v1.7.3...v1.8.0) (2026-05-04)
 
 
