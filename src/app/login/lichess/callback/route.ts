@@ -10,6 +10,7 @@ import { LichessUser } from '@/types/lichess-api';
 import { ArcticFetchError, OAuth2RequestError } from 'arctic';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
@@ -31,12 +32,7 @@ export async function GET(request: Request): Promise<Response> {
     const retryUrl = authFrom
       ? `/login/lichess?from=${encodeURIComponent(authFrom)}`
       : '/login/lichess';
-    return new Response(null, {
-      status: 302,
-      headers: {
-        Location: retryUrl,
-      },
-    });
+    return NextResponse.redirect(new URL(retryUrl, request.url));
   }
 
   try {
@@ -73,12 +69,7 @@ export async function GET(request: Request): Promise<Response> {
       cooks.set(sessionCookie.name, sessionCookie.value, {
         ...sessionCookie.attributes,
       });
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: authFrom ? authFrom : '/',
-        },
-      });
+      return NextResponse.redirect(new URL(authFrom ?? '/', request.url));
     }
 
     try {
@@ -126,12 +117,7 @@ export async function GET(request: Request): Promise<Response> {
       console.log(e);
     }
 
-    return new Response(null, {
-      status: 302,
-      headers: {
-        Location: authFrom ? authFrom : '/',
-      },
-    });
+    return NextResponse.redirect(new URL(authFrom ?? '/', request.url));
   } catch (e) {
     if (
       e instanceof OAuth2RequestError &&
