@@ -17,7 +17,6 @@ import { RoundProps } from '@/lib/pairing-generators/common-generator';
 import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
 import { generateWeightedSwissRound } from '@/lib/pairing-generators/swiss-generator';
 import { TournamentFormat } from '@/server/zod/enums';
-import type { PlayerTournamentModel } from '@/server/zod/players';
 import { GameModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';
@@ -91,42 +90,6 @@ function generateRound(
   }
 }
 
-function getPlayersForRoundGeneration(
-  format: TournamentFormat,
-  players: PlayerTournamentModel[],
-  games: GameModel[],
-) {
-  if (format !== 'round robin') return players;
-
-  const roundOneGames = games
-    .filter((game) => game.roundNumber === 1)
-    .sort((a, b) => a.gameNumber - b.gameNumber);
-  if (roundOneGames.length === 0) return players;
-
-  const pairingIds = roundOneGames.reduce((acc, game) => {
-    acc.unshift(game.whiteId);
-    acc.push(game.blackId);
-    return acc;
-  }, [] as string[]);
-  const pairedIds = new Set(pairingIds);
-  const unpairedPlayers = players.filter((player) => !pairedIds.has(player.id));
-
-  if (unpairedPlayers.length === 1) {
-    pairingIds.unshift(unpairedPlayers[0].id);
-  } else if (unpairedPlayers.length > 1) {
-    return players;
-  }
-
-  const pairingNumberById = new Map(
-    pairingIds.map((playerId, index) => [playerId, index]),
-  );
-
-  return players.map((player) => ({
-    ...player,
-    pairingNumber: pairingNumberById.get(player.id) ?? player.pairingNumber,
-  }));
-}
-
 const NewRoundButton: FC<{
   tournamentId: string;
   roundNumber: number;
@@ -149,13 +112,8 @@ const NewRoundButton: FC<{
     );
     const games = tournamentGames;
     if (!players || !games) return;
-    const playersForGeneration = getPlayersForRoundGeneration(
-      format,
-      players,
-      games,
-    );
     const newGames = generateRound(format, {
-      players: playersForGeneration,
+      players,
       games,
       roundNumber: roundNumber + 1,
       tournamentId,
