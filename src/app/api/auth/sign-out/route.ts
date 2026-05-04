@@ -6,5 +6,7 @@ import { NextResponse } from 'next/server';
 export const POST = async (request: Request) => {
   await logout();
   revalidateTag(CACHE_TAGS.AUTH, 'max');
-  return NextResponse.redirect(new URL('/sign-in', request.url));
+  return NextResponse.redirect(new URL('/sign-in', request.url), {
+    status: 302,
+  });
 };

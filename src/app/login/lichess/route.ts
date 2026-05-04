@@ -5,6 +5,8 @@ import { generateCodeVerifier, generateState } from 'arctic';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
+import { createOauthRedirectResponse } from './oauth-response';
+
 export async function GET(request: NextRequest): Promise<Response> {
   const from = request.nextUrl.searchParams.get('from');
   const state = generateState();
@@ -14,32 +16,33 @@ export async function GET(request: NextRequest): Promise<Response> {
     'team:write',
   ]);
 
+  const response = createOauthRedirectResponse(url);
   const cooks = await cookies();
 
   cooks.getAll().forEach((cookie) => {
-    if (cookie.name !== 'NEXT_LOCALE') cooks.delete(cookie.name);
+    if (cookie.name !== 'NEXT_LOCALE') response.cookies.delete(cookie.name);
   });
 
   if (from) {
-    cooks.set('auth_from', from, {
+    response.cookies.set('auth_from', from, {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
     });
   }
 
-  cooks.set('lichess_oauth_state', state, {
+  response.cookies.set('lichess_oauth_state', state, {
     path: '/',
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'lax',
   });
-  cooks.set('lichess_oauth_code_validation', codeVerifier, {
+  response.cookies.set('lichess_oauth_code_validation', codeVerifier, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     sameSite: 'lax',
   });
 
-  return Response.redirect(url);
+  return response;
 }

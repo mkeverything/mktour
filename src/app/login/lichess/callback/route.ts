@@ -1,5 +1,6 @@
 'use server';
 
+import { createOauthRedirectResponse } from '@/app/login/lichess/oauth-response';
 import { lichess, lucia } from '@/lib/auth/lucia';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
@@ -10,7 +11,6 @@ import { LichessUser } from '@/types/lichess-api';
 import { ArcticFetchError, OAuth2RequestError } from 'arctic';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
 
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
@@ -18,7 +18,6 @@ export async function GET(request: Request): Promise<Response> {
   const state = url.searchParams.get('state');
   const cooks = await cookies();
   const authFrom = cooks.get('auth_from')?.value ?? null;
-  cooks.delete('auth_from');
   const storedState = cooks.get('lichess_oauth_state')?.value ?? null;
   const codeVerifier = cooks.get('lichess_oauth_code_validation')?.value;
 
@@ -32,7 +31,7 @@ export async function GET(request: Request): Promise<Response> {
     const retryUrl = authFrom
       ? `/login/lichess?from=${encodeURIComponent(authFrom)}`
       : '/login/lichess';
-    return NextResponse.redirect(new URL(retryUrl, request.url));
+    return createOauthRedirectResponse(retryUrl, request.url);
   }
 
   try {
@@ -54,7 +53,12 @@ export async function GET(request: Request): Promise<Response> {
     const lichessUserEmail = (await lichessUserEmailResponse.json())
       .email as string;
 
-    cooks.set('token', tokens.accessToken(), {
+    const redirectResponse = createOauthRedirectResponse(
+      authFrom ?? '/',
+      request.url,
+    );
+
+    redirectResponse.cookies.set('token', tokens.accessToken(), {
       sameSite: 'none',
       secure: true,
     });
@@ -66,10 +70,10 @@ export async function GET(request: Request): Promise<Response> {
     if (existingUser) {
       const session = await lucia.createSession(existingUser.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cooks.set(sessionCookie.name, sessionCookie.value, {
+      redirectResponse.cookies.set(sessionCookie.name, sessionCookie.value, {
         ...sessionCookie.attributes,
       });
-      return NextResponse.redirect(new URL(authFrom ?? '/', request.url));
+      return redirectResponse;
     }
 
     try {
@@ -106,18 +110,18 @@ export async function GET(request: Request): Promise<Response> {
         language: 'en',
       });
 
-      cooks.set('show_new_user_toast', 'true');
+      redirectResponse.cookies.set('show_new_user_toast', 'true');
 
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cooks.set(sessionCookie.name, sessionCookie.value, {
+      redirectResponse.cookies.set(sessionCookie.name, sessionCookie.value, {
         ...sessionCookie.attributes,
       });
     } catch (e) {
       console.log(e);
     }
 
-    return NextResponse.redirect(new URL(authFrom ?? '/', request.url));
+    return redirectResponse;
   } catch (e) {
     if (
       e instanceof OAuth2RequestError &&
