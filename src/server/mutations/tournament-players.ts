@@ -10,6 +10,7 @@ import { games, players_to_tournaments } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
+import { GameResult } from '@/server/zod/enums';
 import {
   AddDoublesTeamModel,
   EditDoublesTeamModel,
@@ -23,6 +24,7 @@ import {
 } from '@/server/zod/players';
 import { TRPCError } from '@trpc/server';
 import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
+import { applyGameResult } from './tournament-games';
 import {
   normalizeSwissRoundsNumber,
   normalizeSwissRoundsNumberInDatabase,
@@ -143,9 +145,6 @@ export async function addNewPlayer({
     });
   }
 
-  await db
-    .insert(players)
-    .values({ ...player, nickname, lastSeenAt: new Date(), id: playerId });
   const playerToTournament: PlayerToTournamentInsertModel = {
     playerId,
     tournamentId,
@@ -162,9 +161,15 @@ export async function addNewPlayer({
     newRatingDeviation: null,
     newVolatility: null,
   };
-  await db.insert(players_to_tournaments).values(playerToTournament);
-  await normalizeSwissRoundsNumber(tournamentId);
-  return await reapplyPreStartOrder(tournamentId);
+
+  return await db.transaction(async (tx) => {
+    await tx
+      .insert(players)
+      .values({ ...player, nickname, lastSeenAt: new Date(), id: playerId });
+    await tx.insert(players_to_tournaments).values(playerToTournament);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function reorderTournamentPlayers({
@@ -252,9 +257,11 @@ export async function addExistingPlayer({
     newRatingDeviation: null,
     newVolatility: null,
   };
-  await db.insert(players_to_tournaments).values(playerToTournament);
-  await normalizeSwissRoundsNumber(tournamentId);
-  return await reapplyPreStartOrder(tournamentId);
+  return await db.transaction(async (tx) => {
+    await tx.insert(players_to_tournaments).values(playerToTournament);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function addDoublesTeam({
@@ -374,11 +381,11 @@ export async function addDoublesTeam({
     },
   ];
 
-  await db.insert(players_to_tournaments).values(teamMembers);
-
-  await normalizeSwissRoundsNumber(tournamentId);
-
-  return await reapplyPreStartOrder(tournamentId);
+  return await db.transaction(async (tx) => {
+    await tx.insert(players_to_tournaments).values(teamMembers);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    return await reapplyPreStartOrder(tournamentId, tx);
+  });
 }
 
 export async function editDoublesTeam({
@@ -627,8 +634,13 @@ export async function withdrawPlayer({
       throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
     }
 
-    await tx
-      .delete(games)
+    const pendingGames = await tx
+      .select({
+        id: games.id,
+        whiteId: games.whiteId,
+        blackId: games.blackId,
+      })
+      .from(games)
       .where(
         and(
           eq(games.tournamentId, tournamentId),
@@ -636,6 +648,27 @@ export async function withdrawPlayer({
           or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
         ),
       );
+
+    for (const pendingGame of pendingGames) {
+      const isWithdrawnWhite = pendingGame.whiteId === playerId;
+      let forfeitResult: GameResult;
+      if (isWithdrawnWhite) {
+        forfeitResult = '0-1';
+      } else {
+        forfeitResult = '1-0';
+      }
+
+      await applyGameResult({
+        database: tx,
+        tournamentId,
+        gameId: pendingGame.id,
+        whiteId: pendingGame.whiteId,
+        blackId: pendingGame.blackId,
+        prevResult: null,
+        nextResult: forfeitResult,
+      });
+    }
+
     const normalizedRounds = await normalizeSwissRoundsNumberInDatabase(
       tournamentId,
       tx,

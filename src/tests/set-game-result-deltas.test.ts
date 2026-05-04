@@ -22,18 +22,18 @@ function getExpectedStatsForResult(result: GameResult | null): {
   if (result === '1-0') {
     return {
       white: { wins: 1, draws: 0, losses: 0, colorIndex: 1 },
-      black: { wins: 0, draws: 0, losses: 1, colorIndex: 0 },
+      black: { wins: 0, draws: 0, losses: 1, colorIndex: -1 },
     };
   }
   if (result === '0-1') {
     return {
       white: { wins: 0, draws: 0, losses: 1, colorIndex: 1 },
-      black: { wins: 1, draws: 0, losses: 0, colorIndex: 0 },
+      black: { wins: 1, draws: 0, losses: 0, colorIndex: -1 },
     };
   }
   return {
     white: { wins: 0, draws: 1, losses: 0, colorIndex: 1 },
-    black: { wins: 0, draws: 1, losses: 0, colorIndex: 0 },
+    black: { wins: 0, draws: 1, losses: 0, colorIndex: -1 },
   };
 }
 
@@ -74,7 +74,7 @@ describe('set game result deltas', () => {
       wins: 0,
       draws: 0,
       losses: -1,
-      colorIndex: 0,
+      colorIndex: 1,
     });
 
     const drawRollback = getPlayerResultDeltas('1/2-1/2', null);
@@ -88,7 +88,7 @@ describe('set game result deltas', () => {
       wins: 0,
       draws: -1,
       losses: 0,
-      colorIndex: 0,
+      colorIndex: 1,
     });
   });
 });
