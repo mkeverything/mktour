@@ -10,6 +10,7 @@ import { games, players_to_tournaments } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
+import { GameResult } from '@/server/zod/enums';
 import {
   AddDoublesTeamModel,
   EditDoublesTeamModel,
@@ -22,7 +23,8 @@ import {
   PlayerInsertModel,
 } from '@/server/zod/players';
 import { TRPCError } from '@trpc/server';
-import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
+import { applyGameResult } from './tournament-games';
 import {
   normalizeSwissRoundsNumber,
   normalizeSwissRoundsNumberInDatabase,
@@ -632,8 +634,13 @@ export async function withdrawPlayer({
       throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
     }
 
-    await tx
-      .delete(games)
+    const pendingGames = await tx
+      .select({
+        id: games.id,
+        whiteId: games.whiteId,
+        blackId: games.blackId,
+      })
+      .from(games)
       .where(
         and(
           eq(games.tournamentId, tournamentId),
@@ -641,6 +648,27 @@ export async function withdrawPlayer({
           or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
         ),
       );
+
+    for (const pendingGame of pendingGames) {
+      const isWithdrawnWhite = pendingGame.whiteId === playerId;
+      let forfeitResult: GameResult;
+      if (isWithdrawnWhite) {
+        forfeitResult = '0-1';
+      } else {
+        forfeitResult = '1-0';
+      }
+
+      await applyGameResult({
+        database: tx,
+        tournamentId,
+        gameId: pendingGame.id,
+        whiteId: pendingGame.whiteId,
+        blackId: pendingGame.blackId,
+        prevResult: null,
+        nextResult: forfeitResult,
+      });
+    }
+
     const normalizedRounds = await normalizeSwissRoundsNumberInDatabase(
       tournamentId,
       tx,
