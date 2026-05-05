@@ -1,0 +1,10 @@
+{
+  "plugins": {
+    "posthog": {
+      "enabled": true
+    },
+    "vercel": {
+      "enabled": true
+    }
+  }
+}
