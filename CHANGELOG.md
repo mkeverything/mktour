@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/mkeverything/mktour/compare/v1.8.1...v1.8.2) (2026-05-05)
+
+
+### Bug Fixes
+
+* authentication drop on mobile devices ([#95](https://github.com/mkeverything/mktour/issues/95)) ([ad535eb](https://github.com/mkeverything/mktour/commit/ad535ebf67e51aa63e73414643df94f00e42761f))
+
 ## [1.8.1](https://github.com/mkeverything/mktour/compare/v1.8.0...v1.8.1) (2026-05-04)
 
 
