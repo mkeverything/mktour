@@ -113,7 +113,11 @@ const Menu: FC = () => {
             ))}
             <MenuItem className="ml-3 text-2xl">
               {!user ? (
-                <Link href="/login/lichess" onClick={() => toggleOpen()}>
+                <Link
+                  href="/login/lichess"
+                  onClick={() => toggleOpen()}
+                  prefetch={false}
+                >
                   {t('Profile.sign in')}
                 </Link>
               ) : (
