@@ -1,4 +1,10 @@
+import { ArcticFetchError, OAuth2RequestError } from 'arctic';
+import { eq } from 'drizzle-orm';
+import { revalidateTag } from 'next/cache';
+import { cookies } from 'next/headers';
+
 import { lichess, lucia } from '@/lib/auth/lucia';
+import { CACHE_TAGS, userPublicProfileTag } from '@/lib/cache-tags';
 import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
@@ -6,9 +12,6 @@ import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { user_preferences, users } from '@/server/db/schema/users';
 import { UserModel } from '@/server/zod/users';
 import { LichessUser } from '@/types/lichess-api';
-import { ArcticFetchError, OAuth2RequestError } from 'arctic';
-import { eq } from 'drizzle-orm';
-import { cookies } from 'next/headers';
 
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
@@ -67,6 +70,17 @@ export async function GET(request: Request): Promise<Response> {
     ).at(0) as UserModel | undefined;
 
     if (existingUser) {
+      try {
+        await db
+          .update(users)
+          .set({ rating: lichessUser.perfs.blitz.rating })
+          .where(eq(users.id, existingUser.id));
+        revalidateTag(CACHE_TAGS.AUTH, 'max');
+        revalidateTag(userPublicProfileTag(existingUser.username), 'max');
+      } catch (e) {
+        console.error('error updating user rating', e);
+      }
+
       const session = await lucia.createSession(existingUser.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
       cooks.set(sessionCookie.name, sessionCookie.value, {
