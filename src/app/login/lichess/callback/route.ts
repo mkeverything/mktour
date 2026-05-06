@@ -1,6 +1,5 @@
-'use server';
-
 import { lichess, lucia } from '@/lib/auth/lucia';
+import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
@@ -73,6 +72,19 @@ export async function GET(request: Request): Promise<Response> {
       cooks.set(sessionCookie.name, sessionCookie.value, {
         ...sessionCookie.attributes,
       });
+
+      try {
+        await withPostHogServer(async (posthog) => {
+          posthog.capture({
+            distinctId: existingUser.username,
+            event: 'sign_in_completed',
+            properties: { username: existingUser.username },
+          });
+        });
+      } catch {
+        // non-blocking: auth must succeed if posthog fails
+      }
+
       return new Response(null, {
         status: 302,
         headers: {
@@ -122,6 +134,21 @@ export async function GET(request: Request): Promise<Response> {
       cooks.set(sessionCookie.name, sessionCookie.value, {
         ...sessionCookie.attributes,
       });
+
+      try {
+        await withPostHogServer(async (posthog) => {
+          posthog.capture({
+            distinctId: lichessUser.id,
+            event: 'sign_up_completed',
+            properties: {
+              username: lichessUser.id,
+              rating: lichessUser.perfs.blitz.rating,
+            },
+          });
+        });
+      } catch {
+        // non-blocking
+      }
     } catch (e) {
       console.log(e);
     }

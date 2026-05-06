@@ -18,7 +18,8 @@ import { User2 } from 'lucide-react';
 import { MessageKeys, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FC, PropsWithChildren } from 'react';
+import posthog from 'posthog-js';
+import { FC, PropsWithChildren, useEffect } from 'react';
 import LichessLogo from '../ui-custom/lichess-logo';
 import { Button } from '../ui/button';
 
@@ -29,6 +30,12 @@ export default function AuthButton() {
   const { data: user, isLoading } = useAuth();
   const { mutate: signOut } = useSignOutMutation(queryClient);
   const { data: notificationsCounter } = useUserNotificationsCounter();
+
+  useEffect(() => {
+    if (user) {
+      posthog.identify(user.username, { username: user.username });
+    }
+  }, [user]);
 
   if (isLoading)
     return <Skeleton className="p-mk my-auto hidden h-4 w-24 sm:block" />;
@@ -75,6 +82,8 @@ export default function AuthButton() {
           ))}
           <StyledItem
             onClick={() => {
+              posthog.capture('user_signed_out');
+              posthog.reset();
               signOut(undefined, {
                 onSuccess: () => {
                   router.refresh();

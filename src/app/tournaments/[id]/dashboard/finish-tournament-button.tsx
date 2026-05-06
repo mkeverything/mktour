@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useContext } from 'react';
 
 export default function FinishTournamentButton({
@@ -41,7 +42,19 @@ export default function FinishTournamentButton({
 
   return (
     <Button
-      onClick={() => mutate({ tournamentId, closedAt: new Date() })}
+      onClick={() => {
+        mutate(
+          { tournamentId, closedAt: new Date() },
+          {
+            onSuccess: () => {
+              posthog.capture('tournament_finished', {
+                tournament_id: tournamentId,
+                last_round_number: lastRoundNumber,
+              });
+            },
+          },
+        );
+      }}
       disabled={isPending}
       className={`max-md:w-full ${className}`}
     >

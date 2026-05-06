@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import posthog from 'posthog-js';
 import { Dispatch, SetStateAction } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
@@ -44,10 +45,17 @@ export default function DeleteConfirmationForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => {
-          mutate({
-            clubId: data.id,
-            userDeletion: false,
-          });
+          mutate(
+            {
+              clubId: data.id,
+              userDeletion: false,
+            },
+            {
+              onSuccess: () => {
+                posthog.capture('club_deleted', { club_id: data.id });
+              },
+            },
+          );
         })}
         className={cn('grid items-start gap-6 py-0', className)}
         name="delete-club-form"

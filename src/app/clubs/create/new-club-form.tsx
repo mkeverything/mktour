@@ -21,6 +21,7 @@ import { UserModel } from '@/server/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useTransition } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -49,6 +50,10 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
 
     mutate(dataWithDate, {
       onSuccess: () => {
+        posthog.capture('club_created', {
+          has_description: !!data.description,
+          has_lichess_team: !!data.lichessTeam,
+        });
         startNavigation(() => {
           form.reset();
           router.push('/clubs/my');
