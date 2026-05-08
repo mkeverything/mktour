@@ -6,13 +6,12 @@ import {
   TournamentFormat,
   TournamentType,
 } from '@/server/zod/enums';
-import { relations, sql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import {
   index,
   integer,
   real,
   sqliteTable,
-  sqliteView,
   text,
 } from 'drizzle-orm/sqlite-core';
 
@@ -93,42 +92,6 @@ export const tournament_units = sqliteTable(
   ],
 );
 
-/**
- * @deprecated derived read model for old participant reads. use tournament_units
- * and players_to_units for new code.
- */
-export const players_to_tournaments = sqliteView('players_to_tournaments').as(
-  (qb) =>
-    qb
-      .select({
-        id: players_to_units.id,
-        playerId: players_to_units.playerId,
-        tournamentId: tournament_units.tournamentId,
-        wins: tournament_units.wins,
-        losses: tournament_units.losses,
-        draws: tournament_units.draws,
-        colorIndex: tournament_units.colorIndex,
-        place: tournament_units.place,
-        isOut: tournament_units.isOut,
-        pairingNumber: tournament_units.number,
-        addedAt: tournament_units.addedAt,
-        teamNickname: sql<
-          string | null
-        >`case when ${tournament_units.size} = 1 then null else ${tournament_units.nickname} end`.as(
-          'team_nickname',
-        ),
-        numberInTeam: players_to_units.numberInUnit,
-        newRating: players_to_units.newRating,
-        newRatingDeviation: players_to_units.newRatingDeviation,
-        newVolatility: players_to_units.newVolatility,
-      })
-      .from(players_to_units)
-      .innerJoin(
-        tournament_units,
-        sql`${players_to_units.unitId} = ${tournament_units.id}`,
-      ),
-);
-
 export const games = sqliteTable(
   'game',
   {
@@ -142,6 +105,8 @@ export const games = sqliteTable(
     blackUnitId: text('black_unit_id')
       .notNull()
       .references(() => tournament_units.id),
+    ratedWhiteId: text('rated_white_id').references(() => players.id), // only for rated tournaments
+    ratedBlackId: text('rated_black_id').references(() => players.id), // only for rated tournaments
     whitePrevGameId: text('white_prev_game_id'),
     blackPrevGameId: text('black_prev_game_id'),
     result: text('result').$type<GameResult>(),

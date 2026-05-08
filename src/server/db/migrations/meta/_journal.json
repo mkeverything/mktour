@@ -64,6 +64,13 @@
       "when": 1778262835802,
       "tag": "0008_chief_wind_dancer",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1778276776835,
+      "tag": "0009_salty_ravenous",
+      "breakpoints": true
     }
   ]
 }
