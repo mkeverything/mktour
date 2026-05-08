@@ -1,5 +1,6 @@
 import { affiliations, players } from '@/server/db/schema/players';
 import { affiliationStatusEnum } from '@/server/zod/enums';
+import { tournamentSchema } from '@/server/zod/tournaments';
 import {
   createInsertSchema,
   createSelectSchema,
