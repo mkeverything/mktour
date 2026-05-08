@@ -10,6 +10,7 @@ import { PlayerWithUsernameModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useContext } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
@@ -60,7 +61,18 @@ const AddPlayer = ({
     }
 
     const addedAt = new Date();
-    mutate({ tournamentId: id, player, userId, addedAt });
+    mutate(
+      { tournamentId: id, player, userId, addedAt },
+      {
+        onSuccess: () => {
+          posthog.capture('player_added_to_tournament', {
+            tournament_id: id,
+            player_id: player.id,
+            has_lichess_account: !!player.username,
+          });
+        },
+      },
+    );
   };
 
   useHotkeys('escape', () => handleClose(), { enableOnFormTags: true });

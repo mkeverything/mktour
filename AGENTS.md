@@ -259,4 +259,5 @@ this reduces test time from ~15s to ~20ms for non-db tests.
 - test env: `NODE_ENV=test` + `TEST_DATABASE_URL` / `TEST_DATABASE_AUTH_TOKEN`
 - offline/local mode: `OFFLINE=true` uses local sqld at `http://localhost:8080`
 - websocket server at `ws://localhost:7070` in dev, `NEXT_PUBLIC_SOCKET_URL` in prod
+- posthog: `NEXT_PUBLIC_POSTHOG_KEY`; `NEXT_PUBLIC_POSTHOG_API_HOST` (managed reverse proxy, e.g. `https://data.mktour.org`) for posthog-js `api_host` and `posthog-node` host (defaults to `https://eu.i.posthog.com` if unset); `NEXT_PUBLIC_POSTHOG_UI_HOST` for posthog-js `ui_host`
 - secrets must never be committed

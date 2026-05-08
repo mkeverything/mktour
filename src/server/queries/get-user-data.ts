@@ -1,3 +1,4 @@
+import { userPublicProfileTag } from '@/lib/cache-tags';
 import { db } from '@/server/db';
 import { affiliations } from '@/server/db/schema/players';
 import { users } from '@/server/db/schema/users';
@@ -24,6 +25,7 @@ export const getUserInfoByUsername = async (username: string) => {
       stale: 1000 * 60 * 60,
       revalidate: 1000 * 60 * 60,
     });
+    cacheTag(userPublicProfileTag(username));
   }
   return await db
     .select()

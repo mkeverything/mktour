@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CircleX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useContext, useState } from 'react';
 
 export default function DeleteTournamentButton() {
@@ -50,7 +51,16 @@ export default function DeleteTournamentButton() {
           variant={'destructive'}
           className="w-full"
           onClick={() => {
-            mutate({ tournamentId });
+            mutate(
+              { tournamentId },
+              {
+                onSuccess: () => {
+                  posthog.capture('tournament_deleted', {
+                    tournament_id: tournamentId,
+                  });
+                },
+              },
+            );
           }}
           disabled={isPending}
         >

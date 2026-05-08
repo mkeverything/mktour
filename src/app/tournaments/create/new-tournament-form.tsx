@@ -48,6 +48,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useTransition } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
+import posthog from 'posthog-js';
 
 export default function NewTournamentForm({
   clubs,
@@ -89,6 +90,13 @@ export default function NewTournamentForm({
       },
       {
         onSuccess: (result) => {
+          posthog.capture('tournament_created', {
+            tournament_id: result.id,
+            format: data.format,
+            type: data.type,
+            rated: data.rated,
+            club_id: data.clubId,
+          });
           startNavigation(() => {
             router.push(`/tournaments/${result.id}`);
             form.reset();

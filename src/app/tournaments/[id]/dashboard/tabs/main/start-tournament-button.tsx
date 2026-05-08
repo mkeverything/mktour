@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CirclePlay, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useContext } from 'react';
 
 export default function StartTournamentButton() {
@@ -31,12 +32,24 @@ export default function StartTournamentButton() {
     if (players.length < 2) {
       throw new Error('NOT_ENOUGH_PLAYERS');
     }
-    startTournamentMutation.mutate({
-      startedAt: new Date(),
-      tournamentId: data.tournament.id,
-      format: data.tournament.format,
-      roundsNumber: data.tournament.roundsNumber,
-    });
+    startTournamentMutation.mutate(
+      {
+        startedAt: new Date(),
+        tournamentId: data.tournament.id,
+        format: data.tournament.format,
+        roundsNumber: data.tournament.roundsNumber,
+      },
+      {
+        onSuccess: () => {
+          posthog.capture('tournament_started', {
+            tournament_id: data.tournament.id,
+            format: data.tournament.format,
+            rounds_number: data.tournament.roundsNumber,
+            player_count: players.length,
+          });
+        },
+      },
+    );
   };
 
   return (
