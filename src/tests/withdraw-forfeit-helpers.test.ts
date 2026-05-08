@@ -20,8 +20,8 @@ function makeGame(overrides: Partial<GameModel> = {}): GameModel {
   return {
     id: FIRST_GAME_ID,
     tournamentId: 'tournament-1',
-    whiteId: WHITE_PLAYER_ID,
-    blackId: BLACK_PLAYER_ID,
+    whiteUnitId: WHITE_PLAYER_ID,
+    blackUnitId: BLACK_PLAYER_ID,
     whiteNickname: 'White',
     blackNickname: 'Black',
     gameNumber: 1,
@@ -76,8 +76,8 @@ describe('settlePendingGamesAsForfeit', () => {
       makeGame({ id: FIRST_GAME_ID }),
       makeGame({
         id: SECOND_GAME_ID,
-        whiteId: BLACK_PLAYER_ID,
-        blackId: THIRD_PLAYER_ID,
+        whiteUnitId: BLACK_PLAYER_ID,
+        blackUnitId: THIRD_PLAYER_ID,
       }),
     ];
 
@@ -106,8 +106,8 @@ describe('settlePendingGamesAsForfeit', () => {
 
   it('leaves games without the withdrawn player untouched', () => {
     const otherGame = makeGame({
-      whiteId: THIRD_PLAYER_ID,
-      blackId: UNRELATED_PLAYER_ID,
+      whiteUnitId: THIRD_PLAYER_ID,
+      blackUnitId: UNRELATED_PLAYER_ID,
     });
 
     const [settled] = settlePendingGamesAsForfeit([otherGame], WHITE_PLAYER_ID);

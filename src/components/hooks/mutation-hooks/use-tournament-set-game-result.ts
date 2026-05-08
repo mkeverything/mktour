@@ -28,7 +28,7 @@ export default function useTournamentSetGameResult(
       },
       onSuccess: (
         _res,
-        { gameId, result, roundNumber, prevResult, whiteId, blackId },
+        { gameId, result, roundNumber, prevResult, whiteUnitId, blackUnitId },
       ) => {
         function updatePlayerStats(
           player: PlayerTournamentModel,
@@ -69,16 +69,16 @@ export default function useTournamentSetGameResult(
             return players.map((player) => {
               // Case 1: Toggling the same result (reset)
               if (prevResult === result) {
-                if (player.id === whiteId) {
+                if (player.id === whiteUnitId) {
                   return updatePlayerStats(player, result, true, true);
                 }
-                if (player.id === blackId) {
+                if (player.id === blackUnitId) {
                   return updatePlayerStats(player, result, false, true);
                 }
               }
               // Case 2: Changing from one result to another
               else if (prevResult && prevResult !== result) {
-                if (player.id === whiteId) {
+                if (player.id === whiteUnitId) {
                   // First remove old result
                   const updated = updatePlayerStats(
                     player,
@@ -89,7 +89,7 @@ export default function useTournamentSetGameResult(
                   // Then add new result
                   return updatePlayerStats(updated, result, true, false);
                 }
-                if (player.id === blackId) {
+                if (player.id === blackUnitId) {
                   // First remove old result
                   const updated = updatePlayerStats(
                     player,
@@ -103,10 +103,10 @@ export default function useTournamentSetGameResult(
               }
               // Case 3: Adding a new result where none existed before
               else if (!prevResult && result) {
-                if (player.id === whiteId) {
+                if (player.id === whiteUnitId) {
                   return updatePlayerStats(player, result, true, false);
                 }
-                if (player.id === blackId) {
+                if (player.id === blackUnitId) {
                   return updatePlayerStats(player, result, false, false);
                 }
               }

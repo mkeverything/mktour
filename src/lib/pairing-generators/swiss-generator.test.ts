@@ -158,8 +158,8 @@ describe('Swiss Generator Black-Box Tests', () => {
       expect(
         round.some(
           (game) =>
-            game.whiteId === withdrawnPlayer.id ||
-            game.blackId === withdrawnPlayer.id,
+            game.whiteUnitId === withdrawnPlayer.id ||
+            game.blackUnitId === withdrawnPlayer.id,
         ),
       ).toBe(false);
     });
@@ -187,7 +187,7 @@ describe('Swiss Generator Black-Box Tests', () => {
         .filter((player) => !player.isOut)
         .map((player) => player.id);
       const pairedIds = new Set(
-        round.flatMap((game) => [game.whiteId, game.blackId]),
+        round.flatMap((game) => [game.whiteUnitId, game.blackUnitId]),
       );
       const pabRecipients = activeIds.filter((id) => !pairedIds.has(id));
 
@@ -226,8 +226,8 @@ describe('Swiss Generator Black-Box Tests', () => {
       expect(
         secondRound.some(
           (game) =>
-            game.whiteId === withdrawnPlayer.id ||
-            game.blackId === withdrawnPlayer.id,
+            game.whiteUnitId === withdrawnPlayer.id ||
+            game.blackUnitId === withdrawnPlayer.id,
         ),
       ).toBe(false);
     });

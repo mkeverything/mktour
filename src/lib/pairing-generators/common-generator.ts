@@ -156,7 +156,7 @@ export function countPlayerResults(
   let losses = 0;
 
   for (const game of playerGames) {
-    const isWhite = game.whiteId === playerId;
+    const isWhite = game.whiteUnitId === playerId;
 
     switch (game.result) {
       case '1-0':
@@ -212,7 +212,7 @@ function computeScoreBeforeRound(
     (game) => game.roundNumber < targetRound,
   );
   const playerGames = gamesBeforeRound.filter(
-    (game) => game.whiteId === playerId || game.blackId === playerId,
+    (game) => game.whiteUnitId === playerId || game.blackUnitId === playerId,
   );
 
   const results = countPlayerResults(playerId, playerGames);
@@ -287,9 +287,9 @@ function computeFloatHistory(
 
     if (gameInRound !== undefined) {
       const opponentId =
-        gameInRound.whiteId === playerId
-          ? gameInRound.blackId
-          : gameInRound.whiteId;
+        gameInRound.whiteUnitId === playerId
+          ? gameInRound.blackUnitId
+          : gameInRound.whiteUnitId;
 
       const playerScore = computeScoreBeforeRound(playerId, round, allGames);
       const opponentScore = computeScoreBeforeRound(
@@ -329,7 +329,8 @@ export function convertPlayerToEntity(
   // Filter games involving this player (either as white or black)
   const previousGames = allGames.filter(
     (game) =>
-      game.whiteId === playerModel.id || game.blackId === playerModel.id,
+      game.whiteUnitId === playerModel.id ||
+      game.blackUnitId === playerModel.id,
   );
 
   // Calculate bye count (rounds where player didn't play = received PAB)
@@ -380,14 +381,13 @@ export function getGameToInsert(
   // generating new id for the game
   const gameId = newid();
 
-  // conversion to the game format
-  const whiteId = finalizedMatch.whiteEntity.entityId;
-  const blackId = finalizedMatch.blackEntity.entityId;
+  const whiteUnitId = finalizedMatch.whiteEntity.entityId;
+  const blackUnitId = finalizedMatch.blackEntity.entityId;
 
   const gameToInsert: GameModel = {
     id: gameId,
-    whiteId: whiteId,
-    blackId: blackId,
+    whiteUnitId,
+    blackUnitId,
     whiteNickname: finalizedMatch.whiteEntity.entityNickname,
     blackNickname: finalizedMatch.blackEntity.entityNickname,
     tournamentId: tournamentId,

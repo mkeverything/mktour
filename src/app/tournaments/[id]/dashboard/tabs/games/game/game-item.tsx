@@ -20,9 +20,9 @@ import { toast } from 'sonner';
 const GameItem: FC<GameProps> = ({
   id,
   result,
-  whiteId,
+  whiteUnitId,
   whiteNickname,
-  blackId,
+  blackUnitId,
   blackNickname,
   roundNumber,
   selected,
@@ -45,7 +45,7 @@ const GameItem: FC<GameProps> = ({
   const isClosed = !!data?.isClosed;
   const allowPlayersSetResults = !!data?.allowPlayersSetResults;
   // players can only edit their own games, and only after tournament has started
-  const isPlayerInGame = playerId === whiteId || playerId === blackId;
+  const isPlayerInGame = playerId === whiteUnitId || playerId === blackUnitId;
   const canEdit =
     status === 'organizer' ||
     (status === 'player' && isPlayerInGame && hasStarted);
@@ -74,8 +74,8 @@ const GameItem: FC<GameProps> = ({
     if (selected && hasStarted && !mutation.isPending) {
       mutation.mutate({
         gameId: id,
-        whiteId,
-        blackId,
+        whiteUnitId,
+        blackUnitId,
         result: newResult,
         prevResult: result,
         tournamentId,
@@ -120,7 +120,7 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={whiteNickname}
             position={{ justify: 'justify-self-start', text: 'text-left' }}
-            className={`${playerId === whiteId && 'font-bold'}`}
+            className={`${playerId === whiteUnitId && 'font-bold'}`}
           />
           <Button
             variant="ghost"
@@ -135,7 +135,7 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={blackNickname}
             position={{ justify: 'justify-self-end', text: 'text-right' }}
-            className={`${playerId === blackId && 'font-bold'}`}
+            className={`${playerId === blackUnitId && 'font-bold'}`}
           />
         </Card>
       </motion.div>
@@ -146,9 +146,9 @@ const GameItem: FC<GameProps> = ({
 type GameProps = {
   id: string;
   result: GameResult | null;
-  whiteId: string;
+  whiteUnitId: string;
   whiteNickname: string;
-  blackId: string;
+  blackUnitId: string;
   blackNickname: string;
   roundNumber: number;
   selected: boolean;

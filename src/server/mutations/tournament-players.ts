@@ -70,7 +70,10 @@ export async function removePlayer({
         .where(
           and(
             eq(games.tournamentId, tournamentId),
-            or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
+            or(
+              eq(games.whiteUnitId, playerId),
+              eq(games.blackUnitId, playerId),
+            ),
           ),
         );
 
@@ -637,20 +640,20 @@ export async function withdrawPlayer({
     const pendingGames = await tx
       .select({
         id: games.id,
-        whiteId: games.whiteId,
-        blackId: games.blackId,
+        whiteUnitId: games.whiteUnitId,
+        blackUnitId: games.blackUnitId,
       })
       .from(games)
       .where(
         and(
           eq(games.tournamentId, tournamentId),
           isNull(games.result),
-          or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
+          or(eq(games.whiteUnitId, playerId), eq(games.blackUnitId, playerId)),
         ),
       );
 
     for (const pendingGame of pendingGames) {
-      const isWithdrawnWhite = pendingGame.whiteId === playerId;
+      const isWithdrawnWhite = pendingGame.whiteUnitId === playerId;
       let forfeitResult: GameResult;
       if (isWithdrawnWhite) {
         forfeitResult = '0-1';
@@ -662,8 +665,8 @@ export async function withdrawPlayer({
         database: tx,
         tournamentId,
         gameId: pendingGame.id,
-        whiteId: pendingGame.whiteId,
-        blackId: pendingGame.blackId,
+        whiteUnitId: pendingGame.whiteUnitId,
+        blackUnitId: pendingGame.blackUnitId,
         prevResult: null,
         nextResult: forfeitResult,
       });

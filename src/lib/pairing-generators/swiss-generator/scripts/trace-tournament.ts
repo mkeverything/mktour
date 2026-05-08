@@ -224,7 +224,7 @@ function buildEntityDisplayMap(
 function extractPairingsFromGames(games: GameModel[]): EdgePair[] {
   const pairings: EdgePair[] = [];
   for (const game of games) {
-    pairings.push([game.whiteId, game.blackId]);
+    pairings.push([game.whiteUnitId, game.blackUnitId]);
   }
   return pairings;
 }

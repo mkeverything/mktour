@@ -152,7 +152,7 @@ export const RANDOM_TOURNAMENTS_COUNT = 5;
  * @returns true if player participated in the game
  */
 function isPlayerInGame(game: GameModel, playerId: string): boolean {
-  return game.whiteId === playerId || game.blackId === playerId;
+  return game.whiteUnitId === playerId || game.blackUnitId === playerId;
 }
 
 /**

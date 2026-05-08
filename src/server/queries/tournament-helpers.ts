@@ -155,8 +155,8 @@ export function enrichGamesWithDoublesInfo(
 ): GameModel[] {
   const { teamByPlayerId, membersByTeam } = doublesTeamMembers;
   return sortedGames.map((game) => {
-    const whiteTeam = teamByPlayerId.get(game.whiteId);
-    const blackTeam = teamByPlayerId.get(game.blackId);
+    const whiteTeam = teamByPlayerId.get(game.whiteUnitId);
+    const blackTeam = teamByPlayerId.get(game.blackUnitId);
     const whiteMembers = whiteTeam ? (membersByTeam.get(whiteTeam) ?? []) : [];
     const blackMembers = blackTeam ? (membersByTeam.get(blackTeam) ?? []) : [];
 

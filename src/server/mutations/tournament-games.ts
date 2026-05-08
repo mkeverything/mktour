@@ -106,8 +106,8 @@ export async function saveRound({
     );
     const hasInvalidParticipant = newGames.some(
       (game) =>
-        !activePlayerIds.has(game.whiteId) ||
-        !activePlayerIds.has(game.blackId),
+        !activePlayerIds.has(game.whiteUnitId) ||
+        !activePlayerIds.has(game.blackUnitId),
     );
 
     if (hasInvalidParticipant) {
@@ -135,14 +135,20 @@ export async function setTournamentGameResult({
   gameId,
   result,
   tournamentId,
+  whiteUnitId: _whiteUnitId,
+  blackUnitId: _blackUnitId,
+  prevResult: _prevResult,
+  roundNumber: _roundNumber,
+  userId: _userId,
 }: {
   tournamentId: string;
   gameId: string;
   result: GameResult;
-  whiteId: string;
-  blackId: string;
+  whiteUnitId: string;
+  blackUnitId: string;
   prevResult: GameResult | null;
   roundNumber: number;
+  userId: string;
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
@@ -171,8 +177,8 @@ export async function setTournamentGameResult({
     const game = (
       await tx
         .select({
-          whiteId: games.whiteId,
-          blackId: games.blackId,
+          whiteUnitId: games.whiteUnitId,
+          blackUnitId: games.blackUnitId,
           result: games.result,
         })
         .from(games)
@@ -190,7 +196,7 @@ export async function setTournamentGameResult({
         .where(
           and(
             eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, game.whiteId),
+            eq(players_to_tournaments.playerId, game.whiteUnitId),
           ),
         )
         .then((rows) => rows.at(0)),
@@ -203,7 +209,7 @@ export async function setTournamentGameResult({
         .where(
           and(
             eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, game.blackId),
+            eq(players_to_tournaments.playerId, game.blackUnitId),
           ),
         )
         .then((rows) => rows.at(0)),
@@ -232,8 +238,8 @@ export async function setTournamentGameResult({
         .then((rows) => rows.at(0));
 
       const isPlayerInGame =
-        authStatus.playerId === game.whiteId ||
-        authStatus.playerId === game.blackId ||
+        authStatus.playerId === game.whiteUnitId ||
+        authStatus.playerId === game.blackUnitId ||
         (!!authParticipant?.teamNickname &&
           (authParticipant.teamNickname === whiteParticipant?.teamNickname ||
             authParticipant.teamNickname === blackParticipant?.teamNickname));
@@ -251,8 +257,8 @@ export async function setTournamentGameResult({
       database: tx,
       tournamentId,
       gameId,
-      whiteId: game.whiteId,
-      blackId: game.blackId,
+      whiteUnitId: game.whiteUnitId,
+      blackUnitId: game.blackUnitId,
       prevResult: game.result,
       nextResult,
     });
@@ -283,16 +289,16 @@ export async function applyGameResult({
   database,
   tournamentId,
   gameId,
-  whiteId,
-  blackId,
+  whiteUnitId,
+  blackUnitId,
   prevResult,
   nextResult,
 }: {
   database: Database;
   tournamentId: string;
   gameId: string;
-  whiteId: string;
-  blackId: string;
+  whiteUnitId: string;
+  blackUnitId: string;
   prevResult: GameResult | null;
   nextResult: GameResult | null;
 }): Promise<void> {
@@ -303,7 +309,7 @@ export async function applyGameResult({
       .where(
         and(
           eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, whiteId),
+          eq(players_to_tournaments.playerId, whiteUnitId),
         ),
       )
       .limit(1)
@@ -314,7 +320,7 @@ export async function applyGameResult({
       .where(
         and(
           eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, blackId),
+          eq(players_to_tournaments.playerId, blackUnitId),
         ),
       )
       .limit(1)
@@ -330,7 +336,7 @@ export async function applyGameResult({
   } else {
     whiteMatch = and(
       eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.playerId, whiteId),
+      eq(players_to_tournaments.playerId, whiteUnitId),
     );
   }
 
@@ -343,7 +349,7 @@ export async function applyGameResult({
   } else {
     blackMatch = and(
       eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.playerId, blackId),
+      eq(players_to_tournaments.playerId, blackUnitId),
     );
   }
 

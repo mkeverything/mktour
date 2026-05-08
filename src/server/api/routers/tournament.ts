@@ -260,8 +260,8 @@ export const tournamentRouter = {
     .input(
       z.object({
         gameId: z.string(),
-        whiteId: z.string(),
-        blackId: z.string(),
+        whiteUnitId: z.string(),
+        blackUnitId: z.string(),
         result: gameResultEnum,
         prevResult: gameResultEnum.nullable(),
         roundNumber: z.number(),

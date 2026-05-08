@@ -146,7 +146,7 @@ export function getWithdrawalForfeitResult(
   game: GameModel,
   withdrawnPlayerId: string,
 ): GameResult {
-  const isWithdrawnWhite = game.whiteId === withdrawnPlayerId;
+  const isWithdrawnWhite = game.whiteUnitId === withdrawnPlayerId;
   if (isWithdrawnWhite) {
     return FORFEIT_RESULT_WHEN_WITHDRAWN_IS_WHITE;
   } else {
@@ -166,7 +166,8 @@ export function shouldForfeitForWithdrawal(
 ): boolean {
   const hasResult = game.result !== null;
   const hasWithdrawnPlayer =
-    game.whiteId === withdrawnPlayerId || game.blackId === withdrawnPlayerId;
+    game.whiteUnitId === withdrawnPlayerId ||
+    game.blackUnitId === withdrawnPlayerId;
   return !hasResult && hasWithdrawnPlayer;
 }
 

@@ -21,10 +21,10 @@ export const useRoundData = (
     if (!round || !players) return [];
 
     return [...round].sort((a, b) => {
-      const aWhiteScore = playerScores.get(a.whiteId) || 0;
-      const aBlackScore = playerScores.get(a.blackId) || 0;
-      const bWhiteScore = playerScores.get(b.whiteId) || 0;
-      const bBlackScore = playerScores.get(b.blackId) || 0;
+      const aWhiteScore = playerScores.get(a.whiteUnitId) || 0;
+      const aBlackScore = playerScores.get(a.blackUnitId) || 0;
+      const bWhiteScore = playerScores.get(b.whiteUnitId) || 0;
+      const bBlackScore = playerScores.get(b.blackUnitId) || 0;
 
       const aScore = aWhiteScore + aBlackScore;
       const bScore = bWhiteScore + bBlackScore;

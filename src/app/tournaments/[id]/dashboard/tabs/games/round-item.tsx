@@ -180,8 +180,8 @@ const GamesIteratee = memo(function GamesIteratee({
   result,
   whiteNickname,
   blackNickname,
-  whiteId,
-  blackId,
+  whiteUnitId,
+  blackUnitId,
   roundNumber,
   selected,
   setSelectedGameId,
@@ -193,9 +193,9 @@ const GamesIteratee = memo(function GamesIteratee({
     <GameItem
       id={id}
       result={result}
-      whiteId={whiteId}
+      whiteUnitId={whiteUnitId}
       whiteNickname={whiteNickname}
-      blackId={blackId}
+      blackUnitId={blackUnitId}
       blackNickname={blackNickname}
       roundNumber={roundNumber}
       selected={selected}

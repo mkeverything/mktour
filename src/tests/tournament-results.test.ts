@@ -38,16 +38,16 @@ function makePlayer(
 // Helper to create a minimal game
 function makeGame(
   overrides: Partial<GameModel> & {
-    whiteId: string;
-    blackId: string;
+    whiteUnitId: string;
+    blackUnitId: string;
     roundNumber: number;
   },
 ): GameModel {
   return {
-    id: `game-${overrides.whiteId}-${overrides.blackId}-r${overrides.roundNumber}`,
+    id: `game-${overrides.whiteUnitId}-${overrides.blackUnitId}-r${overrides.roundNumber}`,
     tournamentId: 'tournament-1',
-    whiteNickname: overrides.whiteId,
-    blackNickname: overrides.blackId,
+    whiteNickname: overrides.whiteUnitId,
+    blackNickname: overrides.blackUnitId,
     gameNumber: overrides.roundNumber,
     roundName: null,
     whitePrevGameId: null,
@@ -80,9 +80,24 @@ describe('calculatePlayerScore', () => {
       losses: 0,
     });
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
-      makeGame({ whiteId: 'p3', blackId: 'p1', roundNumber: 2, result: '0-1' }),
-      makeGame({ whiteId: 'p1', blackId: 'p4', roundNumber: 3, result: '1-0' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p3',
+        blackUnitId: 'p1',
+        roundNumber: 2,
+        result: '0-1',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p4',
+        roundNumber: 3,
+        result: '1-0',
+      }),
     ];
     expect(calculatePlayerScore(player, 3, games)).toBe(3);
   });
@@ -97,14 +112,14 @@ describe('calculatePlayerScore', () => {
     });
     const games = [
       makeGame({
-        whiteId: 'p1',
-        blackId: 'p2',
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
         roundNumber: 1,
         result: '1/2-1/2',
       }),
       makeGame({
-        whiteId: 'p3',
-        blackId: 'p1',
+        whiteUnitId: 'p3',
+        blackUnitId: 'p1',
         roundNumber: 2,
         result: '1/2-1/2',
       }),
@@ -122,7 +137,12 @@ describe('calculatePlayerScore', () => {
       losses: 0,
     });
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
     ];
     // sumOfResults = 1, unfinished = 0, actual = 1, byes = 3 - 1 = 2
     // score = 1 + 2 + 0 = 3
@@ -138,8 +158,18 @@ describe('calculatePlayerScore', () => {
       losses: 0,
     });
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
-      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 2, result: null }), // unfinished
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p3',
+        roundNumber: 2,
+        result: null,
+      }), // unfinished
     ];
     // sumOfResults = 1, unfinished = 1, actual = 2, byes = max(0, 2 - 2) = 0
     // score = 1 + 0 + 0 = 1
@@ -158,8 +188,8 @@ describe('calculatePlayerScore', () => {
 
     const games = [
       makeGame({
-        whiteId: 'p1',
-        blackId: 'p2',
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
         roundNumber: 1,
         result: '1-0',
       }),
@@ -209,8 +239,18 @@ describe('calculateBerger (Sonneborn-Berger)', () => {
   it('should sum defeated opponents scores for wins', () => {
     const player = makePlayer({ id: 'p1', nickname: 'Alice', wins: 2 });
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
-      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 2, result: '1-0' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p3',
+        roundNumber: 2,
+        result: '1-0',
+      }),
     ];
     const scoresMap = new Map([
       ['p1', 2],
@@ -225,8 +265,8 @@ describe('calculateBerger (Sonneborn-Berger)', () => {
     const player = makePlayer({ id: 'p1', nickname: 'Alice', draws: 1 });
     const games = [
       makeGame({
-        whiteId: 'p1',
-        blackId: 'p2',
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
         roundNumber: 1,
         result: '1/2-1/2',
       }),
@@ -242,7 +282,12 @@ describe('calculateBerger (Sonneborn-Berger)', () => {
   it('should not count losses', () => {
     const player = makePlayer({ id: 'p1', nickname: 'Alice', losses: 1 });
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '0-1' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '0-1',
+      }),
     ];
     const scoresMap = new Map([
       ['p1', 0],
@@ -254,7 +299,12 @@ describe('calculateBerger (Sonneborn-Berger)', () => {
   it('should handle black side wins correctly', () => {
     const player = makePlayer({ id: 'p1', nickname: 'Alice', wins: 1 });
     const games = [
-      makeGame({ whiteId: 'p2', blackId: 'p1', roundNumber: 1, result: '0-1' }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p1',
+        roundNumber: 1,
+        result: '0-1',
+      }),
     ];
     const scoresMap = new Map([
       ['p1', 1],
@@ -267,7 +317,12 @@ describe('calculateBerger (Sonneborn-Berger)', () => {
   it('should skip unfinished games', () => {
     const player = makePlayer({ id: 'p1', nickname: 'Alice' });
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: null }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: null,
+      }),
     ];
     const scoresMap = new Map([
       ['p1', 0],
@@ -287,9 +342,24 @@ describe('calculateBuchholzCut1', () => {
   it('should sum opponent scores minus the lowest', () => {
     const player = makePlayer({ id: 'p1', nickname: 'Alice', wins: 3 });
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
-      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 2, result: '1-0' }),
-      makeGame({ whiteId: 'p1', blackId: 'p4', roundNumber: 3, result: '1-0' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p3',
+        roundNumber: 2,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p4',
+        roundNumber: 3,
+        result: '1-0',
+      }),
     ];
     const scoresMap = new Map([
       ['p1', 3],
@@ -304,7 +374,12 @@ describe('calculateBuchholzCut1', () => {
   it('should use own score for bye rounds (not negative)', () => {
     const player = makePlayer({ id: 'p1', nickname: 'Alice', wins: 1 });
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
       // Round 2 is a bye (no game)
     ];
     const scoresMap = new Map([
@@ -348,12 +423,42 @@ describe('sortPlayersByResults', () => {
       }),
     ];
     const games = [
-      makeGame({ whiteId: 'p2', blackId: 'p1', roundNumber: 1, result: '1-0' }),
-      makeGame({ whiteId: 'p3', blackId: 'p2', roundNumber: 1, result: '0-1' }),
-      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 2, result: '0-1' }),
-      makeGame({ whiteId: 'p2', blackId: 'p3', roundNumber: 2, result: '1-0' }),
-      makeGame({ whiteId: 'p3', blackId: 'p1', roundNumber: 3, result: '1-0' }),
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 3, result: '0-1' }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p1',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p3',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '0-1',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p3',
+        roundNumber: 2,
+        result: '0-1',
+      }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p3',
+        roundNumber: 2,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p3',
+        blackUnitId: 'p1',
+        roundNumber: 3,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 3,
+        result: '0-1',
+      }),
     ];
 
     const sorted = sortPlayersByResults(players, tournament, games);
@@ -377,10 +482,30 @@ describe('sortPlayersByResults', () => {
       makePlayer({ id: 'p4', nickname: 'Dave', wins: 0, draws: 0, losses: 2 }),
     ];
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 1, result: '0-1' }),
-      makeGame({ whiteId: 'p2', blackId: 'p4', roundNumber: 1, result: '1-0' }),
-      makeGame({ whiteId: 'p1', blackId: 'p4', roundNumber: 2, result: '1-0' }),
-      makeGame({ whiteId: 'p2', blackId: 'p3', roundNumber: 2, result: '0-1' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p3',
+        roundNumber: 1,
+        result: '0-1',
+      }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p4',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p4',
+        roundNumber: 2,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p3',
+        roundNumber: 2,
+        result: '0-1',
+      }),
     ];
 
     const sorted = sortPlayersByResults(
@@ -414,8 +539,18 @@ describe('sortPlayersByResultsWithMaps', () => {
       makePlayer({ id: 'p2', nickname: 'Bob', wins: 0, draws: 0, losses: 2 }),
     ];
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
-      makeGame({ whiteId: 'p2', blackId: 'p1', roundNumber: 2, result: '0-1' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p1',
+        roundNumber: 2,
+        result: '0-1',
+      }),
     ];
 
     const result = sortPlayersByResultsWithMaps(
@@ -439,7 +574,12 @@ describe('buildScoreMaps', () => {
       makePlayer({ id: 'p2', nickname: 'Bob', wins: 0, draws: 0, losses: 1 }),
     ];
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
     ];
 
     const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
@@ -467,23 +607,48 @@ describe('hasSameStanding', () => {
     ];
 
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p2', roundNumber: 1, result: '1-0' }),
       makeGame({
-        whiteId: 'p2',
-        blackId: 'p1',
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p1',
         roundNumber: 2,
         result: '1/2-1/2',
       }),
       makeGame({
-        whiteId: 'p1',
-        blackId: 'p2',
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
         roundNumber: 3,
         result: '1/2-1/2',
       }),
-      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 4, result: '1-0' }),
-      makeGame({ whiteId: 'p2', blackId: 'p3', roundNumber: 4, result: '1-0' }),
-      makeGame({ whiteId: 'p1', blackId: 'p4', roundNumber: 5, result: '1-0' }),
-      makeGame({ whiteId: 'p2', blackId: 'p4', roundNumber: 5, result: '1-0' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p3',
+        roundNumber: 4,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p3',
+        roundNumber: 4,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p4',
+        roundNumber: 5,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p4',
+        roundNumber: 5,
+        result: '1-0',
+      }),
     ];
 
     const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
@@ -511,8 +676,18 @@ describe('hasSameStanding', () => {
     ];
 
     const games = [
-      makeGame({ whiteId: 'p1', blackId: 'p3', roundNumber: 1, result: '1-0' }),
-      makeGame({ whiteId: 'p2', blackId: 'p4', roundNumber: 1, result: '1-0' }),
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p3',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p2',
+        blackUnitId: 'p4',
+        roundNumber: 1,
+        result: '1-0',
+      }),
     ];
 
     const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(

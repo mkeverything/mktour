@@ -51,10 +51,10 @@ export const calculateBuchholzCut1 = (
 
   for (const game of allGames) {
     let opponentId: string | null = null;
-    if (game.whiteId === player.id) {
-      opponentId = game.blackId;
-    } else if (game.blackId === player.id) {
-      opponentId = game.whiteId;
+    if (game.whiteUnitId === player.id) {
+      opponentId = game.blackUnitId;
+    } else if (game.blackUnitId === player.id) {
+      opponentId = game.whiteUnitId;
     }
 
     if (opponentId) {
@@ -90,12 +90,12 @@ export const calculateBerger = (
     let playerWon = false;
     let isDraw = false;
 
-    if (game.whiteId === player.id) {
-      opponentId = game.blackId;
+    if (game.whiteUnitId === player.id) {
+      opponentId = game.blackUnitId;
       if (game.result === '1-0') playerWon = true;
       else if (game.result === '1/2-1/2') isDraw = true;
-    } else if (game.blackId === player.id) {
-      opponentId = game.whiteId;
+    } else if (game.blackUnitId === player.id) {
+      opponentId = game.whiteUnitId;
       if (game.result === '0-1') playerWon = true;
       else if (game.result === '1/2-1/2') isDraw = true;
     }
@@ -129,7 +129,7 @@ export const buildScoreMaps = (
   const playerScoresMap = new Map<string, number>();
   for (const p of players) {
     const playerGames = allGames.filter(
-      (g) => g.whiteId === p.id || g.blackId === p.id,
+      (g) => g.whiteUnitId === p.id || g.blackUnitId === p.id,
     );
     playerScoresMap.set(
       p.id,

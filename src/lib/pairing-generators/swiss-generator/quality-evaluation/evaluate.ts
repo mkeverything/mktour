@@ -67,8 +67,8 @@ export function havePlayedBefore(
 ): boolean {
   return firstEntity.previousGames.some(
     (game) =>
-      game.whiteId === secondEntity.entityId ||
-      game.blackId === secondEntity.entityId,
+      game.whiteUnitId === secondEntity.entityId ||
+      game.blackUnitId === secondEntity.entityId,
   );
 }
 

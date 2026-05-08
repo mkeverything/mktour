@@ -22,8 +22,8 @@ async function getTournamentGamesWithRatings(tournamentId: string, tx: Tx) {
   const tournamentGames = await tx
     .select({
       id: games.id,
-      whiteId: games.whiteId,
-      blackId: games.blackId,
+      whiteUnitId: games.whiteUnitId,
+      blackUnitId: games.blackUnitId,
       result: games.result,
       roundNumber: games.roundNumber,
     })
@@ -58,8 +58,8 @@ async function getTournamentGamesWithRatings(tournamentId: string, tx: Tx) {
 
   // Convert games to results format
   const gameResults: Array<{
-    whiteId: string;
-    blackId: string;
+    whiteUnitId: string;
+    blackUnitId: string;
     result: DbGameResult | null;
     whiteRating: number;
     whiteRD: number;
@@ -70,8 +70,8 @@ async function getTournamentGamesWithRatings(tournamentId: string, tx: Tx) {
   for (const game of tournamentGames) {
     if (!game.result) continue; // Skip unfinished games
 
-    const whitePlayer = playerRatingMap.get(game.whiteId);
-    const blackPlayer = playerRatingMap.get(game.blackId);
+    const whitePlayer = playerRatingMap.get(game.whiteUnitId);
+    const blackPlayer = playerRatingMap.get(game.blackUnitId);
 
     if (!whitePlayer || !blackPlayer) {
       console.warn(`Missing rating data for game ${game.id}`);
@@ -79,8 +79,8 @@ async function getTournamentGamesWithRatings(tournamentId: string, tx: Tx) {
     }
 
     gameResults.push({
-      whiteId: game.whiteId,
-      blackId: game.blackId,
+      whiteUnitId: game.whiteUnitId,
+      blackUnitId: game.blackUnitId,
       result: game.result,
       whiteRating: whitePlayer.rating,
       whiteRD: whitePlayer.ratingDeviation,
@@ -98,8 +98,8 @@ async function getTournamentGamesWithRatings(tournamentId: string, tx: Tx) {
 function collectPlayerResults(
   playerId: string,
   tournamentGames: Array<{
-    whiteId: string;
-    blackId: string;
+    whiteUnitId: string;
+    blackUnitId: string;
     result: DbGameResult | null;
     whiteRating: number;
     whiteRD: number;
@@ -112,7 +112,7 @@ function collectPlayerResults(
   for (const game of tournamentGames) {
     if (!game.result) continue;
 
-    if (game.whiteId === playerId) {
+    if (game.whiteUnitId === playerId) {
       // Player is white
       const score = getScoreFromResult(game.result, 'white');
       results.push({
@@ -120,7 +120,7 @@ function collectPlayerResults(
         opponentRatingDeviation: game.blackRD,
         score,
       });
-    } else if (game.blackId === playerId) {
+    } else if (game.blackUnitId === playerId) {
       // Player is black
       const score = getScoreFromResult(game.result, 'black');
       results.push({

@@ -19,8 +19,8 @@ export async function getTournamentGames(
     .select({
       id: games.id,
       tournamentId: games.tournamentId,
-      blackId: games.blackId,
-      whiteId: games.whiteId,
+      blackUnitId: games.blackUnitId,
+      whiteUnitId: games.whiteUnitId,
       blackNickname: blackPlayer.nickname,
       whiteNickname: whitePlayer.nickname,
       roundNumber: games.roundNumber,
@@ -33,8 +33,8 @@ export async function getTournamentGames(
     })
     .from(games)
     .where(eq(games.tournamentId, tournamentId))
-    .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
-    .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
+    .innerJoin(whitePlayer, eq(games.whiteUnitId, whitePlayer.id))
+    .innerJoin(blackPlayer, eq(games.blackUnitId, blackPlayer.id));
 
   const sortedGames: GameModel[] = gamesDb
     .map((g) => ({ ...g, pairMembers: null }))
@@ -73,8 +73,8 @@ export async function getTournamentRoundGames({
         eq(games.roundNumber, roundNumber),
       ),
     )
-    .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
-    .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
+    .innerJoin(whitePlayer, eq(games.whiteUnitId, whitePlayer.id))
+    .innerJoin(blackPlayer, eq(games.blackUnitId, blackPlayer.id));
 
   const sortedGames: GameModel[] = gamesDb
     .map((g) => ({ ...g, pairMembers: null }))
