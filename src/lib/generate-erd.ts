@@ -29,7 +29,9 @@ async function mergeAndGenerateErd() {
     }
 
     for (const file of files) {
-      // Process only TypeScript files
+      if (file === 'index.ts') {
+        continue;
+      }
       if (file.endsWith('.ts')) {
         const filePath = path.join(SCHEMA_DIRECTORY, file);
         const content = fs.readFileSync(filePath, 'utf-8');
