@@ -6,12 +6,13 @@ import {
   TournamentFormat,
   TournamentType,
 } from '@/server/zod/enums';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   index,
   integer,
   real,
   sqliteTable,
+  sqliteView,
   text,
 } from 'drizzle-orm/sqlite-core';
 
@@ -36,14 +37,35 @@ export const tournaments = sqliteTable('tournament', {
     .$default(() => true),
 });
 
-export const players_to_tournaments = sqliteTable(
-  'players_to_tournaments',
+export const players_to_units = sqliteTable(
+  // ex players_to_tournaments
+  'players_to_units',
   {
-    // join table where single tournament participants are stored
     id: text('id').primaryKey(),
     playerId: text('player_id')
       .notNull()
       .references(() => players.id),
+    unitId: text('unit_id')
+      .notNull()
+      .references(() => tournament_units.id),
+    numberInUnit: integer('number_in_unit').notNull(),
+    newRating: integer('new_rating'),
+    newRatingDeviation: integer('new_rating_deviation'),
+    newVolatility: real('new_volatility'),
+  },
+  (table) => [
+    index('ptu_unit_idx').on(table.unitId),
+    index('ptu_player_idx').on(table.playerId),
+  ],
+);
+
+export const tournament_units = sqliteTable(
+  // ex players_to_tournaments
+  'tournament_units',
+  {
+    // join table where single tournament participants/teams are stored
+    id: text('id').primaryKey(),
+    size: integer('size').notNull(), // unit size (1 for solo, 2 for doubles, 3+ for team)
     tournamentId: text('tournament_id')
       .notNull()
       .references(() => tournaments.id),
@@ -61,58 +83,129 @@ export const players_to_tournaments = sqliteTable(
       .notNull(),
     place: integer('place'),
     isOut: integer('is_out', { mode: 'boolean' }),
-    pairingNumber: integer('pairing_number'),
+    number: integer('number'),
     addedAt: integer('added_at', { mode: 'timestamp_ms' }),
-    teamNickname: text('team_nickname'),
-    numberInTeam: integer('number_in_team'),
-    newRating: integer('new_rating'),
-    newRatingDeviation: integer('new_rating_deviation'),
-    newVolatility: real('new_volatility'),
+    nickname: text('nickname'), // team nickname or solo player nickname
   },
   (table) => [
-    index('ptt_tournament_player_idx').on(table.tournamentId, table.playerId),
-    index('ptt_tournament_team_idx').on(table.tournamentId, table.teamNickname),
+    index('tu_tournament_number_idx').on(table.tournamentId, table.number),
+    index('tu_tournament_nickname_idx').on(table.tournamentId, table.nickname),
   ],
 );
 
-export const games = sqliteTable('game', {
-  id: text('id').primaryKey(),
-  gameNumber: integer('game_number').notNull(),
-  roundNumber: integer('round_number').notNull(),
-  roundName: text('round_name').$type<RoundName>(),
-  whiteId: text('white_id')
-    .references(() => players.id)
-    .notNull(),
-  blackId: text('black_id')
-    .references(() => players.id)
-    .notNull(),
-  whitePrevGameId: text('white_prev_game_id'),
-  blackPrevGameId: text('black_prev_game_id'),
-  result: text('result').$type<GameResult>(),
-  finishedAt: integer('finished_at', { mode: 'timestamp' }),
-  tournamentId: text('tournament_id')
-    .references(() => tournaments.id)
-    .notNull(),
-});
+/**
+ * @deprecated derived read model for old participant reads. use tournament_units
+ * and players_to_units for new code.
+ */
+export const players_to_tournaments = sqliteView('players_to_tournaments').as(
+  (qb) =>
+    qb
+      .select({
+        id: players_to_units.id,
+        playerId: players_to_units.playerId,
+        tournamentId: tournament_units.tournamentId,
+        wins: tournament_units.wins,
+        losses: tournament_units.losses,
+        draws: tournament_units.draws,
+        colorIndex: tournament_units.colorIndex,
+        place: tournament_units.place,
+        isOut: tournament_units.isOut,
+        pairingNumber: tournament_units.number,
+        addedAt: tournament_units.addedAt,
+        teamNickname: sql<
+          string | null
+        >`case when ${tournament_units.size} = 1 then null else ${tournament_units.nickname} end`.as(
+          'team_nickname',
+        ),
+        numberInTeam: players_to_units.numberInUnit,
+        newRating: players_to_units.newRating,
+        newRatingDeviation: players_to_units.newRatingDeviation,
+        newVolatility: players_to_units.newVolatility,
+      })
+      .from(players_to_units)
+      .innerJoin(
+        tournament_units,
+        sql`${players_to_units.unitId} = ${tournament_units.id}`,
+      ),
+);
+
+export const games = sqliteTable(
+  'game',
+  {
+    id: text('id').primaryKey(),
+    gameNumber: integer('game_number').notNull(),
+    roundNumber: integer('round_number').notNull(),
+    roundName: text('round_name').$type<RoundName>(),
+    whiteUnitId: text('white_unit_id')
+      .notNull()
+      .references(() => tournament_units.id),
+    blackUnitId: text('black_unit_id')
+      .notNull()
+      .references(() => tournament_units.id),
+    whitePrevGameId: text('white_prev_game_id'),
+    blackPrevGameId: text('black_prev_game_id'),
+    result: text('result').$type<GameResult>(),
+    finishedAt: integer('finished_at', { mode: 'timestamp' }),
+    tournamentId: text('tournament_id')
+      .references(() => tournaments.id)
+      .notNull(),
+  },
+  (t) => [index('game_tournament_round_idx').on(t.tournamentId, t.roundNumber)],
+);
 
 export const tournaments_relations = relations(
   tournaments,
   ({ one, many }) => ({
     club: one(clubs, { fields: [tournaments.clubId], references: [clubs.id] }),
-    players: many(players_to_tournaments),
+    units: many(tournament_units),
+    games: many(games),
   }),
 );
 
-export const players_to_tournaments_relations = relations(
-  players_to_tournaments,
-  ({ one }) => ({
-    player: one(players, {
-      fields: [players_to_tournaments.playerId],
-      references: [players.id],
-    }),
+export const tournament_units_relations = relations(
+  tournament_units,
+  ({ one, many }) => ({
     tournament: one(tournaments, {
-      fields: [players_to_tournaments.tournamentId],
+      fields: [tournament_units.tournamentId],
       references: [tournaments.id],
+    }),
+    memberRows: many(players_to_units),
+    gamesAsWhite: many(games, {
+      relationName: 'gameWhiteUnit',
+    }),
+    gamesAsBlack: many(games, {
+      relationName: 'gameBlackUnit',
     }),
   }),
 );
+
+export const players_to_units_relations = relations(
+  players_to_units,
+  ({ one }) => ({
+    unit: one(tournament_units, {
+      fields: [players_to_units.unitId],
+      references: [tournament_units.id],
+    }),
+    player: one(players, {
+      fields: [players_to_units.playerId],
+      references: [players.id],
+    }),
+  }),
+);
+
+export const games_relations = relations(games, ({ one }) => ({
+  tournament: one(tournaments, {
+    fields: [games.tournamentId],
+    references: [tournaments.id],
+  }),
+  whiteUnit: one(tournament_units, {
+    fields: [games.whiteUnitId],
+    references: [tournament_units.id],
+    relationName: 'gameWhiteUnit',
+  }),
+  blackUnit: one(tournament_units, {
+    fields: [games.blackUnitId],
+    references: [tournament_units.id],
+    relationName: 'gameBlackUnit',
+  }),
+}));

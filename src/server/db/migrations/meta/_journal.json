@@ -57,6 +57,13 @@
       "when": 1772801928274,
       "tag": "0007_neat_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1778262835802,
+      "tag": "0008_chief_wind_dancer",
+      "breakpoints": true
     }
   ]
 }
