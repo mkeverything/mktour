@@ -82,10 +82,10 @@ export default function AuthButton() {
           ))}
           <StyledItem
             onClick={() => {
-              posthog.capture('user_signed_out');
-              posthog.reset();
               signOut(undefined, {
                 onSuccess: () => {
+                  posthog.capture('user_signed_out');
+                  posthog.reset();
                   router.refresh();
                 },
               });
