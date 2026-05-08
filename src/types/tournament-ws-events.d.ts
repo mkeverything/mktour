@@ -18,7 +18,7 @@ type DashboardMessage =
   | {
       event: 'set-game-result';
       gameId: string;
-      result: GameResult;
+      result: GameResult | null;
       roundNumber: number;
     }
   | { event: 'start-tournament'; startedAt: Date } // it accepts date on input but has to be converted from string to date on incomming messages
