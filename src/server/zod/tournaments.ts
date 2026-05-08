@@ -99,13 +99,132 @@ export const withdrawTournamentUnitResultSchema = z.object({
   roundsNumberAutoDecreased: z.boolean(),
 });
 
-export const playerToTournamentSchema = unitSelectSchema
-  .extend({
-    tournament: tournamentSchema,
-  })
-  .omit({
-    tournamentId: true,
-  });
+/**
+ * canonical mapping from legacy flat/dashboard names to physical tables:
+ * - pairing_number → tournament_units.number
+ * - team_nickname → tournament_units.nickname (multi-player units)
+ * - number_in_team → players_to_units.number_in_unit
+ * - wins / draws / losses / color_index / place / is_out → tournament_units
+ * - new_rating / new_rating_deviation / new_volatility → players_to_units
+ * - games.white_unit_id / black_unit_id → tournament_units.id
+ */
+
+/** @deprecated use playerInUnitSchema instead */
+export const tournamentParticipantPairMemberSchema = z.object({
+  id: z.string(),
+  nickname: z.string(),
+  rating: z.number(),
+});
+
+/** @deprecated use unitSchema instead */
+export const tournamentParticipantRowSchema = z.object({
+  id: z.string(),
+  nickname: z.string(),
+  realname: z.string().nullable(),
+  rating: z.number(),
+  wins: z.number(),
+  draws: z.number(),
+  losses: z.number(),
+  colorIndex: z.number(),
+  isOut: z.boolean().nullable(),
+  place: z.number().nullable(),
+  pairingNumber: z.number().nullable(),
+  addedAt: z.union([z.date(), z.number()]).nullable(),
+  username: z.string().nullable(),
+  teamNickname: z.string().nullable(),
+  pairPlayers: z.array(tournamentParticipantPairMemberSchema).nullable(),
+});
+
+/** @deprecated use tournamentParticipantRowSchema */
+export const playerTournamentSchema = tournamentParticipantRowSchema;
+
+/** @deprecated use UnitModel instead */
+export type TournamentParticipantRowModel = z.infer<
+  typeof tournamentParticipantRowSchema
+>;
+
+/** @deprecated use preStartSchema instead */
+export const preStartPlayerOrderResultSchema = z.object({
+  players: z.array(tournamentParticipantRowSchema),
+  games: z.array(gameSchema),
+});
+
+/** @deprecated use PreStartModel instead */
+export type PreStartPlayerOrderResultModel = z.infer<
+  typeof preStartPlayerOrderResultSchema
+>;
+
+/** @deprecated use unitOrderModel instead */
+export const playerTournamentOrderSchema = z.object({
+  id: z.string(),
+  teamNickname: z.string().nullable(),
+  numberInTeam: z.number().nullable(),
+  pairingNumber: z.number().nullable(),
+  addedAt: z.union([z.date(), z.number()]).nullable(),
+});
+
+/** @deprecated use UnitOrderModel instead */
+export type PlayerTournamentOrderModel = z.infer<
+  typeof playerTournamentOrderSchema
+>;
+
+/** @deprecated use UnitInsertModel instead -----
+ * insert shape for legacy players_to_tournaments view writes (until mutations use units). */
+export const playerToTournamentInsertSchema = z.object({
+  id: z.string(),
+  playerId: z.string(),
+  tournamentId: z.string(),
+  wins: z.number(),
+  losses: z.number(),
+  draws: z.number(),
+  colorIndex: z.number(),
+  place: z.number().nullable(),
+  isOut: z.boolean().nullable(),
+  pairingNumber: z.number(),
+  addedAt: z.date(),
+  newRating: z.number().nullable(),
+  newRatingDeviation: z.number().nullable(),
+  newVolatility: z.number().nullable(),
+  teamNickname: z.string().nullable().optional(),
+  numberInTeam: z.number().optional(),
+});
+
+/** @deprecated use UnitInsertModel instead */
+export type PlayerToTournamentInsertModel = z.infer<
+  typeof playerToTournamentInsertSchema
+>;
+
+/** @deprecated use reorderTournamentUnitsInputSchema instead */
+export const reorderTournamentPlayersInputSchema = z.object({
+  tournamentId: z.string(),
+  playerIds: z.array(z.string()),
+});
+
+/** @deprecated use reorderTournamentUnitsInputSchema instead */
+export type ReorderTournamentPlayersInputModel = z.infer<
+  typeof reorderTournamentPlayersInputSchema
+>;
+
+/** @deprecated use withdrawTournamentUnitInputSchema instead */
+export const withdrawTournamentPlayerInputSchema = z.object({
+  tournamentId: z.string(),
+  playerId: z.string(),
+  userId: z.string(),
+});
+
+/** @deprecated use withdrawTournamentUnitInputSchema instead */
+export type WithdrawTournamentPlayerInputModel = z.infer<
+  typeof withdrawTournamentPlayerInputSchema
+>;
+
+/** @deprecated use withdrawTournamentUnitResultSchema instead */
+export const withdrawTournamentPlayerResultSchema =
+  withdrawTournamentUnitResultSchema;
+
+/** @deprecated use withdrawTournamentUnitResultSchema instead */
+export type WithdrawTournamentPlayerResultModel = z.infer<
+  typeof withdrawTournamentPlayerResultSchema
+>;
 
 export const tournamentInfoSchema = z.object({
   tournament: tournamentSchema,
@@ -123,10 +242,15 @@ export const tournamentWithClubSchema = z.object({
 export const tournamentAuthStatusSchema = z.union([
   z.object({ status: z.literal('organizer') }),
   z.object({ status: z.literal('viewer') }),
-  z.object({
-    status: z.literal('player'),
-    unitId: unitSelectSchema.shape.id,
-  }),
+  z
+    .object({
+      status: z.literal('player'),
+      unitId: unitSelectSchema.shape.id,
+    })
+    .transform((row) => ({
+      status: 'player' as const,
+      unitId: row.unitId,
+    })),
 ]);
 
 const getTodayDateString = (): string => {
@@ -193,9 +317,18 @@ export const addPairUnitFormSchema = addDoublesUnitSchema.safeExtend({
   nickname: z.string().trim().max(30, { error: 'max nickname length' }),
 });
 
+/** @deprecated use addPairUnitFormSchema */
+export const addDoublesTeamFormSchema = addPairUnitFormSchema;
+
 export const editPairUnitFormSchema = editDoublesUnitSchema.safeExtend({
   nickname: z.string().trim().max(30, { error: 'max nickname length' }),
 });
+
+/** @deprecated use addDoublesUnitSchema */
+export const addDoublesTeamSchema = addDoublesUnitSchema;
+
+/** @deprecated use editDoublesUnitSchema */
+export const editDoublesTeamSchema = editDoublesUnitSchema;
 
 export type TournamentInfoModel = z.infer<typeof tournamentInfoSchema>;
 export type TournamentWithClubModel = z.infer<typeof tournamentWithClubSchema>;
@@ -226,7 +359,11 @@ export type GameUpdateModel = z.infer<typeof gamesUpdateSchema>;
 export type AddDoublesUnitModel = z.infer<typeof addDoublesUnitSchema>;
 export type EditDoublesUnitModel = z.infer<typeof editDoublesUnitSchema>;
 
-export type PlayerToTournamentModel = z.infer<typeof playerToTournamentSchema>;
+/** @deprecated use AddDoublesUnitModel */
+export type AddDoublesTeamModel = AddDoublesUnitModel;
+
+/** @deprecated use EditDoublesUnitModel */
+export type EditDoublesTeamModel = EditDoublesUnitModel;
 export type PlayerUnitModel = z.infer<typeof playerUnitSelectSchema>;
 export type PlayerUnitInsertModel = z.infer<typeof playerUnitInsertSchema>;
 export type PlayerUnitUpdateModel = z.infer<typeof playerUnitUpdateSchema>;

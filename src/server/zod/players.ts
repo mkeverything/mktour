@@ -1,6 +1,5 @@
 import { affiliations, players } from '@/server/db/schema/players';
 import { affiliationStatusEnum } from '@/server/zod/enums';
-import { tournamentSchema, UnitModel } from '@/server/zod/tournaments';
 import {
   createInsertSchema,
   createSelectSchema,
@@ -133,6 +132,3 @@ export const userPlayerClubSchema = z.object({
 export type PlayerStatsModel = z.infer<typeof playerStatsSchema>;
 export type PlayerAuthStatsModel = z.infer<typeof playerAuthStatsSchema>;
 export type UserPlayerClubModel = z.infer<typeof userPlayerClubSchema>;
-
-/** @deprecated Use PlayerUnitModel instead */
-export type PlayerTournamentModel = UnitModel;

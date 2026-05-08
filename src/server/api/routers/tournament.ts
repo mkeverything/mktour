@@ -36,7 +36,6 @@ import {
   withdrawPlayer,
 } from '@/server/mutations/tournament-players';
 import getAllTournaments from '@/server/queries/get-all-tournaments';
-import { getPublicFeaturedTournaments } from '@/server/queries/get-public-featured-tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import {
   getTournamentGames,
@@ -59,7 +58,6 @@ import {
   addDoublesTeamSchema,
   editDoublesTeamSchema,
   gameSchema,
-  publicFeaturedTournamentSchema,
   reorderTournamentPlayersInputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
@@ -100,16 +98,6 @@ export const tournamentRouter = {
         limit: input.limit,
         cursor: input.cursor ?? undefined,
       });
-    }),
-  publicFeatured: publicProcedure // TODO: currently not used + not included in openapi. use or remove
-    .input(
-      z.object({
-        limit: z.number().min(1).max(10).optional().default(5),
-      }),
-    )
-    .output(z.array(publicFeaturedTournamentSchema))
-    .query(async ({ input }) => {
-      return await getPublicFeaturedTournaments(input.limit);
     }),
   info: publicProcedure
     .input(tournamentIdInputSchema)
