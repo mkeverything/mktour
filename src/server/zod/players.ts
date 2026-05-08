@@ -1,7 +1,6 @@
 import { affiliations, players } from '@/server/db/schema/players';
-import { players_to_tournaments } from '@/server/db/schema/tournaments';
 import { affiliationStatusEnum } from '@/server/zod/enums';
-import { gameSchema, tournamentSchema } from '@/server/zod/tournaments';
+import { tournamentSchema, UnitModel } from '@/server/zod/tournaments';
 import {
   createInsertSchema,
   createSelectSchema,
@@ -85,57 +84,15 @@ export const playerEditSchema = playersUpdateSchema
     realname: z.string().max(50).nullable().optional(),
   });
 
-export const playersToTournamentsSelectSchema = createSelectSchema(
-  players_to_tournaments,
-);
-
-export const playerTournamentSchema = playersToTournamentsSelectSchema
-  .pick({
-    pairingNumber: true,
-    teamNickname: true,
-    addedAt: true,
-    wins: true,
-    draws: true,
-    losses: true,
-    colorIndex: true,
-    isOut: true,
-    place: true,
-  })
-  .extend({
-    id: playersSelectSchema.shape.id,
-    nickname: playersSelectSchema.shape.nickname,
-    realname: playersSelectSchema.shape.realname,
-    rating: playersSelectSchema.shape.rating,
-    username: playersWithUsernameSchema.shape.username,
-    pairPlayers: z
-      .array(
-        z.object({
-          id: z.string(),
-          nickname: z.string(),
-          rating: z.number().optional(), // TODO: to remove this optional we need to change playersOut api
-        }),
-      )
-      .nullable(),
-  });
-
-export const preStartPlayerOrderResultSchema = z.object({
-  players: z.array(playerTournamentSchema),
-  games: z.array(gameSchema),
+export const statItemSchema = z.object({
+  value: z.number(),
+  rank: z.number(),
 });
 
 export const playerStatsSchema = z.object({
-  tournamentsPlayed: z.object({
-    value: z.number(),
-    rank: z.number(),
-  }),
-  gamesPlayed: z.object({
-    value: z.number(),
-    rank: z.number(),
-  }),
-  winRate: z.object({
-    value: z.number(),
-    rank: z.number(),
-  }),
+  tournamentsPlayed: statItemSchema,
+  gamesPlayed: statItemSchema,
+  winRate: statItemSchema,
   ratingPeakRank: z.number(),
 });
 
@@ -146,11 +103,6 @@ export const playerAuthStatsSchema = z.object({
   userPlayerNickname: z.string(),
   lastTournament: tournamentSchema.nullable(),
 });
-
-export type PlayerTournamentModel = z.infer<typeof playerTournamentSchema>;
-export type PreStartPlayerOrderResultModel = z.infer<
-  typeof preStartPlayerOrderResultSchema
->;
 
 export type AffiliationModel = z.infer<typeof affiliationsSelectSchema>;
 export type AffiliationInsertModel = z.infer<typeof affiliationsInsertSchema>;
@@ -181,3 +133,6 @@ export const userPlayerClubSchema = z.object({
 export type PlayerStatsModel = z.infer<typeof playerStatsSchema>;
 export type PlayerAuthStatsModel = z.infer<typeof playerAuthStatsSchema>;
 export type UserPlayerClubModel = z.infer<typeof userPlayerClubSchema>;
+
+/** @deprecated Use PlayerUnitModel instead */
+export type PlayerTournamentModel = UnitModel;
