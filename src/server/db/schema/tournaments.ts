@@ -105,8 +105,8 @@ export const games = sqliteTable(
     blackUnitId: text('black_unit_id')
       .notNull()
       .references(() => tournament_units.id),
-    ratedWhiteId: text('rated_white_id').references(() => players.id), // only for rated tournaments
-    ratedBlackId: text('rated_black_id').references(() => players.id), // only for rated tournaments
+    whitePlayerId: text('white_player_id').references(() => players.id), // only for rated tournaments or when players in a unit have separate games
+    blackPlayerId: text('black_player_id').references(() => players.id), // only for rated tournaments or when players in a unit have separate games
     whitePrevGameId: text('white_prev_game_id'),
     blackPrevGameId: text('black_prev_game_id'),
     result: text('result').$type<GameResult>(),
