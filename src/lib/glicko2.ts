@@ -4,7 +4,7 @@ export interface GlickoPlayer {
   volatility: number;
 }
 
-export interface GameResult {
+export interface GlickoGameResult {
   opponentRating: number;
   opponentRatingDeviation: number;
   score: number; // 1 = win, 0.5 = draw, 0 = loss
