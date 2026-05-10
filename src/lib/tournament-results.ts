@@ -1,59 +1,75 @@
-import { PlayerTournamentModel } from '@/server/zod/players';
-import { GameModel, TournamentModel } from '@/server/zod/tournaments';
+import {
+  GameModel,
+  TournamentModel,
+  UnitModel,
+} from '@/server/zod/tournaments';
 
-export interface SortedPlayersResult {
-  players: PlayerTournamentModel[];
-  playerScoresMap: Map<string, number>;
-  tiebreakScoresMap: Map<string, number>;
+export interface SortedUnitsResult<T extends UnitModel = UnitModel> {
+  units: T[];
+  unitScoresMap: Map<UnitModel['id'], number>;
+  tiebreakScoresMap: Map<UnitModel['id'], number>;
+}
+
+function pairingOrder(u: Pick<UnitModel, 'number'>): number {
+  return u.number ?? Number.MAX_SAFE_INTEGER;
+}
+
+function addedAtSortKey(u: Pick<UnitModel, 'addedAt'>): number {
+  const d = u.addedAt;
+  if (d == null) return 0;
+  return typeof d === 'number' ? d : d.getTime();
 }
 
 export const hasSameStanding = (
-  player: PlayerTournamentModel,
-  previousPlayer: PlayerTournamentModel,
-  playerScoresMap: Map<string, number>,
+  unit: UnitModel,
+  previousUnit: UnitModel,
+  unitScoresMap: Map<string, number>,
   tiebreakScoresMap: Map<string, number>,
 ): boolean => {
-  const score = playerScoresMap.get(player.id) ?? 0;
-  const previousScore = playerScoresMap.get(previousPlayer.id) ?? 0;
+  const score = unitScoresMap.get(unit.id) ?? 0;
+  const previousScore = unitScoresMap.get(previousUnit.id) ?? 0;
   if (score !== previousScore) return false;
 
-  const tiebreakScore = tiebreakScoresMap.get(player.id) ?? 0;
-  const previousTiebreakScore = tiebreakScoresMap.get(previousPlayer.id) ?? 0;
+  const tiebreakScore = tiebreakScoresMap.get(unit.id) ?? 0;
+  const previousTiebreakScore = tiebreakScoresMap.get(previousUnit.id) ?? 0;
   if (tiebreakScore !== previousTiebreakScore) return false;
 
-  return player.wins === previousPlayer.wins;
+  return unit.wins === previousUnit.wins;
 };
 
-export const calculatePlayerScore = (
-  player: PlayerTournamentModel,
+export const calculateUnitScore = (
+  unit: UnitModel,
   roundNumber: number,
-  playerGames: GameModel[],
+  unitGames: GameModel[],
 ): number => {
-  const wins = player.wins;
-  const draws = player.draws * 0.5;
+  const wins = unit.wins;
+  const draws = unit.draws * 0.5;
 
-  const byes = player.isOut ? 0 : Math.max(0, roundNumber - playerGames.length);
+  const byes = unit.isOut ? 0 : Math.max(0, roundNumber - unitGames.length);
 
   return wins + draws + byes;
 };
 
+/** @deprecated use calculateUnitScore */
+export const calculatePlayerScore = calculateUnitScore;
+
 export const calculateBuchholzCut1 = (
-  player: PlayerTournamentModel,
+  unit: Pick<UnitModel, 'id'>,
   roundNumber: number,
   allGames: GameModel[],
-  playerScoresMap: Map<string, number>,
+  unitScoresMap: Map<string, number>,
 ): number => {
-  // For bye rounds (no opponent), use the player's own score as virtual opponent score
+  // for bye rounds (no opponent), use the unit's own score as virtual opponent score
   // (standard FIDE Buchholz convention for unplayed games / byes)
-  const playerTotalScore = playerScoresMap.get(player.id) ?? 0;
+  const unitTotalScore = unitScoresMap.get(unit.id) ?? 0;
   const opponentScores: number[] = [];
   const opponentsByRound = new Map<number, string>();
 
   for (const game of allGames) {
     let opponentId: string | null = null;
-    if (game.whiteUnitId === player.id) {
+    if (game.whiteUnitId === unit.id) {
       opponentId = game.blackUnitId;
-    } else if (game.blackUnitId === player.id) {
+    } else if (game.blackUnitId === unit.id) {
       opponentId = game.whiteUnitId;
     }
 
@@ -65,9 +81,9 @@ export const calculateBuchholzCut1 = (
   for (let r = 1; r <= roundNumber; r++) {
     const opponentId = opponentsByRound.get(r);
     if (opponentId) {
-      opponentScores.push(playerScoresMap.get(opponentId) ?? 0);
+      opponentScores.push(unitScoresMap.get(opponentId) ?? 0);
     } else {
-      opponentScores.push(playerTotalScore);
+      opponentScores.push(unitTotalScore);
     }
   }
 
@@ -78,31 +94,31 @@ export const calculateBuchholzCut1 = (
 };
 
 export const calculateBerger = (
-  player: PlayerTournamentModel,
+  unit: Pick<UnitModel, 'id'>,
   allGames: GameModel[],
-  playerScoresMap: Map<string, number>,
+  unitScoresMap: Map<string, number>,
 ): number => {
   let berger = 0;
   for (const game of allGames) {
     if (!game.result) continue;
 
     let opponentId: string | null = null;
-    let playerWon = false;
+    let unitWon = false;
     let isDraw = false;
 
-    if (game.whiteUnitId === player.id) {
+    if (game.whiteUnitId === unit.id) {
       opponentId = game.blackUnitId;
-      if (game.result === '1-0') playerWon = true;
+      if (game.result === '1-0') unitWon = true;
       else if (game.result === '1/2-1/2') isDraw = true;
-    } else if (game.blackUnitId === player.id) {
+    } else if (game.blackUnitId === unit.id) {
       opponentId = game.whiteUnitId;
-      if (game.result === '0-1') playerWon = true;
+      if (game.result === '0-1') unitWon = true;
       else if (game.result === '1/2-1/2') isDraw = true;
     }
 
     if (opponentId) {
-      const opponentScore = playerScoresMap.get(opponentId) ?? 0;
-      if (playerWon) {
+      const opponentScore = unitScoresMap.get(opponentId) ?? 0;
+      if (unitWon) {
         berger += opponentScore;
       } else if (isDraw) {
         berger += opponentScore * 0.5;
@@ -113,73 +129,75 @@ export const calculateBerger = (
 };
 
 /**
- * Builds player score and tiebreak maps without sorting.
- * Useful when callers need the maps for display purposes.
+ * builds unit score and tiebreak maps without sorting.
+ * useful when callers need the maps for display purposes.
  */
 export const buildScoreMaps = (
-  players: PlayerTournamentModel[],
+  units: UnitModel[],
   tournament: Pick<TournamentModel, 'format' | 'ongoingRound'>,
   allGames: GameModel[],
 ): {
-  playerScoresMap: Map<string, number>;
+  unitScoresMap: Map<string, number>;
   tiebreakScoresMap: Map<string, number>;
+  /** @deprecated use unitScoresMap */
+  playerScoresMap: Map<string, number>;
 } => {
   const roundNumber = tournament.ongoingRound ?? 0;
 
-  const playerScoresMap = new Map<string, number>();
-  for (const p of players) {
-    const playerGames = allGames.filter(
-      (g) => g.whiteUnitId === p.id || g.blackUnitId === p.id,
+  const unitScoresMap = new Map<string, number>();
+  for (const u of units) {
+    const unitGames = allGames.filter(
+      (g) => g.whiteUnitId === u.id || g.blackUnitId === u.id,
     );
-    playerScoresMap.set(
-      p.id,
-      calculatePlayerScore(p, roundNumber, playerGames),
-    );
+    unitScoresMap.set(u.id, calculateUnitScore(u, roundNumber, unitGames));
   }
 
   const tiebreakScoresMap = new Map<string, number>();
-  for (const p of players) {
+  for (const u of units) {
     const score =
       tournament.format === 'swiss'
-        ? calculateBuchholzCut1(p, roundNumber, allGames, playerScoresMap)
-        : calculateBerger(p, allGames, playerScoresMap);
-    tiebreakScoresMap.set(p.id, score);
+        ? calculateBuchholzCut1(u, roundNumber, allGames, unitScoresMap)
+        : calculateBerger(u, allGames, unitScoresMap);
+    tiebreakScoresMap.set(u.id, score);
   }
 
-  return { playerScoresMap, tiebreakScoresMap };
+  return {
+    unitScoresMap,
+    tiebreakScoresMap,
+    playerScoresMap: unitScoresMap,
+  };
 };
 
-export const baselinePlayerSort = (
-  a: Pick<PlayerTournamentModel, 'pairingNumber' | 'addedAt' | 'id'>,
-  b: Pick<PlayerTournamentModel, 'pairingNumber' | 'addedAt' | 'id'>,
+export const baselineUnitSort = (
+  a: Pick<UnitModel, 'number' | 'addedAt' | 'id'>,
+  b: Pick<UnitModel, 'number' | 'addedAt' | 'id'>,
 ): number => {
-  if (a.pairingNumber !== null || b.pairingNumber !== null) {
-    const pairingNumberA = a.pairingNumber ?? Number.MAX_SAFE_INTEGER;
-    const pairingNumberB = b.pairingNumber ?? Number.MAX_SAFE_INTEGER;
+  if (a.number != null || b.number != null) {
+    const orderA = pairingOrder(a);
+    const orderB = pairingOrder(b);
 
-    if (pairingNumberA !== pairingNumberB) {
-      return pairingNumberA - pairingNumberB;
+    if (orderA !== orderB) {
+      return orderA - orderB;
     }
   }
 
-  const addedAtA = a.addedAt?.getTime() ?? 0;
-  const addedAtB = b.addedAt?.getTime() ?? 0;
+  const addedAtA = addedAtSortKey(a);
+  const addedAtB = addedAtSortKey(b);
   if (addedAtA !== addedAtB) return addedAtA - addedAtB;
 
   return a.id.localeCompare(b.id);
 };
 
-/**
- * Sorts players by score → tiebreak → wins and returns the sorted array
- * along with the computed score maps.
- */
-function makePlayerComparator(
-  playerScoresMap: Map<string, number>,
+/** @deprecated use baselineUnitSort */
+export const baselinePlayerSort = baselineUnitSort;
+
+function makeUnitComparator(
+  unitScoresMap: Map<string, number>,
   tiebreakScoresMap: Map<string, number>,
 ) {
-  return (a: PlayerTournamentModel, b: PlayerTournamentModel): number => {
-    const scoreA = playerScoresMap.get(a.id) ?? 0;
-    const scoreB = playerScoresMap.get(b.id) ?? 0;
+  return (a: UnitModel, b: UnitModel): number => {
+    const scoreA = unitScoresMap.get(a.id) ?? 0;
+    const scoreB = unitScoresMap.get(b.id) ?? 0;
 
     if (scoreB !== scoreA) return scoreB - scoreA;
 
@@ -190,44 +208,59 @@ function makePlayerComparator(
 
     if (b.wins !== a.wins) return b.wins - a.wins;
 
-    return baselinePlayerSort(a, b);
+    return baselineUnitSort(a, b);
   };
 }
 
-export const sortPlayersByResults = (
-  players: PlayerTournamentModel[],
+export function sortUnitsByResults<T extends UnitModel>(
+  units: T[],
   tournament: Pick<TournamentModel, 'format' | 'ongoingRound'>,
   allGames: GameModel[],
-): PlayerTournamentModel[] => {
-  const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
-    players,
+): T[] {
+  const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
+    units,
     tournament,
     allGames,
   );
 
-  return [...players].sort(
-    makePlayerComparator(playerScoresMap, tiebreakScoresMap),
-  );
-};
+  return [...units].sort(makeUnitComparator(unitScoresMap, tiebreakScoresMap));
+}
+
+/** @deprecated use sortUnitsByResults */
+export const sortPlayersByResults = sortUnitsByResults;
 
 /**
- * Sorts players and returns both the sorted array and score maps.
- * Use this when you need the maps for display (e.g., in the tournament table UI).
+ * sorts units and returns both the sorted array and score maps.
+ * use when you need the maps for display (e.g. tournament table UI).
  */
-export const sortPlayersByResultsWithMaps = (
-  players: PlayerTournamentModel[],
+export function sortUnitsByResultsWithMaps<T extends UnitModel>(
+  units: T[],
   tournament: Pick<TournamentModel, 'format' | 'ongoingRound'>,
   allGames: GameModel[],
-): SortedPlayersResult => {
-  const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
-    players,
+): SortedUnitsResult<T> {
+  const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
+    units,
     tournament,
     allGames,
   );
 
-  const sorted = [...players].sort(
-    makePlayerComparator(playerScoresMap, tiebreakScoresMap),
+  const sorted = [...units].sort(
+    makeUnitComparator(unitScoresMap, tiebreakScoresMap),
   );
 
-  return { players: sorted, playerScoresMap, tiebreakScoresMap };
-};
+  return { units: sorted, unitScoresMap, tiebreakScoresMap };
+}
+
+/** @deprecated use sortUnitsByResultsWithMaps */
+export function sortPlayersByResultsWithMaps<T extends UnitModel>(
+  units: T[],
+  tournament: Pick<TournamentModel, 'format' | 'ongoingRound'>,
+  allGames: GameModel[],
+): SortedUnitsResult<T> {
+  const r = sortUnitsByResultsWithMaps(units, tournament, allGames);
+  return {
+    units: r.units,
+    unitScoresMap: r.unitScoresMap,
+    tiebreakScoresMap: r.tiebreakScoresMap,
+  };
+}
