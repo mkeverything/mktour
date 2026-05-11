@@ -36,7 +36,7 @@ import {
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
-import { reapplyPreStartOrder } from './tournament-player-order';
+import { reapplyPreStartOrder } from './tournament-unit-order';
 
 export const createTournament = async (
   values: Omit<NewTournamentFormModel, 'date'> & {

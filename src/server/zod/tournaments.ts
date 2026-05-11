@@ -81,11 +81,6 @@ export const unitOrderSchema = unitSelectSchema.pick({
   addedAt: true,
 });
 
-export const withdrawTournamentUnitInputSchema = z.object({
-  tournamentId: z.string(),
-  unitId: z.string(),
-  userId: z.string(),
-});
 export const reorderTournamentUnitsInputSchema = z.object({
   tournamentId: z.string(),
   unitIds: z
@@ -109,122 +104,103 @@ export const withdrawTournamentUnitResultSchema = z.object({
  * - games.white_unit_id / black_unit_id → tournament_units.id
  */
 
-/** @deprecated use playerInUnitSchema instead */
-export const tournamentParticipantPairMemberSchema = z.object({
-  id: z.string(),
-  nickname: z.string(),
-  rating: z.number(),
-});
+// /** @deprecated use playerInUnitSchema instead */
+// export const tournamentParticipantPairMemberSchema = z.object({
+//   id: z.string(),
+//   nickname: z.string(),
+//   rating: z.number(),
+// });
 
-/** @deprecated use unitSchema instead */
-export const tournamentParticipantRowSchema = z.object({
-  id: z.string(),
-  nickname: z.string(),
-  realname: z.string().nullable(),
-  rating: z.number(),
-  wins: z.number(),
-  draws: z.number(),
-  losses: z.number(),
-  colorIndex: z.number(),
-  isOut: z.boolean().nullable(),
-  place: z.number().nullable(),
-  pairingNumber: z.number().nullable(),
-  addedAt: z.union([z.date(), z.number()]).nullable(),
-  username: z.string().nullable(),
-  teamNickname: z.string().nullable(),
-  pairPlayers: z.array(tournamentParticipantPairMemberSchema).nullable(),
-});
+// /** @deprecated use unitSchema instead */
+// export const tournamentParticipantRowSchema = z.object({
+//   id: z.string(),
+//   nickname: z.string(),
+//   realname: z.string().nullable(),
+//   rating: z.number(),
+//   wins: z.number(),
+//   draws: z.number(),
+//   losses: z.number(),
+//   colorIndex: z.number(),
+//   isOut: z.boolean().nullable(),
+//   place: z.number().nullable(),
+//   pairingNumber: z.number().nullable(),
+//   addedAt: z.union([z.date(), z.number()]).nullable(),
+//   username: z.string().nullable(),
+//   teamNickname: z.string().nullable(),
+//   pairPlayers: z.array(tournamentParticipantPairMemberSchema).nullable(),
+// });
 
-/** @deprecated use tournamentParticipantRowSchema */
-export const playerTournamentSchema = tournamentParticipantRowSchema;
+// /** @deprecated use tournamentParticipantRowSchema */
+// export const playerTournamentSchema = tournamentParticipantRowSchema;
 
-/** @deprecated use UnitModel instead */
-export type TournamentParticipantRowModel = z.infer<
-  typeof tournamentParticipantRowSchema
->;
+// /** @deprecated use UnitModel instead */
+// export type TournamentParticipantRowModel = z.infer<
+//   typeof tournamentParticipantRowSchema
+// >;
 
-/** @deprecated use preStartSchema instead */
-export const preStartPlayerOrderResultSchema = z.object({
-  players: z.array(tournamentParticipantRowSchema),
-  games: z.array(gameSchema),
-});
+// /** @deprecated use preStartSchema instead */
+// export const preStartPlayerOrderResultSchema = z.object({
+//   players: z.array(tournamentParticipantRowSchema),
+//   games: z.array(gameSchema),
+// });
 
-/** @deprecated use PreStartModel instead */
-export type PreStartPlayerOrderResultModel = z.infer<
-  typeof preStartPlayerOrderResultSchema
->;
+// /** @deprecated use UnitInsertModel instead -----
+//  * insert shape for legacy players_to_tournaments view writes (until mutations use units). */
+// export const playerToTournamentInsertSchema = z.object({
+//   id: z.string(),
+//   playerId: z.string(),
+//   tournamentId: z.string(),
+//   wins: z.number(),
+//   losses: z.number(),
+//   draws: z.number(),
+//   colorIndex: z.number(),
+//   place: z.number().nullable(),
+//   isOut: z.boolean().nullable(),
+//   pairingNumber: z.number(),
+//   addedAt: z.date(),
+//   newRating: z.number().nullable(),
+//   newRatingDeviation: z.number().nullable(),
+//   newVolatility: z.number().nullable(),
+//   teamNickname: z.string().nullable().optional(),
+//   numberInTeam: z.number().optional(),
+// });
 
-/** @deprecated use unitOrderModel instead */
-export const playerTournamentOrderSchema = z.object({
-  id: z.string(),
-  teamNickname: z.string().nullable(),
-  numberInTeam: z.number().nullable(),
-  pairingNumber: z.number().nullable(),
-  addedAt: z.union([z.date(), z.number()]).nullable(),
-});
+// /** @deprecated use UnitInsertModel instead */
+// export type PlayerToTournamentInsertModel = z.infer<
+//   typeof playerToTournamentInsertSchema
+// >;
 
-/** @deprecated use UnitOrderModel instead */
-export type PlayerTournamentOrderModel = z.infer<
-  typeof playerTournamentOrderSchema
->;
+// /** @deprecated use reorderTournamentUnitsInputSchema instead */
+// export const reorderTournamentPlayersInputSchema = z.object({
+//   tournamentId: z.string(),
+//   playerIds: z.array(z.string()),
+// });
 
-/** @deprecated use UnitInsertModel instead -----
- * insert shape for legacy players_to_tournaments view writes (until mutations use units). */
-export const playerToTournamentInsertSchema = z.object({
-  id: z.string(),
-  playerId: z.string(),
-  tournamentId: z.string(),
-  wins: z.number(),
-  losses: z.number(),
-  draws: z.number(),
-  colorIndex: z.number(),
-  place: z.number().nullable(),
-  isOut: z.boolean().nullable(),
-  pairingNumber: z.number(),
-  addedAt: z.date(),
-  newRating: z.number().nullable(),
-  newRatingDeviation: z.number().nullable(),
-  newVolatility: z.number().nullable(),
-  teamNickname: z.string().nullable().optional(),
-  numberInTeam: z.number().optional(),
-});
+// /** @deprecated use reorderTournamentUnitsInputSchema instead */
+// export type ReorderTournamentPlayersInputModel = z.infer<
+//   typeof reorderTournamentPlayersInputSchema
+// >;
 
-/** @deprecated use UnitInsertModel instead */
-export type PlayerToTournamentInsertModel = z.infer<
-  typeof playerToTournamentInsertSchema
->;
+// /** @deprecated use withdrawTournamentUnitInputSchema instead */
+// export const withdrawTournamentPlayerInputSchema = z.object({
+//   tournamentId: z.string(),
+//   playerId: z.string(),
+//   userId: z.string(),
+// });
 
-/** @deprecated use reorderTournamentUnitsInputSchema instead */
-export const reorderTournamentPlayersInputSchema = z.object({
-  tournamentId: z.string(),
-  playerIds: z.array(z.string()),
-});
+// /** @deprecated use withdrawTournamentUnitInputSchema instead */
+// export type WithdrawTournamentPlayerInputModel = z.infer<
+//   typeof withdrawTournamentPlayerInputSchema
+// >;
 
-/** @deprecated use reorderTournamentUnitsInputSchema instead */
-export type ReorderTournamentPlayersInputModel = z.infer<
-  typeof reorderTournamentPlayersInputSchema
->;
+// /** @deprecated use withdrawTournamentUnitResultSchema instead */
+// export const withdrawTournamentPlayerResultSchema =
+//   withdrawTournamentUnitResultSchema;
 
-/** @deprecated use withdrawTournamentUnitInputSchema instead */
-export const withdrawTournamentPlayerInputSchema = z.object({
-  tournamentId: z.string(),
-  playerId: z.string(),
-  userId: z.string(),
-});
-
-/** @deprecated use withdrawTournamentUnitInputSchema instead */
-export type WithdrawTournamentPlayerInputModel = z.infer<
-  typeof withdrawTournamentPlayerInputSchema
->;
-
-/** @deprecated use withdrawTournamentUnitResultSchema instead */
-export const withdrawTournamentPlayerResultSchema =
-  withdrawTournamentUnitResultSchema;
-
-/** @deprecated use withdrawTournamentUnitResultSchema instead */
-export type WithdrawTournamentPlayerResultModel = z.infer<
-  typeof withdrawTournamentPlayerResultSchema
->;
+// /** @deprecated use withdrawTournamentUnitResultSchema instead */
+// export type WithdrawTournamentPlayerResultModel = z.infer<
+//   typeof withdrawTournamentPlayerResultSchema
+// >;
 
 export const tournamentInfoSchema = z.object({
   tournament: tournamentSchema,
@@ -313,22 +289,22 @@ export const editDoublesUnitSchema = addDoublesUnitSchema.extend({
 });
 
 /** form schema: nickname optional (derive on submit when empty). api still requires min(2). */
-export const addPairUnitFormSchema = addDoublesUnitSchema.safeExtend({
+export const addDoublesUnitFormSchema = addDoublesUnitSchema.safeExtend({
   nickname: z.string().trim().max(30, { error: 'max nickname length' }),
 });
 
-/** @deprecated use addPairUnitFormSchema */
-export const addDoublesTeamFormSchema = addPairUnitFormSchema;
+// /** @deprecated use addPairUnitFormSchema */
+// export const addDoublesTeamFormSchema = addPairUnitFormSchema;
 
-export const editPairUnitFormSchema = editDoublesUnitSchema.safeExtend({
-  nickname: z.string().trim().max(30, { error: 'max nickname length' }),
-});
+// export const editPairUnitFormSchema = editDoublesUnitSchema.safeExtend({
+//   nickname: z.string().trim().max(30, { error: 'max nickname length' }),
+// });
 
-/** @deprecated use addDoublesUnitSchema */
-export const addDoublesTeamSchema = addDoublesUnitSchema;
+// /** @deprecated use addDoublesUnitSchema */
+// export const addDoublesTeamSchema = addDoublesUnitSchema;
 
-/** @deprecated use editDoublesUnitSchema */
-export const editDoublesTeamSchema = editDoublesUnitSchema;
+// /** @deprecated use editDoublesUnitSchema */
+// export const editDoublesTeamSchema = editDoublesUnitSchema;
 
 export type TournamentInfoModel = z.infer<typeof tournamentInfoSchema>;
 export type TournamentWithClubModel = z.infer<typeof tournamentWithClubSchema>;
@@ -351,19 +327,12 @@ export type NewTournamentFormModel = z.infer<typeof newTournamentFormSchema>;
 export type TournamentCreateInputModel = z.infer<
   typeof tournamentCreateInputSchema
 >;
-
 export type GameModel = z.infer<typeof gameSchema>;
 export type GamePairMembersModel = z.infer<typeof gamePairMembersSchema>;
 export type GameInsertModel = z.infer<typeof gamesInsertSchema>;
 export type GameUpdateModel = z.infer<typeof gamesUpdateSchema>;
 export type AddDoublesUnitModel = z.infer<typeof addDoublesUnitSchema>;
 export type EditDoublesUnitModel = z.infer<typeof editDoublesUnitSchema>;
-
-/** @deprecated use AddDoublesUnitModel */
-export type AddDoublesTeamModel = AddDoublesUnitModel;
-
-/** @deprecated use EditDoublesUnitModel */
-export type EditDoublesTeamModel = EditDoublesUnitModel;
 export type PlayerUnitModel = z.infer<typeof playerUnitSelectSchema>;
 export type PlayerUnitInsertModel = z.infer<typeof playerUnitInsertSchema>;
 export type PlayerUnitUpdateModel = z.infer<typeof playerUnitUpdateSchema>;

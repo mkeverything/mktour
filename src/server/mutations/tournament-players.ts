@@ -1,6 +1,8 @@
 'use server';
 
+import { validateRequest } from '@/lib/auth/lucia';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
+import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
@@ -8,6 +10,7 @@ import {
   players_to_units,
   tournament_units,
 } from '@/server/db/schema/tournaments';
+import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
@@ -21,10 +24,7 @@ import { normalizeSwissRoundsNumberInDatabase } from './tournament-lifecycle';
 import {
   getTournamentOrderTargets,
   reapplyPreStartOrder,
-} from './tournament-player-order';
-import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
-import { validateRequest } from '@/lib/auth/lucia';
-import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
+} from './tournament-unit-order';
 
 export async function addNewPlayer({
   tournamentId,

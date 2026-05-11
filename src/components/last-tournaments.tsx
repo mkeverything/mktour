@@ -2,12 +2,12 @@ import FormattedMessage from '@/components/formatted-message';
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { PlayerToTournamentModel } from '@/server/zod/tournaments';
+import { TournamentModel } from '@/server/zod/tournaments';
 import { ChevronRight, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { FC } from 'react';
 
-const LastTournaments: FC<{ tournaments: PlayerToTournamentModel[] }> = ({
+const LastTournaments: FC<{ tournaments: TournamentModel[] }> = ({
   tournaments,
 }) => {
   if (!tournaments || tournaments.length === 0) return null;
@@ -23,7 +23,7 @@ const LastTournaments: FC<{ tournaments: PlayerToTournamentModel[] }> = ({
       <CardContent className="pt-0">
         <ul className="flex flex-col">
           {tournaments.map((tournament, index) => (
-            <li key={tournament?.tournament?.id}>
+            <li key={tournament.id}>
               {index > 0 && <Separator />}
               <TournamentLi {...tournament} />
             </li>
@@ -34,7 +34,7 @@ const LastTournaments: FC<{ tournaments: PlayerToTournamentModel[] }> = ({
   );
 };
 
-const TournamentLi = ({ tournament }: PlayerToTournamentModel) => {
+const TournamentLi = (tournament: TournamentModel) => {
   const fallbackTitle = useTournamentFallbackTitle(tournament);
   const title = tournament.title || fallbackTitle;
 

@@ -23,7 +23,7 @@ import {
   getPublicPopularClubs,
   getUserClubPlayer,
 } from '@/server/queries/club';
-import getAllClubs from '@/server/queries/get-all-clubs';
+import getAllClubs from '@/server/queries/get-all-clubs-infinite';
 import getClubNotifications from '@/server/queries/get-club-notifications';
 import { getClubStats } from '@/server/queries/get-club-stats';
 import { getClubTournaments } from '@/server/queries/get-club-tournaments';

@@ -13,7 +13,8 @@ import {
 import { affiliations, players } from '@/server/db/schema/players';
 import {
   games,
-  players_to_tournaments,
+  players_to_units,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
@@ -147,12 +148,15 @@ export const createPlayer = async (player: PlayerFormModel) => {
   return newPlayer;
 };
 
-// FIXME
 export const deletePlayer = async ({ playerId }: { playerId: string }) => {
   const [playerTournament] = await db
-    .select({ tournamentId: players_to_tournaments.tournamentId })
-    .from(players_to_tournaments)
-    .where(eq(players_to_tournaments.playerId, playerId))
+    .select({ tournamentId: tournament_units.tournamentId })
+    .from(players_to_units)
+    .innerJoin(
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
+    )
+    .where(eq(players_to_units.playerId, playerId))
     .limit(1);
 
   if (playerTournament) {
@@ -272,12 +276,19 @@ export const deleteClubFunction = async ({
     .select({ id: tournaments.id })
     .from(tournaments)
     .where(eq(tournaments.clubId, clubId));
+  const clubUnitIds = db
+    .select({ id: tournament_units.id })
+    .from(tournament_units)
+    .where(inArray(tournament_units.tournamentId, clubTournamentIds));
 
   await db.batch([
     db.delete(games).where(inArray(games.tournamentId, clubTournamentIds)),
     db
-      .delete(players_to_tournaments)
-      .where(inArray(players_to_tournaments.tournamentId, clubTournamentIds)),
+      .delete(players_to_units)
+      .where(inArray(players_to_units.unitId, clubUnitIds)),
+    db
+      .delete(tournament_units)
+      .where(inArray(tournament_units.tournamentId, clubTournamentIds)),
 
     db.delete(affiliations).where(eq(affiliations.clubId, clubId)),
     db.delete(club_notifications).where(eq(club_notifications.clubId, clubId)),

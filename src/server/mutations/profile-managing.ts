@@ -8,7 +8,8 @@ import { user_notifications } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
 import {
   games,
-  players_to_tournaments,
+  players_to_units,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { sessions, user_preferences, users } from '@/server/db/schema/users';
@@ -161,13 +162,20 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
       await tx
         .delete(games)
         .where(inArray(games.tournamentId, selectedClubTournamentIds));
-      await tx
-        .delete(players_to_tournaments)
+      const selectedClubUnitIds = tx
+        .select({ id: tournament_units.id })
+        .from(tournament_units)
         .where(
-          inArray(
-            players_to_tournaments.tournamentId,
-            selectedClubTournamentIds,
-          ),
+          inArray(tournament_units.tournamentId, selectedClubTournamentIds),
+        );
+
+      await tx
+        .delete(players_to_units)
+        .where(inArray(players_to_units.unitId, selectedClubUnitIds));
+      await tx
+        .delete(tournament_units)
+        .where(
+          inArray(tournament_units.tournamentId, selectedClubTournamentIds),
         );
       await tx.delete(players).where(eq(players.clubId, clubId));
       await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));

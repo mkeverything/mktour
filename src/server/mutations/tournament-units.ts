@@ -1,6 +1,7 @@
 'use server';
 import { validateRequest } from '@/lib/auth/lucia';
 import { lowerEq } from '@/lib/sql-sqlite-string';
+import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
@@ -27,8 +28,7 @@ import {
   applyPreStartPlayerOrder,
   getTournamentOrderTargets,
   reapplyPreStartOrder,
-} from './tournament-player-order';
-import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
+} from './tournament-unit-order';
 
 export async function removeUnit({
   tournamentId,

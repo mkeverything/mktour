@@ -2,9 +2,10 @@ import Profile from '@/app/user/[username]/profile';
 import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
 import { UserPlayerClubModel } from '@/server/zod/players';
-import { PlayerToTournamentModel } from '@/server/zod/tournaments';
+import { TournamentModel } from '@/server/zod/tournaments';
 import { UserPublicModel } from '@/server/zod/users';
 import { TRPCError } from '@trpc/server';
+
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -94,7 +95,7 @@ export async function generateMetadata(
 
 export type UserWithPlayers = UserPublicModel & {
   userPlayers: UserPlayerClubModel[];
-  lastTournaments: PlayerToTournamentModel[];
+  lastTournaments: TournamentModel[];
 };
 
 export interface TournamentPageProps {
