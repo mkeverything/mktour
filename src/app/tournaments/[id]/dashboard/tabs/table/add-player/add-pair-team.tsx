@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { deriveTeamNickname } from '@/lib/derive-team-nickname';
+import { deriveTeamNickname } from '@/lib/tournament-dashboard';
 import { PlayerWithUsernameModel } from '@/server/zod/players';
 import {
   AddDoublesTeamModel,

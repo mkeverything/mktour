@@ -52,7 +52,7 @@ export const createClub = async (user: User, values: ClubFormModel) => {
     createdAt,
   };
   const newRelation: ClubToUserModel = {
-    id: `${user.id}=${id}`,
+    id: `${user.id}_${id}`,
     clubId: id,
     userId: user.id,
     status: 'co-owner',
@@ -325,7 +325,7 @@ export const addClubManager = async ({
     );
   if (existingRelation.length > 0) throw new Error('RELATION_EXISTS');
   const newRelation: ClubToUserModel = {
-    id: `${clubId}=${userId}`,
+    id: `${clubId}_${userId}`,
     clubId: clubId,
     userId: userId,
     status,
