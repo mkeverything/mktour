@@ -35,7 +35,7 @@ function getResultStats(result: GameResult | null): {
   };
 }
 
-export function getPlayerResultDeltas(
+export function getUnitResultDeltas(
   prevResult: GameResult | null,
   nextResult: GameResult | null,
 ) {

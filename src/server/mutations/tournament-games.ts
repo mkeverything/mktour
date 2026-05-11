@@ -5,14 +5,14 @@ import { db, type Database } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import {
   games,
-  players_to_tournaments,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { GameResult } from '@/server/zod/enums';
 import { GameModel } from '@/server/zod/tournaments';
 import { and, eq, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
-import { getPlayerResultDeltas } from './set-game-result-deltas';
+import { getUnitResultDeltas } from './set-game-result-deltas';
 
 export async function replaceRoundGames({
   tournamentId,
@@ -86,32 +86,27 @@ export async function saveRound({
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
 
   if (tournament.format === 'swiss') {
-    const activeParticipants = await db
+    const activeUnits = await db
       .select({
-        playerId: players_to_tournaments.playerId,
+        unitId: tournament_units.id,
       })
-      .from(players_to_tournaments)
+      .from(tournament_units)
       .where(
         and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          or(
-            isNull(players_to_tournaments.isOut),
-            eq(players_to_tournaments.isOut, false),
-          ),
+          eq(tournament_units.tournamentId, tournamentId),
+          or(isNull(tournament_units.isOut), eq(tournament_units.isOut, false)),
         ),
       );
 
-    const activePlayerIds = new Set(
-      activeParticipants.map((participant) => participant.playerId),
-    );
-    const hasInvalidParticipant = newGames.some(
+    const activeUnitIds = new Set(activeUnits.map((unit) => unit.unitId));
+    const hasInvalidUnit = newGames.some(
       (game) =>
-        !activePlayerIds.has(game.whiteUnitId) ||
-        !activePlayerIds.has(game.blackUnitId),
+        !activeUnitIds.has(game.whiteUnitId) ||
+        !activeUnitIds.has(game.blackUnitId),
     );
 
-    if (hasInvalidParticipant) {
-      throw new Error('INVALID_PLAYER_IN_PAIRING');
+    if (hasInvalidUnit) {
+      throw new Error('INVALID_UNIT_IN_PAIRING');
     }
   }
   const existingDecidedGames = await db
@@ -186,63 +181,45 @@ export async function setTournamentGameResult({
     ).at(0);
     if (!game) throw new Error('GAME_NOT_FOUND');
 
-    const [whiteParticipant, blackParticipant] = await Promise.all([
+    const [whiteUnit, blackUnit] = await Promise.all([
       tx
-        .select({
-          teamNickname: players_to_tournaments.teamNickname,
-          isOut: players_to_tournaments.isOut,
-        })
-        .from(players_to_tournaments)
+        .select({ isOut: tournament_units.isOut })
+        .from(tournament_units)
         .where(
           and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, game.whiteUnitId),
+            eq(tournament_units.tournamentId, tournamentId),
+            eq(tournament_units.id, game.whiteUnitId),
           ),
         )
         .then((rows) => rows.at(0)),
       tx
-        .select({
-          teamNickname: players_to_tournaments.teamNickname,
-          isOut: players_to_tournaments.isOut,
-        })
-        .from(players_to_tournaments)
+        .select({ isOut: tournament_units.isOut })
+        .from(tournament_units)
         .where(
           and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, game.blackUnitId),
+            eq(tournament_units.tournamentId, tournamentId),
+            eq(tournament_units.id, game.blackUnitId),
           ),
         )
         .then((rows) => rows.at(0)),
     ]);
 
-    if (whiteParticipant?.isOut || blackParticipant?.isOut) {
-      throw new Error('WITHDRAWN_PLAYER_CANNOT_PLAY');
+    if (!whiteUnit || !blackUnit) {
+      throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
+    }
+
+    if (whiteUnit.isOut || blackUnit.isOut) {
+      throw new Error('WITHDRAWN_UNIT_CANNOT_PLAY');
     }
 
     if (authStatus.status === 'player') {
       if (!tournamentWithClub.allowPlayersSetResults) {
         throw new Error('PLAYER_RESULT_SETTING_DISABLED');
       }
-      const authParticipant = await tx
-        .select({
-          playerId: players_to_tournaments.playerId,
-          teamNickname: players_to_tournaments.teamNickname,
-        })
-        .from(players_to_tournaments)
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, authStatus.playerId),
-          ),
-        )
-        .then((rows) => rows.at(0));
 
       const isPlayerInGame =
-        authStatus.playerId === game.whiteUnitId ||
-        authStatus.playerId === game.blackUnitId ||
-        (!!authParticipant?.teamNickname &&
-          (authParticipant.teamNickname === whiteParticipant?.teamNickname ||
-            authParticipant.teamNickname === blackParticipant?.teamNickname));
+        authStatus.unitId === game.whiteUnitId ||
+        authStatus.unitId === game.blackUnitId;
       if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
     }
 
@@ -269,17 +246,14 @@ export async function setTournamentGameResult({
  * Applies a game result inside a caller-owned transaction.
  *
  * Pure DB logic — no auth, no transaction wrapping, no isOut guard, no toggle.
- * Callers (setTournamentGameResult, withdrawPlayer's forfeit loop) handle
+ * Callers (setTournamentGameResult, withdraw unit's forfeit loop) handle
  * those concerns themselves.
  *
  * Steps (top-to-bottom):
- *   1. Look up team nicknames for both participants in parallel.
- *   2. Build participant match clauses — team-wide via teamNickname for
- *      doubles, single-row by playerId for solo.
- *   3. Compute wins/draws/losses/colorIndex deltas via getPlayerResultDeltas.
- *   4. UPDATE white participant's stat counters with the deltas.
- *   5. UPDATE black participant's stat counters with the deltas.
- *   6. UPDATE the game row with nextResult and finishedAt, with optimistic
+ *   1. Compute wins/draws/losses/colorIndex deltas via getPlayerResultDeltas.
+ *   2. UPDATE white unit's stat counters with the deltas.
+ *   3. UPDATE black unit's stat counters with the deltas.
+ *   4. UPDATE the game row with nextResult and finishedAt, with optimistic
  *      concurrency check on prevResult.
  *
  * `finishedAt` is set to now when nextResult is non-null, cleared when
@@ -302,83 +276,41 @@ export async function applyGameResult({
   prevResult: GameResult | null;
   nextResult: GameResult | null;
 }): Promise<void> {
-  const [whiteParticipant, blackParticipant] = await Promise.all([
-    database
-      .select({ teamNickname: players_to_tournaments.teamNickname })
-      .from(players_to_tournaments)
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, whiteUnitId),
-        ),
-      )
-      .limit(1)
-      .then((rows) => rows.at(0)),
-    database
-      .select({ teamNickname: players_to_tournaments.teamNickname })
-      .from(players_to_tournaments)
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, blackUnitId),
-        ),
-      )
-      .limit(1)
-      .then((rows) => rows.at(0)),
-  ]);
+  const whiteMatch = and(
+    eq(tournament_units.tournamentId, tournamentId),
+    eq(tournament_units.id, whiteUnitId),
+  );
+  const blackMatch = and(
+    eq(tournament_units.tournamentId, tournamentId),
+    eq(tournament_units.id, blackUnitId),
+  );
 
-  let whiteMatch;
-  if (whiteParticipant?.teamNickname) {
-    whiteMatch = and(
-      eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.teamNickname, whiteParticipant.teamNickname),
-    );
-  } else {
-    whiteMatch = and(
-      eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.playerId, whiteUnitId),
-    );
-  }
-
-  let blackMatch;
-  if (blackParticipant?.teamNickname) {
-    blackMatch = and(
-      eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.teamNickname, blackParticipant.teamNickname),
-    );
-  } else {
-    blackMatch = and(
-      eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.playerId, blackUnitId),
-    );
-  }
-
-  const deltas = getPlayerResultDeltas(prevResult, nextResult);
+  const deltas = getUnitResultDeltas(prevResult, nextResult);
 
   const whiteUpdate = await database
-    .update(players_to_tournaments)
+    .update(tournament_units)
     .set({
-      wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.white.wins}`,
-      draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.white.draws}`,
-      losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.white.losses}`,
-      colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.white.colorIndex}`,
+      wins: sql`COALESCE(${tournament_units.wins}, 0) + ${deltas.white.wins}`,
+      draws: sql`COALESCE(${tournament_units.draws}, 0) + ${deltas.white.draws}`,
+      losses: sql`COALESCE(${tournament_units.losses}, 0) + ${deltas.white.losses}`,
+      colorIndex: sql`COALESCE(${tournament_units.colorIndex}, 0) + ${deltas.white.colorIndex}`,
     })
     .where(whiteMatch);
   if (!whiteUpdate.rowsAffected) {
-    throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+    throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
   const blackUpdate = await database
-    .update(players_to_tournaments)
+    .update(tournament_units)
     .set({
-      wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.black.wins}`,
-      draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.black.draws}`,
-      losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.black.losses}`,
-      colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.black.colorIndex}`,
+      wins: sql`COALESCE(${tournament_units.wins}, 0) + ${deltas.black.wins}`,
+      draws: sql`COALESCE(${tournament_units.draws}, 0) + ${deltas.black.draws}`,
+      losses: sql`COALESCE(${tournament_units.losses}, 0) + ${deltas.black.losses}`,
+      colorIndex: sql`COALESCE(${tournament_units.colorIndex}, 0) + ${deltas.black.colorIndex}`,
     })
     .where(blackMatch);
   if (!blackUpdate.rowsAffected) {
-    throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+    throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
   let prevResultMatch;
