@@ -35,7 +35,7 @@ import {
   resetTournamentPlayers,
   withdrawPlayer,
 } from '@/server/mutations/tournament-players';
-import getAllTournaments from '@/server/queries/get-all-tournaments';
+import getAllTournamentsInfinite from '@/server/queries/get-all-tournaments-infinite';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import {
   getTournamentGames,
@@ -94,7 +94,7 @@ export const tournamentRouter = {
       }),
     )
     .query(async ({ input }) => {
-      return await getAllTournaments({
+      return await getAllTournamentsInfinite({
         limit: input.limit,
         cursor: input.cursor ?? undefined,
       });

@@ -70,10 +70,11 @@ export const unitSchema = unitSelectSchema
     players: z.array(playerInUnitSchema).min(1),
   });
 
-export const preStartSchema = z.object({
+export const preStartStateSchema = z.object({
   units: z.array(unitSchema),
   games: z.array(gameSchema),
 });
+export type PreStartStateModel = z.infer<typeof preStartStateSchema>;
 
 export const unitOrderSchema = unitSelectSchema.pick({
   nickname: true,
@@ -88,6 +89,11 @@ export const reorderTournamentUnitsInputSchema = z.object({
     .refine((ids) => new Set(ids).size === ids.length, {
       message: 'unit ids must be unique',
     }),
+});
+export const withdrawTournamentUnitInputSchema = z.object({
+  tournamentId: z.string(),
+  playerId: z.string(),
+  userId: z.string(),
 });
 export const withdrawTournamentUnitResultSchema = z.object({
   roundsNumber: z.number().int().min(1).nullable(),

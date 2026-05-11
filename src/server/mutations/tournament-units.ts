@@ -15,8 +15,8 @@ import type { GameResult } from '@/server/zod/enums';
 import type {
   AddDoublesUnitModel,
   EditDoublesUnitModel,
+  PreStartStateModel,
   ReorderTournamentUnitsInputModel,
-  UnitOrderModel,
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
 import { applyGameResult } from './tournament-games';
@@ -38,7 +38,7 @@ export async function removeUnit({
   tournamentId: string;
   unitId: string;
   userId: string;
-}): Promise<UnitOrderModel> {
+}): Promise<PreStartStateModel> {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
@@ -83,14 +83,11 @@ export async function removeUnit({
 export async function reorderTournamentUnits({
   tournamentId,
   unitIds,
-}: ReorderTournamentUnitsInputModel): Promise<UnitOrderModel> {
+}: ReorderTournamentUnitsInputModel): Promise<PreStartStateModel> {
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
-  const orderTargets = await getTournamentOrderTargets(
-    tournamentId,
-    tournament.type,
-  );
+  const orderTargets = await getTournamentOrderTargets(tournamentId);
   if (orderTargets.length !== unitIds.length) {
     throw new Error('INVALID_UNITS_ORDER');
   }
@@ -124,7 +121,7 @@ export async function addDoublesUnit({
 }: AddDoublesUnitModel & {
   tournamentId: string;
   addedAt?: Date;
-}): Promise<UnitOrderModel> {
+}): Promise<PreStartStateModel> {
   const now = addedAt ?? new Date();
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
@@ -184,9 +181,8 @@ export async function addDoublesUnit({
   if (existingNickname.length > 0) {
     throw new Error('UNIT_NICKNAME_TAKEN');
   }
-  const nextPairingNumber = (
-    await getTournamentOrderTargets(tournamentId, tournament.type)
-  ).length;
+  const nextPairingNumber = (await getTournamentOrderTargets(tournamentId))
+    .length;
   const unitId = newid();
   const unit = createUnit({
     id: unitId,

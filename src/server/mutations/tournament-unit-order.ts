@@ -192,11 +192,7 @@ export async function reapplyPreStartOrder(
   const d = database ?? db;
   const tournament = await getTournamentById(tournamentId, d);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  const orderTargets = await getTournamentOrderTargets(
-    tournamentId,
-    tournament.type,
-    d,
-  );
+  const orderTargets = await getTournamentOrderTargets(tournamentId, d);
   return await applyPreStartPlayerOrder({
     tournamentId,
     tournamentType: tournament.type,

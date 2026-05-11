@@ -4,7 +4,7 @@ import { db } from '@/server/db';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { and, desc, eq, lt } from 'drizzle-orm';
 
-export const getClubTournaments = async (
+export const getClubTournamentsInfinite = async (
   clubId: string,
   limit: number,
   cursor?: number | null,

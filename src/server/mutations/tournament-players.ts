@@ -16,8 +16,8 @@ import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
 import type {
   PlayerUnitInsertModel,
+  PreStartStateModel,
   UnitInsertModel,
-  UnitOrderModel,
 } from '@/server/zod/tournaments';
 import { TRPCError } from '@trpc/server';
 import { normalizeSwissRoundsNumberInDatabase } from './tournament-lifecycle';
@@ -34,7 +34,7 @@ export async function addNewPlayer({
   tournamentId: string;
   player: PlayerFormModel & { id?: string };
   addedAt?: Date;
-}): Promise<UnitOrderModel> {
+}): Promise<PreStartStateModel> {
   const now = addedAt ?? new Date();
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
@@ -42,9 +42,8 @@ export async function addNewPlayer({
   if (tournament.type === 'doubles') {
     throw new Error('DOUBLES_USE_PAIRS');
   }
-  const nextPairingNumber = (
-    await getTournamentOrderTargets(tournamentId, tournament.type)
-  ).length;
+  const nextPairingNumber = (await getTournamentOrderTargets(tournamentId))
+    .length;
 
   const playerId = player.id ?? newid();
   const nickname = normalizePlayerNickname(player.nickname);
@@ -106,7 +105,7 @@ export async function addExistingPlayer({
   player: PlayerInsertModel;
   userId: string;
   addedAt?: Date;
-}): Promise<UnitOrderModel> {
+}): Promise<PreStartStateModel> {
   const now = addedAt ?? new Date();
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
@@ -119,9 +118,8 @@ export async function addExistingPlayer({
   }
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status === 'viewer') throw new Error('NOT_ADMIN');
-  const nextPairingNumber = (
-    await getTournamentOrderTargets(tournamentId, tournament.type)
-  ).length;
+  const nextPairingNumber = (await getTournamentOrderTargets(tournamentId))
+    .length;
   const unitId = `${player.id}_${tournamentId}`;
   const unit = createUnit({
     id: unitId,

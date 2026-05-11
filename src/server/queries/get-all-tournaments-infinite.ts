@@ -5,7 +5,7 @@ import { tournaments } from '@/server/db/schema/tournaments';
 import { desc, eq, lt } from 'drizzle-orm';
 import { cacheTag } from 'next/cache';
 
-export default async function getAllTournaments({
+export default async function getAllTournamentsInfinite({
   limit = 10,
   cursor,
 }: {
