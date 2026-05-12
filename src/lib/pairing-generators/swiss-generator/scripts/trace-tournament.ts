@@ -46,7 +46,7 @@ import {
   TournamentTraceResult,
 } from '@/lib/pairing-generators/swiss-generator/scripts/trace-types';
 import { CardinalityValidationError } from '@/lib/pairing-generators/swiss-generator/weighted-pairing';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { GameModel } from '@/server/zod/tournaments';
 
 // ============================================================================
@@ -185,14 +185,12 @@ function analyseCompatibilityGraph(
  * @param playerCount - Number of players to generate
  * @returns Array of players with pairing numbers 0, 1, 2, ...
  */
-function generatePlayersWithPairingNumbers(
-  playerCount: number,
-): PlayerTournamentModel[] {
-  const players: PlayerTournamentModel[] = [];
+function generatePlayersWithPairingNumbers(playerCount: number): UnitModel[] {
+  const players: UnitModel[] = [];
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const player = generatePlayerModel();
-    player.pairingNumber = playerIndex;
+    player.number = playerIndex;
     players.push(player);
   }
 
@@ -205,12 +203,10 @@ function generatePlayersWithPairingNumbers(
  * @param players - Players to map
  * @returns Map from entity ID to nickname
  */
-function buildEntityDisplayMap(
-  players: PlayerTournamentModel[],
-): EntityDisplayMap {
+function buildEntityDisplayMap(players: UnitModel[]): EntityDisplayMap {
   const displayMap: EntityDisplayMap = new Map();
   for (const player of players) {
-    displayMap.set(player.id, player.nickname);
+    displayMap.set(player.id, player.unitNickname);
   }
   return displayMap;
 }
@@ -266,7 +262,7 @@ const ROUND_FAILURE: RoundSimulationResult = {
  * @returns Simulation result with success status and generated data
  */
 function simulateRound(
-  players: PlayerTournamentModel[],
+  players: UnitModel[],
   previousGames: GameModel[],
   roundNumber: number,
   tournamentId: string,
@@ -329,14 +325,13 @@ function simulateRound(
  * @returns Sorted entities with pairing numbers assigned
  */
 function buildEntitiesForAnalysis(
-  players: PlayerTournamentModel[],
+  players: UnitModel[],
   previousGames: GameModel[],
 ): ChessTournamentEntity[] {
   const updatedPlayers = updatePlayerScores(players, previousGames);
 
-  const convertToEntity = (
-    player: PlayerTournamentModel,
-  ): ChessTournamentEntity => convertPlayerToEntity(player, previousGames);
+  const convertToEntity = (player: UnitModel): ChessTournamentEntity =>
+    convertPlayerToEntity(player, previousGames);
   const entities = updatedPlayers.map(convertToEntity);
 
   const sortedEntities = getInitialOrdering(entities);

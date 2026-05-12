@@ -3,7 +3,7 @@ import type {
   FloatType,
 } from '@/lib/pairing-generators/swiss-generator/types';
 import { newid } from '@/lib/utils';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { GameModel } from '@/server/zod/tournaments';
 
 // default set of round properties, may be changed internally
@@ -11,7 +11,7 @@ export interface RoundProps {
   /**
    * Current round players
    */
-  players: PlayerTournamentModel[];
+  players: UnitModel[];
 
   /**
    * Previously played games, not all round generators require those
@@ -319,11 +319,11 @@ function computeFloatHistory(
  * @param allGames - All tournament games played so far (excluding current round)
  */
 export function convertPlayerToEntity(
-  playerModel: PlayerTournamentModel,
+  playerModel: UnitModel,
   allGames: GameModel[],
 ): ChessTournamentEntity {
-  if (playerModel.pairingNumber === null) {
-    throw new TypeError('PAIRING_NUMBER_IS_NULL');
+  if (playerModel.number === null) {
+    throw new TypeError('NUMBER_IS_NULL'); // FIXME - this is leftover, doesn't look right after we separate pairingNumber from number
   }
 
   // Filter games involving this player (either as white or black)
@@ -352,11 +352,14 @@ export function convertPlayerToEntity(
   // TODO: Add chess title logic
   const tournamentEntity: ChessTournamentEntity = {
     entityId: playerModel.id,
-    entityNickname: playerModel.nickname,
+    entityNickname: playerModel.unitNickname,
     colourIndex: playerModel.colorIndex,
-    entityRating: playerModel.rating,
+    entityRating: Math.round(
+      playerModel.players.reduce((sum, player) => sum + player.rating, 0) /
+        playerModel.players.length,
+    ), // FIXME - are we good with taking average rating for doubles|teams?
     gamesPlayed: playerModel.draws + playerModel.wins + playerModel.losses,
-    pairingNumber: playerModel.pairingNumber,
+    pairingNumber: playerModel.number, // FIXME definitely
     entityTitle: ChessTitle.GM,
     entityScore,
     previousGames,
@@ -395,11 +398,12 @@ export function getGameToInsert(
     gameNumber: finalizedMatch.pairNumber,
     // all those fields are set to null here, maybe will rethink that later
     roundName: null, // TODO: can be equal to round number in R&R
-    whitePrevGameId: null, // TODO: fill the gaps in prev ids
+    whitePrevGameId: null,
     blackPrevGameId: null,
+    whitePlayerId: null,
+    blackPlayerId: null,
     result: null,
     finishedAt: null,
-    pairMembers: null,
   };
   return gameToInsert;
 }

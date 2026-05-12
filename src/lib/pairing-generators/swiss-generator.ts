@@ -36,7 +36,7 @@ import {
   isHeteroBracket,
 } from '@/lib/pairing-generators/swiss-generator/types';
 import { generateWeightedPairing } from '@/lib/pairing-generators/swiss-generator/weighted-pairing';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { GameModel } from '@/server/zod/tournaments';
 
 /*
@@ -458,9 +458,8 @@ export function generateWeightedSwissRound({
     games?.filter((game) => game.roundNumber !== roundNumber) ?? [];
 
   // Convert player models to chess tournament entities with history
-  const convertPlayer = (
-    player: PlayerTournamentModel,
-  ): ChessTournamentEntity => convertPlayerToEntity(player, filteredGames);
+  const convertPlayer = (player: UnitModel): ChessTournamentEntity =>
+    convertPlayerToEntity(player, filteredGames);
   const matchedEntities = players.map(convertPlayer);
 
   // Sort entities by initial ordering rules (score, then tiebreakers)
