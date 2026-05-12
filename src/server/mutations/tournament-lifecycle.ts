@@ -280,7 +280,7 @@ export async function finishTournament({
       .where(eq(tournaments.id, tournamentId))
       .then((rows) => rows[0]);
 
-    if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+    if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
 
     const sortedUnits = sortUnitsByResults(unitsUnsorted, tournament, allGames);
     const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
@@ -369,7 +369,7 @@ export async function updateSwissRoundsNumber({
   roundsNumber: number;
 }) {
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
   if (tournament.closedAt) throw new Error('TOURNAMENT_ALREADY_FINISHED');
 

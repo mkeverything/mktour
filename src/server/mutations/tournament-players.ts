@@ -37,7 +37,7 @@ export async function addNewPlayer({
 }): Promise<PreStartStateModel> {
   const now = addedAt ?? new Date();
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
   if (tournament.type === 'doubles') {
     throw new Error('DOUBLES_USE_PAIRS');
@@ -111,7 +111,7 @@ export async function addExistingPlayer({
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
   if (tournament.type === 'doubles') {
     throw new Error('DOUBLES_USE_PAIRS');

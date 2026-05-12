@@ -88,7 +88,7 @@ export async function getTournamentUnits(
     .from(tournaments)
     .where(eq(tournaments.id, id));
 
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
 
   const [units, allGames] = await Promise.all([
     getRawTournamentUnits(id, database),

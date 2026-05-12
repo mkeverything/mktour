@@ -17,7 +17,7 @@ export async function getTournamentInfo(
       .where(eq(tournaments.id, id))
       .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
   ).at(0);
-  if (!tournamentInfo) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournamentInfo) throw new Error('TOURNAMENT_NOT_FOUND');
   if (!tournamentInfo.club) throw new Error('ORGANIZER CLUB NOT FOUND');
   return tournamentInfo;
 }
