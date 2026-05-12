@@ -60,6 +60,7 @@ export async function getTournamentOrderTargets(
       realname: null,
       rating: 0,
       userId: null,
+      username: null,
     });
     units.set(row.id, unit);
   }
@@ -97,6 +98,13 @@ function toGeneratorUnit(
   };
 }
 
+function personalPlayerIdForGameSide(
+  unit: UnitModel | undefined,
+): null | string {
+  if (!unit || unit.size !== 1) return null;
+  return unit.players[0]?.id ?? null;
+}
+
 function addPersonalGameColumns(
   games: GameModel[],
   units: UnitModel[],
@@ -104,8 +112,8 @@ function addPersonalGameColumns(
   const unitsById = new Map(units.map((unit) => [unit.id, unit]));
   return games.map((game) => ({
     ...game,
-    whitePlayerId: unitsById.get(game.whiteUnitId)?.players[0]?.id ?? null,
-    blackPlayerId: unitsById.get(game.blackUnitId)?.players[0]?.id ?? null,
+    whitePlayerId: personalPlayerIdForGameSide(unitsById.get(game.whiteUnitId)),
+    blackPlayerId: personalPlayerIdForGameSide(unitsById.get(game.blackUnitId)),
   }));
 }
 
