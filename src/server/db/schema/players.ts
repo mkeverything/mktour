@@ -1,5 +1,5 @@
 import { clubs } from '@/server/db/schema/clubs';
-import { players_to_units } from '@/server/db/schema/tournaments';
+import { games, players_to_units } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { AffiliationStatus } from '@/server/zod/enums';
 import { relations } from 'drizzle-orm';
@@ -77,6 +77,8 @@ export const affiliations = sqliteTable(
 export const players_relations = relations(players, ({ one, many }) => ({
   club: one(clubs, { fields: [players.clubId], references: [clubs.id] }),
   units: many(players_to_units),
+  gamesAsWhite: many(games, { relationName: 'gameWhitePlayer' }),
+  gamesAsBlack: many(games, { relationName: 'gameBlackPlayer' }),
 }));
 
 export const affiliations_relations = relations(affiliations, ({ one }) => ({
