@@ -84,7 +84,7 @@ export const tournament_units = sqliteTable(
     isOut: integer('is_out', { mode: 'boolean' }),
     number: integer('number'),
     addedAt: integer('added_at', { mode: 'timestamp_ms' }),
-    nickname: text('nickname'), // team nickname or solo player nickname
+    nickname: text('nickname').notNull(), // team nickname or solo player nickname
   },
   (table) => [
     index('tu_tournament_number_idx').on(table.tournamentId, table.number),
