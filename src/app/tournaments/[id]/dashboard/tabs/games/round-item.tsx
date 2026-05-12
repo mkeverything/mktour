@@ -11,7 +11,7 @@ import Center from '@/components/center';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
 import { useTournamentRoundProgressInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
+import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { useRoundData } from '@/components/hooks/use-round-data';
 import SkeletonList from '@/components/skeleton-list';
@@ -39,12 +39,12 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
     roundNumber,
   });
   const info = useTournamentRoundProgressInfo(tournamentId);
-  const { data: players } = useTournamentPlayers(tournamentId);
+  const { data: units } = useTournamentUnits(tournamentId);
   const { status } = useContext(DashboardContext);
   const { selectedGameId, setSelectedGameId } = useContext(SelectedGameContext);
-  const { sortedRound, ongoingGames } = useRoundData(round, players);
+  const { sortedRound, ongoingGames } = useRoundData(round, units);
 
-  if (isLoading || !info.data || !players)
+  if (isLoading || !info.data || !units)
     return (
       <div className="mx-auto px-4 pt-2 lg:max-w-xl lg:px-0">
         <SkeletonList length={8} className="h-12" />
@@ -119,13 +119,13 @@ const NewRoundButton: FC<{
   const trpc = useTRPC();
 
   const newRound = () => {
-    const players = queryClient.getQueryData(
-      trpc.tournament.playersIn.queryKey({ tournamentId }),
+    const units = queryClient.getQueryData(
+      trpc.tournament.units.queryKey({ tournamentId }),
     );
     const games = tournamentGames;
-    if (!players || !games) return;
+    if (!units || !games) return;
     const newGames = generateRound(format, {
-      players,
+      players: units,
       games,
       roundNumber: roundNumber + 1,
       tournamentId,

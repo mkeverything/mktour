@@ -1,10 +1,10 @@
-import AddPlayerDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player-drawer-content';
+import AddUnitDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-unit-drawer-content';
 import PairPlayerCard, {
   PairPlayerCardPlayer,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
 
 import type { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
-import { useTournamentAddPairTeam } from '@/components/hooks/mutation-hooks/use-tournament-add-pair-team';
+import { useTournamentAddDoublesUnit } from '@/components/hooks/mutation-hooks/use-tournament-add-doubles-unit';
 import { useTRPC } from '@/components/trpc/client';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,8 @@ import { Input } from '@/components/ui/input';
 import { deriveTeamNickname } from '@/lib/tournament-dashboard';
 import { PlayerWithUsernameModel } from '@/server/zod/players';
 import {
-  AddDoublesTeamModel,
-  addDoublesTeamFormSchema,
+  AddDoublesUnitModel,
+  addDoublesUnitFormSchema,
 } from '@/server/zod/tournaments';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -39,7 +39,7 @@ type PairPlayersState = {
   second: PairPlayerCardPlayer | null;
 };
 
-export type PairTeamInitialValues = {
+export type DoublesUnitInitialValues = {
   nickname: string;
   firstPlayer: PairPlayerCardPlayer;
   secondPlayer: PairPlayerCardPlayer;
@@ -57,17 +57,17 @@ const toPairCardPlayer = (
   username: player.username,
 });
 
-const AddPairTeam = ({
+const AddDoublesUnit = ({
   handleClose,
   initialValues,
   submitLabel,
   onSubmitValues,
   isSubmitting,
 }: Pick<DrawerProps, 'handleClose'> & {
-  initialValues?: PairTeamInitialValues;
+  initialValues?: DoublesUnitInitialValues;
   submitLabel?: string;
   onSubmitValues?: (
-    _values: AddDoublesTeamModel,
+    _values: AddDoublesUnitModel,
     _helpers: { reset: () => void },
   ) => void;
   isSubmitting?: boolean;
@@ -76,17 +76,17 @@ const AddPairTeam = ({
   const t = useTranslations('Tournament.AddPlayer');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const addPairTeam = useTournamentAddPairTeam(tournamentId);
+  const addDoublesUnit = useTournamentAddDoublesUnit(tournamentId);
   const [activeSlot, setActiveSlot] = useState<PairSlot | null>(null);
   const [selectorValue, setSelectorValue] = useState('');
   const [selectorAddingNewPlayer, setSelectorAddingNewPlayer] = useState(false);
-  const [selectedPlayers, setSelectedPlayers] = useState<PairPlayersState>({
+  const [selectedUnits, setSelectedUnits] = useState<PairPlayersState>({
     first: initialValues?.firstPlayer ?? null,
     second: initialValues?.secondPlayer ?? null,
   });
 
-  const form = useForm<AddDoublesTeamModel>({
-    resolver: zodResolver(addDoublesTeamFormSchema),
+  const form = useForm<AddDoublesUnitModel>({
+    resolver: zodResolver(addDoublesUnitFormSchema),
     defaultValues: {
       nickname: initialValues?.nickname ?? '',
       firstPlayerId: initialValues?.firstPlayer.id ?? '',
@@ -141,24 +141,24 @@ const AddPairTeam = ({
       shouldValidate: true,
     });
 
-    if (selectedPlayers[oppositeSlot]?.id === player.id) {
+    if (selectedUnits[oppositeSlot]?.id === player.id) {
       form.setValue(oppositeField, '', {
         shouldDirty: true,
         shouldValidate: true,
       });
-      setSelectedPlayers((prev) => ({
+      setSelectedUnits((prev) => ({
         ...prev,
         [oppositeSlot]: null,
       }));
     }
 
-    setSelectedPlayers((prev) => ({
+    setSelectedUnits((prev) => ({
       ...prev,
       [slot]: toPairCardPlayer(player),
     }));
 
     const otherSlot = getOppositeSlot(slot);
-    if (!selectedPlayers[otherSlot]) {
+    if (!selectedUnits[otherSlot]) {
       setActiveSlot(otherSlot);
       setSelectorValue('');
       setSelectorAddingNewPlayer(false);
@@ -185,7 +185,7 @@ const AddPairTeam = ({
   };
 
   const resetState = () => {
-    setSelectedPlayers({
+    setSelectedUnits({
       first: initialValues?.firstPlayer ?? null,
       second: initialValues?.secondPlayer ?? null,
     });
@@ -196,13 +196,13 @@ const AddPairTeam = ({
     });
   };
 
-  const onSubmit = (values: AddDoublesTeamModel) => {
+  const onSubmit = (values: AddDoublesUnitModel) => {
     const nickname =
       (values.nickname ?? '').trim() ||
-      (selectedPlayers.first && selectedPlayers.second
+      (selectedUnits.first && selectedUnits.second
         ? deriveTeamNickname(
-            selectedPlayers.first.nickname,
-            selectedPlayers.second.nickname,
+            selectedUnits.first.nickname,
+            selectedUnits.second.nickname,
           )
         : (values.nickname ?? ''));
     const payload = { ...values, nickname };
@@ -218,11 +218,11 @@ const AddPairTeam = ({
       firstPlayerId: '',
       secondPlayerId: '',
     });
-    setSelectedPlayers({ first: null, second: null });
+    setSelectedUnits({ first: null, second: null });
     setTimeout(() => form.setFocus('nickname'), 0);
 
     const addedAt = new Date();
-    addPairTeam.mutate({
+    addDoublesUnit.mutate({
       tournamentId,
       ...payload,
       addedAt,
@@ -253,13 +253,13 @@ const AddPairTeam = ({
           <div className="space-y-3">
             <PairPlayerCard
               label={getSlotLabel('first')}
-              player={selectedPlayers.first}
+              player={selectedUnits.first}
               placeholder={getSlotPlaceholder('first')}
               onClick={() => openSelector('first')}
             />
             <PairPlayerCard
               label={getSlotLabel('second')}
-              player={selectedPlayers.second}
+              player={selectedUnits.second}
               placeholder={getSlotPlaceholder('second')}
               onClick={() => openSelector('second')}
             />
@@ -269,9 +269,9 @@ const AddPairTeam = ({
             type="submit"
             className="w-full"
             disabled={
-              (isSubmitting ?? addPairTeam.isPending) ||
-              !selectedPlayers.first ||
-              !selectedPlayers.second
+              (isSubmitting ?? addDoublesUnit.isPending) ||
+              !selectedUnits.first ||
+              !selectedUnits.second
             }
           >
             <Save />
@@ -290,7 +290,7 @@ const AddPairTeam = ({
           {activeSlot ? getSlotLabel(activeSlot) : ''}
         </h3>
 
-        <AddPlayerDrawerContent
+        <AddUnitDrawerContent
           value={selectorValue}
           setValue={setSelectorValue}
           addingNewPlayer={selectorAddingNewPlayer}
@@ -300,8 +300,8 @@ const AddPairTeam = ({
           onPlayerCreated={handlePlayerCreated}
           showFakerButton={false}
           excludePlayerIds={[
-            selectedPlayers.first?.id,
-            selectedPlayers.second?.id,
+            selectedUnits.first?.id,
+            selectedUnits.second?.id,
           ].filter((id): id is string => id != null)}
         />
       </SideDrawer>
@@ -309,4 +309,4 @@ const AddPairTeam = ({
   );
 };
 
-export default AddPairTeam;
+export default AddDoublesUnit;

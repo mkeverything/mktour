@@ -5,7 +5,7 @@ const tournamentQueryClient = getQueryClient();
 const tournamentQueryPrefetch = async (tournamentId: string) => {
   await Promise.all([
     tournamentQueryClient.prefetchQuery(
-      trpc.tournament.playersIn.queryOptions({ tournamentId }),
+      trpc.tournament.units.queryOptions({ tournamentId }),
     ),
 
     tournamentQueryClient.prefetchQuery(

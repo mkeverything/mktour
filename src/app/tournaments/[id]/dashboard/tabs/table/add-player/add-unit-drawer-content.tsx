@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 
 import type { Dispatch, SetStateAction } from 'react';
 
-const AddPlayerDrawerContent = ({
+const AddUnitDrawerContent = ({
   value,
   setValue,
   addingNewPlayer,
@@ -19,7 +19,7 @@ const AddPlayerDrawerContent = ({
   onPlayerCreated,
   showFakerButton = true,
   excludePlayerIds,
-}: AddPlayerDrawerContentProps) => {
+}: AddUnitDrawerContentProps) => {
   const t = useTranslations('Tournament.AddPlayer');
 
   const returnToNewPlayer = (player: PlayerFormModel & { id?: string }) => {
@@ -64,7 +64,7 @@ const AddPlayerDrawerContent = ({
   );
 };
 
-type AddPlayerDrawerContentProps = {
+type AddUnitDrawerContentProps = {
   value: string;
   setValue: Dispatch<SetStateAction<string>>;
   addingNewPlayer: boolean;
@@ -77,4 +77,4 @@ type AddPlayerDrawerContentProps = {
   excludePlayerIds?: string[];
 };
 
-export default AddPlayerDrawerContent;
+export default AddUnitDrawerContent;

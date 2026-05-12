@@ -26,7 +26,7 @@ export default function useTournamentFinish(
           queryKey: trpc.tournament.info.queryKey({ tournamentId }),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+          queryKey: trpc.tournament.units.queryKey({ tournamentId }),
         });
       },
       onError: (error) => {

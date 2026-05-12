@@ -139,8 +139,6 @@ export const buildScoreMaps = (
 ): {
   unitScoresMap: Map<string, number>;
   tiebreakScoresMap: Map<string, number>;
-  /** @deprecated use unitScoresMap */
-  playerScoresMap: Map<string, number>;
 } => {
   const roundNumber = tournament.ongoingRound ?? 0;
 
@@ -164,7 +162,6 @@ export const buildScoreMaps = (
   return {
     unitScoresMap,
     tiebreakScoresMap,
-    playerScoresMap: unitScoresMap,
   };
 };
 
@@ -187,9 +184,6 @@ export const baselineUnitSort = (
 
   return a.id.localeCompare(b.id);
 };
-
-/** @deprecated use baselineUnitSort */
-export const baselinePlayerSort = baselineUnitSort;
 
 function makeUnitComparator(
   unitScoresMap: Map<string, number>,
@@ -226,9 +220,6 @@ export function sortUnitsByResults<T extends UnitModel>(
   return [...units].sort(makeUnitComparator(unitScoresMap, tiebreakScoresMap));
 }
 
-/** @deprecated use sortUnitsByResults */
-export const sortPlayersByResults = sortUnitsByResults;
-
 /**
  * sorts units and returns both the sorted array and score maps.
  * use when you need the maps for display (e.g. tournament table UI).
@@ -249,18 +240,4 @@ export function sortUnitsByResultsWithMaps<T extends UnitModel>(
   );
 
   return { units: sorted, unitScoresMap, tiebreakScoresMap };
-}
-
-/** @deprecated use sortUnitsByResultsWithMaps */
-export function sortPlayersByResultsWithMaps<T extends UnitModel>(
-  units: T[],
-  tournament: Pick<TournamentModel, 'format' | 'ongoingRound'>,
-  allGames: GameModel[],
-): SortedUnitsResult<T> {
-  const r = sortUnitsByResultsWithMaps(units, tournament, allGames);
-  return {
-    units: r.units,
-    unitScoresMap: r.unitScoresMap,
-    tiebreakScoresMap: r.tiebreakScoresMap,
-  };
 }

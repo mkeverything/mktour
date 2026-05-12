@@ -1,7 +1,7 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentStart from '@/components/hooks/mutation-hooks/use-tournament-start';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
+import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { CirclePlay, Loader2 } from 'lucide-react';
@@ -15,7 +15,7 @@ export default function StartTournamentButton() {
   const { id } = useParams<{ id: string }>();
   const { data } = useTournamentInfo(id);
   const { sendJsonMessage } = useContext(DashboardContext);
-  const { data: players } = useTournamentPlayers(id);
+  const { data: players } = useTournamentUnits(id);
   const startTournamentMutation = useTournamentStart(queryClient, {
     id,
     sendJsonMessage,

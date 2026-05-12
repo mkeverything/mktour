@@ -30,7 +30,7 @@ const GameItem: FC<GameProps> = ({
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const t = useTranslations('Toasts');
-  const { sendJsonMessage, status, playerId, userId } =
+  const { sendJsonMessage, status, unitId, userId } =
     useContext(DashboardContext);
   const queryClient = useQueryClient();
   const mutation = useTournamentSetGameResult(queryClient, {
@@ -45,7 +45,7 @@ const GameItem: FC<GameProps> = ({
   const isClosed = !!data?.isClosed;
   const allowPlayersSetResults = !!data?.allowPlayersSetResults;
   // players can only edit their own games, and only after tournament has started
-  const isPlayerInGame = playerId === whiteUnitId || playerId === blackUnitId;
+  const isPlayerInGame = unitId === whiteUnitId || unitId === blackUnitId;
   const canEdit =
     status === 'organizer' ||
     (status === 'player' && isPlayerInGame && hasStarted);
@@ -120,7 +120,7 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={whiteNickname}
             position={{ justify: 'justify-self-start', text: 'text-left' }}
-            className={`${playerId === whiteUnitId && 'font-bold'}`}
+            className={`${unitId === whiteUnitId && 'font-bold'}`}
           />
           <Button
             variant="ghost"
@@ -135,7 +135,7 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={blackNickname}
             position={{ justify: 'justify-self-end', text: 'text-right' }}
-            className={`${playerId === blackUnitId && 'font-bold'}`}
+            className={`${unitId === blackUnitId && 'font-bold'}`}
           />
         </Card>
       </motion.div>

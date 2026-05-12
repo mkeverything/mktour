@@ -1,15 +1,15 @@
 'use client';
 
 import {
-  DashboardTabContext,
   DashboardRoundContext,
+  DashboardTabContext,
   SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import RoundControls from '@/app/tournaments/[id]/dashboard/tabs/games/round-controls';
 import RoundItem from '@/app/tournaments/[id]/dashboard/tabs/games/round-item';
 import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
 import { useTournamentGamesOverviewInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
+import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import Overlay from '@/components/overlay';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
@@ -26,17 +26,17 @@ const Games: FC = () => {
   const { id } = useParams<{ id: string }>();
   const { data, isError, isLoading } = useTournamentGamesOverviewInfo(id);
   const {
-    data: players,
-    isLoading: isPlayersloading,
-    isError: isPlayersError,
-  } = useTournamentPlayers(id);
+    data: units,
+    isLoading: isUnitsLoading,
+    isError: isUnitsError,
+  } = useTournamentUnits(id);
   const t = useTranslations('Tournament.Round');
   const trpc = useTRPC();
   const now = new Date().getTime();
   const startedAt = data?.startedAt ? data.startedAt.getTime() : 0;
   const renderDrawer = !startedAt || now - startedAt <= 5000;
 
-  if (isError || isPlayersError) {
+  if (isError || isUnitsError) {
     return (
       <div>
         <RoundControls
@@ -51,11 +51,13 @@ const Games: FC = () => {
 
   if (
     isLoading ||
-    isPlayersloading ||
+    isUnitsLoading ||
     queryClient.isMutating({
       mutationKey: trpc.tournament.saveRound.mutationKey(),
     }) > 1 ||
-    queryClient.isMutating({ mutationKey: [id, 'players', 'add-existing'] }) > 0
+    queryClient.isMutating({
+      mutationKey: trpc.tournament.addSoloUnit.mutationKey(),
+    }) > 0 // FIXME (or at least WHAT THE FUCK IS THIS?) // this capslock message was autocompleted by ai, i could not resist
   ) {
     return (
       <div>
@@ -72,7 +74,7 @@ const Games: FC = () => {
     );
   }
 
-  if (!players || players.length < 2) {
+  if (!units || units.length < 2) {
     return (
       <p className="text-muted-foreground p-4 text-center text-sm text-balance">
         {t('add two players')}

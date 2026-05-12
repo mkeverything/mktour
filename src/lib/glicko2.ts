@@ -146,7 +146,7 @@ export class Glicko2Calculator {
    */
   public calculateNewRatings(
     player: GlickoPlayer,
-    results: GameResult[],
+    results: GlickoGameResult[],
   ): RatingUpdate {
     // if no games played, only apply RD increase
     if (results.length === 0) {

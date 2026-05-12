@@ -21,7 +21,7 @@ interface DashboardMobileProps {
   session: string | null;
   id: string;
   status: TournamentAuthStatus;
-  playerId: string | null;
+  unitId: string | null;
   userId: string | undefined;
   currentRound: number | null;
   currentTab: DashboardTab;
@@ -38,7 +38,7 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
   session,
   id,
   status,
-  playerId,
+  unitId,
   userId,
   currentRound,
   currentTab,
@@ -60,10 +60,10 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
     () => ({
       sendJsonMessage,
       status,
-      playerId,
+      unitId,
       userId,
     }),
-    [playerId, sendJsonMessage, status, userId],
+    [unitId, sendJsonMessage, status, userId],
   );
   const tabValue = useMemo(() => ({ currentTab }), [currentTab]);
   const roundValue = useMemo(

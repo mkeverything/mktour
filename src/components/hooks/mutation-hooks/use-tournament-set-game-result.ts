@@ -1,7 +1,7 @@
 'use client';
 
 import { useTRPC } from '@/components/trpc/client';
-import { PlayerTournamentModel } from '@/server/zod/players';
+import { UnitModel } from '@/server/zod/tournaments';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -23,7 +23,7 @@ export default function useTournamentSetGameResult(
           }),
         });
         await queryClient.cancelQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+          queryKey: trpc.tournament.units.queryKey({ tournamentId }),
         });
       },
       onSuccess: (
@@ -31,7 +31,7 @@ export default function useTournamentSetGameResult(
         { gameId, result, roundNumber, prevResult, whiteUnitId, blackUnitId },
       ) => {
         function updatePlayerStats(
-          player: PlayerTournamentModel,
+          player: UnitModel,
           result: string,
           isWhite: boolean,
           isReset: boolean,
@@ -63,7 +63,7 @@ export default function useTournamentSetGameResult(
         // otherwise ui flickers and adds wrong order for a moment
         // while games are updated and players are being refetched
         queryClient.setQueryData(
-          trpc.tournament.playersIn.queryKey({ tournamentId }),
+          trpc.tournament.units.queryKey({ tournamentId }),
           (players) => {
             if (!players || !result) return players;
             return players.map((player) => {
@@ -145,7 +145,7 @@ export default function useTournamentSetGameResult(
             }),
           });
           queryClient.invalidateQueries({
-            queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+            queryKey: trpc.tournament.units.queryKey({ tournamentId }),
           });
         }
         sendJsonMessage({

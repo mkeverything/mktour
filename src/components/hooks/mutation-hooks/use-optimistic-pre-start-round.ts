@@ -2,9 +2,9 @@
 
 import { useTRPC } from '@/components/trpc/client';
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
-import { applyManualPlayerOrder } from '@/lib/reorder-tournament-players';
-import { baselinePlayerSort } from '@/lib/tournament-results';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import { applyManualUnitOrder } from '@/lib/reorder-tournament-units';
+import { baselineUnitSort } from '@/lib/tournament-results';
+import type { UnitModel } from '@/server/zod/tournaments';
 import type { GameModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
@@ -12,33 +12,33 @@ import { useCallback, useMemo } from 'react';
 export const useOptimisticPreStartRound = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const playersQueryKey = trpc.tournament.playersIn.queryKey({ tournamentId });
+  const unitsQueryKey = trpc.tournament.units.queryKey({ tournamentId });
   const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
     tournamentId,
     roundNumber: 1,
   });
   const preStartRoundMutationKeys = useMemo(
     () => [
-      trpc.tournament.addNewPlayer.mutationKey(),
-      trpc.tournament.addExistingPlayer.mutationKey(),
-      trpc.tournament.addPairTeam.mutationKey(),
-      trpc.tournament.removePlayer.mutationKey(),
-      trpc.tournament.reorderPlayers.mutationKey(),
+      trpc.tournament.addNewSoloUnit.mutationKey(),
+      trpc.tournament.addSoloUnit.mutationKey(),
+      trpc.tournament.addDoublesUnit.mutationKey(),
+      trpc.tournament.removeUnit.mutationKey(),
+      trpc.tournament.reorderUnits.mutationKey(),
     ],
     [trpc],
   );
 
   const buildOptimisticPreStartRound = useCallback(
-    (players: PlayerTournamentModel[], sortByBaseline = true) => {
-      const orderedPlayers = sortByBaseline
-        ? [...players].sort(baselinePlayerSort)
-        : players;
-      const nextPlayers = applyManualPlayerOrder(orderedPlayers);
+    (units: UnitModel[], sortByBaseline = true) => {
+      const orderedUnits = sortByBaseline
+        ? [...units].sort(baselineUnitSort)
+        : units;
+      const nextUnits = applyManualUnitOrder(orderedUnits);
 
       return {
-        players: nextPlayers,
+        units: nextUnits,
         games: generatePreStartRoundGames({
-          players: nextPlayers,
+          units: nextUnits,
           tournamentId,
         }),
       };
@@ -47,31 +47,31 @@ export const useOptimisticPreStartRound = (tournamentId: string) => {
   );
 
   const applyOptimisticPreStartRound = useCallback(
-    async (players: PlayerTournamentModel[], sortByBaseline = true) => {
+    async (units: UnitModel[], sortByBaseline = true) => {
       await Promise.all([
-        queryClient.cancelQueries({ queryKey: playersQueryKey }),
+        queryClient.cancelQueries({ queryKey: unitsQueryKey }),
         queryClient.cancelQueries({ queryKey: roundGamesQueryKey }),
       ]);
 
-      const previousPlayers =
-        queryClient.getQueryData<PlayerTournamentModel[]>(playersQueryKey);
+      const previousUnits =
+        queryClient.getQueryData<UnitModel[]>(unitsQueryKey);
       const previousGames =
         queryClient.getQueryData<GameModel[]>(roundGamesQueryKey);
-      const nextState = buildOptimisticPreStartRound(players, sortByBaseline);
+      const nextState = buildOptimisticPreStartRound(units, sortByBaseline);
 
-      queryClient.setQueryData(playersQueryKey, nextState.players);
+      queryClient.setQueryData(unitsQueryKey, nextState.units);
       queryClient.setQueryData(roundGamesQueryKey, nextState.games);
 
       return {
-        previousPlayers,
+        previousUnits,
         previousGames,
-        nextPlayers: nextState.players,
+        nextUnits: nextState.units,
         nextGames: nextState.games,
       };
     },
     [
       buildOptimisticPreStartRound,
-      playersQueryKey,
+      unitsQueryKey,
       queryClient,
       roundGamesQueryKey,
     ],
@@ -83,15 +83,15 @@ export const useOptimisticPreStartRound = (tournamentId: string) => {
         Awaited<ReturnType<typeof applyOptimisticPreStartRound>>
       >,
     ) => {
-      if (context?.previousPlayers) {
-        queryClient.setQueryData(playersQueryKey, context.previousPlayers);
+      if (context?.previousUnits) {
+        queryClient.setQueryData(unitsQueryKey, context.previousUnits);
       }
 
       if (context?.previousGames) {
         queryClient.setQueryData(roundGamesQueryKey, context.previousGames);
       }
     },
-    [playersQueryKey, queryClient, roundGamesQueryKey],
+    [unitsQueryKey, queryClient, roundGamesQueryKey],
   );
 
   const isOnlyPendingPreStartRoundMutation = useCallback(
