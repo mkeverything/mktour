@@ -1,6 +1,6 @@
 'use client';
 
-import { useTournamentReorderUnits } from '@/components/hooks/mutation-hooks/use-tournament-reorder-units';
+import { useTournamentReorderUnits } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-reorder-units';
 import { reorderTournamentUnitsByIndex } from '@/lib/reorder-tournament-units';
 import { UnitModel } from '@/server/zod/tournaments';
 import { isSortable } from '@dnd-kit/dom/sortable';

@@ -13,7 +13,7 @@ import {
   TableStatsHeads,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/table-ui';
 import { useSortableUnitTable } from '@/app/tournaments/[id]/dashboard/tabs/table/use-sortable-unit-table';
-import { useTournamentRemoveUnit } from '@/components/hooks/mutation-hooks/use-tournament-remove-unit';
+import { useTournamentRemoveUnit } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-remove-unit';
 import { useTournamentWithdrawUnit } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-unit';
 import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
 import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tournament-info';

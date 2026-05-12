@@ -115,6 +115,7 @@ export async function reorderTournamentUnits({
 export async function addDoublesUnit({
   tournamentId,
   nickname,
+  unitId: requestedUnitId,
   firstPlayerId,
   secondPlayerId,
   addedAt,
@@ -183,7 +184,7 @@ export async function addDoublesUnit({
   }
   const nextPairingNumber = (await getTournamentOrderTargets(tournamentId))
     .length;
-  const unitId = newid();
+  const unitId = requestedUnitId ?? newid();
   const unit = createUnit({
     id: unitId,
     size: 2,

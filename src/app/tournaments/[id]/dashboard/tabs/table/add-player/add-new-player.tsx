@@ -1,6 +1,6 @@
 import { LoadingSpinner } from '@/app/loading';
 import { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
-import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/use-tournament-add-new-player';
+import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-new-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';

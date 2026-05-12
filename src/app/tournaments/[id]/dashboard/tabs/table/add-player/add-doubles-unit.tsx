@@ -4,7 +4,7 @@ import PairPlayerCard, {
 } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/pair-player-card';
 
 import type { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
-import { useTournamentAddDoublesUnit } from '@/components/hooks/mutation-hooks/use-tournament-add-doubles-unit';
+import { useTournamentAddDoublesUnit } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-doubles-unit';
 import { useTRPC } from '@/components/trpc/client';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { deriveTeamNickname } from '@/lib/tournament-dashboard';
+import { newid } from '@/lib/utils';
 import { PlayerWithUsernameModel } from '@/server/zod/players';
 import {
   AddDoublesUnitModel,
@@ -225,6 +226,7 @@ const AddDoublesUnit = ({
     addDoublesUnit.mutate({
       tournamentId,
       ...payload,
+      unitId: newid(),
       addedAt,
     });
   };

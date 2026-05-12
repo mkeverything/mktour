@@ -74,4 +74,5 @@ const ComboModal = {
   Close,
 };
 
+export { Root, Trigger, Content, Header, Title, Description, Footer, Close };
 export default ComboModal;

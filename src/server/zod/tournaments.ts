@@ -23,7 +23,7 @@ export const tournamentSchema = createSelectSchema(tournaments, {
   format: tournamentFormatEnum,
   type: tournamentTypeEnum,
 });
-const playerInUnitSchema = createSelectSchema(players)
+export const playerInUnitSchema = createSelectSchema(players)
   .pick({
     id: true,
     nickname: true,
@@ -285,6 +285,7 @@ export const addDoublesUnitSchema = z
       .trim()
       .min(2, { error: 'min nickname length' })
       .max(30, { error: 'max nickname length' }),
+    unitId: unitSchema.shape.id.optional(),
     firstPlayerId: playerInUnitSchema.shape.id,
     secondPlayerId: playerInUnitSchema.shape.id,
   })
@@ -344,6 +345,7 @@ export type EditDoublesUnitModel = z.infer<typeof editDoublesUnitSchema>;
 export type PlayerUnitModel = z.infer<typeof playerUnitSelectSchema>;
 export type PlayerUnitInsertModel = z.infer<typeof playerUnitInsertSchema>;
 export type PlayerUnitUpdateModel = z.infer<typeof playerUnitUpdateSchema>;
+export type PlayerInUnitModel = z.infer<typeof playerInUnitSchema>;
 export type UnitModel = z.infer<typeof unitSchema>;
 export type UnitSelectModel = z.infer<typeof unitSelectSchema>;
 export type UnitInsertModel = z.infer<typeof unitInsertSchema>;

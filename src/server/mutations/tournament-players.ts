@@ -27,10 +27,12 @@ type SoloUnitDatabase = Pick<
 export async function addNewSoloUnit({
   tournamentId,
   player,
+  unitId,
   addedAt,
 }: {
   tournamentId: string;
   player: PlayerFormModel & { id?: string };
+  unitId?: string;
   addedAt?: Date;
 }): Promise<PreStartStateModel> {
   const tournament = await getTournamentById(tournamentId);
@@ -43,7 +45,7 @@ export async function addNewSoloUnit({
       { database: tx, id: playerId },
     );
     return await addSoloUnit(
-      { tournamentId, player: createdPlayer, addedAt },
+      { tournamentId, player: createdPlayer, unitId, addedAt },
       { database: tx, skipAuth: true },
     );
   });
@@ -54,11 +56,13 @@ export async function addSoloUnit(
     tournamentId,
     player,
     userId,
+    unitId: requestedUnitId,
     addedAt,
   }: {
     tournamentId: string;
     player: PlayerInsertModel;
     userId?: string;
+    unitId?: string;
     addedAt?: Date;
   },
   options: { database?: SoloUnitDatabase; skipAuth?: boolean } = {},
@@ -85,7 +89,7 @@ export async function addSoloUnit(
   const nextPairingNumber = (
     await getTournamentOrderTargets(tournamentId, database)
   ).length;
-  const unitId = `${player.id}_${tournamentId}`;
+  const unitId = requestedUnitId ?? newid();
   const unit = createUnit({
     id: unitId,
     size: 1,

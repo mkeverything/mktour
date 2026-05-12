@@ -1,0 +1,172 @@
+'use client';
+
+import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useTRPC } from '@/components/trpc/client';
+import { settlePendingGamesAsForfeit } from '@/lib/utils';
+import type { GameModel } from '@/server/zod/tournaments';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
+import { useContext } from 'react';
+import { toast } from 'sonner';
+
+export const useTournamentWithdrawUnit = (tournamentId: string) => {
+  const queryClient = useQueryClient();
+  const t = useTranslations('Errors');
+  const tToasts = useTranslations('Toasts');
+  const trpc = useTRPC();
+  const { sendJsonMessage } = useContext(DashboardContext);
+
+  return useMutation(
+    trpc.tournament.withdrawUnit.mutationOptions({
+      onMutate: async ({ unitId }) => {
+        await queryClient.cancelQueries({
+          queryKey: trpc.tournament.units.queryKey({ tournamentId }),
+        });
+        await queryClient.cancelQueries({
+          queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+        });
+
+        const info = queryClient.getQueryData(
+          trpc.tournament.info.queryKey({ tournamentId }),
+        );
+        const ongoingRound =
+          info?.tournament.startedAt != null
+            ? info.tournament.ongoingRound
+            : null;
+
+        let roundGamesRollback:
+          | { roundNumber: number; data: GameModel[] }
+          | undefined;
+        const previousAllGames = queryClient.getQueryData(
+          trpc.tournament.allGames.queryKey({ tournamentId }),
+        );
+
+        if (ongoingRound != null) {
+          const roundGamesKey = trpc.tournament.roundGames.queryKey({
+            tournamentId,
+            roundNumber: ongoingRound,
+          });
+          await queryClient.cancelQueries({ queryKey: roundGamesKey });
+          const previousRoundGames = queryClient.getQueryData(roundGamesKey);
+          if (previousRoundGames) {
+            roundGamesRollback = {
+              roundNumber: ongoingRound,
+              data: previousRoundGames,
+            };
+            const nextRoundGames = settlePendingGamesAsForfeit(
+              previousRoundGames,
+              unitId,
+            );
+            queryClient.setQueryData(roundGamesKey, nextRoundGames);
+          }
+        }
+
+        const previousState = queryClient.getQueryData(
+          trpc.tournament.units.queryKey({ tournamentId }),
+        );
+        if (previousAllGames !== undefined) {
+          const nextAllGames = settlePendingGamesAsForfeit(
+            previousAllGames,
+            unitId,
+          );
+          queryClient.setQueryData(
+            trpc.tournament.allGames.queryKey({ tournamentId }),
+            nextAllGames,
+          );
+        }
+
+        queryClient.setQueryData(
+          trpc.tournament.units.queryKey({ tournamentId }),
+          (cache) =>
+            cache?.map((unit) =>
+              unit.id === unitId ? { ...unit, isOut: true } : unit,
+            ),
+        );
+
+        return { previousAllGames, previousState, roundGamesRollback };
+      },
+      onError: (_err, { unitId }, context) => {
+        if (context?.previousAllGames) {
+          queryClient.setQueryData(
+            trpc.tournament.allGames.queryKey({ tournamentId }),
+            context.previousAllGames,
+          );
+        }
+        if (context?.roundGamesRollback) {
+          queryClient.setQueryData(
+            trpc.tournament.roundGames.queryKey({
+              tournamentId,
+              roundNumber: context.roundGamesRollback.roundNumber,
+            }),
+            context.roundGamesRollback.data,
+          );
+        }
+        if (context?.previousState) {
+          queryClient.setQueryData(
+            trpc.tournament.units.queryKey({ tournamentId }),
+            context.previousState,
+          );
+        }
+
+        if (_err.message === 'WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT') {
+          toast.error(t('withdraw-unit-rounds-error'), {
+            id: 'withdraw-unit-rounds-error',
+            duration: 3000,
+          });
+          return;
+        }
+
+        const unit = context?.previousState?.find(
+          (previousUnit) => previousUnit.id === unitId,
+        );
+        if (!unit) {
+          toast.error(
+            t('internal-error', {
+              error: 'unit not found in context.previousState',
+            }),
+            {
+              id: 'internal-error',
+              duration: 3000,
+            },
+          );
+          return;
+        }
+
+        toast.error(
+          t('withdraw-unit-error', {
+            player: unit.unitNickname,
+          }),
+          {
+            id: 'withdraw-unit-error',
+            duration: 3000,
+          },
+        );
+      },
+      onSettled: () => {
+        if (
+          queryClient.isMutating({
+            mutationKey: trpc.tournament.withdrawUnit.mutationKey(),
+          }) === 1
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.tournament.pathKey(),
+          });
+        }
+      },
+      onSuccess: (data, { unitId }) => {
+        sendJsonMessage({ event: 'withdraw-unit', id: unitId });
+        if (data.roundsNumberAutoDecreased && data.roundsNumber !== null) {
+          toast.info(
+            tToasts('rounds number decreased automatically', {
+              roundsNumber: data.roundsNumber,
+            }),
+          );
+          sendJsonMessage({
+            event: 'swiss-new-rounds-number',
+            roundsNumber: data.roundsNumber,
+          });
+        }
+      },
+    }),
+  );
+};

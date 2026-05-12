@@ -1,6 +1,6 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
-import { useTournamentAddExistingPlayer } from '@/components/hooks/mutation-hooks/use-tournament-add-existing-player';
+import { useTournamentAddExistingPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-existing-player';
 import { useTournamentPossiblePlayers } from '@/components/hooks/query-hooks/use-tournament-possible-players';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
