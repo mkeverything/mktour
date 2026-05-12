@@ -109,7 +109,7 @@ function addPersonalGameColumns(
   }));
 }
 
-export async function applyPreStartPlayerOrder({
+export async function applyPreStartUnitOrder({
   tournamentId,
   tournamentType,
   orderedTargets,
@@ -191,9 +191,9 @@ export async function reapplyPreStartOrder(
 ): Promise<PreStartUnitOrderResult> {
   const d = database ?? db;
   const tournament = await getTournamentById(tournamentId, d);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   const orderTargets = await getTournamentOrderTargets(tournamentId, d);
-  return await applyPreStartPlayerOrder({
+  return await applyPreStartUnitOrder({
     tournamentId,
     tournamentType: tournament.type,
     orderedTargets: orderTargets,

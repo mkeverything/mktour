@@ -25,7 +25,7 @@ import {
   normalizeSwissRoundsNumberInDatabase,
 } from './tournament-lifecycle';
 import {
-  applyPreStartPlayerOrder,
+  applyPreStartUnitOrder,
   getTournamentOrderTargets,
   reapplyPreStartOrder,
 } from './tournament-unit-order';
@@ -43,7 +43,7 @@ export async function removeUnit({
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
   const unit = await db
     .select({ id: tournament_units.id })
@@ -85,7 +85,7 @@ export async function reorderTournamentUnits({
   unitIds,
 }: ReorderTournamentUnitsInputModel): Promise<PreStartStateModel> {
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
   const orderTargets = await getTournamentOrderTargets(tournamentId);
   if (orderTargets.length !== unitIds.length) {
@@ -101,7 +101,7 @@ export async function reorderTournamentUnits({
   const orderTargetsById = new Map(
     orderTargets.map((target) => [target.id, target]),
   );
-  return await applyPreStartPlayerOrder({
+  return await applyPreStartUnitOrder({
     tournamentId,
     tournamentType: tournament.type,
     orderedTargets: unitIds.map((unitId) => {
@@ -129,7 +129,7 @@ export async function addDoublesUnit({
     throw new Error('INVALID_DOUBLES_PAIR');
   }
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
   if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
   const selectedPlayers = await db
@@ -218,7 +218,7 @@ export async function editDoublesUnit({
     throw new Error('INVALID_DOUBLES_PAIR');
   }
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
   if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
   const unit = await db
@@ -382,7 +382,7 @@ export async function withdrawUnit({
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
   if (!tournament.startedAt) throw new Error('TOURNAMENT_NOT_STARTED');
   if (tournament.closedAt) throw new Error('TOURNAMENT_ALREADY_FINISHED');

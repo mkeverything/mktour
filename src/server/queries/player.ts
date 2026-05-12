@@ -3,29 +3,30 @@ import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
   games,
-  players_to_tournaments,
+  players_to_units,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { PlayerAuthStatsModel, PlayerStatsModel } from '@/server/zod/players';
 import { and, count, desc, eq, getTableColumns, or, sum } from 'drizzle-orm';
 
 // returns the last 5 tournaments a player participated in
-export async function getPlayersTournaments(
+export async function getPlayersTournamentsInfinite(
   playerId: string,
   limit: number = 5,
   offset: number = 0,
 ) {
   return await db
     .select({
-      ...getTableColumns(players_to_tournaments),
-      tournament: tournaments,
+      ...getTableColumns(tournaments),
     })
-    .from(players_to_tournaments)
+    .from(players_to_units)
     .innerJoin(
-      tournaments,
-      eq(players_to_tournaments.tournamentId, tournaments.id),
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
     )
-    .where(eq(players_to_tournaments.playerId, playerId))
+    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
+    .where(eq(players_to_units.playerId, playerId))
     .orderBy(desc(tournaments.createdAt))
     .limit(limit)
     .offset(offset);
@@ -53,15 +54,16 @@ export async function getPlayerStats(
     .select({
       playerId: players.id,
       ratingPeak: players.ratingPeak,
-      tournamentsPlayed: count(players_to_tournaments.id),
-      wins: sum(players_to_tournaments.wins),
-      losses: sum(players_to_tournaments.losses),
-      draws: sum(players_to_tournaments.draws),
+      tournamentsPlayed: count(players_to_units.id),
+      wins: sum(tournament_units.wins),
+      losses: sum(tournament_units.losses),
+      draws: sum(tournament_units.draws),
     })
     .from(players)
+    .leftJoin(players_to_units, eq(players.id, players_to_units.playerId))
     .leftJoin(
-      players_to_tournaments,
-      eq(players.id, players_to_tournaments.playerId),
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
     )
     .where(eq(players.clubId, player.clubId))
     .groupBy(players.id)

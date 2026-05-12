@@ -16,7 +16,7 @@ export const getStatusInTournament = cache(
     userId: string | null,
     tournamentId: string,
   ): Promise<TournamentAuthStatusModel> => {
-    if (!userId) return { status: 'viewer' };
+    if (!userId) return { status: 'viewer', unitId: null };
     const tournament = (
       await db
         .select({ clubId: tournaments.clubId })
@@ -37,7 +37,7 @@ export const getStatusInTournament = cache(
           ),
         )
     ).at(0)?.status;
-    if (dbStatus) return { status: 'organizer' };
+    if (dbStatus) return { status: 'organizer', unitId: null };
 
     // find player by userId in this club
     const player = (
@@ -46,7 +46,7 @@ export const getStatusInTournament = cache(
         .from(players)
         .where(and(eq(players.userId, userId), eq(players.clubId, clubId)))
     ).at(0);
-    if (!player) return { status: 'viewer' };
+    if (!player) return { status: 'viewer', unitId: null };
 
     const isHere = (
       await db
@@ -71,6 +71,6 @@ export const getStatusInTournament = cache(
         status: 'player',
         unitId: isHere.unitId,
       };
-    else return { status: 'viewer' };
+    else return { status: 'viewer', unitId: null };
   },
 );

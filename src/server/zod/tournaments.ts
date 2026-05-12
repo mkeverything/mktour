@@ -41,7 +41,6 @@ export const gamePairMembersSchema = z.object({
 export const gameSchema = createSelectSchema(games).extend({
   whiteNickname: z.string(),
   blackNickname: z.string(),
-  pairMembers: gamePairMembersSchema.nullable(),
   roundName: roundNameEnum.nullable(),
   result: gameResultEnum.nullable(),
 });
@@ -66,7 +65,7 @@ export const unitSchema = unitSelectSchema
     nickname: true,
   })
   .extend({
-    unitNickname: z.string(),
+    unitNickname: unitSelectSchema.shape.nickname,
     players: z.array(playerInUnitSchema).min(1),
   });
 
@@ -92,7 +91,7 @@ export const reorderTournamentUnitsInputSchema = z.object({
 });
 export const withdrawTournamentUnitInputSchema = z.object({
   tournamentId: z.string(),
-  playerId: z.string(),
+  unitId: unitSchema.shape.id,
   userId: z.string(),
 });
 export const withdrawTournamentUnitResultSchema = z.object({
@@ -222,8 +221,8 @@ export const tournamentWithClubSchema = z.object({
 });
 
 export const tournamentAuthStatusSchema = z.union([
-  z.object({ status: z.literal('organizer') }),
-  z.object({ status: z.literal('viewer') }),
+  z.object({ status: z.literal('organizer'), unitId: z.null() }),
+  z.object({ status: z.literal('viewer'), unitId: z.null() }),
   z
     .object({
       status: z.literal('player'),
@@ -334,7 +333,6 @@ export type TournamentCreateInputModel = z.infer<
   typeof tournamentCreateInputSchema
 >;
 export type GameModel = z.infer<typeof gameSchema>;
-export type GamePairMembersModel = z.infer<typeof gamePairMembersSchema>;
 export type GameInsertModel = z.infer<typeof gamesInsertSchema>;
 export type GameUpdateModel = z.infer<typeof gamesUpdateSchema>;
 export type AddDoublesUnitModel = z.infer<typeof addDoublesUnitSchema>;

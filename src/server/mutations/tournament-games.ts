@@ -83,7 +83,7 @@ export async function saveRound({
     .from(tournaments)
     .where(eq(tournaments.id, tournamentId))
     .then((rows) => rows.at(0));
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
 
   if (tournament.format === 'swiss') {
     const activeUnits = await db
@@ -130,25 +130,16 @@ export async function setTournamentGameResult({
   gameId,
   result,
   tournamentId,
-  whiteUnitId: _whiteUnitId,
-  blackUnitId: _blackUnitId,
-  prevResult: _prevResult,
-  roundNumber: _roundNumber,
-  userId: _userId,
 }: {
   tournamentId: string;
   gameId: string;
   result: GameResult;
-  whiteUnitId: string;
-  blackUnitId: string;
-  prevResult: GameResult | null;
-  roundNumber: number;
-  userId: string;
 }) {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const authStatus = await getStatusInTournament(user.id, tournamentId);
-  if (authStatus.status === 'viewer') throw new Error('NOT_AUTHORIZED');
+  const { status: authStatus, unitId: authUnitId } =
+    await getStatusInTournament(user.id, tournamentId);
+  if (authStatus === 'viewer') throw new Error('NOT_AUTHORIZED');
 
   const tournamentWithClub = (
     await db
@@ -161,7 +152,7 @@ export async function setTournamentGameResult({
       .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
       .where(eq(tournaments.id, tournamentId))
   ).at(0);
-  if (!tournamentWithClub) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournamentWithClub) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournamentWithClub.startedAt === null)
     throw new Error('TOURNAMENT_NOT_STARTED');
   if (tournamentWithClub.closedAt !== null) {
@@ -212,14 +203,13 @@ export async function setTournamentGameResult({
       throw new Error('WITHDRAWN_UNIT_CANNOT_PLAY');
     }
 
-    if (authStatus.status === 'player') {
+    if (authStatus === 'player') {
       if (!tournamentWithClub.allowPlayersSetResults) {
         throw new Error('PLAYER_RESULT_SETTING_DISABLED');
       }
 
       const isPlayerInGame =
-        authStatus.unitId === game.whiteUnitId ||
-        authStatus.unitId === game.blackUnitId;
+        authUnitId === game.whiteUnitId || authUnitId === game.blackUnitId;
       if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
     }
 
