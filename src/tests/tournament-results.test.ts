@@ -4,33 +4,42 @@ import {
   calculateBuchholzCut1,
   calculatePlayerScore,
   hasSameStanding,
-  sortPlayersByResults,
-  sortPlayersByResultsWithMaps,
+  sortUnitsByResults,
+  sortUnitsByResultsWithMaps,
 } from '@/lib/tournament-results';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import type { GameModel } from '@/server/zod/tournaments';
 import { describe, expect, it } from 'bun:test';
 
 // Helper to create a minimal player
 function makePlayer(
-  overrides: Partial<PlayerTournamentModel> & { id: string; nickname: string },
-): PlayerTournamentModel {
-  const { teamNickname, ...restOverrides } = overrides;
+  overrides: Partial<UnitModel> & { id: string; nickname?: string },
+): UnitModel {
+  const { id, nickname, unitNickname, players, ...restOverrides } = overrides;
+  const displayName = unitNickname ?? nickname ?? id;
 
   return {
+    id,
     wins: 0,
     draws: 0,
     losses: 0,
-    rating: 1500,
-    realname: null,
     colorIndex: 0,
     isOut: null,
     place: null,
-    pairingNumber: null,
+    number: null,
     addedAt: null,
-    teamNickname: teamNickname ?? null,
-    username: null,
-    pairPlayers: null,
+    size: players?.length ?? 1,
+    unitNickname: displayName,
+    players: players ?? [
+      {
+        id,
+        nickname: displayName,
+        realname: null,
+        rating: 1500,
+        userId: null,
+        username: null,
+      },
+    ],
     ...restOverrides,
   };
 }
@@ -53,8 +62,9 @@ function makeGame(
     whitePrevGameId: null,
     blackPrevGameId: null,
     result: null,
+    whitePlayerId: null,
+    blackPlayerId: null,
     finishedAt: null,
-    pairMembers: null,
     ...overrides,
   };
 }
@@ -199,24 +209,24 @@ describe('calculatePlayerScore', () => {
   });
 });
 
-describe('sortPlayersByResults', () => {
+describe('sortUnitsByResults', () => {
   it('prefers pairing number over addedAt when standings are equal', () => {
     const players = [
       makePlayer({
         id: 'p1',
         nickname: 'Alice',
-        pairingNumber: 1,
+        number: 1,
         addedAt: new Date('2026-01-02T00:00:00.000Z'),
       }),
       makePlayer({
         id: 'p2',
         nickname: 'Bob',
-        pairingNumber: 0,
+        number: 0,
         addedAt: new Date('2026-01-01T00:00:00.000Z'),
       }),
     ];
 
-    const sorted = sortPlayersByResults(
+    const sorted = sortUnitsByResults(
       players,
       { format: 'swiss', ongoingRound: 0 },
       [],
@@ -407,7 +417,7 @@ describe('calculateBuchholzCut1', () => {
   });
 });
 
-describe('sortPlayersByResults', () => {
+describe('sortUnitsByResults', () => {
   const tournament = { format: 'swiss' as const, ongoingRound: 3 };
 
   it('should sort by score descending', () => {
@@ -461,7 +471,7 @@ describe('sortPlayersByResults', () => {
       }),
     ];
 
-    const sorted = sortPlayersByResults(players, tournament, games);
+    const sorted = sortUnitsByResults(players, tournament, games);
     expect(sorted[0].id).toBe('p2'); // 3 wins
     expect(sorted[1].id).toBe('p3'); // 2 wins
     expect(sorted[2].id).toBe('p1'); // 1 win
@@ -508,7 +518,7 @@ describe('sortPlayersByResults', () => {
       }),
     ];
 
-    const sorted = sortPlayersByResults(
+    const sorted = sortUnitsByResults(
       players,
       { format: 'swiss', ongoingRound: 2 },
       games,
@@ -526,13 +536,13 @@ describe('sortPlayersByResults', () => {
       makePlayer({ id: 'p2', nickname: 'Bob', wins: 1 }),
     ];
     const original = [...players];
-    sortPlayersByResults(players, { format: 'swiss', ongoingRound: 1 }, []);
+    sortUnitsByResults(players, { format: 'swiss', ongoingRound: 1 }, []);
     expect(players[0].id).toBe(original[0].id);
     expect(players[1].id).toBe(original[1].id);
   });
 });
 
-describe('sortPlayersByResultsWithMaps', () => {
+describe('sortUnitsByResultsWithMaps', () => {
   it('should return score maps alongside sorted players', () => {
     const players = [
       makePlayer({ id: 'p1', nickname: 'Alice', wins: 2, draws: 0, losses: 0 }),
@@ -553,15 +563,15 @@ describe('sortPlayersByResultsWithMaps', () => {
       }),
     ];
 
-    const result = sortPlayersByResultsWithMaps(
+    const result = sortUnitsByResultsWithMaps(
       players,
       { format: 'round robin', ongoingRound: 2 },
       games,
     );
 
-    expect(result.players[0].id).toBe('p1');
-    expect(result.playerScoresMap.get('p1')).toBe(2);
-    expect(result.playerScoresMap.get('p2')).toBe(0);
+    expect(result.units[0].id).toBe('p1');
+    expect(result.unitScoresMap.get('p1')).toBe(2);
+    expect(result.unitScoresMap.get('p2')).toBe(0);
     expect(result.tiebreakScoresMap).toBeInstanceOf(Map);
     expect(result.tiebreakScoresMap.size).toBe(2);
   });
@@ -582,14 +592,14 @@ describe('buildScoreMaps', () => {
       }),
     ];
 
-    const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+    const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
       players,
       { format: 'round robin', ongoingRound: 1 },
       games,
     );
 
-    expect(playerScoresMap.get('p1')).toBe(1);
-    expect(playerScoresMap.get('p2')).toBe(0);
+    expect(unitScoresMap.get('p1')).toBe(1);
+    expect(unitScoresMap.get('p2')).toBe(0);
     // Berger for p1: won against p2 (score 0) → 0
     expect(tiebreakScoresMap.get('p1')).toBe(0);
     // Berger for p2: lost → 0
@@ -651,19 +661,14 @@ describe('hasSameStanding', () => {
       }),
     ];
 
-    const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+    const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
       players,
       { format: 'swiss', ongoingRound: 5 },
       games,
     );
 
     expect(
-      hasSameStanding(
-        players[0],
-        players[1],
-        playerScoresMap,
-        tiebreakScoresMap,
-      ),
+      hasSameStanding(players[0], players[1], unitScoresMap, tiebreakScoresMap),
     ).toBe(false);
   });
 
@@ -690,19 +695,14 @@ describe('hasSameStanding', () => {
       }),
     ];
 
-    const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
+    const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
       players,
       { format: 'swiss', ongoingRound: 1 },
       games,
     );
 
     expect(
-      hasSameStanding(
-        players[0],
-        players[1],
-        playerScoresMap,
-        tiebreakScoresMap,
-      ),
+      hasSameStanding(players[0], players[1], unitScoresMap, tiebreakScoresMap),
     ).toBe(true);
   });
 });

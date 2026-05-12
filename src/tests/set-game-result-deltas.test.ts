@@ -1,4 +1,4 @@
-import { getPlayerResultDeltas } from '@/server/mutations/set-game-result-deltas';
+import { getUnitResultDeltas } from '@/server/mutations/set-game-result-deltas';
 import type { GameResult } from '@/server/zod/enums';
 import { describe, expect, it } from 'bun:test';
 
@@ -54,7 +54,7 @@ describe('set game result deltas', () => {
       for (const nextResult of allResults) {
         const prev = getExpectedStatsForResult(prevResult);
         const next = getExpectedStatsForResult(nextResult);
-        const deltas = getPlayerResultDeltas(prevResult, nextResult);
+        const deltas = getUnitResultDeltas(prevResult, nextResult);
 
         expect(applyDelta(prev.white, deltas.white)).toEqual(next.white);
         expect(applyDelta(prev.black, deltas.black)).toEqual(next.black);
@@ -63,7 +63,7 @@ describe('set game result deltas', () => {
   });
 
   it('rolls back counters when result is aborted', () => {
-    const whiteWinRollback = getPlayerResultDeltas('1-0', null);
+    const whiteWinRollback = getUnitResultDeltas('1-0', null);
     expect(whiteWinRollback.white).toEqual({
       wins: -1,
       draws: 0,
@@ -77,7 +77,7 @@ describe('set game result deltas', () => {
       colorIndex: 1,
     });
 
-    const drawRollback = getPlayerResultDeltas('1/2-1/2', null);
+    const drawRollback = getUnitResultDeltas('1/2-1/2', null);
     expect(drawRollback.white).toEqual({
       wins: 0,
       draws: -1,
