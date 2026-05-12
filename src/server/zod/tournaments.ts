@@ -4,6 +4,7 @@ import {
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
+import { players } from '@/server/db/schema/players';
 import { clubsSelectSchema } from '@/server/zod/clubs';
 import {
   gameResultEnum,
@@ -11,7 +12,6 @@ import {
   tournamentFormatEnum,
   tournamentTypeEnum,
 } from '@/server/zod/enums';
-import { playersSelectSchema } from '@/server/zod/players';
 import {
   createInsertSchema,
   createSelectSchema,
@@ -23,13 +23,17 @@ export const tournamentSchema = createSelectSchema(tournaments, {
   format: tournamentFormatEnum,
   type: tournamentTypeEnum,
 });
-const playerInUnitSchema = playersSelectSchema.pick({
-  id: true,
-  nickname: true,
-  realname: true,
-  rating: true,
-  userId: true,
-});
+const playerInUnitSchema = createSelectSchema(players)
+  .pick({
+    id: true,
+    nickname: true,
+    realname: true,
+    rating: true,
+    userId: true,
+  })
+  .extend({
+    username: z.string().nullable(),
+  });
 
 const gamePairSideSchema = z.tuple([playerInUnitSchema, playerInUnitSchema]);
 
@@ -281,8 +285,8 @@ export const addDoublesUnitSchema = z
       .trim()
       .min(2, { error: 'min nickname length' })
       .max(30, { error: 'max nickname length' }),
-    firstPlayerId: playersSelectSchema.shape.id,
-    secondPlayerId: playersSelectSchema.shape.id,
+    firstPlayerId: playerInUnitSchema.shape.id,
+    secondPlayerId: playerInUnitSchema.shape.id,
   })
   .refine((value) => value.firstPlayerId !== value.secondPlayerId, {
     path: ['secondPlayerId'],

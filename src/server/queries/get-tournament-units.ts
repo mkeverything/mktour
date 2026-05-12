@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { baselineUnitSort, sortUnitsByResults } from '@/lib/tournament-results';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
+import { users } from '@/server/db/schema/users';
 import {
   players_to_units,
   tournament_units,
@@ -33,6 +34,7 @@ export async function getRawTournamentUnits(
       playerRealname: players.realname,
       playerRating: players.rating,
       playerUserId: players.userId,
+      playerUsername: users.username,
       numberInUnit: players_to_units.numberInUnit,
     })
     .from(tournament_units)
@@ -41,7 +43,8 @@ export async function getRawTournamentUnits(
       players_to_units,
       eq(players_to_units.unitId, tournament_units.id),
     )
-    .innerJoin(players, eq(players.id, players_to_units.playerId));
+    .innerJoin(players, eq(players.id, players_to_units.playerId))
+    .leftJoin(users, eq(players.userId, users.id));
 
   const units = new Map<UnitModel['id'], UnitModel>();
 
@@ -55,6 +58,7 @@ export async function getRawTournamentUnits(
       playerRealname,
       playerRating,
       playerUserId,
+      playerUsername,
       numberInUnit,
       unitNickname,
       ...unitBase
@@ -72,6 +76,7 @@ export async function getRawTournamentUnits(
       realname: playerRealname,
       rating: playerRating,
       userId: playerUserId,
+      username: playerUsername ?? null,
     });
     units.set(row.id, unit);
   }
