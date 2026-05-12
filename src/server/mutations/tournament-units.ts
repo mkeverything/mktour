@@ -244,7 +244,6 @@ export async function editDoublesUnit({
     throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
   }
   const currentUnitId = unit.unitId;
-  const currentUnitNickname = unit.nickname;
   const preservedAddedAt = unit.addedAt ?? new Date();
   const preservedNumber = unit.number ?? 0;
   const selectedPlayers = await db
@@ -300,7 +299,7 @@ export async function editDoublesUnit({
       and(
         eq(tournament_units.tournamentId, tournamentId),
         lowerEq(tournament_units.nickname, nickname),
-        ne(tournament_units.nickname, currentUnitNickname),
+        ne(tournament_units.id, currentUnitId),
       ),
     )
     .limit(1);
