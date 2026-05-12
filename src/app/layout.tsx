@@ -32,12 +32,6 @@ async function LayoutContent({ children }: PropsWithChildren) {
         <Analytics />
         <SpeedInsights />
         <Toaster richColors />
-        {process.env.NODE_ENV === 'development' && (
-          <Script
-            src="https://unpkg.com/react-scan/dist/install-hook.global.js"
-            strategy="beforeInteractive"
-          />
-        )}
       </GlobalWebSocketProvider>
     </IntlProvider>
   );
@@ -62,6 +56,12 @@ export default function RootLayout({ children }: PropsWithChildren) {
         ))}
       </head>
       <body className="small-scrollbar">
+        {process.env.NODE_ENV === 'development' && (
+          <Script
+            src="https://unpkg.com/react-scan/dist/install-hook.global.js"
+            strategy="beforeInteractive"
+          />
+        )}
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <ThemeProvider
             attribute="class"
