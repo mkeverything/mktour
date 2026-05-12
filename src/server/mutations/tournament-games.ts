@@ -46,12 +46,7 @@ export async function replaceRoundGames({
       );
 
     if (newGames.length === 0) return;
-    await d.insert(games).values(
-      newGames.map((game) => {
-        const { blackNickname, whiteNickname, pairMembers, ...rest } = game;
-        return rest;
-      }),
-    );
+    await d.insert(games).values(newGames);
   };
 
   if (database) {

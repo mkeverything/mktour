@@ -21,8 +21,8 @@ import {
   updateSwissRoundsNumber,
 } from '@/server/mutations/tournament-lifecycle';
 import {
-  addExistingPlayer,
-  addNewPlayer,
+  addNewSoloUnit,
+  addSoloUnit,
 } from '@/server/mutations/tournament-players';
 import {
   addDoublesUnit,
@@ -144,7 +144,7 @@ export const tournamentRouter = {
       const result = await getTournamentGames(input.tournamentId);
       return result;
     }),
-  addExistingPlayer: tournamentAdminProcedure
+  addSoloUnit: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
         player: playersWithUsernameSchema,
@@ -155,9 +155,9 @@ export const tournamentRouter = {
     .output(preStartStateSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await addExistingPlayer(input);
+      return await addSoloUnit(input);
     }),
-  addNewPlayer: tournamentAdminProcedure
+  addNewSoloUnit: tournamentAdminProcedure
     .input(
       z.object({
         player: playerFormSchema.and(z.object({ id: z.string().optional() })),
@@ -167,7 +167,7 @@ export const tournamentRouter = {
     .output(preStartStateSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await addNewPlayer(input);
+      return await addNewSoloUnit(input);
     }),
   addDoublesUnit: tournamentAdminProcedure
     .input(

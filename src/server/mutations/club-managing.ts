@@ -118,7 +118,13 @@ export const deleteClub = async ({
   return await deleteClubFunction({ clubId, userId, userDeletion });
 };
 
-export const createPlayer = async (player: PlayerFormModel) => {
+export const createPlayer = async (
+  player: PlayerFormModel,
+  options: {
+    database?: Pick<typeof db, 'insert'>;
+    id?: string;
+  } = {},
+) => {
   const nickname = normalizePlayerNickname(player.nickname);
   const taken = await playerExistsInClub({
     nickname,
@@ -131,14 +137,15 @@ export const createPlayer = async (player: PlayerFormModel) => {
     });
   }
 
+  const database = options.database ?? db;
   const newPlayer = (
-    await db
+    await database
       .insert(players)
       .values({
         ...player,
         nickname,
         lastSeenAt: new Date(),
-        id: newid(),
+        id: options.id ?? newid(),
         ratingPeak: null,
       })
       .returning()
