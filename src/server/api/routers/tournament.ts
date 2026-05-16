@@ -26,11 +26,11 @@ import {
 } from '@/server/mutations/tournament-players';
 import {
   addDoublesUnit,
-  removeUnit,
   editDoublesUnit,
-  withdrawUnit,
+  removeUnit,
   reorderTournamentUnits,
   resetTournamentUnits,
+  withdrawUnit,
 } from '@/server/mutations/tournament-units';
 import getAllTournamentsInfinite from '@/server/queries/get-all-tournaments-infinite';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
@@ -309,7 +309,7 @@ export const tournamentRouter = {
       const { input } = opts;
       await updateSwissRoundsNumber(input);
     }),
-  editTournamentTitle: tournamentAdminProcedure
+  editTitle: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
         title: z.string(),
