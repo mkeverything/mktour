@@ -2,6 +2,7 @@
 
 import { validateRequest } from '@/lib/auth/lucia';
 import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
+import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import {
@@ -9,15 +10,13 @@ import {
   tournament_units,
 } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
 import type { PreStartStateModel } from '@/server/zod/tournaments';
 import { createPlayer } from './club-managing';
 import { normalizeSwissRoundsNumberInDatabase } from './tournament-lifecycle';
-import {
-  getTournamentOrderTargets,
-  reapplyPreStartOrder,
-} from './tournament-unit-order';
+import { applyPreStartUnitOrder } from './tournament-unit-order';
 
 type SoloUnitDatabase = Pick<
   typeof db,
@@ -86,15 +85,12 @@ export async function addSoloUnit(
     throw new Error('NOT_SOLO_TOURNAMENT');
   }
 
-  const nextPairingNumber = (
-    await getTournamentOrderTargets(tournamentId, database)
-  ).length;
   const unitId = requestedUnitId ?? newid();
   const unit = createUnit({
     id: unitId,
     size: 1,
     tournamentId,
-    number: nextPairingNumber,
+    number: null,
     addedAt: now,
     nickname: player.nickname,
   });
@@ -108,7 +104,12 @@ export async function addSoloUnit(
     await d.insert(tournament_units).values(unit);
     await d.insert(players_to_units).values(playerUnit);
     await normalizeSwissRoundsNumberInDatabase(tournamentId, d);
-    return await reapplyPreStartOrder(tournamentId, d);
+    const currentUnits = await getRawTournamentUnits(tournamentId, d);
+    return await applyPreStartUnitOrder({
+      tournamentId,
+      orderedUnits: [...currentUnits].sort(baselineUnitSort),
+      database: d,
+    });
   };
 
   if (options.database) return await run(options.database);

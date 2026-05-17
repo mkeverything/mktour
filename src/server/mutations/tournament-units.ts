@@ -2,6 +2,7 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { lowerEq } from '@/lib/sql-sqlite-string';
 import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
+import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
@@ -10,6 +11,7 @@ import {
   players_to_units,
   tournament_units,
 } from '@/server/db/schema/tournaments';
+import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { GameResult } from '@/server/zod/enums';
 import type {
@@ -24,11 +26,7 @@ import {
   normalizeSwissRoundsNumber,
   normalizeSwissRoundsNumberInDatabase,
 } from './tournament-lifecycle';
-import {
-  applyPreStartUnitOrder,
-  getTournamentOrderTargets,
-  reapplyPreStartOrder,
-} from './tournament-unit-order';
+import { applyPreStartUnitOrder } from './tournament-unit-order';
 
 export async function removeUnit({
   tournamentId,
@@ -77,7 +75,12 @@ export async function removeUnit({
         ),
       );
     await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
-    return await reapplyPreStartOrder(tournamentId, tx);
+    const currentUnits = await getRawTournamentUnits(tournamentId, tx);
+    return await applyPreStartUnitOrder({
+      tournamentId,
+      orderedUnits: [...currentUnits].sort(baselineUnitSort),
+      database: tx,
+    });
   });
 }
 export async function reorderTournamentUnits({
@@ -87,28 +90,27 @@ export async function reorderTournamentUnits({
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
-  const orderTargets = await getTournamentOrderTargets(tournamentId);
-  if (orderTargets.length !== unitIds.length) {
-    throw new Error('INVALID_UNITS_ORDER');
-  }
-  const orderTargetIds = new Set(orderTargets.map((unit) => unit.id));
-  if (
-    unitIds.some((unitId) => !orderTargetIds.has(unitId)) ||
-    orderTargetIds.size !== unitIds.length
-  ) {
-    throw new Error('INVALID_UNITS_ORDER');
-  }
-  const orderTargetsById = new Map(
-    orderTargets.map((target) => [target.id, target]),
-  );
-  return await applyPreStartUnitOrder({
-    tournamentId,
-    tournamentType: tournament.type,
-    orderedTargets: unitIds.map((unitId) => {
-      const target = orderTargetsById.get(unitId);
-      if (!target) throw new Error('INVALID_UNITS_ORDER');
-      return target;
-    }),
+  return await db.transaction(async (tx) => {
+    const currentUnits = await getRawTournamentUnits(tournamentId, tx);
+    if (currentUnits.length !== unitIds.length) {
+      throw new Error('INVALID_UNITS_ORDER');
+    }
+    const unitsById = new Map(currentUnits.map((unit) => [unit.id, unit]));
+    if (
+      unitIds.some((unitId) => !unitsById.has(unitId)) ||
+      new Set(unitIds).size !== unitIds.length
+    ) {
+      throw new Error('INVALID_UNITS_ORDER');
+    }
+    return await applyPreStartUnitOrder({
+      tournamentId,
+      orderedUnits: unitIds.map((unitId) => {
+        const unit = unitsById.get(unitId);
+        if (!unit) throw new Error('INVALID_UNITS_ORDER');
+        return unit;
+      }),
+      database: tx,
+    });
   });
 }
 
@@ -182,14 +184,12 @@ export async function addDoublesUnit({
   if (existingNickname.length > 0) {
     throw new Error('UNIT_NICKNAME_TAKEN');
   }
-  const nextPairingNumber = (await getTournamentOrderTargets(tournamentId))
-    .length;
   const unitId = requestedUnitId ?? newid();
   const unit = createUnit({
     id: unitId,
     size: 2,
     tournamentId,
-    number: nextPairingNumber,
+    number: null,
     addedAt: now,
     nickname,
   });
@@ -201,7 +201,12 @@ export async function addDoublesUnit({
     await tx.insert(tournament_units).values(unit);
     await tx.insert(players_to_units).values(unitMembers);
     await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
-    return await reapplyPreStartOrder(tournamentId, tx);
+    const currentUnits = await getRawTournamentUnits(tournamentId, tx);
+    return await applyPreStartUnitOrder({
+      tournamentId,
+      orderedUnits: [...currentUnits].sort(baselineUnitSort),
+      database: tx,
+    });
   });
 }
 export async function editDoublesUnit({

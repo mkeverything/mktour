@@ -1,18 +1,18 @@
 'use server';
 
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
+import { applyManualUnitOrder } from '@/lib/reorder-tournament-units';
+import { SQLCaseWhen } from '@/lib/sql-case-when';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { db } from '@/server/db';
 import {
   players_to_units,
   tournament_units,
 } from '@/server/db/schema/tournaments';
-import { getTournamentRoundGames } from '@/server/queries/get-tournament-games';
-import { getTournamentUnits } from '@/server/queries/get-tournament-units';
+import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
-import type { TournamentType } from '@/server/zod/enums';
 import type { GameModel, UnitModel } from '@/server/zod/tournaments';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { replaceRoundGames } from './tournament-games';
 
 type TournamentOrderTarget = Pick<
@@ -24,6 +24,11 @@ type PreStartUnitOrderResult = {
   units: UnitModel[];
   games: GameModel[];
 };
+
+type PreStartOrderDatabase = Pick<
+  typeof db,
+  'select' | 'insert' | 'update' | 'delete'
+>;
 
 export async function getTournamentOrderTargets(
   tournamentId: string,
@@ -70,19 +75,29 @@ export async function getTournamentOrderTargets(
 
 async function persistTournamentOrder(
   tournamentId: string,
-  tournamentType: TournamentType,
-  orderedTargets: TournamentOrderTarget[],
+  orderedTargets: Pick<UnitModel, 'id'>[],
   database: Pick<typeof db, 'update'>,
 ) {
-  void tournamentId;
-  void tournamentType;
   if (orderedTargets.length === 0) return;
-  for (const [index, target] of orderedTargets.entries()) {
-    await database
-      .update(tournament_units)
-      .set({ number: index })
-      .where(eq(tournament_units.id, target.id));
-  }
+
+  const unitIds = orderedTargets.map((target) => target.id);
+  const numberCase = orderedTargets
+    .reduce(
+      (builder, target, index) =>
+        builder.when(eq(tournament_units.id, target.id), index),
+      new SQLCaseWhen(),
+    )
+    .else(sql`${tournament_units.number}`);
+
+  await database
+    .update(tournament_units)
+    .set({ number: numberCase })
+    .where(
+      and(
+        eq(tournament_units.tournamentId, tournamentId),
+        inArray(tournament_units.id, unitIds),
+      ),
+    );
 }
 
 function toGeneratorUnit(
@@ -117,74 +132,65 @@ function addPersonalGameColumns(
   }));
 }
 
+async function persistPreStartRound({
+  tournamentId,
+  orderedUnits,
+  database,
+}: {
+  tournamentId: string;
+  orderedUnits: UnitModel[];
+  database: PreStartOrderDatabase;
+}): Promise<PreStartUnitOrderResult> {
+  const units = applyManualUnitOrder(orderedUnits);
+  const generatorUnits = units.map((unit, index) =>
+    toGeneratorUnit(unit, index),
+  );
+  const games = addPersonalGameColumns(
+    generatePreStartRoundGames({
+      players: generatorUnits,
+      tournamentId,
+    }),
+    units,
+  );
+
+  await persistTournamentOrder(tournamentId, units, database);
+  await replaceRoundGames({
+    tournamentId,
+    roundNumber: 1,
+    newGames: games,
+    database,
+  });
+
+  return { units, games };
+}
+
 export async function applyPreStartUnitOrder({
   tournamentId,
-  tournamentType,
-  orderedTargets,
+  orderedUnits,
   database,
   skipFinalReads = false,
 }: {
   tournamentId: string;
-  tournamentType: TournamentType;
-  orderedTargets: TournamentOrderTarget[];
-  database?: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>;
+  orderedUnits: UnitModel[];
+  database?: PreStartOrderDatabase;
   skipFinalReads?: boolean;
 }): Promise<PreStartUnitOrderResult> {
-  const d = database ?? db;
-
-  async function readGenerateAndPersist(
-    dbLike: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
-  ) {
-    const currentUnits = await getTournamentUnits(tournamentId, dbLike);
-    const unitsById = new Map(currentUnits.map((unit) => [unit.id, unit]));
-    const orderedUnits = orderedTargets
-      .map((target) => unitsById.get(target.id))
-      .filter((unit): unit is (typeof currentUnits)[number] => !!unit);
-    if (orderedUnits.length !== currentUnits.length) {
-      throw new Error('INVALID_UNITS_ORDER');
-    }
-    const generatorUnits = orderedUnits.map((unit, index) =>
-      toGeneratorUnit(unit, index),
-    );
-    const games = addPersonalGameColumns(
-      generatePreStartRoundGames({
-        players: generatorUnits,
-        tournamentId,
-      }),
+  const run = async (d: PreStartOrderDatabase) => {
+    const result = await persistPreStartRound({
+      tournamentId,
       orderedUnits,
-    );
-    await persistTournamentOrder(
-      tournamentId,
-      tournamentType,
-      orderedTargets,
-      dbLike,
-    );
-    await replaceRoundGames({
-      tournamentId,
-      roundNumber: 1,
-      newGames: games,
-      database: dbLike,
+      database: d,
     });
-  }
 
-  if (database) {
-    await readGenerateAndPersist(database);
-  } else {
-    await db.transaction(async (tx) => readGenerateAndPersist(tx));
-  }
+    if (skipFinalReads) {
+      return { units: [], games: [] };
+    }
 
-  if (skipFinalReads) {
-    return { units: [], games: [] };
-  }
+    return result;
+  };
 
-  const units = await getTournamentUnits(tournamentId, d);
-  const persistedGames = await getTournamentRoundGames({
-    tournamentId,
-    roundNumber: 1,
-    database: d,
-  });
-
-  return { units, games: persistedGames };
+  if (database) return await run(database);
+  return await db.transaction(async (tx) => run(tx));
 }
 
 /**
@@ -194,17 +200,16 @@ export async function applyPreStartUnitOrder({
  */
 export async function reapplyPreStartOrder(
   tournamentId: string,
-  database?: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
+  database?: PreStartOrderDatabase,
   options?: { skipFinalReads?: boolean },
 ): Promise<PreStartUnitOrderResult> {
   const d = database ?? db;
   const tournament = await getTournamentById(tournamentId, d);
   if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
-  const orderTargets = await getTournamentOrderTargets(tournamentId, d);
+  const currentUnits = await getRawTournamentUnits(tournamentId, d);
   return await applyPreStartUnitOrder({
     tournamentId,
-    tournamentType: tournament.type,
-    orderedTargets: orderTargets,
+    orderedUnits: [...currentUnits].sort(baselineUnitSort),
     database,
     skipFinalReads: options?.skipFinalReads,
   });

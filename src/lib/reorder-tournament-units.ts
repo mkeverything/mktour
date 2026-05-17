@@ -1,10 +1,6 @@
 import { UnitModel } from '@/server/zod/tournaments';
 
-export const arrayMove = <T>(
-  items: T[],
-  fromIndex: number,
-  toIndex: number,
-): T[] => {
+const arrayMove = <T>(items: T[], fromIndex: number, toIndex: number): T[] => {
   const next = [...items];
   const [movedItem] = next.splice(fromIndex, 1);
 
