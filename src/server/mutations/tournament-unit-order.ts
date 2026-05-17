@@ -5,20 +5,12 @@ import { applyManualUnitOrder } from '@/lib/reorder-tournament-units';
 import { SQLCaseWhen } from '@/lib/sql-case-when';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { db } from '@/server/db';
-import {
-  players_to_units,
-  tournament_units,
-} from '@/server/db/schema/tournaments';
+import { tournament_units } from '@/server/db/schema/tournaments';
 import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { GameModel, UnitModel } from '@/server/zod/tournaments';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { replaceRoundGames } from './tournament-games';
-
-type TournamentOrderTarget = Pick<
-  UnitModel,
-  'id' | 'number' | 'addedAt' | 'unitNickname' | 'players'
->;
 
 type PreStartUnitOrderResult = {
   units: UnitModel[];
@@ -29,49 +21,6 @@ type PreStartOrderDatabase = Pick<
   typeof db,
   'select' | 'insert' | 'update' | 'delete'
 >;
-
-export async function getTournamentOrderTargets(
-  tournamentId: string,
-  database: Pick<typeof db, 'select'> = db,
-): Promise<TournamentOrderTarget[]> {
-  const rows = await database
-    .select({
-      id: tournament_units.id,
-      number: tournament_units.number,
-      addedAt: tournament_units.addedAt,
-      unitNickname: tournament_units.nickname,
-      playerId: players_to_units.playerId,
-      numberInUnit: players_to_units.numberInUnit,
-    })
-    .from(tournament_units)
-    .where(eq(tournament_units.tournamentId, tournamentId))
-    .innerJoin(
-      players_to_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    );
-
-  const units = new Map<string, TournamentOrderTarget>();
-  for (const row of rows.sort((a, b) => a.numberInUnit - b.numberInUnit)) {
-    const unit = units.get(row.id) ?? {
-      id: row.id,
-      number: row.number,
-      addedAt: row.addedAt,
-      unitNickname: row.unitNickname ?? '',
-      players: [],
-    };
-    unit.players.push({
-      id: row.playerId,
-      nickname: '',
-      realname: null,
-      rating: 0,
-      userId: null,
-      username: null,
-    });
-    units.set(row.id, unit);
-  }
-
-  return Array.from(units.values()).sort(baselineUnitSort);
-}
 
 async function persistTournamentOrder(
   tournamentId: string,

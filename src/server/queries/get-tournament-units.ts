@@ -3,12 +3,12 @@ import { eq } from 'drizzle-orm';
 import { baselineUnitSort, sortUnitsByResults } from '@/lib/tournament-results';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
-import { users } from '@/server/db/schema/users';
 import {
   players_to_units,
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
+import { users } from '@/server/db/schema/users';
 import type { UnitModel } from '@/server/zod/tournaments';
 import { getTournamentGames } from './get-tournament-games';
 
@@ -108,9 +108,3 @@ export async function getTournamentUnits(
 
   return sortUnitsByResults(units, tournament, allGames);
 }
-
-/** @deprecated use getRawTournamentUnits */
-export const getRawTournamentPlayers = getRawTournamentUnits;
-
-/** @deprecated use getTournamentUnits */
-export const getTournamentPlayers = getTournamentUnits;

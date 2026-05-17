@@ -2,13 +2,12 @@ import {
   buildScoreMaps,
   calculateBerger,
   calculateBuchholzCut1,
-  calculatePlayerScore,
+  calculateUnitScore,
   hasSameStanding,
   sortUnitsByResults,
   sortUnitsByResultsWithMaps,
 } from '@/lib/tournament-results';
-import type { UnitModel } from '@/server/zod/tournaments';
-import type { GameModel } from '@/server/zod/tournaments';
+import type { GameModel, UnitModel } from '@/server/zod/tournaments';
 import { describe, expect, it } from 'bun:test';
 
 // Helper to create a minimal player
@@ -69,7 +68,7 @@ function makeGame(
   };
 }
 
-describe('calculatePlayerScore', () => {
+describe('calculateUnitScore', () => {
   it('should return 0 for a player with no results in round 0', () => {
     const player = makePlayer({
       id: 'p1',
@@ -78,7 +77,7 @@ describe('calculatePlayerScore', () => {
       draws: 0,
       losses: 0,
     });
-    expect(calculatePlayerScore(player, 0, [])).toBe(0);
+    expect(calculateUnitScore(player, 0, [])).toBe(0);
   });
 
   it('should count wins as 1 point each', () => {
@@ -109,7 +108,7 @@ describe('calculatePlayerScore', () => {
         result: '1-0',
       }),
     ];
-    expect(calculatePlayerScore(player, 3, games)).toBe(3);
+    expect(calculateUnitScore(player, 3, games)).toBe(3);
   });
 
   it('should count draws as 0.5 points each', () => {
@@ -134,7 +133,7 @@ describe('calculatePlayerScore', () => {
         result: '1/2-1/2',
       }),
     ];
-    expect(calculatePlayerScore(player, 2, games)).toBe(1);
+    expect(calculateUnitScore(player, 2, games)).toBe(1);
   });
 
   it('should award bye points for missing rounds', () => {
@@ -156,7 +155,7 @@ describe('calculatePlayerScore', () => {
     ];
     // sumOfResults = 1, unfinished = 0, actual = 1, byes = 3 - 1 = 2
     // score = 1 + 2 + 0 = 3
-    expect(calculatePlayerScore(player, 3, games)).toBe(3);
+    expect(calculateUnitScore(player, 3, games)).toBe(3);
   });
 
   it('should not count unfinished games as byes', () => {
@@ -183,7 +182,7 @@ describe('calculatePlayerScore', () => {
     ];
     // sumOfResults = 1, unfinished = 1, actual = 2, byes = max(0, 2 - 2) = 0
     // score = 1 + 0 + 0 = 1
-    expect(calculatePlayerScore(player, 2, games)).toBe(1);
+    expect(calculateUnitScore(player, 2, games)).toBe(1);
   });
 
   it('should not award bye points to withdrawn players', () => {
@@ -205,7 +204,7 @@ describe('calculatePlayerScore', () => {
       }),
     ];
 
-    expect(calculatePlayerScore(player, 3, games)).toBe(1);
+    expect(calculateUnitScore(player, 3, games)).toBe(1);
   });
 });
 

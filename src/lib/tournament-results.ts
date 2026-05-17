@@ -50,9 +50,6 @@ export const calculateUnitScore = (
   return wins + draws + byes;
 };
 
-/** @deprecated use calculateUnitScore */
-export const calculatePlayerScore = calculateUnitScore;
-
 export const calculateBuchholzCut1 = (
   unit: Pick<UnitModel, 'id'>,
   roundNumber: number,
