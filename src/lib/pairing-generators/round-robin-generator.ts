@@ -1,5 +1,5 @@
 import {
-  convertPlayerToEntity,
+  convertUnitToEntity,
   generateRoundPairs,
   getColouredPair,
   getGameToInsert,
@@ -31,7 +31,7 @@ export function generateRoundRobinRound({
 
   // checking if the set of layers is even, if not, making it even with a smart alg
   const matchedEntities = players.map((player) =>
-    convertPlayerToEntity(player, games),
+    convertUnitToEntity(player, games),
   );
 
   const playerCount = matchedEntities.length;

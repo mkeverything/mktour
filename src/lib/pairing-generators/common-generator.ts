@@ -57,6 +57,7 @@ export type ColouringFunction = (
  * */
 export interface ChessTournamentEntity {
   entityId: string;
+  personalPlayerId: string | null;
   colourIndex: number;
   entityRating: number;
   gamesPlayed: number;
@@ -318,19 +319,18 @@ function computeFloatHistory(
  * @param playerModel - Player data from the database
  * @param allGames - All tournament games played so far (excluding current round)
  */
-export function convertPlayerToEntity(
-  playerModel: UnitModel,
+export function convertUnitToEntity(
+  unitModel: UnitModel,
   allGames: GameModel[],
 ): ChessTournamentEntity {
-  if (playerModel.number === null) {
+  if (unitModel.number === null) {
     throw new TypeError('NUMBER_IS_NULL'); // FIXME - this is leftover, doesn't look right after we separate pairingNumber from number
   }
 
   // Filter games involving this player (either as white or black)
   const previousGames = allGames.filter(
     (game) =>
-      game.whiteUnitId === playerModel.id ||
-      game.blackUnitId === playerModel.id,
+      game.whiteUnitId === unitModel.id || game.blackUnitId === unitModel.id,
   );
 
   // Calculate bye count (rounds where player didn't play = received PAB)
@@ -338,12 +338,12 @@ export function convertPlayerToEntity(
   const byeCount = calculateByeCount(roundsPlayed, previousGames.length);
 
   const scoreFromGames =
-    playerModel.wins * POINTS_PER_WIN + playerModel.draws * POINTS_PER_DRAW;
+    unitModel.wins * POINTS_PER_WIN + unitModel.draws * POINTS_PER_DRAW;
   const entityScore = scoreFromGames + byeCount * POINTS_PER_BYE;
 
   const currentRoundNumber = roundsPlayed + 1;
   const floatHistory = computeFloatHistory(
-    playerModel.id,
+    unitModel.id,
     previousGames,
     allGames,
     currentRoundNumber,
@@ -351,15 +351,17 @@ export function convertPlayerToEntity(
 
   // TODO: Add chess title logic
   const tournamentEntity: ChessTournamentEntity = {
-    entityId: playerModel.id,
-    entityNickname: playerModel.unitNickname,
-    colourIndex: playerModel.colorIndex,
+    entityId: unitModel.id,
+    personalPlayerId:
+      unitModel.size === 1 ? (unitModel.players[0]?.id ?? null) : null,
+    entityNickname: unitModel.unitNickname,
+    colourIndex: unitModel.colorIndex,
     entityRating: Math.round(
-      playerModel.players.reduce((sum, player) => sum + player.rating, 0) /
-        playerModel.players.length,
+      unitModel.players.reduce((sum, player) => sum + player.rating, 0) /
+        unitModel.players.length,
     ), // FIXME - are we good with taking average rating for doubles|teams?
-    gamesPlayed: playerModel.draws + playerModel.wins + playerModel.losses,
-    pairingNumber: playerModel.number, // FIXME definitely
+    gamesPlayed: unitModel.draws + unitModel.wins + unitModel.losses,
+    pairingNumber: unitModel.number, // FIXME definitely
     entityTitle: ChessTitle.GM,
     entityScore,
     previousGames,
@@ -400,8 +402,8 @@ export function getGameToInsert(
     roundName: null, // TODO: can be equal to round number in R&R
     whitePrevGameId: null,
     blackPrevGameId: null,
-    whitePlayerId: null,
-    blackPlayerId: null,
+    whitePlayerId: finalizedMatch.whiteEntity.personalPlayerId,
+    blackPlayerId: finalizedMatch.blackEntity.personalPlayerId,
     result: null,
     finishedAt: null,
   };

@@ -1,7 +1,7 @@
 import {
   ChessTournamentEntity,
   RoundProps,
-  convertPlayerToEntity,
+  convertUnitToEntity,
   getGameToInsert,
   getNumberedPair,
 } from '@/lib/pairing-generators/common-generator';
@@ -56,7 +56,7 @@ export function generateSwissRound({
 
   // checking if the set of layers is even, if not, making it even with a smart alg
   const matchedEntities = players.map((player) =>
-    convertPlayerToEntity(player, games),
+    convertUnitToEntity(player, games),
   );
 
   const sortedEntities = getInitialOrdering(matchedEntities);
@@ -459,7 +459,7 @@ export function generateWeightedSwissRound({
 
   // Convert player models to chess tournament entities with history
   const convertPlayer = (player: UnitModel): ChessTournamentEntity =>
-    convertPlayerToEntity(player, filteredGames);
+    convertUnitToEntity(player, filteredGames);
   const matchedEntities = players.map(convertPlayer);
 
   // Sort entities by initial ordering rules (score, then tiebreakers)

@@ -20,7 +20,7 @@ import { hideBin } from 'yargs/helpers';
 
 import {
   ChessTournamentEntity,
-  convertPlayerToEntity,
+  convertUnitToEntity,
   RoundProps,
 } from '@/lib/pairing-generators/common-generator';
 import {
@@ -331,7 +331,7 @@ function buildEntitiesForAnalysis(
   const updatedPlayers = updatePlayerScores(players, previousGames);
 
   const convertToEntity = (player: UnitModel): ChessTournamentEntity =>
-    convertPlayerToEntity(player, previousGames);
+    convertUnitToEntity(player, previousGames);
   const entities = updatedPlayers.map(convertToEntity);
 
   const sortedEntities = getInitialOrdering(entities);
