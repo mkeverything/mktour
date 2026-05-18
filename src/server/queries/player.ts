@@ -154,8 +154,14 @@ export async function getPlayerAuthStats({
   if (playerId === authPlayerId) return null;
 
   const headToHeadCondition = or(
-    and(eq(games.whiteUnitId, playerId), eq(games.blackUnitId, authPlayerId)),
-    and(eq(games.whiteUnitId, authPlayerId), eq(games.blackUnitId, playerId)),
+    and(
+      eq(games.whitePlayerId, playerId),
+      eq(games.blackPlayerId, authPlayerId),
+    ),
+    and(
+      eq(games.whitePlayerId, authPlayerId),
+      eq(games.blackPlayerId, playerId),
+    ),
   );
 
   const headToHead = await db
@@ -163,8 +169,8 @@ export async function getPlayerAuthStats({
       playerWins: count(
         caseWhen(
           or(
-            and(eq(games.whiteUnitId, playerId), eq(games.result, '1-0')),
-            and(eq(games.blackUnitId, playerId), eq(games.result, '0-1')),
+            and(eq(games.whitePlayerId, playerId), eq(games.result, '1-0')),
+            and(eq(games.blackPlayerId, playerId), eq(games.result, '0-1')),
           ),
           1,
         ).elseNull(),
@@ -172,8 +178,8 @@ export async function getPlayerAuthStats({
       userWins: count(
         caseWhen(
           or(
-            and(eq(games.whiteUnitId, authPlayerId), eq(games.result, '1-0')),
-            and(eq(games.blackUnitId, authPlayerId), eq(games.result, '0-1')),
+            and(eq(games.whitePlayerId, authPlayerId), eq(games.result, '1-0')),
+            and(eq(games.blackPlayerId, authPlayerId), eq(games.result, '0-1')),
           ),
           1,
         ).elseNull(),
