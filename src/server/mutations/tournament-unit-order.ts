@@ -9,7 +9,7 @@ import { tournament_units } from '@/server/db/schema/tournaments';
 import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { GameModel, UnitModel } from '@/server/zod/tournaments';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { replaceRoundGames } from './tournament-games';
 
 type PreStartUnitOrderResult = {
@@ -36,7 +36,7 @@ async function persistTournamentOrder(
         builder.when(eq(tournament_units.id, target.id), index),
       new SQLCaseWhen(),
     )
-    .else(sql`${tournament_units.number}`);
+    .else(tournament_units.number);
 
   await database
     .update(tournament_units)
