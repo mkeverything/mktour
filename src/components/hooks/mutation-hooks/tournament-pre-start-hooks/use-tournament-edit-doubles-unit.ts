@@ -59,9 +59,9 @@ export const useTournamentEditDoublesUnit = (
             playersOutQueryKey,
           );
         const playersOut = previousPlayersOut ?? [];
-        const currentTeam = previousState?.find((unit) => unit.id === unitId);
+        const currentUnit = previousState?.find((unit) => unit.id === unitId);
 
-        if (!currentTeam) throw new Error(pairErrors.playersNotFound);
+        if (!currentUnit) throw new Error(pairErrors.playersNotFound);
         if (hasDuplicateUnitNickname(previousState, nickname, unitId)) {
           throw new Error(pairErrors.nicknameTaken);
         }
@@ -70,13 +70,13 @@ export const useTournamentEditDoublesUnit = (
           firstPlayerId,
           playersOut,
           previousState,
-          currentTeam.players,
+          currentUnit.players,
         );
         const secondPair = findPairPlayer(
           secondPlayerId,
           playersOut,
           previousState,
-          currentTeam.players,
+          currentUnit.players,
         );
 
         if (!firstPair || !secondPair)
@@ -92,21 +92,20 @@ export const useTournamentEditDoublesUnit = (
           playersOut,
           previousState,
         );
-        const oldMemberIds = currentTeam.players.map((player) => player.id);
+        const oldMemberIds = currentUnit.players.map((player) => player.id);
         const addedIds = [firstPlayerId, secondPlayerId].filter(
           (id) => !oldMemberIds.includes(id),
         );
 
-        const updatedTeam = {
-          ...currentTeam,
-          id: firstPlayerId,
+        const updatedUnit = {
+          ...currentUnit,
           unitNickname: nickname,
           rating: Math.round((firstRating + secondRating) / 2),
           players: [firstPair, secondPair].map((player, index) => {
             const out = playersOut.find(
               (outPlayer) => outPlayer.id === player.id,
             );
-            const fromUnit = currentTeam.players.find(
+            const fromUnit = currentUnit.players.find(
               (unitPlayer) => unitPlayer.id === player.id,
             );
 
@@ -125,11 +124,15 @@ export const useTournamentEditDoublesUnit = (
           unitsQueryKey,
           (cache: UnitModel[] | undefined) => {
             const nextUnits = cache?.map((unit) =>
-              unit.id === unitId ? updatedTeam : unit,
-            ) ?? [updatedTeam];
+              unit.id === unitId ? updatedUnit : unit,
+            ) ?? [updatedUnit];
 
             return nextUnits.filter(
-              (unit) => !(addedIds.includes(unit.id) && !unit.players?.length),
+              (unit) =>
+                !(
+                  unit.players.length === 1 &&
+                  addedIds.includes(unit.players[0].id)
+                ),
             );
           },
         );
@@ -155,9 +158,7 @@ export const useTournamentEditDoublesUnit = (
       },
       onSuccess: (_data, variables) => {
         const units = queryClient.getQueryData<UnitModel[]>(unitsQueryKey);
-        const updatedUnit = units?.find(
-          (unit) => unit.id === variables.firstPlayerId,
-        );
+        const updatedUnit = units?.find((unit) => unit.id === variables.unitId);
         if (!updatedUnit) return;
 
         sendJsonMessage({
