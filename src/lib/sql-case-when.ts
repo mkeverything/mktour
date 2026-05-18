@@ -1,12 +1,10 @@
-import { type SQL, sql } from 'drizzle-orm';
+import { type AnyColumn, type SQL, sql } from 'drizzle-orm';
 
-type SQLish = SQL | undefined | number | string;
+type SQLish = AnyColumn | SQL | undefined | number | string;
 
 function toSQL(expr: SQLish, fallback: SQL): SQL {
   if (expr === undefined) return fallback;
-  if (typeof expr === 'number' || typeof expr === 'string')
-    return sql`${expr}` ?? fallback;
-  return expr;
+  return sql`${expr}` ?? fallback;
 }
 
 /**

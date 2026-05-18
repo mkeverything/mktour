@@ -8,7 +8,15 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { PlayerAuthStatsModel, PlayerStatsModel } from '@/server/zod/players';
-import { and, count, desc, eq, getTableColumns, or, sum } from 'drizzle-orm';
+import {
+  and,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  getTableColumns,
+  or,
+} from 'drizzle-orm';
 
 // returns the last 5 tournaments a player participated in
 export async function getPlayersTournamentsInfinite(
@@ -49,21 +57,41 @@ export async function getPlayerStats(
       ratingPeakRank: 0,
     };
 
-  // Get stats for all players in the same club
   const clubPlayersStats = await db
     .select({
       playerId: players.id,
       ratingPeak: players.ratingPeak,
-      tournamentsPlayed: count(players_to_units.id),
-      wins: sum(tournament_units.wins),
-      losses: sum(tournament_units.losses),
-      draws: sum(tournament_units.draws),
+      tournamentsPlayed: countDistinct(players_to_units.id),
+      wins: countDistinct(
+        caseWhen(
+          or(
+            and(eq(games.whitePlayerId, players.id), eq(games.result, '1-0')),
+            and(eq(games.blackPlayerId, players.id), eq(games.result, '0-1')),
+          ),
+          games.id,
+        ).elseNull(),
+      ),
+      losses: countDistinct(
+        caseWhen(
+          or(
+            and(eq(games.whitePlayerId, players.id), eq(games.result, '0-1')),
+            and(eq(games.blackPlayerId, players.id), eq(games.result, '1-0')),
+          ),
+          games.id,
+        ).elseNull(),
+      ),
+      draws: countDistinct(
+        caseWhen(eq(games.result, '1/2-1/2'), games.id).elseNull(),
+      ),
     })
     .from(players)
     .leftJoin(players_to_units, eq(players.id, players_to_units.playerId))
     .leftJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
+      games,
+      or(
+        eq(players.id, games.whitePlayerId),
+        eq(players.id, games.blackPlayerId),
+      ),
     )
     .where(eq(players.clubId, player.clubId))
     .groupBy(players.id)
