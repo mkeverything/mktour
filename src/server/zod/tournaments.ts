@@ -294,8 +294,8 @@ export const addDoublesUnitSchema = z
     message: 'team players should be different',
   });
 
-export const editDoublesUnitSchema = addDoublesUnitSchema.extend({
-  currentUnitPlayerId: z.string(),
+export const editDoublesUnitSchema = addDoublesUnitSchema.required({
+  unitId: true,
 });
 
 /** form schema: nickname optional (derive on submit when empty). api still requires min(2). */

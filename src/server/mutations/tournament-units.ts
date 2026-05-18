@@ -211,7 +211,7 @@ export async function addDoublesUnit({
 }
 export async function editDoublesUnit({
   tournamentId,
-  currentUnitPlayerId,
+  unitId,
   nickname,
   firstPlayerId,
   secondPlayerId,
@@ -229,27 +229,21 @@ export async function editDoublesUnit({
   if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
   const unit = await db
     .select({
-      unitId: tournament_units.id,
       nickname: tournament_units.nickname,
       addedAt: tournament_units.addedAt,
       number: tournament_units.number,
     })
-    .from(players_to_units)
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
+    .from(tournament_units)
     .where(
       and(
+        eq(tournament_units.id, unitId),
         eq(tournament_units.tournamentId, tournamentId),
-        eq(players_to_units.playerId, currentUnitPlayerId),
       ),
     )
     .then((rows) => rows.at(0));
   if (!unit?.nickname) {
     throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
   }
-  const currentUnitId = unit.unitId;
   const preservedAddedAt = unit.addedAt ?? new Date();
   const preservedNumber = unit.number ?? 0;
   const selectedPlayers = await db
@@ -271,7 +265,7 @@ export async function editDoublesUnit({
   const currentUnitMembers = await db
     .select({ playerId: players_to_units.playerId })
     .from(players_to_units)
-    .where(eq(players_to_units.unitId, currentUnitId));
+    .where(eq(players_to_units.unitId, unitId));
   const currentUnitMemberIds = new Set(
     currentUnitMembers.map((member) => member.playerId),
   );
@@ -292,8 +286,7 @@ export async function editDoublesUnit({
       ),
     );
   const hasOtherUnitMember = occupiedPlayers.some(
-    (row) =>
-      !currentUnitMemberIds.has(row.playerId) && row.unitId !== currentUnitId,
+    (row) => !currentUnitMemberIds.has(row.playerId) && row.unitId !== unitId,
   );
   if (hasOtherUnitMember) {
     throw new Error('PLAYER_ALREADY_IN_PAIR');
@@ -305,7 +298,7 @@ export async function editDoublesUnit({
       and(
         eq(tournament_units.tournamentId, tournamentId),
         lowerEq(tournament_units.nickname, nickname),
-        ne(tournament_units.id, currentUnitId),
+        ne(tournament_units.id, unitId),
       ),
     )
     .limit(1);
@@ -315,7 +308,7 @@ export async function editDoublesUnit({
   await db.transaction(async (tx) => {
     await tx
       .delete(players_to_units)
-      .where(eq(players_to_units.unitId, currentUnitId));
+      .where(eq(players_to_units.unitId, unitId));
     const selectedPlayersById = new Map(
       selectedPlayers.map((each) => [each.id, each]),
     );
@@ -333,16 +326,16 @@ export async function editDoublesUnit({
         number: preservedNumber,
         addedAt: preservedAddedAt,
       })
-      .where(eq(tournament_units.id, currentUnitId));
+      .where(eq(tournament_units.id, unitId));
     await tx.insert(players_to_units).values([
       createUnitMember({
         playerId: firstPlayer.id,
-        unitId: currentUnitId,
+        unitId,
         numberInUnit: 1,
       }),
       createUnitMember({
         playerId: secondPlayer.id,
-        unitId: currentUnitId,
+        unitId,
         numberInUnit: 2,
       }),
     ]);

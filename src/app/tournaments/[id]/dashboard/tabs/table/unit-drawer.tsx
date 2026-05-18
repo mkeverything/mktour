@@ -164,7 +164,7 @@ const UnitDrawer: FC<{
               closeDrawer();
               editDoublesUnit.mutate({
                 tournamentId,
-                currentUnitPlayerId: unit.id,
+                unitId: unit.id,
                 ...values,
               });
             }}

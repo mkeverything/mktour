@@ -46,12 +46,7 @@ export const useTournamentEditDoublesUnit = (
 
   return useMutation(
     trpc.tournament.editDoublesUnit.mutationOptions({
-      async onMutate({
-        currentUnitPlayerId,
-        nickname,
-        firstPlayerId,
-        secondPlayerId,
-      }) {
+      async onMutate({ unitId, nickname, firstPlayerId, secondPlayerId }) {
         await Promise.all([
           queryClient.cancelQueries({ queryKey: unitsQueryKey }),
           queryClient.cancelQueries({ queryKey: playersOutQueryKey }),
@@ -64,14 +59,10 @@ export const useTournamentEditDoublesUnit = (
             playersOutQueryKey,
           );
         const playersOut = previousPlayersOut ?? [];
-        const currentTeam = previousState?.find(
-          (unit) => unit.id === currentUnitPlayerId,
-        );
+        const currentTeam = previousState?.find((unit) => unit.id === unitId);
 
         if (!currentTeam) throw new Error(pairErrors.playersNotFound);
-        if (
-          hasDuplicateUnitNickname(previousState, nickname, currentUnitPlayerId)
-        ) {
+        if (hasDuplicateUnitNickname(previousState, nickname, unitId)) {
           throw new Error(pairErrors.nicknameTaken);
         }
 
@@ -134,7 +125,7 @@ export const useTournamentEditDoublesUnit = (
           unitsQueryKey,
           (cache: UnitModel[] | undefined) => {
             const nextUnits = cache?.map((unit) =>
-              unit.id === currentUnitPlayerId ? updatedTeam : unit,
+              unit.id === unitId ? updatedTeam : unit,
             ) ?? [updatedTeam];
 
             return nextUnits.filter(
@@ -172,7 +163,7 @@ export const useTournamentEditDoublesUnit = (
         sendJsonMessage({
           event: 'edit-doubles-unit',
           body: updatedUnit,
-          previousId: variables.currentUnitPlayerId,
+          previousId: variables.unitId,
         });
       },
       onSettled: () => {
