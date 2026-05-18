@@ -12,8 +12,6 @@ import { useTournamentGamesOverviewInfo } from '@/components/hooks/query-hooks/u
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import Overlay from '@/components/overlay';
 import SkeletonList from '@/components/skeleton-list';
-import { useTRPC } from '@/components/trpc/client';
-import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { FC, useContext } from 'react';
@@ -22,7 +20,6 @@ const Games: FC = () => {
   const { currentTab } = useContext(DashboardTabContext);
   const { roundInView, setRoundInView } = useContext(DashboardRoundContext);
   const { selectedGameId } = useContext(SelectedGameContext);
-  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const { data, isError, isLoading } = useTournamentGamesOverviewInfo(id);
   const {
@@ -31,7 +28,6 @@ const Games: FC = () => {
     isError: isUnitsError,
   } = useTournamentUnits(id);
   const t = useTranslations('Tournament.Round');
-  const trpc = useTRPC();
   const now = new Date().getTime();
   const startedAt = data?.startedAt ? data.startedAt.getTime() : 0;
   const renderDrawer = !startedAt || now - startedAt <= 5000;
@@ -49,16 +45,7 @@ const Games: FC = () => {
     );
   }
 
-  if (
-    isLoading ||
-    isUnitsLoading ||
-    queryClient.isMutating({
-      mutationKey: trpc.tournament.saveRound.mutationKey(),
-    }) > 1 ||
-    queryClient.isMutating({
-      mutationKey: trpc.tournament.addSoloUnit.mutationKey(),
-    }) > 0 // FIXME (or at least WHAT THE FUCK IS THIS?) // this capslock message was autocompleted by ai, i could not resist
-  ) {
+  if (isLoading || isUnitsLoading) {
     return (
       <div>
         <RoundControls
