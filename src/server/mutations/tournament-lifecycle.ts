@@ -29,6 +29,7 @@ import {
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import { TournamentFormat } from '@/server/zod/enums';
 import {
+  GameModel,
   NewTournamentFormModel,
   TournamentModel,
   tournamentsInsertSchema,
@@ -158,14 +159,13 @@ export async function normalizeSwissRoundsNumberInDatabase(
 async function preparePreStartPairings(
   tournamentId: string,
   database: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
-) {
+): Promise<GameModel[]> {
   const units = await getTournamentUnits(tournamentId, database);
   if (units.length < 2) {
     throw new Error('NOT_ENOUGH_PLAYERS');
   }
-  await reapplyPreStartOrder(tournamentId, database, {
-    skipFinalReads: true,
-  });
+  const result = await reapplyPreStartOrder(tournamentId, database);
+  return result.games;
 }
 
 export async function startTournament({
@@ -187,8 +187,8 @@ export async function startTournament({
     roundsNumber,
   });
 
-  await db.transaction(async (tx) => {
-    await preparePreStartPairings(tournamentId, tx);
+  return await db.transaction(async (tx) => {
+    const roundGames = await preparePreStartPairings(tournamentId, tx);
     const value = await tx
       .update(tournaments)
       .set({ startedAt, roundsNumber: finalRoundsNumber })
@@ -196,6 +196,7 @@ export async function startTournament({
         and(eq(tournaments.id, tournamentId), isNull(tournaments.startedAt)),
       );
     if (!value.rowsAffected) throw new Error('TOURNAMENT_ALREADY_GOING');
+    return roundGames;
   });
 }
 

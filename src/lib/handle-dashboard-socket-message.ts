@@ -177,8 +177,18 @@ export const handleSocketMessage = (
           return cache;
         },
       );
+      queryClient.setQueryData(
+        trpc.tournament.roundGames.queryKey({
+          tournamentId,
+          roundNumber: 1,
+        }),
+        message.games,
+      );
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
       });
       break;
     case 'reset-tournament':
@@ -195,6 +205,12 @@ export const handleSocketMessage = (
       });
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.roundGames.queryKey({
+          tournamentId,
+          roundNumber: 1,
+        }),
       });
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.units.queryKey({ tournamentId }),

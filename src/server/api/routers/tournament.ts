@@ -252,10 +252,10 @@ export const tournamentRouter = {
         roundsNumber: z.number().int().min(1).nullable(),
       }),
     )
-    .output(z.void())
+    .output(z.array(gameSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      await startTournament(input);
+      return await startTournament(input);
     }),
   reset: tournamentAdminProcedure
     .input(tournamentIdInputSchema)

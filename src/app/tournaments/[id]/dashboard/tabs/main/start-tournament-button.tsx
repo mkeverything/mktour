@@ -16,10 +16,11 @@ export default function StartTournamentButton() {
   const { data } = useTournamentInfo(id);
   const { sendJsonMessage } = useContext(DashboardContext);
   const { data: players } = useTournamentUnits(id);
-  const startTournamentMutation = useTournamentStart(queryClient, {
+  const startTournamentMutation = useTournamentStart(
+    queryClient,
     id,
     sendJsonMessage,
-  });
+  );
   const t = useTranslations('Tournament.Main');
 
   const handleClick = () => {

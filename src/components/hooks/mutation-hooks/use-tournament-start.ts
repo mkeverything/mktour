@@ -8,18 +8,27 @@ import { toast } from 'sonner';
 
 export default function useTournamentStart(
   queryClient: QueryClient,
-  { sendJsonMessage }: TournamentHookProps,
+  tournamentId: string,
+  sendJsonMessage: (_message: DashboardMessage) => void,
 ) {
   const t = useTranslations('Toasts');
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.start.mutationOptions({
-      onSuccess: (_error, { startedAt }) => {
+      onSuccess: (games, { startedAt }) => {
         if (startedAt) {
           toast.success(t('started'));
+          queryClient.setQueryData(
+            trpc.tournament.roundGames.queryKey({
+              tournamentId,
+              roundNumber: 1,
+            }),
+            games,
+          );
           sendJsonMessage({
             event: 'start-tournament',
             startedAt,
+            games,
           });
         }
         queryClient.invalidateQueries({
@@ -33,8 +42,3 @@ export default function useTournamentStart(
     }),
   );
 }
-
-type TournamentHookProps = {
-  id: string | undefined;
-  sendJsonMessage: (_message: DashboardMessage) => void;
-};

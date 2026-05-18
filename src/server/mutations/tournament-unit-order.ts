@@ -150,7 +150,6 @@ export async function applyPreStartUnitOrder({
 export async function reapplyPreStartOrder(
   tournamentId: string,
   database?: PreStartOrderDatabase,
-  options?: { skipFinalReads?: boolean },
 ): Promise<PreStartUnitOrderResult> {
   const d = database ?? db;
   const tournament = await getTournamentById(tournamentId, d);
@@ -160,6 +159,5 @@ export async function reapplyPreStartOrder(
     tournamentId,
     orderedUnits: [...currentUnits].sort(baselineUnitSort),
     database,
-    skipFinalReads: options?.skipFinalReads,
   });
 }
