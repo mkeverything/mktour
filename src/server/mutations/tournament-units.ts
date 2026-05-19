@@ -346,7 +346,7 @@ export async function editDoublesUnit({
     const currentUnits = await getRawTournamentUnits(tournamentId, tx);
     return await applyPreStartUnitOrder({
       tournamentId,
-      orderedUnits: currentUnits,
+      orderedUnits: [...currentUnits].sort(baselineUnitSort),
       database: tx,
     });
   });
