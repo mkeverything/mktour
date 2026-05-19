@@ -183,10 +183,10 @@ export const tournamentRouter = {
     }),
   editDoublesUnit: tournamentAdminProcedure
     .input(tournamentIdInputSchema.and(editDoublesUnitSchema))
-    .output(z.void())
+    .output(preStartStateSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      await editDoublesUnit(input);
+      return await editDoublesUnit(input);
     }),
   removeUnit: tournamentAdminProcedure
     .input(

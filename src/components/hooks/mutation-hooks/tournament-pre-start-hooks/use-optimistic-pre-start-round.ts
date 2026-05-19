@@ -22,6 +22,7 @@ export const useOptimisticPreStartRound = (tournamentId: string) => {
       trpc.tournament.addNewSoloUnit.mutationKey(),
       trpc.tournament.addSoloUnit.mutationKey(),
       trpc.tournament.addDoublesUnit.mutationKey(),
+      trpc.tournament.editDoublesUnit.mutationKey(),
       trpc.tournament.removeUnit.mutationKey(),
       trpc.tournament.reorderUnits.mutationKey(),
     ],

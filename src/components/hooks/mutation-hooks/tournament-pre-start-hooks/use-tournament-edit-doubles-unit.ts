@@ -1,184 +1,98 @@
 'use client';
 
 import {
-  findPairPlayer,
-  getPairErrorTranslationKey,
-  pairErrors,
+  doublesErrors,
+  findDoublesUnitPlayer,
+  getDoublesErrorTranslationKey,
 } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
 import {
   hasDuplicateUnitNickname,
   removePlayersOutByIds,
 } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/unit-helpers';
+import { useSharedPreStart } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-shared-pre-start';
 import { useTRPC } from '@/components/trpc/client';
-import { type PlayerWithUsernameModel } from '@/server/zod/players';
 import { type UnitModel } from '@/server/zod/tournaments';
-import { DashboardMessage } from '@/types/tournament-ws-events';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
-const findRating = (
-  playerId: string,
-  playersOut: PlayerWithUsernameModel[],
-  units: UnitModel[] | undefined,
-) =>
-  playersOut.find((player) => player.id === playerId)?.rating ??
-  units
-    ?.find((unit) => unit.players.some((player) => player.id === playerId))
-    ?.players.find((player) => player.id === playerId)?.rating ??
-  0;
-
-export const useTournamentEditDoublesUnit = (
-  tournamentId: string,
-  sendJsonMessage: (_message: DashboardMessage) => void,
-) => {
+export const useTournamentEditDoublesUnit = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const t = useTranslations('Tournament.AddPlayer');
-  const unitsQueryKey = trpc.tournament.units.queryKey({ tournamentId });
-  const playersOutQueryKey = trpc.tournament.playersOut.queryKey({
-    tournamentId,
-  });
-  const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
-    tournamentId,
-    roundNumber: 1,
-  });
+  const {
+    applyOptimisticPreStartRound,
+    applyServerPreStartStateIfLatest,
+    invalidatePreStartState,
+    keys,
+    rollbackOptimisticPreStartRound,
+  } = useSharedPreStart(tournamentId);
 
   return useMutation(
     trpc.tournament.editDoublesUnit.mutationOptions({
       async onMutate({ unitId, nickname, firstPlayerId, secondPlayerId }) {
-        await Promise.all([
-          queryClient.cancelQueries({ queryKey: unitsQueryKey }),
-          queryClient.cancelQueries({ queryKey: playersOutQueryKey }),
-        ]);
+        await queryClient.cancelQueries({ queryKey: keys.playersOut });
 
-        const previousState =
-          queryClient.getQueryData<UnitModel[]>(unitsQueryKey);
-        const previousPlayersOut =
-          queryClient.getQueryData<PlayerWithUsernameModel[]>(
-            playersOutQueryKey,
-          );
-        const playersOut = previousPlayersOut ?? [];
-        const currentUnit = previousState?.find((unit) => unit.id === unitId);
+        const previousUnits = queryClient.getQueryData<UnitModel[]>(keys.units);
+        const previousPlayersOut = queryClient.getQueryData(keys.playersOut);
+        const currentUnit = previousUnits?.find((unit) => unit.id === unitId);
 
-        if (!currentUnit) throw new Error(pairErrors.playersNotFound);
-        if (hasDuplicateUnitNickname(previousState, nickname, unitId)) {
-          throw new Error(pairErrors.nicknameTaken);
+        if (firstPlayerId === secondPlayerId) {
+          throw new Error(doublesErrors.invalidDoublesPair);
+        }
+        if (!currentUnit) throw new Error(doublesErrors.playersNotFound);
+        if (hasDuplicateUnitNickname(previousUnits, nickname, unitId)) {
+          throw new Error(doublesErrors.nicknameTaken);
         }
 
-        const firstPair = findPairPlayer(
+        const playersOut = previousPlayersOut ?? [];
+        const firstPlayer = findDoublesUnitPlayer(
           firstPlayerId,
           playersOut,
-          previousState,
-          currentUnit.players,
+          currentUnit,
         );
-        const secondPair = findPairPlayer(
+        const secondPlayer = findDoublesUnitPlayer(
           secondPlayerId,
           playersOut,
-          previousState,
-          currentUnit.players,
+          currentUnit,
         );
 
-        if (!firstPair || !secondPair)
-          throw new Error(pairErrors.playersNotFound);
+        if (!firstPlayer || !secondPlayer) {
+          throw new Error(doublesErrors.playersNotFound);
+        }
 
-        const firstRating = findRating(
-          firstPlayerId,
-          playersOut,
-          previousState,
-        );
-        const secondRating = findRating(
-          secondPlayerId,
-          playersOut,
-          previousState,
-        );
-        const oldMemberIds = currentUnit.players.map((player) => player.id);
-        const addedIds = [firstPlayerId, secondPlayerId].filter(
-          (id) => !oldMemberIds.includes(id),
-        );
-
-        const updatedUnit = {
+        const nextUnit: UnitModel = {
           ...currentUnit,
           unitNickname: nickname,
-          rating: Math.round((firstRating + secondRating) / 2),
-          players: [firstPair, secondPair].map((player, index) => {
-            const out = playersOut.find(
-              (outPlayer) => outPlayer.id === player.id,
-            );
-            const fromUnit = currentUnit.players.find(
-              (unitPlayer) => unitPlayer.id === player.id,
-            );
-
-            return {
-              id: player.id,
-              nickname: player.nickname,
-              realname: out?.realname ?? fromUnit?.realname ?? null,
-              rating: index === 0 ? firstRating : secondRating,
-              userId: out?.userId ?? fromUnit?.userId ?? null,
-              username: out?.username ?? fromUnit?.username ?? null,
-            };
-          }),
-        } as UnitModel;
-
-        queryClient.setQueryData(
-          unitsQueryKey,
-          (cache: UnitModel[] | undefined) => {
-            const nextUnits = cache?.map((unit) =>
-              unit.id === unitId ? updatedUnit : unit,
-            ) ?? [updatedUnit];
-
-            return nextUnits.filter(
-              (unit) =>
-                !(
-                  unit.players.length === 1 &&
-                  addedIds.includes(unit.players[0].id)
-                ),
-            );
-          },
+          players: [firstPlayer, secondPlayer],
+        };
+        const nextUnits =
+          previousUnits?.map((unit) =>
+            unit.id === unitId ? nextUnit : unit,
+          ) ?? [];
+        const context = await applyOptimisticPreStartRound(nextUnits, false);
+        const currentMemberIds = currentUnit.players.map((player) => player.id);
+        const addedIds = [firstPlayerId, secondPlayerId].filter(
+          (id) => !currentMemberIds.includes(id),
         );
 
-        queryClient.setQueryData(playersOutQueryKey, (cache) =>
+        queryClient.setQueryData(keys.playersOut, (cache) =>
           removePlayersOutByIds(cache, addedIds),
         );
 
-        return { previousState, previousPlayersOut };
+        return { ...context, previousPlayersOut };
       },
       onError: (error, _variables, context) => {
-        if (context?.previousState) {
-          queryClient.setQueryData(unitsQueryKey, context.previousState);
-        }
+        rollbackOptimisticPreStartRound(context);
+
         if (context?.previousPlayersOut) {
-          queryClient.setQueryData(
-            playersOutQueryKey,
-            context.previousPlayersOut,
-          );
+          queryClient.setQueryData(keys.playersOut, context.previousPlayersOut);
         }
 
-        toast.error(t(getPairErrorTranslationKey(error)));
+        toast.error(t(getDoublesErrorTranslationKey(error)));
       },
-      onSuccess: (_data, variables) => {
-        const units = queryClient.getQueryData<UnitModel[]>(unitsQueryKey);
-        const updatedUnit = units?.find((unit) => unit.id === variables.unitId);
-        if (!updatedUnit) return;
-
-        sendJsonMessage({
-          event: 'edit-doubles-unit',
-          unit: updatedUnit,
-        });
-      },
-      onSettled: () => {
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.tournament.editDoublesUnit.mutationKey(),
-          }) !== 1
-        ) {
-          return;
-        }
-
-        queryClient.invalidateQueries({ queryKey: unitsQueryKey });
-        queryClient.invalidateQueries({ queryKey: playersOutQueryKey });
-        queryClient.invalidateQueries({ queryKey: roundGamesQueryKey });
-      },
+      onSuccess: applyServerPreStartStateIfLatest,
+      onSettled: () => invalidatePreStartState({ playersOut: true }),
     }),
   );
 };

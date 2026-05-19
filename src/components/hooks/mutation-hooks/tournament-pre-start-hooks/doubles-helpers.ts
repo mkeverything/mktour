@@ -1,38 +1,32 @@
 import type { PlayerWithUsernameModel } from '@/server/zod/players';
 import type { UnitModel } from '@/server/zod/tournaments';
 
-export const pairErrors = {
-  nicknameTaken: 'PAIR_NICKNAME_TAKEN',
-  playersNotFound: 'PAIR_PLAYERS_NOT_FOUND',
+export const doublesErrors = {
+  nicknameTaken: 'UNIT_NICKNAME_TAKEN',
+  playersNotFound: 'UNIT_PLAYERS_NOT_FOUND',
   playerAlreadyInPair: 'PLAYER_ALREADY_IN_PAIR',
+  invalidDoublesPair: 'INVALID_DOUBLES_PAIR',
 } as const;
 
-export const findPairPlayer = (
+export const findDoublesUnitPlayer = (
   id: string,
   playersOut: PlayerWithUsernameModel[],
-  units: UnitModel[] | undefined,
-  currentPairPlayers: UnitModel['players'] | null = null,
-) => {
-  const fromOut = playersOut.find((player) => player.id === id);
-  if (fromOut) return fromOut;
+  currentUnit: UnitModel,
+) =>
+  currentUnit.players.find((player) => player.id === id) ??
+  playersOut.find((player) => player.id === id);
 
-  const fromPair = currentPairPlayers?.find((player) => player.id === id);
-  if (fromPair) return fromPair;
-
-  return units
-    ?.find(
-      (unit) =>
-        unit.players.length === 1 &&
-        unit.players.some((player) => player.id === id),
-    )
-    ?.players.at(0);
-};
-
-export const getPairErrorTranslationKey = (error: { message: string }) => {
-  if (error.message === pairErrors.nicknameTaken) return 'team nickname taken';
-  if (error.message === pairErrors.playerAlreadyInPair)
+export const getDoublesErrorTranslationKey = (error: { message: string }) => {
+  if (error.message === doublesErrors.nicknameTaken) {
+    return 'team nickname taken';
+  }
+  if (error.message === doublesErrors.playerAlreadyInPair) {
     return 'player already in team';
-  if (error.message === pairErrors.playersNotFound)
+  }
+  if (error.message === doublesErrors.playersNotFound) {
+    return 'team players not found';
+  }
+  if (error.message === doublesErrors.invalidDoublesPair)
     return 'team players not found';
   return 'team add error';
 };

@@ -46,13 +46,10 @@ const UnitDrawer: FC<{
   format,
 }) => {
   const open = !!unit;
-  const { status, sendJsonMessage } = useContext(DashboardContext);
+  const { status } = useContext(DashboardContext);
   const t = useTranslations('Tournament.AddPlayer');
   const { id: tournamentId } = useParams<{ id: string }>();
-  const editDoublesUnit = useTournamentEditDoublesUnit(
-    tournamentId,
-    sendJsonMessage,
-  );
+  const editDoublesUnit = useTournamentEditDoublesUnit(tournamentId);
   const isDoublesUnit = unit.players.length === 2;
   const [isEditingUnit, setIsEditingUnit] = useState(false);
 

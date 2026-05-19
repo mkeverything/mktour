@@ -22,10 +22,7 @@ import type {
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
 import { applyGameResult } from './tournament-games';
-import {
-  normalizeSwissRoundsNumber,
-  normalizeSwissRoundsNumberInDatabase,
-} from './tournament-lifecycle';
+import { normalizeSwissRoundsNumberInDatabase } from './tournament-lifecycle';
 import { applyPreStartUnitOrder } from './tournament-unit-order';
 
 export async function removeUnit({
@@ -223,7 +220,7 @@ export async function editDoublesUnit({
   secondPlayerId,
 }: EditDoublesUnitModel & {
   tournamentId: string;
-}): Promise<void> {
+}): Promise<PreStartStateModel> {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (firstPlayerId === secondPlayerId) {
@@ -311,7 +308,7 @@ export async function editDoublesUnit({
   if (existingNickname.length > 0) {
     throw new Error('UNIT_NICKNAME_TAKEN');
   }
-  await db.transaction(async (tx) => {
+  return await db.transaction(async (tx) => {
     await tx
       .delete(players_to_units)
       .where(eq(players_to_units.unitId, unitId));
@@ -345,8 +342,14 @@ export async function editDoublesUnit({
         numberInUnit: 2,
       }),
     ]);
+    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
+    const currentUnits = await getRawTournamentUnits(tournamentId, tx);
+    return await applyPreStartUnitOrder({
+      tournamentId,
+      orderedUnits: currentUnits,
+      database: tx,
+    });
   });
-  await normalizeSwissRoundsNumber(tournamentId);
 }
 export async function resetTournamentUnits({
   tournamentId,
