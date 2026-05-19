@@ -15,7 +15,7 @@ export default function StartTournamentButton() {
   const { id } = useParams<{ id: string }>();
   const { data } = useTournamentInfo(id);
   const { sendJsonMessage } = useContext(DashboardContext);
-  const { data: players } = useTournamentUnits(id);
+  const { data: units } = useTournamentUnits(id);
   const startTournamentMutation = useTournamentStart(
     queryClient,
     id,
@@ -24,14 +24,14 @@ export default function StartTournamentButton() {
   const t = useTranslations('Tournament.Main');
 
   const handleClick = () => {
-    if (!players) {
-      throw new Error('NO_PLAYERS_DATA');
+    if (!units) {
+      throw new Error('NO_UNITS_DATA');
     }
     if (!data) {
       throw new Error('NO_TOURNAMENT_DATA');
     }
-    if (players.length < 2) {
-      throw new Error('NOT_ENOUGH_PLAYERS');
+    if (units.length < 2) {
+      throw new Error('NOT_ENOUGH_UNITS');
     }
     startTournamentMutation.mutate(
       {
@@ -46,7 +46,7 @@ export default function StartTournamentButton() {
             tournament_id: data.tournament.id,
             format: data.tournament.format,
             rounds_number: data.tournament.roundsNumber,
-            player_count: players.length,
+            unit_count: units.length,
           });
         },
       },
@@ -57,7 +57,7 @@ export default function StartTournamentButton() {
     <Button
       className="isolate-touch md:col-span-2"
       disabled={
-        !players || players?.length < 2 || startTournamentMutation.isPending
+        !units || units?.length < 2 || startTournamentMutation.isPending
       }
       onClick={handleClick}
       size="lg"

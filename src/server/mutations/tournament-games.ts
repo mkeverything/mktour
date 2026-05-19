@@ -203,9 +203,9 @@ export async function setTournamentGameResult({
         throw new Error('PLAYER_RESULT_SETTING_DISABLED');
       }
 
-      const isPlayerInGame =
+      const isPlayerUnitInGame =
         authUnitId === game.whiteUnitId || authUnitId === game.blackUnitId;
-      if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
+      if (!isPlayerUnitInGame) throw new Error('NOT_YOUR_GAME');
     }
 
     let nextResult: GameResult | null;
