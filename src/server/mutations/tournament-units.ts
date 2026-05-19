@@ -131,59 +131,6 @@ export async function addDoublesUnit({
   if (firstPlayerId === secondPlayerId) {
     throw new Error('INVALID_DOUBLES_PAIR');
   }
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
-  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
-  if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
-  const selectedPlayers = await db
-    .select({
-      id: players.id,
-      nickname: players.nickname,
-      rating: players.rating,
-    })
-    .from(players)
-    .where(
-      and(
-        eq(players.clubId, tournament.clubId),
-        or(eq(players.id, firstPlayerId), eq(players.id, secondPlayerId)),
-      ),
-    );
-  if (selectedPlayers.length !== 2) {
-    throw new Error('PAIR_PLAYERS_NOT_FOUND');
-  }
-  const existingPair = await db
-    .select({ id: players_to_units.id })
-    .from(players_to_units)
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
-    .where(
-      and(
-        eq(tournament_units.tournamentId, tournamentId),
-        or(
-          eq(players_to_units.playerId, firstPlayerId),
-          eq(players_to_units.playerId, secondPlayerId),
-        ),
-      ),
-    )
-    .limit(1);
-  if (existingPair.length > 0) {
-    throw new Error('PLAYER_ALREADY_IN_PAIR');
-  }
-  const existingNickname = await db
-    .select({ id: tournament_units.id })
-    .from(tournament_units)
-    .where(
-      and(
-        eq(tournament_units.tournamentId, tournamentId),
-        lowerEq(tournament_units.nickname, nickname),
-      ),
-    )
-    .limit(1);
-  if (existingNickname.length > 0) {
-    throw new Error('UNIT_NICKNAME_TAKEN');
-  }
   const unitId = requestedUnitId ?? newid();
   const unit = createUnit({
     id: unitId,
@@ -197,7 +144,66 @@ export async function addDoublesUnit({
     createUnitMember({ playerId: firstPlayerId, unitId, numberInUnit: 1 }),
     createUnitMember({ playerId: secondPlayerId, unitId, numberInUnit: 2 }),
   ];
+
   return await db.transaction(async (tx) => {
+    const tournament = await getTournamentById(tournamentId, tx);
+    if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
+    if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+    if (tournament.type !== 'doubles')
+      throw new Error('NOT_DOUBLES_TOURNAMENT');
+
+    const selectedPlayers = await tx
+      .select({
+        id: players.id,
+        nickname: players.nickname,
+        rating: players.rating,
+      })
+      .from(players)
+      .where(
+        and(
+          eq(players.clubId, tournament.clubId),
+          or(eq(players.id, firstPlayerId), eq(players.id, secondPlayerId)),
+        ),
+      );
+    if (selectedPlayers.length !== 2) {
+      throw new Error('PAIR_PLAYERS_NOT_FOUND');
+    }
+
+    const existingPair = await tx
+      .select({ id: players_to_units.id })
+      .from(players_to_units)
+      .innerJoin(
+        tournament_units,
+        eq(players_to_units.unitId, tournament_units.id),
+      )
+      .where(
+        and(
+          eq(tournament_units.tournamentId, tournamentId),
+          or(
+            eq(players_to_units.playerId, firstPlayerId),
+            eq(players_to_units.playerId, secondPlayerId),
+          ),
+        ),
+      )
+      .limit(1);
+    if (existingPair.length > 0) {
+      throw new Error('PLAYER_ALREADY_IN_PAIR');
+    }
+
+    const existingNickname = await tx
+      .select({ id: tournament_units.id })
+      .from(tournament_units)
+      .where(
+        and(
+          eq(tournament_units.tournamentId, tournamentId),
+          lowerEq(tournament_units.nickname, nickname),
+        ),
+      )
+      .limit(1);
+    if (existingNickname.length > 0) {
+      throw new Error('UNIT_NICKNAME_TAKEN');
+    }
+
     await tx.insert(tournament_units).values(unit);
     await tx.insert(players_to_units).values(unitMembers);
     await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
