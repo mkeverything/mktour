@@ -4,8 +4,7 @@ import { GameModel, UnitModel } from '@/server/zod/tournaments';
 type DashboardMessage =
   | {
       event: 'edit-doubles-unit';
-      body: UnitModel;
-      previousId: string;
+      unit: UnitModel;
     }
   | {
       event: 'prestart-round-updated';

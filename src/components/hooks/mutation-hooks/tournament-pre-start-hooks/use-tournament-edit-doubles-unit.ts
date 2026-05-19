@@ -163,8 +163,7 @@ export const useTournamentEditDoublesUnit = (
 
         sendJsonMessage({
           event: 'edit-doubles-unit',
-          body: updatedUnit,
-          previousId: variables.unitId,
+          unit: updatedUnit,
         });
       },
       onSettled: () => {

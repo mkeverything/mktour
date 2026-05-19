@@ -35,7 +35,7 @@ export const handleSocketMessage = (
 ) => {
   switch (message.event) {
     case 'edit-doubles-unit': {
-      const body = parseUnitBody(message.body);
+      const unit = parseUnitBody(message.unit);
       queryClient.cancelQueries({
         queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
@@ -43,16 +43,9 @@ export const handleSocketMessage = (
         trpc.tournament.units.queryKey({ tournamentId }),
         (cache) => {
           if (!cache) return cache;
-          const result = cache.map((p) =>
-            p.id === message.previousId ? body : p,
-          );
-          if (body.id !== message.previousId) {
-            // FIXME TODO
-            return result
-              .filter((p) => p.id !== body.id || (p.players?.length ?? 0) > 0)
-              .sort(baselineUnitSort);
-          }
-          return result.sort(baselineUnitSort);
+          return cache
+            .map((entry) => (entry.id === unit.id ? unit : entry))
+            .sort(baselineUnitSort);
         },
       );
       queryClient.invalidateQueries({
