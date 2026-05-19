@@ -20,7 +20,7 @@ export const useRoundData = (
   const sortedRound = useMemo(() => {
     if (!round || !players) return [];
 
-    return [...round].sort((a, b) => {
+    return round.toSorted((a, b) => {
       const aWhiteScore = playerScores.get(a.whiteUnitId) || 0;
       const aBlackScore = playerScores.get(a.blackUnitId) || 0;
       const bWhiteScore = playerScores.get(b.whiteUnitId) || 0;

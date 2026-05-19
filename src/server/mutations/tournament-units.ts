@@ -75,7 +75,7 @@ export async function removeUnit({
     const currentUnits = await getRawTournamentUnits(tournamentId, tx);
     return await applyPreStartUnitOrder({
       tournamentId,
-      orderedUnits: [...currentUnits].sort(baselineUnitSort),
+      orderedUnits: currentUnits.toSorted(baselineUnitSort),
       database: tx,
     });
   });
@@ -207,7 +207,7 @@ export async function addDoublesUnit({
     const currentUnits = await getRawTournamentUnits(tournamentId, tx);
     return await applyPreStartUnitOrder({
       tournamentId,
-      orderedUnits: [...currentUnits].sort(baselineUnitSort),
+      orderedUnits: currentUnits.toSorted(baselineUnitSort),
       database: tx,
     });
   });
@@ -346,7 +346,7 @@ export async function editDoublesUnit({
     const currentUnits = await getRawTournamentUnits(tournamentId, tx);
     return await applyPreStartUnitOrder({
       tournamentId,
-      orderedUnits: [...currentUnits].sort(baselineUnitSort),
+      orderedUnits: currentUnits.toSorted(baselineUnitSort),
       database: tx,
     });
   });

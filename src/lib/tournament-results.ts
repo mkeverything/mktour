@@ -214,7 +214,7 @@ export function sortUnitsByResults<T extends UnitModel>(
     allGames,
   );
 
-  return [...units].sort(makeUnitComparator(unitScoresMap, tiebreakScoresMap));
+  return units.toSorted(makeUnitComparator(unitScoresMap, tiebreakScoresMap));
 }
 
 /**
@@ -232,7 +232,7 @@ export function sortUnitsByResultsWithMaps<T extends UnitModel>(
     allGames,
   );
 
-  const sorted = [...units].sort(
+  const sorted = units.toSorted(
     makeUnitComparator(unitScoresMap, tiebreakScoresMap),
   );
 

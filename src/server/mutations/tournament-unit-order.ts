@@ -157,7 +157,7 @@ export async function reapplyPreStartOrder(
   const currentUnits = await getRawTournamentUnits(tournamentId, d);
   return await applyPreStartUnitOrder({
     tournamentId,
-    orderedUnits: [...currentUnits].sort(baselineUnitSort),
+    orderedUnits: currentUnits.toSorted(baselineUnitSort),
     database,
   });
 }

@@ -113,16 +113,16 @@ export async function getPlayerStats(
     };
   });
 
-  const byTournaments = [...statsWithCalculations].sort(
+  const byTournaments = statsWithCalculations.toSorted(
     (a, b) => b.tournamentsPlayed - a.tournamentsPlayed,
   );
-  const byGames = [...statsWithCalculations].sort(
+  const byGames = statsWithCalculations.toSorted(
     (a, b) => b.gamesPlayed - a.gamesPlayed,
   );
-  const byWinRate = [...statsWithCalculations].sort(
+  const byWinRate = statsWithCalculations.toSorted(
     (a, b) => b.winRate - a.winRate,
   );
-  const byRatingPeak = [...statsWithCalculations].sort(
+  const byRatingPeak = statsWithCalculations.toSorted(
     (a, b) => (b.ratingPeak ?? 0) - (a.ratingPeak ?? 0),
   );
 

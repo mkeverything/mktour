@@ -32,7 +32,7 @@ export const useOptimisticPreStartRound = (tournamentId: string) => {
   const buildOptimisticPreStartRound = useCallback(
     (units: UnitModel[], sortByBaseline = true) => {
       const orderedUnits = sortByBaseline
-        ? [...units].sort(baselineUnitSort)
+        ? units.toSorted(baselineUnitSort)
         : units;
       const nextUnits = applyManualUnitOrder(orderedUnits);
 
