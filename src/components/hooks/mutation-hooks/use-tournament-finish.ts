@@ -30,6 +30,10 @@ export default function useTournamentFinish(
         });
       },
       onError: (error) => {
+        if (error.message === 'INCOMPLETE_GAMES') {
+          toast.error(t('incomplete games'));
+          return;
+        }
         toast.error(t('server error'));
         console.log(error);
       },

@@ -86,24 +86,24 @@ function mapPlayerRatings(playerRows: PlayerRating[]) {
   return new Map(playerRows.map((player) => [player.id, player]));
 }
 
-function assertCompletedRatedGame(
+function isCompletedRatedGameRow(
   game: RatedGameRow,
-): asserts game is CompletedRatedGameRow {
-  if (!game.result) {
-    throw new Error(`rated game ${game.id} has no result`);
-  }
-
-  if (!game.whitePlayerId || !game.blackPlayerId) {
-    throw new Error(`rated game ${game.id} has missing player ids`);
-  }
+): game is CompletedRatedGameRow {
+  return (
+    game.result !== null &&
+    game.whitePlayerId !== null &&
+    game.blackPlayerId !== null
+  );
 }
 
 function toRatedGames(
   gameRows: RatedGameRow[],
   playerRatings: Map<PlayerModel['id'], PlayerRating>,
 ): RatedGame[] {
-  return gameRows.map((game) => {
-    assertCompletedRatedGame(game);
+  const ratedGames: RatedGame[] = [];
+
+  for (const game of gameRows) {
+    if (!isCompletedRatedGameRow(game)) continue;
 
     const whitePlayer = playerRatings.get(game.whitePlayerId);
     const blackPlayer = playerRatings.get(game.blackPlayerId);
@@ -112,14 +112,16 @@ function toRatedGames(
       throw new Error(`rated game ${game.id} has missing player rating data`);
     }
 
-    return {
+    ratedGames.push({
       ...game,
       whiteRating: whitePlayer.rating,
       whiteRD: whitePlayer.ratingDeviation,
       blackRating: blackPlayer.rating,
       blackRD: blackPlayer.ratingDeviation,
-    };
-  });
+    });
+  }
+
+  return ratedGames;
 }
 
 function collectPlayerResults(

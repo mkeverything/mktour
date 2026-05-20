@@ -330,6 +330,7 @@
     "tmt-not-started error": "first you need to start the tournament to then set game results",
     "ws message error": "sorry! realtime server couldn't forward this event to other viewers",
     "finished": "tournament finished!",
+    "incomplete games": "enter results for every game before finishing the tournament",
     "player updated": "player updated",
     "affiliation requested": "request sent",
     "affiliation canceled": "request cancelled",

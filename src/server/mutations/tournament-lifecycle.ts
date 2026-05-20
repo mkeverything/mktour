@@ -35,6 +35,7 @@ import {
   tournamentsInsertSchema,
   UnitModel,
 } from '@/server/zod/tournaments';
+import { TRPCError } from '@trpc/server';
 import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
 import { reapplyPreStartOrder } from './tournament-unit-order';
@@ -261,10 +262,22 @@ export async function finishTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new Error('NOT_ADMIN');
 
-  const allGames = await getTournamentGames(tournamentId);
-  const unitsUnsorted = await getRawTournamentUnits(tournamentId);
-
   await db.transaction(async (tx) => {
+    const [tournament, allGames, unitsUnsorted] = await Promise.all([
+      getTournamentById(tournamentId, tx),
+      getTournamentGames(tournamentId, tx),
+      getRawTournamentUnits(tournamentId, tx),
+    ]);
+
+    if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
+
+    if (allGames.some((game) => game.result === null)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'INCOMPLETE_GAMES',
+      });
+    }
+
     if (closedAt) {
       const result = await tx
         .update(tournaments)
@@ -274,14 +287,6 @@ export async function finishTournament({
         );
       if (!result.rowsAffected) throw new Error('TOURNAMENT_ALREADY_FINISHED');
     }
-
-    const tournament = await tx
-      .select()
-      .from(tournaments)
-      .where(eq(tournaments.id, tournamentId))
-      .then((rows) => rows[0]);
-
-    if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
 
     const sortedUnits = sortUnitsByResults(unitsUnsorted, tournament, allGames);
     const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
