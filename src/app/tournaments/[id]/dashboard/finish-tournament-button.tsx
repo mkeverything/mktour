@@ -1,7 +1,7 @@
 import { LoadingSpinner } from '@/app/loading';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentFinish from '@/components/hooks/mutation-hooks/use-tournament-finish';
-import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
+import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';

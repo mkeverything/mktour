@@ -9,10 +9,10 @@ import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tour
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
-import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
+import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
 import { useTournamentRoundProgressInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
+import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useRoundData } from '@/components/hooks/use-round-data';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';

@@ -5,17 +5,17 @@ import {
   STATS_WITH_TIEBREAK,
   type Stat,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/column-types';
-import UnitDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/unit-drawer';
 import {
-  UnitTableRow,
   SortableUnitTableRow,
   TableLoading,
   TableStatsHeads,
+  UnitTableRow,
 } from '@/app/tournaments/[id]/dashboard/tabs/table/table-ui';
+import UnitDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/unit-drawer';
 import { useSortableUnitTable } from '@/app/tournaments/[id]/dashboard/tabs/table/use-sortable-unit-table';
 import { useTournamentRemoveUnit } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-remove-unit';
 import { useTournamentWithdrawUnit } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-unit';
-import { useTournamentGames } from '@/components/hooks/query-hooks/_use-tournament-games';
+import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
 import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
