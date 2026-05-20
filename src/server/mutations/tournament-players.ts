@@ -14,6 +14,7 @@ import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
 import type { PreStartStateModel } from '@/server/zod/tournaments';
+import { and, eq } from 'drizzle-orm';
 import { createPlayer } from './club-managing';
 import { normalizeSwissRoundsNumberInDatabase } from './tournament-lifecycle';
 import { applyPreStartUnitOrder } from './tournament-unit-order';
@@ -101,6 +102,24 @@ export async function addSoloUnit(
   });
 
   const run = async (d: SoloUnitDatabase) => {
+    const existingMembership = await d
+      .select({ id: players_to_units.id })
+      .from(players_to_units)
+      .innerJoin(
+        tournament_units,
+        eq(players_to_units.unitId, tournament_units.id),
+      )
+      .where(
+        and(
+          eq(tournament_units.tournamentId, tournamentId),
+          eq(players_to_units.playerId, player.id),
+        ),
+      )
+      .limit(1);
+    if (existingMembership.length > 0) {
+      throw new Error('PLAYER_ALREADY_IN_UNIT');
+    }
+
     await d.insert(tournament_units).values(unit);
     await d.insert(players_to_units).values(playerUnit);
     await normalizeSwissRoundsNumberInDatabase(tournamentId, d);
