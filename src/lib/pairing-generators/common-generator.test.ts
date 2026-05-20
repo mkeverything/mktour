@@ -4,7 +4,7 @@ import { countPlayerResults } from '@/lib/pairing-generators/common-generator';
 import { newid } from '@/lib/utils';
 import { ClubModel } from '@/server/zod/clubs';
 import { GameResult } from '@/server/zod/enums';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { GameModel, TournamentModel } from '@/server/zod/tournaments';
 import { UserModel } from '@/server/zod/users';
 import { faker } from '@faker-js/faker';
@@ -117,22 +117,29 @@ export const fillRandomResult = mock(
 export const generatePlayerModel = mock(() => {
   const randomUser = generateUserModel();
 
-  const randomPlayer: PlayerTournamentModel = {
+  const randomPlayer: UnitModel = {
     id: randomUser.id,
-    nickname: randomUser.username,
+    size: 1,
     wins: INITIAL_WINS,
     draws: INITIAL_DRAWS,
     losses: INITIAL_LOSSES,
     colorIndex: INITIAL_COLOUR_INDEX,
-    realname: randomUser.name,
-    rating: randomUser.rating ?? 0,
+
     isOut: DEFAULT_IS_EXITED,
     place: DEFAULT_PLACE,
-    pairingNumber: null,
+    number: null,
     addedAt: null,
-    teamNickname: null,
-    username: null,
-    pairPlayers: null,
+    unitNickname: randomUser.username,
+    players: [
+      {
+        id: randomUser.id,
+        nickname: randomUser.username,
+        realname: randomUser.name,
+        rating: randomUser.rating ?? 0,
+        userId: randomUser.id,
+        username: randomUser.username,
+      },
+    ],
   };
 
   return randomPlayer;
@@ -152,7 +159,7 @@ export const RANDOM_TOURNAMENTS_COUNT = 5;
  * @returns true if player participated in the game
  */
 function isPlayerInGame(game: GameModel, playerId: string): boolean {
-  return game.whiteId === playerId || game.blackId === playerId;
+  return game.whiteUnitId === playerId || game.blackUnitId === playerId;
 }
 
 /**
@@ -193,9 +200,9 @@ function calculateByeCount(
  * @returns Updated player with recalculated wins/draws/losses
  */
 function updateSinglePlayerScore(
-  player: PlayerTournamentModel,
+  player: UnitModel,
   games: GameModel[],
-): PlayerTournamentModel {
+): UnitModel {
   // Filter games involving this player
   const playerGames = games.filter((game) => isPlayerInGame(game, player.id));
 
@@ -222,10 +229,7 @@ function updateSinglePlayerScore(
  * @returns Updated players with recalculated wins/draws/losses
  */
 export const updatePlayerScores = mock(
-  (
-    players: PlayerTournamentModel[],
-    games: GameModel[],
-  ): PlayerTournamentModel[] => {
-    return players.map((player) => updateSinglePlayerScore(player, games));
+  (units: UnitModel[], games: GameModel[]): UnitModel[] => {
+    return units.map((unit) => updateSinglePlayerScore(unit, games));
   },
 );

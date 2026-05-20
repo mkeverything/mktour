@@ -6,12 +6,7 @@ import {
   tournamentAdminProcedure,
 } from '@/server/api/trpc';
 import { db } from '@/server/db';
-import { users } from '@/server/db/schema';
-import { players } from '@/server/db/schema/players';
-import {
-  players_to_tournaments,
-  tournaments,
-} from '@/server/db/schema/tournaments';
+import { tournaments } from '@/server/db/schema/tournaments';
 import {
   saveRound,
   setTournamentGameResult,
@@ -26,49 +21,47 @@ import {
   updateSwissRoundsNumber,
 } from '@/server/mutations/tournament-lifecycle';
 import {
-  addDoublesTeam,
-  addExistingPlayer,
-  addNewPlayer,
-  editDoublesTeam,
-  removePlayer,
-  reorderTournamentPlayers,
-  resetTournamentPlayers,
-  withdrawPlayer,
+  addNewSoloUnit,
+  addSoloUnit,
 } from '@/server/mutations/tournament-players';
-import getAllTournaments from '@/server/queries/get-all-tournaments';
-import { getPublicFeaturedTournaments } from '@/server/queries/get-public-featured-tournaments';
+import {
+  addDoublesUnit,
+  editDoublesUnit,
+  removeUnit,
+  reorderTournamentUnits,
+  resetTournamentUnits,
+  withdrawUnit,
+} from '@/server/mutations/tournament-units';
+import getAllTournamentsInfinite from '@/server/queries/get-all-tournaments-infinite';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import {
   getTournamentGames,
   getTournamentRoundGames,
 } from '@/server/queries/get-tournament-games';
 import { getTournamentInfo } from '@/server/queries/get-tournament-info';
-import { getTournamentPlayers } from '@/server/queries/get-tournament-players';
-import {
-  playerIdInputSchema,
-  tournamentIdInputSchema,
-} from '@/server/zod/common';
+import { getTournamentPossiblePlayers } from '@/server/queries/get-tournament-possible-players';
+import { getTournamentUnits } from '@/server/queries/get-tournament-units';
+import { tournamentIdInputSchema } from '@/server/zod/common';
 import { gameResultEnum, TournamentFormat } from '@/server/zod/enums';
 import {
   playerFormSchema,
   playersWithUsernameSchema,
-  playerTournamentSchema,
-  preStartPlayerOrderResultSchema,
 } from '@/server/zod/players';
 import {
-  addDoublesTeamSchema,
-  editDoublesTeamSchema,
+  addDoublesUnitSchema,
+  editDoublesUnitSchema,
   gameSchema,
-  publicFeaturedTournamentSchema,
-  reorderTournamentPlayersInputSchema,
+  preStartStateSchema,
+  reorderTournamentUnitsInputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
   tournamentInfoSchema,
   tournamentWithClubSchema,
-  withdrawTournamentPlayerInputSchema,
-  withdrawTournamentPlayerResultSchema,
+  unitSchema,
+  withdrawTournamentUnitInputSchema,
+  withdrawTournamentUnitResultSchema,
 } from '@/server/zod/tournaments';
-import { and, desc, eq, getTableColumns, isNull } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
@@ -96,20 +89,10 @@ export const tournamentRouter = {
       }),
     )
     .query(async ({ input }) => {
-      return await getAllTournaments({
+      return await getAllTournamentsInfinite({
         limit: input.limit,
         cursor: input.cursor ?? undefined,
       });
-    }),
-  publicFeatured: publicProcedure // TODO: currently not used + not included in openapi. use or remove
-    .input(
-      z.object({
-        limit: z.number().min(1).max(10).optional().default(5),
-      }),
-    )
-    .output(z.array(publicFeaturedTournamentSchema))
-    .query(async ({ input }) => {
-      return await getPublicFeaturedTournaments(input.limit);
     }),
   info: publicProcedure
     .input(tournamentIdInputSchema)
@@ -129,43 +112,17 @@ export const tournamentRouter = {
       }
       return tournamentInfo;
     }),
-  playersIn: publicProcedure
+  units: publicProcedure
     .input(tournamentIdInputSchema)
-    .output(z.array(playerTournamentSchema))
+    .output(z.array(unitSchema))
     .query(async (opts) => {
-      return await getTournamentPlayers(opts.input.tournamentId);
+      return await getTournamentUnits(opts.input.tournamentId);
     }),
   playersOut: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
     .output(z.array(playersWithUsernameSchema))
     .query(async (opts) => {
-      const { input } = opts;
-      const tournament = await db
-        .select({ clubId: tournaments.clubId })
-        .from(tournaments)
-        .where(eq(tournaments.id, input.tournamentId))
-        .then((rows) => rows.at(0));
-
-      if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-
-      return db
-        .select({ ...getTableColumns(players), username: users.username })
-        .from(players)
-        .leftJoin(
-          players_to_tournaments,
-          and(
-            eq(players.id, players_to_tournaments.playerId),
-            eq(players_to_tournaments.tournamentId, input.tournamentId),
-          ),
-        )
-        .leftJoin(users, eq(users.id, players.userId))
-        .where(
-          and(
-            eq(players.clubId, tournament.clubId),
-            isNull(players_to_tournaments.playerId),
-          ),
-        )
-        .orderBy(desc(players.lastSeenAt));
+      return await getTournamentPossiblePlayers(opts.input.tournamentId);
     }),
   roundGames: publicProcedure
     .input(
@@ -187,81 +144,82 @@ export const tournamentRouter = {
       const result = await getTournamentGames(input.tournamentId);
       return result;
     }),
-  addExistingPlayer: tournamentAdminProcedure
+  addSoloUnit: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
         player: playersWithUsernameSchema,
         userId: z.string(),
+        unitId: unitSchema.shape.id.optional(),
         addedAt: z.date().optional(),
       }),
     )
-    .output(preStartPlayerOrderResultSchema)
+    .output(preStartStateSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await addExistingPlayer(input);
+      return await addSoloUnit(input);
     }),
-  addNewPlayer: tournamentAdminProcedure
-    .input(
-      z.object({
-        player: playerFormSchema.and(z.object({ id: z.string().optional() })),
-        addedAt: z.date().optional(),
-      }),
-    )
-    .output(preStartPlayerOrderResultSchema)
-    .mutation(async (opts) => {
-      const { input } = opts;
-      return await addNewPlayer(input);
-    }),
-  addPairTeam: tournamentAdminProcedure
-    .input(
-      tournamentIdInputSchema.and(
-        addDoublesTeamSchema.extend({ addedAt: z.date().optional() }),
-      ),
-    )
-    .output(preStartPlayerOrderResultSchema)
-    .mutation(async (opts) => {
-      const { input } = opts;
-      return await addDoublesTeam(input);
-    }),
-  editPairTeam: tournamentAdminProcedure
-    .input(tournamentIdInputSchema.and(editDoublesTeamSchema))
-    .output(z.void())
-    .mutation(async (opts) => {
-      const { input } = opts;
-      await editDoublesTeam(input);
-    }),
-  removePlayer: tournamentAdminProcedure
+  addNewSoloUnit: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
-        playerId: playerIdInputSchema.shape.playerId,
+        player: playerFormSchema.and(z.object({ id: z.string().optional() })),
+        unitId: unitSchema.shape.id.optional(),
+        addedAt: z.date().optional(),
+      }),
+    )
+    .output(preStartStateSchema)
+    .mutation(async (opts) => {
+      const { input } = opts;
+      return await addNewSoloUnit(input);
+    }),
+  addDoublesUnit: tournamentAdminProcedure
+    .input(
+      tournamentIdInputSchema.and(
+        addDoublesUnitSchema.extend({ addedAt: z.date().optional() }),
+      ),
+    )
+    .output(preStartStateSchema)
+    .mutation(async ({ input }) => {
+      return await addDoublesUnit(input);
+    }),
+  editDoublesUnit: tournamentAdminProcedure
+    .input(tournamentIdInputSchema.and(editDoublesUnitSchema))
+    .output(preStartStateSchema)
+    .mutation(async (opts) => {
+      const { input } = opts;
+      return await editDoublesUnit(input);
+    }),
+  removeUnit: tournamentAdminProcedure
+    .input(
+      tournamentIdInputSchema.extend({
+        unitId: unitSchema.shape.id,
         userId: z.string(),
       }),
     )
-    .output(preStartPlayerOrderResultSchema)
+    .output(preStartStateSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await removePlayer(input);
+      return await removeUnit(input);
     }),
-  reorderPlayers: tournamentAdminProcedure
-    .input(reorderTournamentPlayersInputSchema)
-    .output(preStartPlayerOrderResultSchema)
+  reorderUnits: tournamentAdminProcedure
+    .input(reorderTournamentUnitsInputSchema)
+    .output(preStartStateSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await reorderTournamentPlayers(input);
+      return await reorderTournamentUnits(input);
     }),
-  withdrawPlayer: tournamentAdminProcedure
-    .input(withdrawTournamentPlayerInputSchema)
-    .output(withdrawTournamentPlayerResultSchema)
+  withdrawUnit: tournamentAdminProcedure
+    .input(withdrawTournamentUnitInputSchema)
+    .output(withdrawTournamentUnitResultSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await withdrawPlayer(input);
+      return await withdrawUnit(input);
     }),
   setGameResult: protectedProcedure
     .input(
       z.object({
         gameId: z.string(),
-        whiteId: z.string(),
-        blackId: z.string(),
+        whiteUnitId: unitSchema.shape.id,
+        blackUnitId: unitSchema.shape.id,
         result: gameResultEnum,
         prevResult: gameResultEnum.nullable(),
         roundNumber: z.number(),
@@ -294,10 +252,10 @@ export const tournamentRouter = {
         roundsNumber: z.number().int().min(1).nullable(),
       }),
     )
-    .output(z.void())
+    .output(z.array(gameSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      await startTournament(input);
+      return await startTournament(input);
     }),
   reset: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
@@ -311,7 +269,7 @@ export const tournamentRouter = {
     .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
-      await resetTournamentPlayers(input);
+      await resetTournamentUnits(input);
     }),
   finish: tournamentAdminProcedure
     .input(
@@ -337,7 +295,7 @@ export const tournamentRouter = {
     .output(tournamentAuthStatusSchema)
     .query(async (opts) => {
       const { user } = await validateRequest();
-      if (!user) return { status: 'viewer' as const };
+      if (!user) return { status: 'viewer' as const, unitId: null };
       return await getStatusInTournament(user.id, opts.input.tournamentId);
     }),
   updateSwissRoundsNumber: tournamentAdminProcedure
@@ -351,7 +309,7 @@ export const tournamentRouter = {
       const { input } = opts;
       await updateSwissRoundsNumber(input);
     }),
-  editTournamentTitle: tournamentAdminProcedure
+  editTitle: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
         title: z.string(),

@@ -1,34 +1,37 @@
 import { LoadingSpinner } from '@/app/loading';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import Fab from '@/components/fab';
-import { useTournamentReorderPlayers } from '@/components/hooks/mutation-hooks/use-tournament-reorder-players';
+import { useTournamentReorderUnits } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-reorder-units';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
+import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Button } from '@/components/ui/button';
 import { shuffle } from '@/lib/utils';
-import { PlayerTournamentModel } from '@/server/zod/players';
-import { GameModel, TournamentInfoModel } from '@/server/zod/tournaments';
+import {
+  GameModel,
+  TournamentInfoModel,
+  UnitModel,
+} from '@/server/zod/tournaments';
 import { Loader2, Shuffle } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useContext } from 'react';
 
 const ShuffleButton = () => {
-  const { isPending, handleClick, tournament, players, games } = useShuffle();
+  const { isPending, handleClick, tournament, units, games } = useShuffle();
   const { userId, status } = useContext(DashboardContext);
   const { isDesktop } = useContext(MediaQueryContext);
 
   if (
     tournament?.tournament.startedAt ||
     !games ||
-    !players ||
+    !units ||
     !userId ||
     status !== 'organizer'
   )
     return null;
 
-  const isSufficient = players && players.length > 2;
+  const isSufficient = units.length > 2;
 
   const desktop = isSufficient ? (
     <Button
@@ -57,27 +60,27 @@ const ShuffleButton = () => {
 const useShuffle = (): ShuffleProps => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data: tournament } = useTournamentInfo(tournamentId);
-  const { data: players } = useTournamentPlayers(tournamentId);
+  const { data: units } = useTournamentUnits(tournamentId);
   const { data: games } = useTournamentRoundGames({
     tournamentId,
     roundNumber: 1,
   });
-  const reorderPlayers = useTournamentReorderPlayers(tournamentId);
+  const reorderUnits = useTournamentReorderUnits(tournamentId);
 
   const handleClick = () => {
-    if (!players || !games) return null;
+    if (!units || !games) return null;
 
-    reorderPlayers.mutate({
+    reorderUnits.mutate({
       tournamentId,
-      playerIds: shuffle(players).map((player) => player.id),
+      unitIds: shuffle(units).map((unit) => unit.id),
     });
   };
 
   return {
-    isPending: reorderPlayers.isPending,
+    isPending: reorderUnits.isPending,
     handleClick,
     tournament,
-    players,
+    units,
     games,
   };
 };
@@ -86,7 +89,7 @@ type ShuffleProps = {
   isPending: boolean;
   handleClick: () => void;
   tournament: TournamentInfoModel | undefined;
-  players: PlayerTournamentModel[] | undefined;
+  units: UnitModel[] | undefined;
   games: GameModel[] | undefined;
 };
 

@@ -1,7 +1,7 @@
-import { PlayerTournamentModel } from '@/server/zod/players';
+import { UnitModel } from '@/server/zod/tournaments';
 
 export type Stat =
-  | keyof Pick<PlayerTournamentModel, 'wins' | 'draws' | 'losses'>
+  | keyof Pick<UnitModel, 'wins' | 'draws' | 'losses'>
   | 'score'
   | 'tiebreak';
 

@@ -26,10 +26,14 @@ export default function useTournamentFinish(
           queryKey: trpc.tournament.info.queryKey({ tournamentId }),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+          queryKey: trpc.tournament.units.queryKey({ tournamentId }),
         });
       },
       onError: (error) => {
+        if (error.message === 'INCOMPLETE_GAMES') {
+          toast.error(t('incomplete games'));
+          return;
+        }
         toast.error(t('server error'));
         console.log(error);
       },

@@ -1,7 +1,7 @@
 import { GameModel } from '@/server/zod/tournaments';
 import {
   type ColouredEntitiesPair,
-  convertPlayerToEntity,
+  convertUnitToEntity,
   generateRoundPairs,
   getGameToInsert,
   getNumberedPair,
@@ -13,7 +13,7 @@ export function generateConsecutiveRoundGames(
   roundProps: RoundProps,
 ): GameModel[] {
   const matchedEntities = roundProps.players.map((player) =>
-    convertPlayerToEntity(player, roundProps.games),
+    convertUnitToEntity(player, roundProps.games),
   );
 
   const entitiesMatchingsGenerated = generateRoundPairs(

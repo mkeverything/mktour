@@ -1,7 +1,7 @@
 import { shuffle } from '@/lib/utils';
 import { GameModel } from '@/server/zod/tournaments';
 import {
-  convertPlayerToEntity,
+  convertUnitToEntity,
   generateRoundPairs,
   getColouredPair,
   getGameToInsert,
@@ -21,7 +21,7 @@ export function generateRandomRoundGames(
 ): GameModel[] {
   // checking if the set of layers is even, if not, making it even with a smart alg
   const matchedEntities = randomRoundProps.players.map((player) =>
-    convertPlayerToEntity(player, randomRoundProps.games),
+    convertUnitToEntity(player, randomRoundProps.games),
   );
 
   // generating set of base matches

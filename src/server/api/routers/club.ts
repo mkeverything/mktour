@@ -23,10 +23,10 @@ import {
   getPublicPopularClubs,
   getUserClubPlayer,
 } from '@/server/queries/club';
-import getAllClubs from '@/server/queries/get-all-clubs';
+import getAllClubsInfinite from '@/server/queries/get-all-clubs-infinite';
 import getClubNotifications from '@/server/queries/get-club-notifications';
 import { getClubStats } from '@/server/queries/get-club-stats';
-import { getClubTournaments } from '@/server/queries/get-club-tournaments';
+import { getClubTournamentsInfinite } from '@/server/queries/get-club-tournaments-infinite';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { getUserClubAffiliation } from '@/server/queries/get-user-club-affiliation';
 import {
@@ -68,7 +68,7 @@ export const clubRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      return await getAllClubs({
+      return await getAllClubsInfinite({
         limit: input.limit,
         cursor: input.cursor ?? undefined,
       });
@@ -134,7 +134,7 @@ export const clubRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      return await getClubTournaments(
+      return await getClubTournamentsInfinite(
         opts.input.clubId,
         opts.input.limit,
         opts.input.cursor,

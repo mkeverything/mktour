@@ -53,10 +53,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let dynamicPages: MetadataRoute.Sitemap = [];
 
   try {
-    const [{ clubs }, { tournaments: tournamentsData }] = await Promise.all([
-      publicCaller.club.all({}),
-      publicCaller.tournament.all({}),
-    ]);
+    const { clubs } = await publicCaller.club.all({});
+    const { tournaments: tournamentsData } = await publicCaller.tournament.all(
+      {},
+    );
 
     const clubPages = clubs.map((club) => ({
       url: `${baseUrl}/clubs/${club.id}`,

@@ -24,7 +24,7 @@ import { getUserClubIds } from '@/server/queries/get-user-clubs';
 import {
   getPlayerAuthStats,
   getPlayerStats,
-  getPlayersTournaments,
+  getPlayersTournamentsInfinite,
 } from '@/server/queries/player';
 import { clubsSelectSchema } from '@/server/zod/clubs';
 import {
@@ -40,7 +40,7 @@ import {
   playersSelectSchema,
   playerStatsSchema,
 } from '@/server/zod/players';
-import { playerToTournamentSchema } from '@/server/zod/tournaments';
+import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -72,10 +72,10 @@ export const playerRouter = {
   lastTournaments: publicProcedure
     .meta(meta.playersLastTournaments)
     .input(playerIdInputSchema)
-    .output(z.array(playerToTournamentSchema))
+    .output(z.array(tournamentSchema))
     .query(async (opts) => {
       const { input } = opts;
-      return await getPlayersTournaments(input.playerId);
+      return await getPlayersTournamentsInfinite(input.playerId);
     }),
   affiliation: {
     request: protectedProcedure

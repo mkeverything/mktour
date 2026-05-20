@@ -21,6 +21,17 @@ export const newid = customAlphabet(
   8,
 );
 
+/** public profile url: mktour user page when linked, else club player page */
+export function playerPublicProfileHref(player: {
+  id: string;
+  userId: string | null;
+  username: string | null;
+}) {
+  return player.userId && player.username
+    ? `/user/${player.username}`
+    : `/player/${player.id}`;
+}
+
 export function shallowEqual(
   object1: { [key: string]: string | number | boolean | undefined | null },
   object2: { [key: string]: string | number | boolean | undefined | null },
@@ -146,7 +157,7 @@ export function getWithdrawalForfeitResult(
   game: GameModel,
   withdrawnPlayerId: string,
 ): GameResult {
-  const isWithdrawnWhite = game.whiteId === withdrawnPlayerId;
+  const isWithdrawnWhite = game.whiteUnitId === withdrawnPlayerId;
   if (isWithdrawnWhite) {
     return FORFEIT_RESULT_WHEN_WITHDRAWN_IS_WHITE;
   } else {
@@ -166,7 +177,8 @@ export function shouldForfeitForWithdrawal(
 ): boolean {
   const hasResult = game.result !== null;
   const hasWithdrawnPlayer =
-    game.whiteId === withdrawnPlayerId || game.blackId === withdrawnPlayerId;
+    game.whiteUnitId === withdrawnPlayerId ||
+    game.blackUnitId === withdrawnPlayerId;
   return !hasResult && hasWithdrawnPlayer;
 }
 
@@ -206,7 +218,7 @@ function forfeitGameIfNeeded(
  * wins). All other games pass through unchanged. Pure function — returns a new
  * array without mutating the input.
  *
- * Called from both sides: server-side inside the withdrawPlayer transaction to
+ * Called from both sides: server-side inside the withdrawUnit transaction to
  * persist forfeits, and client-side as the optimistic cache update so the
  * server and client agree on what happened while the mutation is in flight.
  */

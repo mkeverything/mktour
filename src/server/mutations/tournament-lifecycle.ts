@@ -4,7 +4,7 @@ import { validateRequest } from '@/lib/auth/lucia';
 import {
   buildScoreMaps,
   hasSameStanding,
-  sortPlayersByResults,
+  sortUnitsByResults,
 } from '@/lib/tournament-results';
 import {
   getRoundRobinRoundsNumber,
@@ -16,28 +16,29 @@ import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
   games,
-  players_to_tournaments,
+  players_to_units,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { getTournamentGames } from '@/server/queries/get-tournament-games';
 import {
-  getRawTournamentPlayers,
-  getTournamentPlayers,
-} from '@/server/queries/get-tournament-players';
-import {
-  getTournamentById,
-  getTournamentPlayersCount,
-} from '@/server/queries/tournament-helpers';
+  getRawTournamentUnits,
+  getTournamentUnits,
+} from '@/server/queries/get-tournament-units';
+import { getTournamentById } from '@/server/queries/tournament-helpers';
 import { TournamentFormat } from '@/server/zod/enums';
 import {
+  GameModel,
   NewTournamentFormModel,
   TournamentModel,
   tournamentsInsertSchema,
+  UnitModel,
 } from '@/server/zod/tournaments';
+import { TRPCError } from '@trpc/server';
 import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
-import { reapplyPreStartOrder } from './tournament-player-order';
+import { reapplyPreStartOrder } from './tournament-unit-order';
 
 export const createTournament = async (
   values: Omit<NewTournamentFormModel, 'date'> & {
@@ -73,12 +74,12 @@ async function resolveTournamentRoundsNumber({
   roundsNumber: number | null;
 }) {
   if (format === 'swiss') {
-    const playerCount = await getTournamentPlayersCount(tournamentId);
-    if (playerCount < 2) throw new Error('NOT_ENOUGH_PLAYERS');
+    const units = await getTournamentUnits(tournamentId);
+    if (units.length < 2) throw new Error('NOT_ENOUGH_PARTICIPANTS');
 
-    const maxRounds = getSwissMaxRoundsNumber(playerCount);
+    const maxRounds = getSwissMaxRoundsNumber(units.length);
     const resolvedRounds =
-      roundsNumber ?? getSwissRecommendedRoundsNumber(playerCount);
+      roundsNumber ?? getSwissRecommendedRoundsNumber(units.length);
 
     if (resolvedRounds < 1 || resolvedRounds > maxRounds) {
       throw new Error('INVALID_ROUNDS_NUMBER');
@@ -87,8 +88,8 @@ async function resolveTournamentRoundsNumber({
     return resolvedRounds;
   }
   if (format === 'round robin') {
-    const playersList = await getTournamentPlayers(tournamentId);
-    return getRoundRobinRoundsNumber(playersList.length);
+    const units = await getTournamentUnits(tournamentId);
+    return getRoundRobinRoundsNumber(units.length);
   }
   throw new Error('UNSUPPORTED_TOURNAMENT_FORMAT');
 }
@@ -102,6 +103,19 @@ export async function normalizeSwissRoundsNumber(
   return await normalizeSwissRoundsNumberInDatabase(tournamentId, db);
 }
 
+function getEligibleSwissUnits(
+  tournament: TournamentModel,
+  units: Array<UnitModel>,
+) {
+  if (!tournament.startedAt && units.some((unit) => unit.isOut === true)) {
+    throw new Error('INVALID_PRE_START_WITHDRAWN_UNIT');
+  }
+
+  return tournament.startedAt
+    ? units.filter((unit) => unit.isOut !== true)
+    : units;
+}
+
 export async function normalizeSwissRoundsNumberInDatabase(
   tournamentId: string,
   database: Pick<typeof db, 'select' | 'update'>,
@@ -112,13 +126,9 @@ export async function normalizeSwissRoundsNumberInDatabase(
   const tournament = await getTournamentById(tournamentId, database);
   if (!tournament || tournament.format !== 'swiss') return null;
 
-  const playerCount = await getTournamentPlayersCount(
-    tournamentId,
-    tournament.type,
-    { excludeOut: !!tournament.startedAt },
-    database,
-  );
-  const maxRounds = getSwissMaxRoundsNumber(playerCount);
+  const units = await getTournamentUnits(tournamentId, database);
+  const eligibleUnits = getEligibleSwissUnits(tournament, units);
+  const maxRounds = getSwissMaxRoundsNumber(eligibleUnits.length);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
   if (minRounds > maxRounds) {
     throw new Error('WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT');
@@ -150,14 +160,13 @@ export async function normalizeSwissRoundsNumberInDatabase(
 async function preparePreStartPairings(
   tournamentId: string,
   database: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
-) {
-  const players = await getTournamentPlayers(tournamentId, database);
-  if (players && players.length < 2) {
+): Promise<GameModel[]> {
+  const units = await getTournamentUnits(tournamentId, database);
+  if (units.length < 2) {
     throw new Error('NOT_ENOUGH_PLAYERS');
   }
-  await reapplyPreStartOrder(tournamentId, database, {
-    skipFinalReads: true,
-  });
+  const result = await reapplyPreStartOrder(tournamentId, database);
+  return result.games;
 }
 
 export async function startTournament({
@@ -179,8 +188,8 @@ export async function startTournament({
     roundsNumber,
   });
 
-  await db.transaction(async (tx) => {
-    await preparePreStartPairings(tournamentId, tx);
+  return await db.transaction(async (tx) => {
+    const roundGames = await preparePreStartPairings(tournamentId, tx);
     const value = await tx
       .update(tournaments)
       .set({ startedAt, roundsNumber: finalRoundsNumber })
@@ -188,6 +197,7 @@ export async function startTournament({
         and(eq(tournaments.id, tournamentId), isNull(tournaments.startedAt)),
       );
     if (!value.rowsAffected) throw new Error('TOURNAMENT_ALREADY_GOING');
+    return roundGames;
   });
 }
 
@@ -221,7 +231,7 @@ export async function resetTournament({
       );
 
     await tx
-      .update(players_to_tournaments)
+      .update(tournament_units)
       .set({
         wins: 0,
         draws: 0,
@@ -230,7 +240,7 @@ export async function resetTournament({
         place: null,
         isOut: null,
       })
-      .where(eq(players_to_tournaments.tournamentId, tournamentId));
+      .where(eq(tournament_units.tournamentId, tournamentId));
 
     await tx
       .update(games)
@@ -252,10 +262,22 @@ export async function finishTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new Error('NOT_ADMIN');
 
-  const allGames = await getTournamentGames(tournamentId);
-  const playersUnsorted = await getRawTournamentPlayers(tournamentId);
-
   await db.transaction(async (tx) => {
+    const [tournament, allGames, unitsUnsorted] = await Promise.all([
+      getTournamentById(tournamentId, tx),
+      getTournamentGames(tournamentId, tx),
+      getRawTournamentUnits(tournamentId, tx),
+    ]);
+
+    if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
+
+    if (allGames.some((game) => game.result === null)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'INCOMPLETE_GAMES',
+      });
+    }
+
     if (closedAt) {
       const result = await tx
         .update(tournaments)
@@ -266,58 +288,38 @@ export async function finishTournament({
       if (!result.rowsAffected) throw new Error('TOURNAMENT_ALREADY_FINISHED');
     }
 
-    const tournament = await tx
-      .select()
-      .from(tournaments)
-      .where(eq(tournaments.id, tournamentId))
-      .then((rows) => rows[0]);
-
-    if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-
-    const sortedPlayers = sortPlayersByResults(
-      playersUnsorted,
-      tournament,
-      allGames,
-    );
-    const { playerScoresMap, tiebreakScoresMap } = buildScoreMaps(
-      sortedPlayers,
+    const sortedUnits = sortUnitsByResults(unitsUnsorted, tournament, allGames);
+    const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
+      sortedUnits,
       tournament,
       allGames,
     );
 
-    sortedPlayers.forEach((player, i) => {
+    sortedUnits.forEach((unit, i) => {
       if (i === 0) {
-        player.place = 1;
+        unit.place = 1;
       } else {
-        const prevPlayer = sortedPlayers[i - 1];
-        player.place = hasSameStanding(
-          player,
-          prevPlayer,
-          playerScoresMap,
+        const prevUnit = sortedUnits[i - 1];
+        unit.place = hasSameStanding(
+          unit,
+          prevUnit,
+          unitScoresMap,
           tiebreakScoresMap,
         )
-          ? prevPlayer.place
+          ? prevUnit.place
           : i + 1;
       }
     });
 
     await Promise.all(
-      sortedPlayers.flatMap((player) => {
-        const playerIds =
-          player.pairPlayers && player.pairPlayers.length > 0
-            ? player.pairPlayers.map((pairPlayer) => pairPlayer.id)
-            : [player.id];
+      sortedUnits.flatMap((unit) => {
+        const playerIds = unit.players.map((player) => player.id);
 
         return [
           tx
-            .update(players_to_tournaments)
-            .set({ place: player.place })
-            .where(
-              and(
-                eq(players_to_tournaments.tournamentId, tournamentId),
-                inArray(players_to_tournaments.playerId, playerIds),
-              ),
-            ),
+            .update(tournament_units)
+            .set({ place: unit.place })
+            .where(eq(tournament_units.id, unit.id)),
           tx
             .update(players)
             .set({ lastSeenAt: closedAt })
@@ -341,14 +343,28 @@ export async function deleteTournament({
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new Error('NOT_ADMIN');
-  const queries = [
-    db.delete(games).where(eq(games.tournamentId, tournamentId)),
-    db
-      .delete(players_to_tournaments)
-      .where(eq(players_to_tournaments.tournamentId, tournamentId)),
-  ];
-  await Promise.all(queries);
-  await db.delete(tournaments).where(eq(tournaments.id, tournamentId));
+  await db.transaction(async (tx) => {
+    const units = await tx
+      .select({ id: tournament_units.id })
+      .from(tournament_units)
+      .where(eq(tournament_units.tournamentId, tournamentId));
+    if (units.length > 0) {
+      const unitIds = units.map((unit) => unit.id);
+
+      await Promise.all([
+        tx.delete(games).where(eq(games.tournamentId, tournamentId)),
+        tx
+          .delete(players_to_units)
+          .where(inArray(players_to_units.unitId, unitIds)),
+      ]);
+
+      await tx
+        .delete(tournament_units)
+        .where(eq(tournament_units.tournamentId, tournamentId));
+    }
+
+    await tx.delete(tournaments).where(eq(tournaments.id, tournamentId));
+  });
 }
 
 export async function updateSwissRoundsNumber({
@@ -359,16 +375,13 @@ export async function updateSwissRoundsNumber({
   roundsNumber: number;
 }) {
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
   if (tournament.closedAt) throw new Error('TOURNAMENT_ALREADY_FINISHED');
 
-  const playerCount = await getTournamentPlayersCount(
-    tournamentId,
-    tournament.type,
-    { excludeOut: !!tournament.startedAt },
-  );
-  const maxRounds = getSwissMaxRoundsNumber(playerCount);
+  const units = await getTournamentUnits(tournamentId);
+  const eligibleUnits = getEligibleSwissUnits(tournament, units);
+  const maxRounds = getSwissMaxRoundsNumber(eligibleUnits.length);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
   if (roundsNumber < minRounds) throw new Error('INVALID_ROUNDS_NUMBER');
   if (roundsNumber > maxRounds) throw new Error('INVALID_ROUNDS_NUMBER');

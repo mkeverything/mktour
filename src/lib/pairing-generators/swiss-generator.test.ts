@@ -10,7 +10,7 @@ import {
   updatePlayerScores,
 } from '@/lib/pairing-generators/common-generator.test';
 import { generateWeightedSwissRound } from '@/lib/pairing-generators/swiss-generator';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { GameModel } from '@/server/zod/tournaments';
 
 /** Starting seed for testing */
@@ -61,14 +61,14 @@ function generateTournamentWithSeed(
     playerCount ?? faker.number.int(SWISS_PLAYER_NUMBER_FAKEOPTS);
 
   // Generate players
-  const randomPlayers: PlayerTournamentModel[] = [];
+  const randomPlayers: UnitModel[] = [];
   for (let playerIndex = 0; playerIndex < randomPlayerNumber; playerIndex++) {
     randomPlayers.push(generatePlayerModel());
   }
 
   // Assign pairing numbers (0, 1, 2, ...)
   randomPlayers.forEach((player, index) => {
-    player.pairingNumber = index;
+    player.number = index;
   });
 
   // Generate tournament context
@@ -140,7 +140,7 @@ describe('Swiss Generator Black-Box Tests', () => {
     test('withdrawn player is excluded from future pairings', () => {
       const players = Array.from({ length: 4 }, (_, index) => {
         const player = generatePlayerModel();
-        player.pairingNumber = index;
+        player.number = index;
         return player;
       });
 
@@ -158,8 +158,8 @@ describe('Swiss Generator Black-Box Tests', () => {
       expect(
         round.some(
           (game) =>
-            game.whiteId === withdrawnPlayer.id ||
-            game.blackId === withdrawnPlayer.id,
+            game.whiteUnitId === withdrawnPlayer.id ||
+            game.blackUnitId === withdrawnPlayer.id,
         ),
       ).toBe(false);
     });
@@ -169,7 +169,7 @@ describe('Swiss Generator Black-Box Tests', () => {
         { length: WITHDRAWAL_TEST_PLAYER_COUNT },
         (_, index) => {
           const player = generatePlayerModel();
-          player.pairingNumber = index;
+          player.number = index;
           return player;
         },
       );
@@ -187,7 +187,7 @@ describe('Swiss Generator Black-Box Tests', () => {
         .filter((player) => !player.isOut)
         .map((player) => player.id);
       const pairedIds = new Set(
-        round.flatMap((game) => [game.whiteId, game.blackId]),
+        round.flatMap((game) => [game.whiteUnitId, game.blackUnitId]),
       );
       const pabRecipients = activeIds.filter((id) => !pairedIds.has(id));
 
@@ -199,7 +199,7 @@ describe('Swiss Generator Black-Box Tests', () => {
         { length: WITHDRAWAL_TEST_PLAYER_COUNT },
         (_, index) => {
           const player = generatePlayerModel();
-          player.pairingNumber = index;
+          player.number = index;
           return player;
         },
       );
@@ -226,8 +226,8 @@ describe('Swiss Generator Black-Box Tests', () => {
       expect(
         secondRound.some(
           (game) =>
-            game.whiteId === withdrawnPlayer.id ||
-            game.blackId === withdrawnPlayer.id,
+            game.whiteUnitId === withdrawnPlayer.id ||
+            game.blackUnitId === withdrawnPlayer.id,
         ),
       ).toBe(false);
     });

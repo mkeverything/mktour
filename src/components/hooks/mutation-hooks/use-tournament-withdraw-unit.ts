@@ -9,7 +9,7 @@ import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
 import { toast } from 'sonner';
 
-export const useTournamentWithdrawPlayer = (tournamentId: string) => {
+export const useTournamentWithdrawUnit = (tournamentId: string) => {
   const queryClient = useQueryClient();
   const t = useTranslations('Errors');
   const tToasts = useTranslations('Toasts');
@@ -17,10 +17,10 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
   const { sendJsonMessage } = useContext(DashboardContext);
 
   return useMutation(
-    trpc.tournament.withdrawPlayer.mutationOptions({
-      onMutate: async ({ playerId }) => {
+    trpc.tournament.withdrawUnit.mutationOptions({
+      onMutate: async ({ unitId }) => {
         await queryClient.cancelQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+          queryKey: trpc.tournament.units.queryKey({ tournamentId }),
         });
         await queryClient.cancelQueries({
           queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
@@ -55,19 +55,19 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
             };
             const nextRoundGames = settlePendingGamesAsForfeit(
               previousRoundGames,
-              playerId,
+              unitId,
             );
             queryClient.setQueryData(roundGamesKey, nextRoundGames);
           }
         }
 
         const previousState = queryClient.getQueryData(
-          trpc.tournament.playersIn.queryKey({ tournamentId }),
+          trpc.tournament.units.queryKey({ tournamentId }),
         );
         if (previousAllGames !== undefined) {
           const nextAllGames = settlePendingGamesAsForfeit(
             previousAllGames,
-            playerId,
+            unitId,
           );
           queryClient.setQueryData(
             trpc.tournament.allGames.queryKey({ tournamentId }),
@@ -76,16 +76,16 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
         }
 
         queryClient.setQueryData(
-          trpc.tournament.playersIn.queryKey({ tournamentId }),
+          trpc.tournament.units.queryKey({ tournamentId }),
           (cache) =>
-            cache?.map((player) =>
-              player.id === playerId ? { ...player, isOut: true } : player,
+            cache?.map((unit) =>
+              unit.id === unitId ? { ...unit, isOut: true } : unit,
             ),
         );
 
         return { previousAllGames, previousState, roundGamesRollback };
       },
-      onError: (_err, { playerId }, context) => {
+      onError: (_err, { unitId }, context) => {
         if (context?.previousAllGames) {
           queryClient.setQueryData(
             trpc.tournament.allGames.queryKey({ tournamentId }),
@@ -103,26 +103,26 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
         }
         if (context?.previousState) {
           queryClient.setQueryData(
-            trpc.tournament.playersIn.queryKey({ tournamentId }),
+            trpc.tournament.units.queryKey({ tournamentId }),
             context.previousState,
           );
         }
 
         if (_err.message === 'WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT') {
-          toast.error(t('withdraw-player-rounds-error'), {
-            id: 'withdraw-player-rounds-error',
+          toast.error(t('withdraw-unit-rounds-error'), {
+            id: 'withdraw-unit-rounds-error',
             duration: 3000,
           });
           return;
         }
 
-        const player = context?.previousState?.find(
-          (previousPlayer) => previousPlayer.id === playerId,
+        const unit = context?.previousState?.find(
+          (previousUnit) => previousUnit.id === unitId,
         );
-        if (!player) {
+        if (!unit) {
           toast.error(
             t('internal-error', {
-              error: 'player not found in context.previousState',
+              error: 'unit not found in context.previousState',
             }),
             {
               id: 'internal-error',
@@ -133,11 +133,11 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
         }
 
         toast.error(
-          t('withdraw-player-error', {
-            player: player.nickname,
+          t('withdraw-unit-error', {
+            player: unit.unitNickname,
           }),
           {
-            id: 'withdraw-player-error',
+            id: 'withdraw-unit-error',
             duration: 3000,
           },
         );
@@ -145,7 +145,7 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
       onSettled: () => {
         if (
           queryClient.isMutating({
-            mutationKey: trpc.tournament.withdrawPlayer.mutationKey(),
+            mutationKey: trpc.tournament.withdrawUnit.mutationKey(),
           }) === 1
         ) {
           queryClient.invalidateQueries({
@@ -153,8 +153,8 @@ export const useTournamentWithdrawPlayer = (tournamentId: string) => {
           });
         }
       },
-      onSuccess: (data, { playerId }) => {
-        sendJsonMessage({ event: 'withdraw-player', id: playerId });
+      onSuccess: (data, { unitId }) => {
+        sendJsonMessage({ event: 'withdraw-unit', id: unitId });
         if (data.roundsNumberAutoDecreased && data.roundsNumber !== null) {
           toast.info(
             tToasts('rounds number decreased automatically', {

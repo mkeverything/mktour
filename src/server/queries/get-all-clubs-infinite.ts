@@ -4,7 +4,7 @@ import { tournaments } from '@/server/db/schema/tournaments';
 import { ClubModel } from '@/server/zod/clubs';
 import { and, desc, eq, isNotNull, lt } from 'drizzle-orm';
 
-export default async function getAllClubs({
+export default async function getAllClubsInfinite({
   limit = 10,
   cursor,
 }: {

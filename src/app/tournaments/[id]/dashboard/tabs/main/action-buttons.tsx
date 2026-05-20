@@ -75,7 +75,7 @@ const ActionButtonsRoot: FC<{
   }
 
   if (startedAt && roundsNumber === ongoingRound) {
-    return <FinishTournamentButton lastRoundNumber={roundsNumber} />;
+    return <FinishTournamentButton />;
   }
 
   if (!startedAt) {

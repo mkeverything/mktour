@@ -13,7 +13,7 @@ export default function useTournamentEditTitle() {
   const t = useTranslations('Toasts');
   const trpc = useTRPC();
   return useMutation(
-    trpc.tournament.editTournamentTitle.mutationOptions({
+    trpc.tournament.editTitle.mutationOptions({
       onMutate: async ({ tournamentId, title }) => {
         queryClient.cancelQueries({
           queryKey: trpc.tournament.info.queryKey({ tournamentId }),

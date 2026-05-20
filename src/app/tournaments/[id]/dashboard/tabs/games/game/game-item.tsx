@@ -20,9 +20,9 @@ import { toast } from 'sonner';
 const GameItem: FC<GameProps> = ({
   id,
   result,
-  whiteId,
+  whiteUnitId,
   whiteNickname,
-  blackId,
+  blackUnitId,
   blackNickname,
   roundNumber,
   selected,
@@ -30,7 +30,7 @@ const GameItem: FC<GameProps> = ({
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const t = useTranslations('Toasts');
-  const { sendJsonMessage, status, playerId, userId } =
+  const { sendJsonMessage, status, unitId, userId } =
     useContext(DashboardContext);
   const queryClient = useQueryClient();
   const mutation = useTournamentSetGameResult(queryClient, {
@@ -45,10 +45,10 @@ const GameItem: FC<GameProps> = ({
   const isClosed = !!data?.isClosed;
   const allowPlayersSetResults = !!data?.allowPlayersSetResults;
   // players can only edit their own games, and only after tournament has started
-  const isPlayerInGame = playerId === whiteId || playerId === blackId;
+  const isPlayerUnitInGame = unitId === whiteUnitId || unitId === blackUnitId;
   const canEdit =
     status === 'organizer' ||
-    (status === 'player' && isPlayerInGame && hasStarted);
+    (status === 'player' && isPlayerUnitInGame && hasStarted);
   const disabled = !canEdit || isClosed;
   const draw = result === '1/2-1/2';
 
@@ -59,7 +59,7 @@ const GameItem: FC<GameProps> = ({
     }
     const playerBlockedByClubSetting =
       status === 'player' &&
-      isPlayerInGame &&
+      isPlayerUnitInGame &&
       hasStarted &&
       !allowPlayersSetResults;
     if (playerBlockedByClubSetting) {
@@ -74,8 +74,8 @@ const GameItem: FC<GameProps> = ({
     if (selected && hasStarted && !mutation.isPending) {
       mutation.mutate({
         gameId: id,
-        whiteId,
-        blackId,
+        whiteUnitId,
+        blackUnitId,
         result: newResult,
         prevResult: result,
         tournamentId,
@@ -112,7 +112,7 @@ const GameItem: FC<GameProps> = ({
         onClick={handleOpenGame}
       >
         <Card
-          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-4xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerInGame && 'border-3'}`}
+          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-4xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerUnitInGame && 'border-3'}`}
         >
           <Player
             isWinner={result === '1-0'}
@@ -120,7 +120,7 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={whiteNickname}
             position={{ justify: 'justify-self-start', text: 'text-left' }}
-            className={`${playerId === whiteId && 'font-bold'}`}
+            className={`${unitId === whiteUnitId && 'font-bold'}`}
           />
           <Button
             variant="ghost"
@@ -135,7 +135,7 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={blackNickname}
             position={{ justify: 'justify-self-end', text: 'text-right' }}
-            className={`${playerId === blackId && 'font-bold'}`}
+            className={`${unitId === blackUnitId && 'font-bold'}`}
           />
         </Card>
       </motion.div>
@@ -146,9 +146,9 @@ const GameItem: FC<GameProps> = ({
 type GameProps = {
   id: string;
   result: GameResult | null;
-  whiteId: string;
+  whiteUnitId: string;
   whiteNickname: string;
-  blackId: string;
+  blackUnitId: string;
   blackNickname: string;
   roundNumber: number;
   selected: boolean;

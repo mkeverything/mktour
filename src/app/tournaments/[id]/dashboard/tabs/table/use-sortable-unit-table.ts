@@ -1,23 +1,19 @@
 'use client';
 
-import { useTournamentReorderPlayers } from '@/components/hooks/mutation-hooks/use-tournament-reorder-players';
-import { reorderTournamentPlayersByIndex } from '@/lib/reorder-tournament-players';
-import { PlayerTournamentModel } from '@/server/zod/players';
+import { useTournamentReorderUnits } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-reorder-units';
+import { reorderTournamentUnitsByIndex } from '@/lib/reorder-tournament-units';
+import { UnitModel } from '@/server/zod/tournaments';
 import { isSortable } from '@dnd-kit/dom/sortable';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useParams } from 'next/navigation';
 import { ComponentProps, useState } from 'react';
 
-export const useSortablePlayerTable = (
-  players: PlayerTournamentModel[],
-  canSort: boolean,
-) => {
+export const useSortableUnitTable = (units: UnitModel[], canSort: boolean) => {
   const { id } = useParams<{ id: string }>();
-  const reorderPlayers = useTournamentReorderPlayers(id);
-  const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+  const reorderUnits = useTournamentReorderUnits(id);
+  const [activeUnitId, setActiveUnitId] = useState<string | null>(null);
 
-  const activePlayer =
-    players.find((player) => player.id === activePlayerId) ?? null;
+  const activeUnit = units.find((unit) => unit.id === activeUnitId) ?? null;
 
   const handleDragStart = (
     event: Parameters<
@@ -25,7 +21,7 @@ export const useSortablePlayerTable = (
     >[0],
   ) => {
     const activeId = event.operation.source?.id;
-    setActivePlayerId(typeof activeId === 'string' ? activeId : null);
+    setActiveUnitId(typeof activeId === 'string' ? activeId : null);
   };
 
   const handleDragEnd = (
@@ -33,7 +29,7 @@ export const useSortablePlayerTable = (
       NonNullable<ComponentProps<typeof DragDropProvider>['onDragEnd']>
     >[0],
   ) => {
-    setActivePlayerId(null);
+    setActiveUnitId(null);
 
     if (!canSort || event.canceled) return;
 
@@ -45,23 +41,23 @@ export const useSortablePlayerTable = (
 
     if (fromIndex === toIndex) return;
 
-    const reorderedPlayers = reorderTournamentPlayersByIndex(
-      players,
+    const reorderedUnits = reorderTournamentUnitsByIndex(
+      units,
       fromIndex,
       toIndex,
     );
 
-    if (reorderedPlayers === players) return;
+    if (reorderedUnits === units) return;
 
-    reorderPlayers.mutate({
+    reorderUnits.mutate({
       tournamentId: id,
-      playerIds: reorderedPlayers.map((player) => player.id),
+      unitIds: reorderedUnits.map((unit) => unit.id),
     });
   };
 
   return {
-    activePlayer,
-    activePlayerId,
+    activeUnit,
+    activeUnitId,
     handleDragStart,
     handleDragEnd,
   };

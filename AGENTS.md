@@ -176,6 +176,7 @@ always run `bun check` before pushing. use single-file test when validating chan
 
 - **no capital letters** in ui text, comments, or prose — write everything lowercase unless technically required
 - no unnecessary comments in code
+- preserve `/** @deprecated ... */` / `/** deprecated */` markers on exports; do not strip them during refactors unless asked
 - files: kebab-case (`user-profile.tsx`), components: PascalCase, variables: camelCase, constants: UPPER_SNAKE_CASE, types: PascalCase
 - absolute imports: `@/` prefix (maps to `src/`)
 - import order: react → third-party → internal (blank lines between groups), use `import type` for type-only

@@ -10,7 +10,7 @@ import {
   generateRandomDatabaseTournament,
 } from '@/lib/pairing-generators/common-generator.test';
 import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { GameModel } from '@/server/zod/tournaments';
 import { faker } from '@faker-js/faker';
 
@@ -24,7 +24,7 @@ describe('pure matching generation test', () => {
     const randomPlayerNumber = faker.number.int(PLAYER_NUMBER_FAKEOPTS);
 
     // initialising the player list
-    const randomPlayers: PlayerTournamentModel[] = [];
+    const randomPlayers: UnitModel[] = [];
     for (let playerIdx = 0; playerIdx < randomPlayerNumber; playerIdx++) {
       const generatedPlayer = generatePlayerModel();
       randomPlayers.push(generatedPlayer);
@@ -32,7 +32,7 @@ describe('pure matching generation test', () => {
 
     // simple pairing number rating assignment based on array index
     randomPlayers.forEach((matchedEntity, entityIndex) => {
-      matchedEntity.pairingNumber = entityIndex;
+      matchedEntity.number = entityIndex;
     });
     // for the initial case, the previous games are missing
     const previousGames: GameModel[] = [];

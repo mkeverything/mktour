@@ -110,7 +110,7 @@ export async function GET(request: Request): Promise<Response> {
     try {
       const userId = newid();
       const clubId = newid();
-      const ctuId = `${clubId}=${userId}`;
+      const ctuId = `${clubId}_${userId}`;
       const name = lichessUser.profile?.realName ?? null;
 
       await db.insert(clubs).values({

@@ -4,7 +4,7 @@ export interface GlickoPlayer {
   volatility: number;
 }
 
-export interface GameResult {
+export interface GlickoGameResult {
   opponentRating: number;
   opponentRatingDeviation: number;
   score: number; // 1 = win, 0.5 = draw, 0 = loss
@@ -146,7 +146,7 @@ export class Glicko2Calculator {
    */
   public calculateNewRatings(
     player: GlickoPlayer,
-    results: GameResult[],
+    results: GlickoGameResult[],
   ): RatingUpdate {
     // if no games played, only apply RD increase
     if (results.length === 0) {
