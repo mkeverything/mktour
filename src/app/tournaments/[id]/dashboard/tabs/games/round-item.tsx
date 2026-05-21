@@ -57,9 +57,12 @@ const RoundItem: FC<RoundItemProps> = ({
   if (isError) return <Center>error</Center>;
   if (!round) return <Center>no round</Center>;
 
-  const { ongoingRound, roundsNumber, closedAt, format } = info.data;
+  const { ongoingRound, roundsNumber, closedAt, format, startedAt } = info.data;
   const renderFinishButton =
-    status === 'organizer' && !closedAt && ongoingRound === roundsNumber;
+    status === 'organizer' &&
+    !closedAt &&
+    !!startedAt &&
+    ongoingRound === roundsNumber;
   const renderNewRoundButton =
     roundNumber === ongoingRound &&
     ongoingRound !== roundsNumber &&
