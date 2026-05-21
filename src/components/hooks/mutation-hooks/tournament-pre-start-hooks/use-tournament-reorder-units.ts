@@ -12,7 +12,7 @@ export const useTournamentReorderUnits = (tournamentId: string) => {
   const queryClient = useQueryClient();
   const {
     applyOptimisticPreStartRound,
-    applyServerPreStartStateIfLatest,
+    applyServerPreStartUnitsIfLatest,
     invalidatePreStartState,
     keys,
     rollbackOptimisticPreStartRound,
@@ -44,7 +44,7 @@ export const useTournamentReorderUnits = (tournamentId: string) => {
     onError: (_error, _variables, context) => {
       rollbackOptimisticPreStartRound(context);
     },
-    onSuccess: applyServerPreStartStateIfLatest,
+    onSuccess: applyServerPreStartUnitsIfLatest,
     onSettled: () => invalidatePreStartState({ info: false }),
   });
 };

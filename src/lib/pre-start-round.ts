@@ -22,10 +22,9 @@ function assignUnitNumbers<T extends UnitModel>(units: T[]): T[] {
  */
 export function generatePreStartRoundGames({
   units,
-  players,
   tournamentId,
 }: PreStartRoundProps): GameModel[] {
-  const tournamentUnits = units ?? players ?? [];
+  const tournamentUnits = units ?? [];
   return generateConsecutiveRoundGames({
     players: assignUnitNumbers(tournamentUnits),
     games: [],

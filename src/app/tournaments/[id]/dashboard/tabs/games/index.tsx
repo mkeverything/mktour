@@ -14,7 +14,7 @@ import Overlay from '@/components/overlay';
 import SkeletonList from '@/components/skeleton-list';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, useContext } from 'react';
+import { FC, useContext, useState } from 'react';
 
 const Games: FC = () => {
   const { currentTab } = useContext(DashboardTabContext);
@@ -28,6 +28,7 @@ const Games: FC = () => {
     isError: isUnitsError,
   } = useTournamentUnits(id);
   const t = useTranslations('Tournament.Round');
+  const [startTournamentOpen, setStartTournamentOpen] = useState(false);
   const now = new Date().getTime();
   const startedAt = data?.startedAt ? data.startedAt.getTime() : 0;
   const renderDrawer = !startedAt || now - startedAt <= 5000;
@@ -80,8 +81,17 @@ const Games: FC = () => {
         currentRound={data.ongoingRound}
         currentTab={currentTab}
       />
-      <RoundItem roundNumber={roundInView} />
-      {renderDrawer && <StartTournamentDrawer startedAt={startedAt} />}
+      <RoundItem
+        roundNumber={roundInView}
+        onOpenStartTournamentDrawer={() => setStartTournamentOpen(true)}
+      />
+      {renderDrawer && (
+        <StartTournamentDrawer
+          startedAt={startedAt}
+          open={startTournamentOpen}
+          onOpenChange={setStartTournamentOpen}
+        />
+      )}
     </div>
   );
 };

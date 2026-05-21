@@ -17,7 +17,7 @@ import type { GameResult } from '@/server/zod/enums';
 import type {
   AddDoublesUnitModel,
   EditDoublesUnitModel,
-  PreStartStateModel,
+  UnitModel,
   ReorderTournamentUnitsInputModel,
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
@@ -33,7 +33,7 @@ export async function removeUnit({
   tournamentId: string;
   unitId: string;
   userId: string;
-}): Promise<PreStartStateModel> {
+}): Promise<UnitModel[]> {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
@@ -52,14 +52,6 @@ export async function removeUnit({
     .then((rows) => rows.at(0));
   if (!unit) throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
   return await db.transaction(async (tx) => {
-    await tx
-      .delete(games)
-      .where(
-        and(
-          eq(games.tournamentId, tournamentId),
-          or(eq(games.whiteUnitId, unitId), eq(games.blackUnitId, unitId)),
-        ),
-      );
     await tx
       .delete(players_to_units)
       .where(eq(players_to_units.unitId, unitId));
@@ -83,7 +75,7 @@ export async function removeUnit({
 export async function reorderTournamentUnits({
   tournamentId,
   unitIds,
-}: ReorderTournamentUnitsInputModel): Promise<PreStartStateModel> {
+}: ReorderTournamentUnitsInputModel): Promise<UnitModel[]> {
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
   if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
@@ -121,7 +113,7 @@ export async function addDoublesUnit({
 }: AddDoublesUnitModel & {
   tournamentId: string;
   addedAt?: Date;
-}): Promise<PreStartStateModel> {
+}): Promise<UnitModel[]> {
   const now = addedAt ?? new Date();
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
@@ -220,7 +212,7 @@ export async function editDoublesUnit({
   secondPlayerId,
 }: EditDoublesUnitModel & {
   tournamentId: string;
-}): Promise<PreStartStateModel> {
+}): Promise<UnitModel[]> {
   const { user } = await validateRequest();
   if (!user) throw new Error('UNAUTHORIZED_REQUEST');
   if (firstPlayerId === secondPlayerId) {

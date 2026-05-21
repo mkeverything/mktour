@@ -2,6 +2,7 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
+import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { settlePendingGamesAsForfeit } from '@/lib/utils';
 import type { UnitModel } from '@/server/zod/tournaments';
@@ -56,11 +57,11 @@ export const handleSocketMessage = (
       });
       break;
     }
-    case 'prestart-round-updated': {
+    case 'prestart-units-updated': {
       const units = parseUnitsBody(message.units);
       const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
         tournamentId,
-        roundNumber: message.roundNumber,
+        roundNumber: 1,
       });
       queryClient.cancelQueries({
         queryKey: trpc.tournament.units.queryKey({ tournamentId }),
@@ -70,7 +71,10 @@ export const handleSocketMessage = (
         trpc.tournament.units.queryKey({ tournamentId }),
         units,
       );
-      queryClient.setQueryData(roundGamesQueryKey, message.games);
+      queryClient.setQueryData(
+        roundGamesQueryKey,
+        generatePreStartRoundGames({ units, tournamentId }),
+      );
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
@@ -177,6 +181,10 @@ export const handleSocketMessage = (
         }),
         message.games,
       );
+      queryClient.setQueryData(
+        trpc.tournament.allGames.queryKey({ tournamentId }),
+        message.games,
+      );
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.info.queryKey({ tournamentId }),
       });
@@ -193,6 +201,27 @@ export const handleSocketMessage = (
           return cache;
         },
       );
+      const resetUnits = queryClient.getQueryData<UnitModel[]>(
+        trpc.tournament.units.queryKey({ tournamentId }),
+      );
+      queryClient.setQueryData(
+        trpc.tournament.allGames.queryKey({ tournamentId }),
+        [],
+      );
+      if (resetUnits) {
+        const orderedUnits = resetUnits.toSorted(baselineUnitSort);
+        queryClient.setQueryData(
+          trpc.tournament.units.queryKey({ tournamentId }),
+          orderedUnits,
+        );
+        queryClient.setQueryData(
+          trpc.tournament.roundGames.queryKey({
+            tournamentId,
+            roundNumber: 1,
+          }),
+          generatePreStartRoundGames({ units: orderedUnits, tournamentId }),
+        );
+      }
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.info.queryKey({ tournamentId }),
       });

@@ -7,10 +7,8 @@ type DashboardMessage =
       unit: UnitModel;
     }
   | {
-      event: 'prestart-round-updated';
+      event: 'prestart-units-updated';
       units: UnitModel[];
-      games: GameModel[];
-      roundNumber: 1;
     }
   | { event: 'withdraw-unit'; id: UnitModel['id'] }
   | {

@@ -13,7 +13,7 @@ import { getStatusInTournament } from '@/server/queries/get-status-in-tournament
 import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
-import type { PreStartStateModel } from '@/server/zod/tournaments';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { and, eq } from 'drizzle-orm';
 import { createPlayer } from './club-managing';
 import { normalizeSwissRoundsNumberInDatabase } from './tournament-lifecycle';
@@ -34,7 +34,7 @@ export async function addNewSoloUnit({
   player: PlayerFormModel & { id?: string };
   unitId?: string;
   addedAt?: Date;
-}): Promise<PreStartStateModel> {
+}): Promise<UnitModel[]> {
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
 
@@ -66,7 +66,7 @@ export async function addSoloUnit(
     addedAt?: Date;
   },
   options: { database?: SoloUnitDatabase; skipAuth?: boolean } = {},
-): Promise<PreStartStateModel> {
+): Promise<UnitModel[]> {
   const now = addedAt ?? new Date();
   const database = options.database ?? db;
 

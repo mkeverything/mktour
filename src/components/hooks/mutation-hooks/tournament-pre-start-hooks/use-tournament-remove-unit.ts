@@ -12,7 +12,7 @@ export const useTournamentRemoveUnit = (tournamentId: string) => {
   const trpc = useTRPC();
   const {
     applyOptimisticPreStartRound,
-    applyServerPreStartStateIfLatest,
+    applyServerPreStartUnitsIfLatest,
     invalidatePreStartState,
     keys,
     rollbackOptimisticPreStartRound,
@@ -44,7 +44,7 @@ export const useTournamentRemoveUnit = (tournamentId: string) => {
           duration: 3000,
         });
       },
-      onSuccess: applyServerPreStartStateIfLatest,
+      onSuccess: applyServerPreStartUnitsIfLatest,
       onSettled: () => invalidatePreStartState({ playersOut: true }),
     }),
   );

@@ -51,7 +51,6 @@ import {
   addDoublesUnitSchema,
   editDoublesUnitSchema,
   gameSchema,
-  preStartStateSchema,
   reorderTournamentUnitsInputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
@@ -153,7 +152,7 @@ export const tournamentRouter = {
         addedAt: z.date().optional(),
       }),
     )
-    .output(preStartStateSchema)
+    .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
       return await addSoloUnit(input);
@@ -166,7 +165,7 @@ export const tournamentRouter = {
         addedAt: z.date().optional(),
       }),
     )
-    .output(preStartStateSchema)
+    .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
       return await addNewSoloUnit(input);
@@ -177,13 +176,13 @@ export const tournamentRouter = {
         addDoublesUnitSchema.extend({ addedAt: z.date().optional() }),
       ),
     )
-    .output(preStartStateSchema)
+    .output(z.array(unitSchema))
     .mutation(async ({ input }) => {
       return await addDoublesUnit(input);
     }),
   editDoublesUnit: tournamentAdminProcedure
     .input(tournamentIdInputSchema.and(editDoublesUnitSchema))
-    .output(preStartStateSchema)
+    .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
       return await editDoublesUnit(input);
@@ -195,14 +194,14 @@ export const tournamentRouter = {
         userId: z.string(),
       }),
     )
-    .output(preStartStateSchema)
+    .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
       return await removeUnit(input);
     }),
   reorderUnits: tournamentAdminProcedure
     .input(reorderTournamentUnitsInputSchema)
-    .output(preStartStateSchema)
+    .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
       return await reorderTournamentUnits(input);

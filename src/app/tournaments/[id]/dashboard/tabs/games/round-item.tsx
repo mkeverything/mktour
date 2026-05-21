@@ -28,7 +28,10 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Dispatch, FC, memo, SetStateAction, useContext } from 'react';
 
-const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
+const RoundItem: FC<RoundItemProps> = ({
+  roundNumber,
+  onOpenStartTournamentDrawer,
+}) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const {
     data: round,
@@ -80,6 +83,7 @@ const RoundItem: FC<RoundItemProps> = ({ roundNumber }) => {
             key={game.id}
             selected={selectedGameId === game.id}
             setSelectedGameId={setSelectedGameId}
+            onOpenStartTournamentDrawer={onOpenStartTournamentDrawer}
             {...game}
           />
         );
@@ -185,9 +189,11 @@ const GamesIteratee = memo(function GamesIteratee({
   roundNumber,
   selected,
   setSelectedGameId,
+  onOpenStartTournamentDrawer,
 }: GameModel & {
   selected: boolean;
   setSelectedGameId: Dispatch<SetStateAction<string | null>>;
+  onOpenStartTournamentDrawer: () => void;
 }) {
   return (
     <GameItem
@@ -200,12 +206,14 @@ const GamesIteratee = memo(function GamesIteratee({
       roundNumber={roundNumber}
       selected={selected}
       setSelectedGameId={setSelectedGameId}
+      onOpenStartTournamentDrawer={onOpenStartTournamentDrawer}
     />
   );
 });
 
 type RoundItemProps = {
   roundNumber: number;
+  onOpenStartTournamentDrawer: () => void;
   compact?: boolean;
 };
 

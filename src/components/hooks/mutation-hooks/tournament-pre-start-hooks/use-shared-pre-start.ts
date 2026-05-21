@@ -3,12 +3,9 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useOptimisticPreStartRound } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-optimistic-pre-start-round';
 import { useTRPC } from '@/components/trpc/client';
-import type { preStartStateSchema } from '@/server/zod/tournaments';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
-import type { z } from 'zod';
-
-type PreStartState = z.infer<typeof preStartStateSchema>;
 
 export const useSharedPreStart = (tournamentId: string) => {
   const trpc = useTRPC();
@@ -27,20 +24,22 @@ export const useSharedPreStart = (tournamentId: string) => {
     info: trpc.tournament.info.queryKey({ tournamentId }),
   };
 
-  const applyServerPreStartState = (data: PreStartState) => {
-    queryClient.setQueryData(keys.units, data.units);
-    queryClient.setQueryData(keys.roundGames, data.games);
+  const applyServerPreStartUnits = (units: UnitModel[]) => {
+    const nextState = optimisticPreStartRound.buildOptimisticPreStartRound(
+      units,
+      false,
+    );
+    queryClient.setQueryData(keys.units, nextState.units);
+    queryClient.setQueryData(keys.roundGames, nextState.games);
     sendJsonMessage({
-      event: 'prestart-round-updated',
-      units: data.units,
-      games: data.games,
-      roundNumber: 1,
+      event: 'prestart-units-updated',
+      units: nextState.units,
     });
   };
 
-  const applyServerPreStartStateIfLatest = (data: PreStartState) => {
+  const applyServerPreStartUnitsIfLatest = (units: UnitModel[]) => {
     if (!optimisticPreStartRound.isOnlyPendingPreStartRoundMutation()) return;
-    applyServerPreStartState(data);
+    applyServerPreStartUnits(units);
   };
 
   const invalidatePreStartState = (
@@ -48,6 +47,7 @@ export const useSharedPreStart = (tournamentId: string) => {
   ) => {
     if (!optimisticPreStartRound.isOnlyPendingPreStartRoundMutation()) return;
 
+    queryClient.invalidateQueries({ queryKey: keys.roundGames });
     if (options.playersOut) {
       queryClient.invalidateQueries({ queryKey: keys.playersOut });
     }
@@ -62,8 +62,8 @@ export const useSharedPreStart = (tournamentId: string) => {
   return {
     keys,
     ...optimisticPreStartRound,
-    applyServerPreStartState,
-    applyServerPreStartStateIfLatest,
+    applyServerPreStartUnits,
+    applyServerPreStartUnitsIfLatest,
     invalidatePreStartState,
   };
 };

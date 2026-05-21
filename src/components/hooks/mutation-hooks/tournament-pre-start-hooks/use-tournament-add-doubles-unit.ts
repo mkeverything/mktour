@@ -23,7 +23,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
   const t = useTranslations('Tournament.AddPlayer');
   const {
     applyOptimisticPreStartRound,
-    applyServerPreStartStateIfLatest,
+    applyServerPreStartUnitsIfLatest,
     invalidatePreStartState,
     keys,
     rollbackOptimisticPreStartRound,
@@ -85,7 +85,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
 
         toast.error(t(getDoublesErrorTranslationKey(error)));
       },
-      onSuccess: applyServerPreStartStateIfLatest,
+      onSuccess: applyServerPreStartUnitsIfLatest,
       onSettled: () => invalidatePreStartState({ playersOut: true }),
     }),
   );
