@@ -26,7 +26,7 @@ export default function SwissRoundsNumber({
   const isOrganizer = status === 'organizer';
   const isFinished = !!data?.closedAt;
   const currentValue = data?.roundsNumber ?? 1;
-  const minValue = 1;
+  const minValue = data?.startedAt ? data.ongoingRound : 1;
   const maxValue = getSwissMaxRoundsNumber(unitCount);
   const boundedCurrentValue = Math.min(
     Math.max(currentValue, minValue),

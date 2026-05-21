@@ -80,7 +80,9 @@ export const useTournamentSwissRoundsInfo = (tournamentId: string) => {
     ...trpc.tournament.info.queryOptions({ tournamentId }),
     select: (data) => ({
       closedAt: data.tournament.closedAt,
+      ongoingRound: data.tournament.ongoingRound,
       roundsNumber: data.tournament.roundsNumber,
+      startedAt: data.tournament.startedAt,
     }),
   });
 };
