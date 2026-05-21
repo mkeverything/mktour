@@ -39,8 +39,9 @@ export default function FinishTournamentButton({
     !roundGames ||
     info.tournament.ongoingRound !== info.tournament.roundsNumber ||
     roundGames.some((game) => game.result === null)
-  )
+  ) {
     return null;
+  }
 
   return (
     <Button
