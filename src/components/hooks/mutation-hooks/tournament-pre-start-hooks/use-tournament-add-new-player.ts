@@ -20,7 +20,7 @@ export const useTournamentAddNewPlayer = (
   const trpc = useTRPC();
   const {
     applyOptimisticPreStartRound,
-    applyServerPreStartStateIfLatest,
+    applyServerPreStartUnitsIfLatest,
     invalidatePreStartState,
     keys,
     rollbackOptimisticPreStartRound,
@@ -50,7 +50,7 @@ export const useTournamentAddNewPlayer = (
           id: `add-player-error-${data.player.id}`,
         });
       },
-      onSuccess: applyServerPreStartStateIfLatest,
+      onSuccess: applyServerPreStartUnitsIfLatest,
       onSettled: () => invalidatePreStartState(),
     }),
   );

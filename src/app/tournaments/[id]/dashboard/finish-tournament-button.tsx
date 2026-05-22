@@ -2,6 +2,8 @@ import { LoadingSpinner } from '@/app/loading';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentFinish from '@/components/hooks/mutation-hooks/use-tournament-finish';
 import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
+import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
@@ -20,14 +22,26 @@ export default function FinishTournamentButton({
   const { sendJsonMessage } = useContext(DashboardContext);
   const t = useTranslations('Tournament.Main');
   const { data: allGames } = useTournamentGames(tournamentId);
+  const { data: info } = useTournamentInfo(tournamentId);
+  const { data: roundGames } = useTournamentRoundGames({
+    tournamentId,
+    roundNumber: info?.tournament.ongoingRound ?? 1,
+  });
 
   const { mutate, isPending } = useTournamentFinish(queryClient, {
     tournamentId,
     sendJsonMessage,
   });
 
-  if (!allGames) return null;
-  if (allGames.some((game) => game.result === null)) return null;
+  if (
+    !allGames ||
+    !info ||
+    !roundGames ||
+    info.tournament.ongoingRound !== info.tournament.roundsNumber ||
+    roundGames.some((game) => game.result === null)
+  ) {
+    return null;
+  }
 
   return (
     <Button
@@ -43,7 +57,7 @@ export default function FinishTournamentButton({
           },
         );
       }}
-      disabled={isPending}
+      disabled={isPending || allGames.some((game) => game.result === null)}
       className={`max-md:w-full ${className}`}
     >
       {isPending ? <LoadingSpinner /> : <Save />}

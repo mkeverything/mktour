@@ -1,6 +1,8 @@
 'use server';
 
 import { validateRequest } from '@/lib/auth/lucia';
+import { generatePreStartRoundGames } from '@/lib/pre-start-round';
+import { baselineUnitSort } from '@/lib/tournament-results';
 import {
   buildScoreMaps,
   hasSameStanding,
@@ -38,7 +40,8 @@ import {
 import { TRPCError } from '@trpc/server';
 import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
-import { reapplyPreStartOrder } from './tournament-unit-order';
+import { replaceRoundGames } from './tournament-games';
+import { applyPreStartUnitOrder } from './tournament-unit-order';
 
 export const createTournament = async (
   values: Omit<NewTournamentFormModel, 'date'> & {
@@ -161,12 +164,23 @@ async function preparePreStartPairings(
   tournamentId: string,
   database: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
 ): Promise<GameModel[]> {
-  const units = await getTournamentUnits(tournamentId, database);
-  if (units.length < 2) {
+  const currentUnits = await getRawTournamentUnits(tournamentId, database);
+  if (currentUnits.length < 2) {
     throw new Error('NOT_ENOUGH_PLAYERS');
   }
-  const result = await reapplyPreStartOrder(tournamentId, database);
-  return result.games;
+  const units = await applyPreStartUnitOrder({
+    tournamentId,
+    orderedUnits: currentUnits.toSorted(baselineUnitSort),
+    database,
+  });
+  const roundGames = generatePreStartRoundGames({ units, tournamentId });
+  await replaceRoundGames({
+    tournamentId,
+    roundNumber: 1,
+    newGames: roundGames,
+    database,
+  });
+  return roundGames;
 }
 
 export async function startTournament({
@@ -224,11 +238,7 @@ export async function resetTournament({
     if (!tournamentUpdate.rowsAffected)
       throw new Error('TOURNAMENT_ALREADY_RESET');
 
-    await tx
-      .delete(games)
-      .where(
-        and(eq(games.tournamentId, tournamentId), ne(games.roundNumber, 1)),
-      );
+    await tx.delete(games).where(eq(games.tournamentId, tournamentId));
 
     await tx
       .update(tournament_units)

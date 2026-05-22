@@ -147,6 +147,9 @@ export default function useTournamentSetGameResult(
           queryClient.invalidateQueries({
             queryKey: trpc.tournament.units.queryKey({ tournamentId }),
           });
+          queryClient.invalidateQueries({
+            queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+          });
         }
         sendJsonMessage({
           event: 'set-game-result',

@@ -25,6 +25,10 @@ export default function useTournamentStart(
             }),
             games,
           );
+          queryClient.setQueryData(
+            trpc.tournament.allGames.queryKey({ tournamentId }),
+            games,
+          );
           sendJsonMessage({
             event: 'start-tournament',
             startedAt,

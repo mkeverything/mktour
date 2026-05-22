@@ -1,11 +1,8 @@
 import { generateConsecutiveRoundGames } from '@/lib/pairing-generators/consecutive-pairs-generator';
-import type { UnitModel } from '@/server/zod/tournaments';
-import type { GameModel } from '@/server/zod/tournaments';
+import type { GameModel, UnitModel } from '@/server/zod/tournaments';
 
 type PreStartRoundProps = {
-  units?: UnitModel[];
-  /** @deprecated use units */
-  players?: UnitModel[];
+  units: UnitModel[];
   tournamentId: string;
 };
 
@@ -22,12 +19,10 @@ function assignUnitNumbers<T extends UnitModel>(units: T[]): T[] {
  */
 export function generatePreStartRoundGames({
   units,
-  players,
   tournamentId,
 }: PreStartRoundProps): GameModel[] {
-  const tournamentUnits = units ?? players ?? [];
   return generateConsecutiveRoundGames({
-    players: assignUnitNumbers(tournamentUnits),
+    players: assignUnitNumbers(units),
     games: [],
     roundNumber: 1,
     tournamentId,

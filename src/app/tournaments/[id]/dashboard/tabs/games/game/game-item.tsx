@@ -27,6 +27,7 @@ const GameItem: FC<GameProps> = ({
   roundNumber,
   selected,
   setSelectedGameId,
+  onOpenStartTournamentDrawer,
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const t = useTranslations('Toasts');
@@ -57,11 +58,12 @@ const GameItem: FC<GameProps> = ({
       setSelectedGameId(null);
       return;
     }
+    if (!hasStarted) {
+      onOpenStartTournamentDrawer();
+      return;
+    }
     const playerBlockedByClubSetting =
-      status === 'player' &&
-      isPlayerUnitInGame &&
-      hasStarted &&
-      !allowPlayersSetResults;
+      status === 'player' && isPlayerUnitInGame && !allowPlayersSetResults;
     if (playerBlockedByClubSetting) {
       toast.warning(t('player result setting disabled'));
       return;
@@ -153,6 +155,7 @@ type GameProps = {
   roundNumber: number;
   selected: boolean;
   setSelectedGameId: Dispatch<SetStateAction<string | null>>;
+  onOpenStartTournamentDrawer: () => void;
 };
 
 export default memo(GameItem);

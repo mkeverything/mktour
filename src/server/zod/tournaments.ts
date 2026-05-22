@@ -73,12 +73,6 @@ export const unitSchema = unitSelectSchema
     players: z.array(playerInUnitSchema).min(1),
   });
 
-export const preStartStateSchema = z.object({
-  units: z.array(unitSchema),
-  games: z.array(gameSchema),
-});
-export type PreStartStateModel = z.infer<typeof preStartStateSchema>;
-
 export const unitOrderSchema = unitSelectSchema.pick({
   nickname: true,
   number: true,

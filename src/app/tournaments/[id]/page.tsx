@@ -22,7 +22,7 @@ export default async function TournamentPage(props: TournamentPageProps) {
     tournament = await publicCaller.tournament.info({
       tournamentId: params.id,
     });
-    tournamentQueryPrefetch(params.id);
+    await tournamentQueryPrefetch(params.id);
   } catch (e) {
     console.log(e);
     notFound();
