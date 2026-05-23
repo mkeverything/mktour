@@ -242,7 +242,16 @@ this reduces test time from ~15s to ~20ms for non-db tests.
 - next-intl, configured at `src/components/i18n.ts`
 - translation files: `src/messages/en.json`, `src/messages/ru.json`
 - no hard-coded user-facing strings; use translation keys
+- keep `src/messages/en.json` and `src/messages/ru.json` structurally aligned
 - format dates with date-fns
+
+## error handling
+
+- canonical error catalog: `src/lib/errors.ts`
+- never throw native `Error` for app/domain failures; throw `new AppError(ERRORS.SOME_CODE)`
+- never hard-code user-facing error messages; add an `ERRORS` code and translations in every locale
+- client error ui should translate error codes via `getAppErrorCode`, `useIntlError()`, or `useTranslations('Errors')`
+- when adding/changing error codes, run `bun test:noseed src/tests/errors.test.ts src/tests/messages.test.ts`
 
 ## git & commits
 
