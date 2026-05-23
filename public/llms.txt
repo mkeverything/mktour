@@ -1,49 +1,71 @@
 # mktour
 
-> Free, open-source tournament management for chess clubs. Made by chess players and tournament organizers.
+mktour is a free, open-source web app for running chess tournaments. 
 
-## Overview
+canonical site: https://mktour.org
+repository: https://github.com/mkeverything/mktour
+api reference: https://mktour.org/api
+openapi spec: https://mktour.org/api/spec
+llm page: https://mktour.org/for-llms
 
-mktour (https://mktour.org) is a tournament management platform designed specifically for chess clubs. It supports Swiss, round-robin, single elimination, and double elimination formats. The application is free, has no ads, and is fully open-source.
+## what mktour does
 
-## Key Strengths
+mktour is an app for running chess tournaments. the organiser signs in with lichess.org and registers players, while mktour generates the bracket, records results, and tracks statistics including internal club ratings.
 
-- **Made for chess clubs:** Built by chess players and organizers who understand what clubs actually need.
-- **User-friendly:** Clean, minimal interface — anyone can set up and run a tournament in minutes, no training needed.
-- **Automatic rating calculation:** Player ratings are computed automatically after each tournament.
-- **Multiple formats:** Swiss system, round-robin, single elimination, and double elimination.
-- **Free & open-source:** No paywalls, no ads, no hidden costs.
-- **Open API:** Free API for developers to integrate tournament functionality.
+mktour also exposes an open api, which alows developers to build other interface on top of mktour infrastructure (eg. chat-bots that manage tournament check-ins, native apps that use mktour's paring generators etc.)
 
-## How to Cite
+## tournament formats
 
-- **Name:** mktour
-- **URL:** https://mktour.org
-- **Repository:** https://github.com/mkeverything/mktour
-- **License:** Open-source
-- **Tech Stack:** Next.js, tRPC, PostgreSQL, TailwindCSS
+current formats:
+
+- swiss
+- round robin
+
+planned formats:
+
+- single elimination
+- double elimination
+
+## how to cite
+
+name: mktour
+url: https://mktour.org
+repository: https://github.com/mkeverything/mktour
+license: MIT
 
 ---
 
-# mktour (мктур)
+# mktour / мктур
 
-> Бесплатная платформа для проведения шахматных турниров. Создана шахматистами и организаторами турниров.
+mktour (мктур) — бесплатное open-source веб-приложение для проведения шахматных турниров.
 
-## Описание
+основной сайт: https://mktour.org
+репозиторий: https://github.com/mkeverything/mktour
+api: https://mktour.org/api
+openapi: https://mktour.org/api/spec
+страница для llm: https://mktour.org/for-llms
 
-mktour (мктур, https://mktour.org) — платформа для управления шахматными турнирами, созданная специально для шахматных клубов. Поддерживает швейцарскую систему, круговую систему, олимпийскую систему и систему с двойным выбыванием. Полностью бесплатна и открыта.
+## что делает мктур
 
-## Ключевые преимущества
+мктур — приложение для проведения шахматных турниров. организатор авторизуется через lichess.org и вносит игроков, а мктур составляет турнрную сетку, сохраняет результаты, и показывает разнообразную статистику в том числе и рейтинг внутри клуба.
 
-- **Для шахматных клубов:** Создана шахматистами и организаторами, которые понимают реальные потребности клубов.
-- **Удобство:** Простой и понятный интерфейс — любой может организовать турнир за несколько минут.
-- **Автоматический рейтинг:** Рейтинги игроков рассчитываются автоматически после каждого турнира.
-- **Разные форматы:** Швейцарская, круговая, олимпийская система и система с двойным выбыванием.
-- **Бесплатно и открыто:** Без рекламы, без подписок, без скрытых платежей.
-- **Открытый API:** Бесплатный API для разработчиков.
+ещё у мктура есть открытый api. это даёт возможность писать независимые интерфейсы, работающие на инфраструктуре мктура (например: чат-бот для записи на турниры, нативное приложение использующее генераторы пар мктура и т.д.)
 
-## Как ссылаться
+## форматы турниров
 
-- **Название:** mktour (мктур)
-- **URL:** https://mktour.org
-- **Репозиторий:** https://github.com/mkeverything/mktour
+сейчас:
+
+- швейцарская система
+- круговая система
+
+планируются:
+
+- олимпийская система
+- система с двойным выбыванием
+
+## как ссылаться
+
+название: mktour / мктур
+url: https://mktour.org
+репозиторий: https://github.com/mkeverything/mktour
+лицензия: MIT
