@@ -1,10 +1,11 @@
+import { getAppErrorCode } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export default function useAffiliationAuthMutation() {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   return useMutation(
@@ -19,7 +20,7 @@ export default function useAffiliationAuthMutation() {
           }),
         });
       },
-      onError: () => toast.error(t('server error')),
+      onError: (error) => toast.error(tErrors(getAppErrorCode(error))),
     }),
   );
 }

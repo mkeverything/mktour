@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-new-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -15,7 +16,7 @@ const AddFakerPlayer: FC<{ setOpen: (_arg: boolean) => void }> = ({
   const tournament = useTournamentInfo(id);
   const returnToNewPlayer = () => null;
   const { userId } = useContext(DashboardContext);
-  if (!userId) throw new Error('USERID_NOT_FOUND_IN_CONTEXT');
+  if (!userId) throw new AppError(ERRORS.USERID_NOT_FOUND_IN_CONTEXT);
   const { mutate } = useTournamentAddNewPlayer(id, returnToNewPlayer);
 
   const nickname =

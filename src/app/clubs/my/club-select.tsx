@@ -3,6 +3,7 @@
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
 import { useAuthClubs } from '@/components/hooks/query-hooks/use-user-clubs';
 import { Card } from '@/components/ui/card';
+import { ERRORS } from '@/lib/errors';
 import {
   Select,
   SelectContent,
@@ -22,10 +23,10 @@ const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
   const { data: clubs, status } = useAuthClubs();
   const queryClient = useQueryClient();
   const clubSelection = useAuthSelectClub(queryClient);
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
 
   if (status === 'error')
-    toast.error(t('server error'), {
+    toast.error(tErrors(ERRORS.UNKNOWN_ERROR), {
       id: 'error',
       duration: 3000,
     });

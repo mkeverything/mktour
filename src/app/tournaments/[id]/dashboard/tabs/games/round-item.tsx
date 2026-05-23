@@ -17,6 +17,7 @@ import { useRoundData } from '@/components/hooks/use-round-data';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
+import { AppError, ERRORS } from '@/lib/errors';
 import { RoundProps } from '@/lib/pairing-generators/common-generator';
 import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
 import { generateWeightedSwissRound } from '@/lib/pairing-generators/swiss-generator';
@@ -100,7 +101,9 @@ function generateRound(
     case 'round robin':
       return generateRoundRobinRound(props);
     default:
-      throw new Error(`unsupported format: ${format}`);
+      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        cause: `unsupported format: ${format}`,
+      });
   }
 }
 

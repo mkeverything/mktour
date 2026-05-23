@@ -1,9 +1,12 @@
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorCode } from '@/lib/errors';
 import { QueryClient, useMutation } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export const useAuthSelectClub = (queryClient: QueryClient) => {
   const trpc = useTRPC();
+  const tErrors = useTranslations('Errors');
   return useMutation(
     trpc.auth.selectClub.mutationOptions({
       onMutate: ({ clubId }) => {
@@ -35,8 +38,8 @@ export const useAuthSelectClub = (queryClient: QueryClient) => {
           });
         }
       },
-      onError: (_error, _variables, context) => {
-        toast.error('error happened', {
+      onError: (error, _variables, context) => {
+        toast.error(tErrors(getAppErrorCode(error)), {
           id: 'error',
           duration: 3000,
         });

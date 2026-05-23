@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 /**
  * BSN (Bracket Sequence Number) utilities for Swiss system pairing
  *
@@ -55,7 +56,9 @@ export function convertBSNToEntity(
   // TODO: This undefined check is purely due to TypeScript limitations
   // Map.has() check doesn't provide type narrowing for Map.get()
   if (entity === undefined) {
-    throw new Error(`Entity not found for BSN ${bsn}`);
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: `Entity not found for BSN ${bsn}`,
+    });
   }
 
   return entity;
@@ -76,7 +79,9 @@ export function convertEntityToBSN(
 
   // TODO: This undefined check is purely due to TypeScript limitations
   if (bsn === undefined) {
-    throw new Error('BSN not found for entity');
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: 'BSN not found for entity',
+    });
   }
 
   return bsn;

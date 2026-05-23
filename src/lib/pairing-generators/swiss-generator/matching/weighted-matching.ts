@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 /**
  * Weighted Maximum Matching using Edmonds' Blossom Algorithm
  *
@@ -111,7 +112,9 @@ function processTightNeighbour(
     const neighbourState = state.vertices.get(neighbourKey);
 
     if (neighbourState === undefined) {
-      throw new Error(`Neighbour ${neighbourKey} not found in state`);
+      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        cause: `Neighbour ${neighbourKey} not found in state`,
+      });
     }
 
     const neighbourIsFree = neighbourState.mate === NO_MATE;
@@ -244,7 +247,9 @@ function applyDeltaAndExpand(
 
     const blossom = state.blossoms.get(delta.blossomId);
     if (blossom === undefined) {
-      throw new Error(`Blossom ${delta.blossomId} not found for expansion`);
+      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        cause: `Blossom ${delta.blossomId} not found for expansion`,
+      });
     }
     // endstage=false: relabel children with alternating T-S
     // Per NetworkX: entrychild = inblossom[labeledge[b][1]]
@@ -279,9 +284,9 @@ function requeueSLabelledVertices(state: WeightedMatchingState): void {
   for (const [vertexKey, vertexState] of state.vertices) {
     const blossom = state.blossoms.get(vertexState.inBlossom);
     if (blossom === undefined) {
-      throw new Error(
-        `Blossom ${vertexState.inBlossom} not found for vertex ${vertexKey}`,
-      );
+      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        cause: `Blossom ${vertexState.inBlossom} not found for vertex ${vertexKey}`,
+      });
     }
     if (blossom.label === Label.S) {
       state.queue.push(vertexKey);
@@ -364,9 +369,9 @@ function performSearchStage(
   while (result === null) {
     iterationCount++;
     if (iterationCount > MAX_STAGE_ITERATIONS) {
-      throw new Error(
-        `Infinite loop in performSearchStage after ${iterationCount} iterations`,
-      );
+      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        cause: `Infinite loop in performSearchStage after ${iterationCount} iterations`,
+      });
     }
 
     if (IS_MATCHING_DEBUG_ENABLED) {

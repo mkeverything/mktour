@@ -1,3 +1,4 @@
+import { ERRORS } from '@/lib/errors';
 import { validateLichessTeam } from '@/lib/zod/new-club-validation-action';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { statusInClubEnum } from '@/server/zod/enums';
@@ -22,8 +23,8 @@ export const clubsToUsersSelectSchema = createSelectSchema(clubs_to_users, {
 export const clubsInsertSchema = createInsertSchema(clubs, {
   name: (s) =>
     s
-      .min(3, { error: 'short club name' })
-      .max(100, { error: 'long club name' }),
+      .min(3, { error: ERRORS.SHORT_CLUB_NAME })
+      .max(100, { error: ERRORS.LONG_CLUB_NAME }),
   lichessTeam: (s) =>
     s
       .superRefine(async (lichessTeam, ctx) => {
@@ -33,7 +34,7 @@ export const clubsInsertSchema = createInsertSchema(clubs, {
         if (team) {
           ctx.addIssue({
             code: 'custom',
-            message: `LINK_TEAM_ERROR@%!!(&${team.id}@%!!(&${team.name}`,
+            message: `${ERRORS.LINK_TEAM_ERROR}@%!!(&${team.id}@%!!(&${team.name}`,
           });
         }
       })

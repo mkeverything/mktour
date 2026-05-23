@@ -1,5 +1,6 @@
 'use client';
 
+import { getAppErrorCode } from '@/lib/errors';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTRPC } from '@/components/trpc/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ export default function useTournamentEditTitle() {
   const { sendJsonMessage } = useContext(DashboardContext);
   const queryClient = useQueryClient();
   const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.editTitle.mutationOptions({
@@ -38,7 +40,7 @@ export default function useTournamentEditTitle() {
         toast.success(t('tournament renamed'));
       },
       onError: (error, { tournamentId }, context) => {
-        toast.error(t('server error') + `: ` + error.message);
+        toast.error(tErrors(getAppErrorCode(error)));
         if (context?.previousData) {
           queryClient.setQueryData(
             trpc.tournament.info.queryKey({ tournamentId }),

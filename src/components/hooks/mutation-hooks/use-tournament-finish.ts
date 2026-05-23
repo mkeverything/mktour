@@ -1,5 +1,6 @@
 'use client';
 
+import { ERRORS, getAppErrorCode } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ export default function useTournamentFinish(
   { tournamentId, sendJsonMessage }: SetStatusProps,
 ) {
   const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.finish.mutationOptions({
@@ -30,11 +32,11 @@ export default function useTournamentFinish(
         });
       },
       onError: (error) => {
-        if (error.message === 'INCOMPLETE_GAMES') {
-          toast.error(t('incomplete games'));
+        if (getAppErrorCode(error) === ERRORS.INCOMPLETE_GAMES) {
+          toast.error(tErrors(ERRORS.INCOMPLETE_GAMES));
           return;
         }
-        toast.error(t('server error'));
+        toast.error(tErrors(getAppErrorCode(error)));
         console.log(error);
       },
     }),

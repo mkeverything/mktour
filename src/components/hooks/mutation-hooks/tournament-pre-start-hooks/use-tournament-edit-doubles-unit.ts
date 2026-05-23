@@ -1,5 +1,6 @@
 'use client';
 
+import { AppError } from '@/lib/errors';
 import {
   doublesErrors,
   findDoublesUnitPlayer,
@@ -38,11 +39,11 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
         const currentUnit = previousUnits?.find((unit) => unit.id === unitId);
 
         if (firstPlayerId === secondPlayerId) {
-          throw new Error(doublesErrors.invalidDoublesPair);
+          throw new AppError(doublesErrors.invalidDoublesPair);
         }
-        if (!currentUnit) throw new Error(doublesErrors.playersNotFound);
+        if (!currentUnit) throw new AppError(doublesErrors.playersNotFound);
         if (hasDuplicateUnitNickname(previousUnits, nickname, unitId)) {
-          throw new Error(doublesErrors.nicknameTaken);
+          throw new AppError(doublesErrors.nicknameTaken);
         }
 
         const playersOut = previousPlayersOut ?? [];
@@ -58,7 +59,7 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
         );
 
         if (!firstPlayer || !secondPlayer) {
-          throw new Error(doublesErrors.playersNotFound);
+          throw new AppError(doublesErrors.playersNotFound);
         }
 
         const nextUnit: UnitModel = {

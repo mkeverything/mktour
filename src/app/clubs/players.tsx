@@ -12,6 +12,7 @@ import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
+import { getAppErrorCode } from '@/lib/errors';
 import { Card } from '@/components/ui/card';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
@@ -23,6 +24,7 @@ import { toast } from 'sonner';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   const t = useTranslations();
+  const tErrors = useTranslations('Errors');
   const { playersCount } = useClubStats(selectedClub).data ?? {};
   const {
     data: searchResults,
@@ -45,8 +47,9 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   }
 
   if (!useSearch && playersInfinite.status === 'error') {
-    toast.error(playersInfinite.error.message);
-    return <p>{playersInfinite.error.message}</p>;
+    const code = getAppErrorCode(playersInfinite.error);
+    toast.error(tErrors(code));
+    return <p>{tErrors(code)}</p>;
   }
 
   return (

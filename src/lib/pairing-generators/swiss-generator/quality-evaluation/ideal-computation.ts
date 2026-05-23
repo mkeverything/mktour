@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 /**
  * Theoretical ideal computation functions for quality criteria
  *
@@ -461,10 +462,11 @@ export function computeIdealC8FutureCriteriaCompliance(
   );
 
   if (optimalNextBracketDownfloaterScores === null) {
-    throw new Error(
-      `Failed to find optimal downfloater set for C8 ideal computation. ` +
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause:
+        `Failed to find optimal downfloater set for C8 ideal computation. ` +
         `Expected ${nextBracketMinDownfloaterCount} downfloaters from ${nextBracketAllPlayers.length} players.`,
-    );
+    });
   }
 
   // Step 6: Compute PAB score if next bracket is last

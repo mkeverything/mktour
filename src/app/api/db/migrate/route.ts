@@ -1,4 +1,5 @@
 import { getDatabaseAuthToken, getDatabaseUrl } from '@/lib/config/urls';
+import { ERRORS } from '@/lib/errors';
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { migrate } from 'drizzle-orm/libsql/migrator';
@@ -20,17 +21,14 @@ export async function POST(req: Request) {
   if (
     req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`
   ) {
-    return new Response('unauthorized', { status: 401 });
+    return Response.json({ error: ERRORS.UNAUTHENTICATED }, { status: 401 });
   }
 
   const url = getDatabaseUrl();
   const authToken = getDatabaseAuthToken();
 
   if (!url) {
-    return Response.json(
-      { error: 'DATABASE_URL is not defined' },
-      { status: 500 },
-    );
+    return Response.json({ error: ERRORS.CONFIG_ERROR }, { status: 500 });
   }
 
   const logger = new QueryLogger();
@@ -61,7 +59,7 @@ export async function POST(req: Request) {
     console.error('migration failed:', error);
     return Response.json(
       {
-        error: error instanceof Error ? error.message : 'migration failed',
+        error: ERRORS.DATABASE_MIGRATION_ERROR,
         queriesExecuted: logger.queries.length,
         queries: logger.queries,
       },

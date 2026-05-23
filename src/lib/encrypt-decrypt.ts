@@ -1,5 +1,6 @@
 // encrypt-decrypt.ts
 
+import { AppError, ERRORS } from '@/lib/errors';
 import {
   createCipheriv,
   createDecipheriv,
@@ -19,9 +20,10 @@ const toUint8Array = (buffer: Buffer): Uint8Array<ArrayBuffer> =>
 function getSecretKey(): string {
   const key = process.env.SECRET_KEY;
   if (!key || key.length < 32) {
-    throw new Error(
-      'SECRET_KEY must be at least 32 characters and match between app and ws server',
-    );
+    throw new AppError(ERRORS.CONFIG_ERROR, {
+      cause:
+        'SECRET_KEY must be at least 32 characters and match between app and ws server',
+    });
   }
   return key;
 }

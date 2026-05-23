@@ -1,5 +1,7 @@
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorCode } from '@/lib/errors';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export default function useDeleteClubManagerMutation() {
@@ -7,6 +9,7 @@ export default function useDeleteClubManagerMutation() {
   //   const t = useTranslations('Toasts');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const tErrors = useTranslations('Errors');
   return useMutation(
     trpc.club.managers.delete.mutationOptions({
       onMutate: ({ userId }) => {
@@ -41,7 +44,7 @@ export default function useDeleteClubManagerMutation() {
           trpc.club.managers.all.queryKey(),
           context?.previousState,
         );
-        toast.error('sorry! server error happened', { id: 'serverError' });
+        toast.error(tErrors(getAppErrorCode(error)), { id: 'serverError' });
         console.error(error);
       },
     }),

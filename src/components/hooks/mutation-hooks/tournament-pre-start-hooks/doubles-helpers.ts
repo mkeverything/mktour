@@ -1,11 +1,12 @@
+import { ERRORS, getAppErrorCode } from '@/lib/errors';
 import type { PlayerWithUsernameModel } from '@/server/zod/players';
 import type { UnitModel } from '@/server/zod/tournaments';
 
 export const doublesErrors = {
-  nicknameTaken: 'UNIT_NICKNAME_TAKEN',
-  playersNotFound: 'UNIT_PLAYERS_NOT_FOUND',
-  playerAlreadyInPair: 'PLAYER_ALREADY_IN_PAIR',
-  invalidDoublesPair: 'INVALID_DOUBLES_PAIR',
+  nicknameTaken: ERRORS.UNIT_NICKNAME_TAKEN,
+  playersNotFound: ERRORS.UNIT_PLAYERS_NOT_FOUND,
+  playerAlreadyInPair: ERRORS.PLAYER_ALREADY_IN_PAIR,
+  invalidDoublesPair: ERRORS.INVALID_DOUBLES_PAIR,
 } as const;
 
 export const findDoublesUnitPlayer = (
@@ -17,16 +18,17 @@ export const findDoublesUnitPlayer = (
   playersOut.find((player) => player.id === id);
 
 export const getDoublesErrorTranslationKey = (error: { message: string }) => {
-  if (error.message === doublesErrors.nicknameTaken) {
+  const code = getAppErrorCode(error);
+  if (code === doublesErrors.nicknameTaken) {
     return 'team nickname taken';
   }
-  if (error.message === doublesErrors.playerAlreadyInPair) {
+  if (code === doublesErrors.playerAlreadyInPair) {
     return 'player already in team';
   }
-  if (error.message === doublesErrors.playersNotFound) {
+  if (code === doublesErrors.playersNotFound) {
     return 'team players not found';
   }
-  if (error.message === doublesErrors.invalidDoublesPair)
+  if (code === doublesErrors.invalidDoublesPair)
     return 'team players not found';
   return 'team add error';
 };

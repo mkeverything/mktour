@@ -8,6 +8,12 @@
  */
 
 import { validateRequest } from '@/lib/auth/lucia';
+import {
+  APP_ERROR_TRPC_CODES,
+  AppError,
+  ERRORS,
+  getAppErrorCode,
+} from '@/lib/errors';
 import { db } from '@/server/db';
 import { apiTokens, users } from '@/server/db/schema/users';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
@@ -136,7 +142,23 @@ export const createTRPCRouter = t.router;
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure;
+const appErrorMiddleware = t.middleware(async ({ next }) => {
+  const result = await next();
+
+  if (!result.ok) {
+    const code = getAppErrorCode(result.error);
+    const trpcCode =
+      code === ERRORS.UNKNOWN_ERROR
+        ? 'INTERNAL_SERVER_ERROR'
+        : (APP_ERROR_TRPC_CODES[code] ?? 'BAD_REQUEST');
+
+    throw new TRPCError({ code: trpcCode, message: code });
+  }
+
+  return result;
+});
+
+export const publicProcedure = t.procedure.use(appErrorMiddleware);
 
 /**
  * Protected (authenticated) procedure
@@ -146,7 +168,7 @@ export const publicProcedure = t.procedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
+export const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let { session, user } = ctx;
 
   if (!user) {
@@ -156,7 +178,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   }
 
   if (!user) {
-    throw new TRPCError({ code: 'UNAUTHORIZED' });
+    throw new AppError(ERRORS.UNAUTHENTICATED);
   }
   return next({
     ctx: {
@@ -166,7 +188,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   });
 });
 
-export const authProcedure = t.procedure.use(async ({ ctx, next }) => {
+export const authProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let { session, user } = ctx;
 
   if (!user) {
@@ -191,9 +213,7 @@ export const clubAdminProcedure = protectedProcedure
       (clubId) => clubId === opts.input.clubId,
     );
     if (!isAdmin) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-      });
+      throw new AppError(ERRORS.NOT_CLUB_ADMIN);
     }
     return opts.next({
       ctx: {
@@ -211,9 +231,7 @@ export const tournamentAdminProcedure = protectedProcedure
       opts.input.tournamentId,
     );
     if (status !== 'organizer') {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-      });
+      throw new AppError(ERRORS.NOT_TOURNAMENT_ORGANIZER);
     }
     return opts.next();
   });

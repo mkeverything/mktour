@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 /**
  * Weighted operations for Edmonds' Blossom Algorithm
  *
@@ -49,7 +50,9 @@ export function getEdgeWeight(graph: Graph, edgeKey: GraphEdgeKey): EdgeWeight {
   const weight = graph.getEdgeAttribute(edgeKey, EDGE_WEIGHT_ATTRIBUTE);
 
   if (typeof weight !== 'bigint') {
-    throw new Error(`Edge ${edgeKey} not found or has invalid weight`);
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: `Edge ${edgeKey} not found or has invalid weight`,
+    });
   }
 
   return weight;
@@ -134,7 +137,9 @@ function sumBlossomDualsInSet(
     if (isTarget) {
       const blossomDual = state.duals.get(step.blossomId);
       if (blossomDual === undefined) {
-        throw new Error(`Dual not found for blossom ${step.blossomId}`);
+        throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+          cause: `Dual not found for blossom ${step.blossomId}`,
+        });
       }
       dualSum = dualSum + blossomDual;
     }
@@ -197,10 +202,14 @@ export function computeSlack(
   const dualV = state.duals.get(vertexV);
 
   if (dualU === undefined) {
-    throw new Error(`Dual not found for vertex ${vertexU}`);
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: `Dual not found for vertex ${vertexU}`,
+    });
   }
   if (dualV === undefined) {
-    throw new Error(`Dual not found for vertex ${vertexV}`);
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: `Dual not found for vertex ${vertexV}`,
+    });
   }
 
   const sharedBlossomDuals = computeSharedBlossomDualSum(

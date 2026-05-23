@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 import { db } from '@/server/db';
 import { affiliations, players } from '@/server/db/schema/players';
 import { and, eq, getTableColumns } from 'drizzle-orm';
@@ -8,7 +9,7 @@ export async function getUserClubAffiliation(
   clubId: string,
 ) {
   if (!user) {
-    throw new Error('USER_NOT_FOUND');
+    throw new AppError(ERRORS.USER_NOT_FOUND);
   }
 
   const affiliation = await db

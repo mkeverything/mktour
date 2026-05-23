@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { getAppErrorCode } from '@/lib/errors';
 import {
   Card,
   CardContent,
@@ -8,9 +9,22 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import posthog from 'posthog-js';
+import { useEffect } from 'react';
 import { FallbackProps } from 'react-error-boundary';
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  const t = useTranslations('Errors');
+  const code = getAppErrorCode(error);
+
+  useEffect(() => {
+    posthog.capture('app_error_boundary', {
+      error_code: code,
+      error_message: error instanceof Error ? error.message : String(error),
+    });
+  }, [code, error]);
+
   return (
     <div
       role="alert"
@@ -23,7 +37,7 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         </CardHeader>
         <CardContent>
           <pre className="bg-muted overflow-auto rounded-md p-3 text-sm">
-            {error instanceof Error ? error.message : String(error)}
+            {t(code)}
           </pre>
         </CardContent>
         <CardFooter className="flex gap-2">

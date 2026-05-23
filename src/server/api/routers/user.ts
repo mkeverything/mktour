@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 import { db } from '@/server/db';
@@ -14,7 +15,6 @@ import { userIdInputSchema } from '@/server/zod/common';
 import { userPlayerClubSchema } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectPublicSchema, usersSelectSchema } from '@/server/zod/users';
-import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -51,7 +51,7 @@ export const userRouter = createTRPCRouter({
     .query(async (opts) => {
       const { input } = opts;
       const user = await getUserInfoByUsername(input.username);
-      if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (!user) throw new AppError(ERRORS.USER_NOT_FOUND);
       return user;
     }),
   clubs: publicProcedure

@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import {
   authProcedure,
@@ -42,7 +43,6 @@ import {
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
-import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 export const playerRouter = {
@@ -162,7 +162,7 @@ export const playerRouter = {
       const isAdmin = Object.keys(clubs).find(
         (clubId) => clubId === player.clubId,
       );
-      if (!isAdmin) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (!isAdmin) throw new AppError(ERRORS.NOT_CLUB_ADMIN);
       await deletePlayer(input);
     }),
   edit: protectedProcedure

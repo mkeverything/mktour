@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 /**
  * Dual variable updates for weighted Blossom algorithm
  *
@@ -161,7 +162,9 @@ export function computeBlossomDelta(
   const blossom = state.blossoms.get(blossomId);
 
   if (blossom === undefined) {
-    throw new Error(`Blossom ${blossomId} not found`);
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: `Blossom ${blossomId} not found`,
+    });
   }
 
   let result: BlossomDelta | null = null;
@@ -179,7 +182,9 @@ export function computeBlossomDelta(
       const blossomDual = state.duals.get(blossomId);
 
       if (blossomDual === undefined) {
-        throw new Error(`Dual not found for blossom ${blossomId}`);
+        throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+          cause: `Dual not found for blossom ${blossomId}`,
+        });
       }
 
       // Delta = dual / 2 (blossom dual decreases by 2 per unit update)
@@ -408,7 +413,9 @@ export function applyDualUpdates(
     const currentDual = state.duals.get(nodeInfo.nodeId);
 
     if (currentDual === undefined) {
-      throw new Error(`Dual not found for node ${nodeInfo.nodeId}`);
+      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        cause: `Dual not found for node ${nodeInfo.nodeId}`,
+      });
     }
 
     const change = computeDualChange(nodeInfo.label, delta, nodeInfo.isBlossom);
@@ -490,7 +497,9 @@ function extractDualsForVertices(
     const dual = state.duals.get(vertexKey);
 
     if (dual === undefined) {
-      throw new Error(`Dual not found for S-vertex ${vertexKey}`);
+      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        cause: `Dual not found for S-vertex ${vertexKey}`,
+      });
     }
 
     duals.push(dual);

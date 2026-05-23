@@ -1,5 +1,6 @@
 'use client';
 
+import { getAppErrorCode } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
@@ -13,7 +14,7 @@ export default function useTournamentDelete(
   sendJsonMessage: (_message: DashboardMessage) => void,
   setOpen: Dispatch<SetStateAction<boolean>>,
 ) {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const router = useRouter();
   const trpc = useTRPC();
   return useMutation(
@@ -30,7 +31,7 @@ export default function useTournamentDelete(
       onError: (error) => {
         if (error.message !== 'NEXT_REDIRECT') {
           console.error('SERVER_ERROR', error);
-          toast.error(t('server error'));
+          toast.error(tErrors(getAppErrorCode(error)));
           queryClient.invalidateQueries({
             queryKey: trpc.tournament.pathKey(),
           });

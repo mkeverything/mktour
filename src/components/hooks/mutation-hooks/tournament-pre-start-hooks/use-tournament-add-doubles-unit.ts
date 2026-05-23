@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 import {
   doublesErrors,
   getDoublesErrorTranslationKey,
@@ -43,7 +44,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
         >(keys.playersOut);
 
         if (hasDuplicateUnitNickname(previousUnits, nickname)) {
-          throw new Error(doublesErrors.nicknameTaken);
+          throw new AppError(doublesErrors.nicknameTaken);
         }
 
         const playersOut = previousPlayersOut ?? [];
@@ -55,7 +56,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
         );
 
         if (!firstPlayer || !secondPlayer) {
-          throw new Error(doublesErrors.playersNotFound);
+          throw new AppError(doublesErrors.playersNotFound);
         }
 
         const newUnit = createDoublesUnit({

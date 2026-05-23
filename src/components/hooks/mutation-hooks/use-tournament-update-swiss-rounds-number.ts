@@ -1,5 +1,6 @@
 'use client';
 
+import { getAppErrorCode } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
@@ -10,7 +11,7 @@ export default function useTournamentSaveRoundsNumber(
   queryClient: QueryClient,
   sendJsonMessage: (_message: DashboardMessage) => void,
 ) {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.updateSwissRoundsNumber.mutationOptions({
@@ -37,7 +38,7 @@ export default function useTournamentSaveRoundsNumber(
         sendJsonMessage({ event: 'swiss-new-rounds-number', roundsNumber });
       },
       onError: (error, { tournamentId }, context) => {
-        toast.error(t('server error') + `: ` + error.message);
+        toast.error(tErrors(getAppErrorCode(error)));
         if (context?.previousData) {
           queryClient.setQueryData(
             trpc.tournament.info.queryKey({ tournamentId }),

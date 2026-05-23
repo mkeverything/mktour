@@ -2,6 +2,7 @@ import { getUserLichessTeams } from '@/lib/api/lichess';
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
+import { AppError, ERRORS } from '@/lib/errors';
 import { newid, timeout } from '@/lib/utils';
 import meta from '@/server/api/meta';
 import {
@@ -43,7 +44,6 @@ import {
   usersSelectPublicSchema,
   usersSelectSchema,
 } from '@/server/zod/users';
-import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
@@ -201,14 +201,11 @@ export const authRouter = {
         });
 
         if (!token) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Token not found',
-          });
+          throw new AppError(ERRORS.USER_NOT_FOUND);
         }
 
         if (token.userId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not your token' });
+          throw new AppError(ERRORS.FORBIDDEN);
         }
 
         await ctx.db.delete(apiTokens).where(eq(apiTokens.id, input.id));

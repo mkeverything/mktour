@@ -1,6 +1,8 @@
 import { useGlobalWebSocketContext } from '@/components/providers/websocket-provider';
+import { getAppErrorCode } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export const useClubAddManagerMutation = ({
@@ -11,6 +13,7 @@ export const useClubAddManagerMutation = ({
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const { sendJsonMessage } = useGlobalWebSocketContext();
+  const tErrors = useTranslations('Errors');
   return useMutation(
     trpc.club.managers.add.mutationOptions({
       onSuccess: (_data, { userId }) => {
@@ -25,7 +28,7 @@ export const useClubAddManagerMutation = ({
         });
         onSuccess();
       },
-      onError: () => toast.error('sorry! server error happened'),
+      onError: (error) => toast.error(tErrors(getAppErrorCode(error))),
     }),
   );
 };

@@ -1,3 +1,4 @@
+import { AppError, ERRORS } from '@/lib/errors';
 /**
  * Types, interfaces, and comparison utilities for quality evaluation
  *
@@ -101,7 +102,9 @@ export function checkCriterionPerfect(
   const value = report[criterion.id];
   const ideal = cache.get(criterion.id);
   if (ideal === undefined) {
-    throw new Error(`No cached ideal for criterion ${criterion.id}`);
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: `No cached ideal for criterion ${criterion.id}`,
+    });
   }
   return criterion.isPerfect(value, ideal);
 }
@@ -133,7 +136,9 @@ export function isNumericPerfect(
   ideal: CriterionValue,
 ): boolean {
   if (typeof value !== 'number' || typeof ideal !== 'number') {
-    throw new Error('isNumericPerfect: expected numeric values');
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: 'isNumericPerfect: expected numeric values',
+    });
   }
   return value === ideal;
 }
@@ -147,7 +152,9 @@ export function compareNumericValues(
   second: CriterionValue,
 ): number {
   if (typeof first !== 'number' || typeof second !== 'number') {
-    throw new Error('compareNumericValues: expected numeric values');
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: 'compareNumericValues: expected numeric values',
+    });
   }
   return first - second;
 }
@@ -194,7 +201,9 @@ export function isArrayPerfect(
   ideal: CriterionValue,
 ): boolean {
   if (!Array.isArray(value) || !Array.isArray(ideal)) {
-    throw new Error('isArrayPerfect: expected array values');
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: 'isArrayPerfect: expected array values',
+    });
   }
   if (value.length !== ideal.length) {
     return false;
@@ -211,7 +220,9 @@ export function compareArrayValues(
   second: CriterionValue,
 ): number {
   if (!Array.isArray(first) || !Array.isArray(second)) {
-    throw new Error('compareArrayValues: expected array values');
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: 'compareArrayValues: expected array values',
+    });
   }
   return compareLexicographically(first, second);
 }
@@ -239,7 +250,9 @@ export function isC8Perfect(
     !isFutureCriteriaCompliance(value) ||
     !isFutureCriteriaCompliance(ideal)
   ) {
-    throw new Error('isC8Perfect: expected FutureCriteriaCompliance values');
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: 'isC8Perfect: expected FutureCriteriaCompliance values',
+    });
   }
 
   if (value.pabScore !== ideal.pabScore) {
@@ -267,9 +280,9 @@ export function compareC8Values(
     !isFutureCriteriaCompliance(first) ||
     !isFutureCriteriaCompliance(second)
   ) {
-    throw new Error(
-      'compareC8Values: expected FutureCriteriaCompliance values',
-    );
+    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      cause: 'compareC8Values: expected FutureCriteriaCompliance values',
+    });
   }
 
   const pabScoreDiff = first.pabScore - second.pabScore;

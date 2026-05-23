@@ -1,5 +1,6 @@
 /* eslint-disable */
 // FIXME eslint
+import { AppError, ERRORS } from '@/lib/errors';
 import type { GameResult } from '@/server/zod/enums';
 import { GameModel } from '@/server/zod/tournaments';
 import { ClassValue, clsx } from 'clsx';
@@ -124,7 +125,7 @@ export const getClockIcon = (time: Date | null | undefined): FC => {
 };
 
 export function getRoundRobinRoundsNumber(playerCount: number) {
-  if (playerCount < 2) throw new Error('NOT_ENOUGH_PLAYERS');
+  if (playerCount < 2) throw new AppError(ERRORS.NOT_ENOUGH_TOURNAMENT_UNITS);
   return playerCount % 2 === 0 ? playerCount - 1 : playerCount;
 }
 

@@ -1,3 +1,4 @@
+import { ERRORS, getAppErrorCode } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -8,7 +9,7 @@ export default function useDeleteClubMutation(
   queryClient: QueryClient,
   setOpen: Dispatch<SetStateAction<boolean>>,
 ) {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   return useMutation(
     trpc.club.delete.mutationOptions({
@@ -23,10 +24,10 @@ export default function useDeleteClubMutation(
         setOpen(false);
       },
       onError: (error) => {
-        if (error.message === 'ZERO_CLUBS') {
-          toast.error(t('zero clubs error', { id: 'zeroClubsError' }));
+        if (getAppErrorCode(error) === ERRORS.ZERO_CLUBS) {
+          toast.error(tErrors(ERRORS.ZERO_CLUBS), { id: 'zeroClubsError' });
         } else {
-          toast.error('sorry! server error happened', { id: 'serverError' });
+          toast.error(tErrors(getAppErrorCode(error)), { id: 'serverError' });
         }
       },
     }),
