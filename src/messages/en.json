@@ -158,6 +158,7 @@
     "clubs": "no clubs yet"
   },
   "Profile": {
+    "edit": "edit",
     "rating": "lichess blitz rating",
     "email": "email",
     "created": "joined mktour on",
@@ -405,6 +406,8 @@
     "player updated": "player updated",
     "affiliation requested": "request sent",
     "affiliation canceled": "request cancelled",
+    "affiliation approved": "request approved",
+    "affiliation denied": "request denied",
     "player deleted": "player deleted",
     "player has tournaments": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
     "club updated": "club updated",
