@@ -333,7 +333,7 @@
         "delete club": "delete club",
         "add manager": "add manager",
         "allow players set results": "allow players to set game results",
-        "allow players set results description": "affiliated users can submit results in their own games",
+        "allow players set results description": "users can submit results in their own games",
         "no affiliated users": "no users linked to your club found. start typing to search all mktour users",
         "search users error": "an error happened while searching",
         "make admin": "make admin",
