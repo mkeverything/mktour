@@ -1,8 +1,6 @@
-import { AppError } from '@/lib/errors';
-import {
-  doublesErrors,
-  getDoublesErrorTranslationKey,
-} from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
+import { doublesErrors } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
+import { useIntlError } from '@/components/hooks/use-intl-error';
+import { AppError, ERRORS } from '@/lib/errors';
 import {
   appendUnitIfMissing,
   createDoublesUnit,
@@ -15,13 +13,12 @@ import { newid } from '@/lib/utils';
 import { type PlayerWithUsernameModel } from '@/server/zod/players';
 import { UnitModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export const useTournamentAddDoublesUnit = (tournamentId: string) => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
-  const t = useTranslations('Tournament.AddPlayer');
+  const { translateError } = useIntlError();
   const {
     applyOptimisticPreStartRound,
     applyServerPreStartUnitsIfLatest,
@@ -84,7 +81,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
           queryClient.setQueryData(keys.playersOut, context.previousPlayersOut);
         }
 
-        toast.error(t(getDoublesErrorTranslationKey(error)));
+        toast.error(translateError(error, { fallback: ERRORS.UNIT_NOT_ADDED }));
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
       onSettled: () => invalidatePreStartState({ playersOut: true }),

@@ -2,10 +2,12 @@ import { useClubAddManagerMutation } from '@/components/hooks/mutation-hooks/use
 import { useClubAffiliatedUsers } from '@/components/hooks/query-hooks/use-club-affiliated-users';
 import { useClubManagers } from '@/components/hooks/query-hooks/use-club-managers';
 import { useSearchQuery } from '@/components/hooks/query-hooks/use-search-result';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { ERRORS } from '@/lib/errors';
 import { UserPublicModel } from '@/server/zod/users';
 import { VariantProps } from 'class-variance-authority';
 import { useTranslations } from 'next-intl';
@@ -39,12 +41,14 @@ const AddManager = ({
   });
 
   const t = useTranslations('Club.Dashboard.Settings');
+  const { translateError } = useIntlError();
   useHotkeys('escape', () => handleClose, { enableOnFormTags: true });
 
   if (affiliatedUsers.status === 'pending' || foundUsers.status === 'pending')
     return <Skeleton className="h-svh w-full pt-8" />;
-  if (affiliatedUsers.status === 'error' || foundUsers.status === 'error') {
-    toast.error(t('search users error'), {
+  const error = affiliatedUsers.error ?? foundUsers.error;
+  if (error) {
+    toast.error(translateError(error, { fallback: ERRORS.USERS_NOT_LOADED }), {
       id: 'query-users',
       duration: 3000,
     });

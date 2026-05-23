@@ -1,12 +1,12 @@
 import { useTRPC } from '@/components/trpc/client';
-import { getAppErrorCode } from '@/lib/errors';
+import { useIntlError } from '@/components/hooks/use-intl-error';
+import { ERRORS } from '@/lib/errors';
 import { QueryClient, useMutation } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export const usePlayerAddMutation = (queryClient: QueryClient) => {
   const trpc = useTRPC();
-  const tErrors = useTranslations('Errors');
+  const { translateError } = useIntlError();
   return useMutation(
     trpc.player.create.mutationOptions({
       onSuccess: (_data, variables) => {
@@ -16,7 +16,11 @@ export const usePlayerAddMutation = (queryClient: QueryClient) => {
           }),
         });
       },
-      onError: (error) => toast.error(tErrors(getAppErrorCode(error))),
+      onError: (error) => {
+        toast.error(
+          translateError(error, { fallback: ERRORS.PLAYER_NOT_CREATED }),
+        );
+      },
     }),
   );
 };

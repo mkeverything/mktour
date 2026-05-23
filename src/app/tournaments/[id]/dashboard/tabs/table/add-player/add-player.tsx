@@ -2,7 +2,9 @@ import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-con
 import { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddExistingPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-existing-player';
 import { useTournamentPossiblePlayers } from '@/components/hooks/query-hooks/use-tournament-possible-players';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { Input } from '@/components/ui/input';
+import { ERRORS } from '@/lib/errors';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
@@ -30,6 +32,7 @@ const AddPlayer = ({
   const { userId } = useContext(DashboardContext);
   const { mutate } = useTournamentAddExistingPlayer(id);
   const t = useTranslations('Tournament.AddPlayer');
+  const { translateError } = useIntlError();
   const excludeSet = excludePlayerIds?.length
     ? new Set(excludePlayerIds)
     : null;
@@ -99,10 +102,15 @@ const AddPlayer = ({
       </div>
     );
   if (possiblePlayers.status === 'error') {
-    toast.error(t('possible players error'), {
-      id: 'query-possible-players',
-      duration: 3000,
-    });
+    toast.error(
+      translateError(possiblePlayers.error, {
+        fallback: ERRORS.POSSIBLE_PLAYERS_NOT_LOADED,
+      }),
+      {
+        id: 'query-possible-players',
+        duration: 3000,
+      },
+    );
     return (
       <div className="flex flex-col gap-3">
         <Input

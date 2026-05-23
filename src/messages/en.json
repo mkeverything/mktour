@@ -265,7 +265,7 @@
     "PLAYER_NOT_FOUND": "player not found",
     "PLAYER_RESULT_SETTING_DISABLED": "club admins disabled player result submissions",
     "RATING_CALCULATION_ERROR": "sorry! rating calculation failed",
-    "RELATION_EXISTS": "this relation already exists",
+    "RELATION_EXISTS": "this user is already a club manager",
     "ROUND_ALREADY_HAS_RESULTS": "this round already has results",
     "SHORT_CLUB_NAME": "too short for a chess club name",
     "TEAM_PLAYERS_SHOULD_BE_DIFFERENT": "team must consist of two different players",
@@ -288,7 +288,18 @@
     "USER_NOT_FOUND": "user not found",
     "WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT": "can't withdraw player because too few rounds remains",
     "WITHDRAWN_UNIT_CANNOT_PLAY": "withdrawn player cannot play",
-    "ZERO_CLUBS": "every user must have at least one club"
+    "ZERO_CLUBS": "every user must have at least one club",
+    "POSSIBLE_PLAYERS_NOT_LOADED": "error happened while loading club players",
+    "TOURNAMENT_INFO_NOT_LOADED": "couldn't get tournament info from server",
+    "TOURNAMENT_NOT_CREATED": "tournament making failed",
+    "TOURNAMENT_UNITS_NOT_LOADED": "sorry! couldn't get added players from the server",
+    "UNIT_NOT_ADDED": "sorry! couldn't add {player}",
+    "UNIT_NOT_REMOVED": "sorry! couldn't remove {player}",
+    "UNIT_NOT_WITHDRAWN": "sorry! couldn't withdraw {player}",
+    "USERS_NOT_LOADED": "an error happened while searching",
+    "WEBSOCKET_FAILED": "live-server error. sorry! no realtime updates this time",
+    "WEBSOCKET_MESSAGE_NOT_SENT": "sorry! realtime server couldn't forward this event to other viewers",
+    "PASTE_DISABLED": "you have to do it yourself"
   },
   "Club": {
     "managers list": "managers",

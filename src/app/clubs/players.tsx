@@ -7,12 +7,13 @@ import Empty from '@/components/empty';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
-import { getAppErrorCode } from '@/lib/errors';
+import { ERRORS } from '@/lib/errors';
 import { Card } from '@/components/ui/card';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
@@ -24,7 +25,7 @@ import { toast } from 'sonner';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   const t = useTranslations();
-  const tErrors = useTranslations('Errors');
+  const { translateError } = useIntlError();
   const { playersCount } = useClubStats(selectedClub).data ?? {};
   const {
     data: searchResults,
@@ -47,9 +48,11 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   }
 
   if (!useSearch && playersInfinite.status === 'error') {
-    const code = getAppErrorCode(playersInfinite.error);
-    toast.error(tErrors(code));
-    return <p>{tErrors(code)}</p>;
+    const message = translateError(playersInfinite.error, {
+      fallback: ERRORS.POSSIBLE_PLAYERS_NOT_LOADED,
+    });
+    toast.error(message);
+    return <p>{message}</p>;
   }
 
   return (

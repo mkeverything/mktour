@@ -5,6 +5,7 @@ import { LoadingSpinner } from '@/app/loading';
 import FormattedMessage from '@/components/formatted-message';
 import useDeleteClubManagerMutation from '@/components/hooks/mutation-hooks/use-club-delete-manager';
 import { useClubManagers } from '@/components/hooks/query-hooks/use-club-managers';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import {
   Close,
   Content,
@@ -14,6 +15,7 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
+import { ERRORS } from '@/lib/errors';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Item,
@@ -36,13 +38,16 @@ const ClubManagersList: FC<{ clubId: string; userId: string }> = ({
   clubId,
   userId,
 }) => {
-  const { data, status } = useClubManagers(clubId);
+  const { data, status, error } = useClubManagers(clubId);
   const t = useTranslations('Club.Dashboard.Settings');
+  const { translateError } = useIntlError();
   const user = data?.find(
     ({ clubs_to_users: { userId } }) => userId === userId,
   );
 
-  if (status === 'error') toast.error(t('search users error'));
+  if (status === 'error') {
+    toast.error(translateError(error, { fallback: ERRORS.USERS_NOT_LOADED }));
+  }
 
   return (
     <div className="gap-mk flex flex-col">

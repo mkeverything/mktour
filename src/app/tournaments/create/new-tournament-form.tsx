@@ -4,8 +4,10 @@ import { turboPascal } from '@/app/fonts';
 import { LoadingSpinner } from '@/app/loading';
 import FormDatePicker from '@/app/tournaments/create/form-date-picker';
 import { useTournamentCreate } from '@/components/hooks/mutation-hooks/use-tournament-create';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import TypeCard from '@/components/ui-custom/type-card';
 import { Button } from '@/components/ui/button';
+import { ERRORS } from '@/lib/errors';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
@@ -66,6 +68,7 @@ export default function NewTournamentForm({
     },
   });
   const t = useTranslations('MakeTournament');
+  const { translateError } = useIntlError();
   const { mutate, isPending: isMutating } = useTournamentCreate();
   const [isNavigating, startNavigation] = useTransition();
   const router = useRouter();
@@ -104,7 +107,9 @@ export default function NewTournamentForm({
         },
         onError: (e) => {
           console.error(e);
-          toast.error(t('error'));
+          toast.error(
+            translateError(e, { fallback: ERRORS.TOURNAMENT_NOT_CREATED }),
+          );
         },
       },
     );

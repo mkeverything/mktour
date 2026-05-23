@@ -1,7 +1,9 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
+import { ERRORS } from '@/lib/errors';
 import { settlePendingGamesAsForfeit } from '@/lib/utils';
 import type { GameModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +13,7 @@ import { toast } from 'sonner';
 
 export const useTournamentWithdrawUnit = (tournamentId: string) => {
   const queryClient = useQueryClient();
-  const t = useTranslations('Errors');
+  const { translateError } = useIntlError();
   const tToasts = useTranslations('Toasts');
   const trpc = useTRPC();
   const { sendJsonMessage } = useContext(DashboardContext);
@@ -108,33 +110,13 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
           );
         }
 
-        if (_err.message === 'WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT') {
-          toast.error(t('withdraw-unit-rounds-error'), {
-            id: 'withdraw-unit-rounds-error',
-            duration: 3000,
-          });
-          return;
-        }
-
         const unit = context?.previousState?.find(
           (previousUnit) => previousUnit.id === unitId,
         );
-        if (!unit) {
-          toast.error(
-            t('internal-error', {
-              error: 'unit not found in context.previousState',
-            }),
-            {
-              id: 'internal-error',
-              duration: 3000,
-            },
-          );
-          return;
-        }
-
         toast.error(
-          t('withdraw-unit-error', {
-            player: unit.unitNickname,
+          translateError(_err, {
+            fallback: ERRORS.UNIT_NOT_WITHDRAWN,
+            options: { player: unit?.unitNickname ?? '' },
           }),
           {
             id: 'withdraw-unit-error',
