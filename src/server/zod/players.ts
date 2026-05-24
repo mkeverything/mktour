@@ -1,4 +1,5 @@
 import { ERRORS } from '@/lib/errors';
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { affiliations, players } from '@/server/db/schema/players';
 import { affiliationStatusEnum } from '@/server/zod/enums';
 import { tournamentSchema } from '@/server/zod/tournaments';
@@ -16,19 +17,19 @@ export const playersWithUsernameSchema = createSelectSchema(players).extend({
 export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
-      .min(0, {
-        error: ERRORS.MIN_RATING,
+      .min(GLICKO2_CONSTANTS.MIN_STARTING_RATING, {
+        error: ERRORS.MIN_STARTING_RATING,
       })
-      .max(3000, {
-        error: ERRORS.MAX_RATING,
+      .max(GLICKO2_CONSTANTS.MAX_STARTING_RATING, {
+        error: ERRORS.MAX_STARTING_RATING,
       }),
   ratingPeak: (s) =>
     s
-      .min(0, {
-        error: ERRORS.MIN_PEAK_RATING,
+      .min(GLICKO2_CONSTANTS.MIN_RATING, {
+        error: ERRORS.MIN_RATING,
       })
-      .max(3000, {
-        error: ERRORS.MAX_PEAK_RATING,
+      .max(GLICKO2_CONSTANTS.MAX_RATING, {
+        error: ERRORS.MAX_RATING,
       }),
   nickname: (s) =>
     s

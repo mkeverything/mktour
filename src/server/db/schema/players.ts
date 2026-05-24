@@ -2,8 +2,9 @@ import { clubs } from '@/server/db/schema/clubs';
 import { games, players_to_units } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { AffiliationStatus } from '@/server/zod/enums';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
+  check,
   integer,
   real,
   sqliteTable,
@@ -40,6 +41,11 @@ export const players = sqliteTable(
       table.clubId,
     ),
     uniqueIndex('player_user_club_unique_idx').on(table.userId, table.clubId),
+    check('player_rating_bounds', sql`${table.rating} between 400 and 3400`),
+    check(
+      'player_rating_peak_bounds',
+      sql`${table.ratingPeak} is null or ${table.ratingPeak} between 400 and 3400`,
+    ),
   ],
 );
 

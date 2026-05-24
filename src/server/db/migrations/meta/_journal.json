@@ -85,6 +85,13 @@
       "when": 1778546938732,
       "tag": "0011_bitter_the_hand",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1779644297528,
+      "tag": "0012_young_sage",
+      "breakpoints": true
     }
   ]
 }

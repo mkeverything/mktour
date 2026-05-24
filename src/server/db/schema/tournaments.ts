@@ -6,8 +6,9 @@ import {
   TournamentFormat,
   TournamentType,
 } from '@/server/zod/enums';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
+  check,
   index,
   integer,
   real,
@@ -55,6 +56,10 @@ export const players_to_units = sqliteTable(
   (table) => [
     index('ptu_unit_idx').on(table.unitId),
     index('ptu_player_idx').on(table.playerId),
+    check(
+      'ptu_new_rating_bounds',
+      sql`${table.newRating} is null or ${table.newRating} between 400 and 3400`,
+    ),
   ],
 );
 
