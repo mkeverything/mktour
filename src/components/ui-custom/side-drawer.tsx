@@ -30,11 +30,11 @@ const SideDrawer: FC<DrawerProps> = ({
         <Drawer.Overlay className="fixed inset-0 top-0 z-50 bg-black/80" />
         <Drawer.Content
           onInteractOutside={() => setOpen(false)}
-          className="fixed top-0 right-0 bottom-0 z-50 flex flex-col outline-hidden max-sm:left-[5rem] sm:w-sm"
+          className="bg-background fixed top-0 right-0 bottom-0 z-50 flex flex-col outline-hidden max-sm:left-[5rem] sm:w-sm"
         >
           <Drawer.Title />
           <Drawer.Description />
-          <div className="border-secondary bg-background flex h-[100dvh] w-full flex-1 flex-col gap-3 rounded-l-[15px] border p-4">
+          <div className="border-secondary flex h-[100dvh] w-full flex-1 flex-col gap-3 rounded-l-[15px] border border-r-0 p-4">
             {children}
           </div>
         </Drawer.Content>
