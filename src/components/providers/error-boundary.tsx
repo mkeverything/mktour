@@ -1,13 +1,13 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { getAppErrorCode } from '@/lib/errors';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
+import { getAppErrorCode } from '@/lib/errors';
 import { AlertTriangle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import posthog from 'posthog-js';
@@ -21,9 +21,8 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   useEffect(() => {
     posthog.capture('app_error_boundary', {
       error_code: code,
-      error_message: error instanceof Error ? error.message : String(error),
     });
-  }, [code, error]);
+  }, [code]);
 
   return (
     <div
