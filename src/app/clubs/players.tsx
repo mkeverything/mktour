@@ -13,8 +13,8 @@ import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
-import { ERRORS } from '@/lib/errors';
 import { Card } from '@/components/ui/card';
+import { ERRORS } from '@/lib/errors';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
@@ -112,7 +112,7 @@ const PlayerItem: FC<{
 
   return (
     <ComboModal.Root>
-      <ComboModal.Trigger>
+      <ComboModal.Trigger asChild>
         <Card
           key={id}
           className="mk-card flex items-center justify-between truncate"

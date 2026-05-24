@@ -27,6 +27,8 @@ const SwipeHandlerProvider: FC<SwipeDetectorProps & PropsWithChildren> = ({
   }
 
   function handleTouchEnd() {
+    if (!window.getSelection()?.isCollapsed) return;
+
     if (
       touchStartX.current !== null &&
       touchStartY.current !== null &&
