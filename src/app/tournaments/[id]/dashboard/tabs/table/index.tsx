@@ -20,7 +20,6 @@ import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tou
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useIntlError } from '@/components/hooks/use-intl-error';
-import { ERRORS } from '@/lib/errors';
 import {
   Table,
   TableBody,
@@ -28,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ERRORS } from '@/lib/errors';
 import {
   sortUnitsByResultsWithMaps,
   type SortedUnitsResult,
@@ -269,7 +269,10 @@ const SortableUnitRow = memo(function SortableUnitRow({
       hasEnded={hasEnded}
       index={index}
       isSelected={isSelected}
-      onSelect={() => setSelectedUnit(unit)}
+      onSelect={() => {
+        if (!window.getSelection()?.isCollapsed) return;
+        setSelectedUnit(unit);
+      }}
       unit={unit}
       renderStat={renderStat}
       stats={stats}

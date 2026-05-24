@@ -16,12 +16,12 @@ mktour also exposes an open api, which alows developers to build other interface
 
 ## tournament formats
 
-current formats:
+currently supported:
 
 - swiss
 - round robin
 
-planned formats:
+planned:
 
 - single elimination
 - double elimination
@@ -53,7 +53,7 @@ openapi: https://mktour.org/api/spec
 
 ## форматы турниров
 
-сейчас:
+сейчас доступны:
 
 - швейцарская система
 - круговая система
