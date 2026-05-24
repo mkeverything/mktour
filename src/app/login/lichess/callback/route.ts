@@ -61,8 +61,9 @@ export async function GET(request: Request): Promise<Response> {
       .email as string;
 
     cooks.set('token', tokens.accessToken(), {
-      sameSite: 'none',
-      secure: true,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     });
 
     const existingUser = (
