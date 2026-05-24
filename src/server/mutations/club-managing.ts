@@ -180,11 +180,11 @@ export const editPlayer = async ({
   values: PlayerEditModel;
   user: User;
 }) => {
-  const { id, ...updates } = values;
+  const { playerId, ...updates } = values;
   const [player] = await db
     .select({ clubId: players.clubId, userId: players.userId })
     .from(players)
-    .where(eq(players.id, id));
+    .where(eq(players.id, playerId));
 
   if (!player) throw new AppError(ERRORS.PLAYER_NOT_FOUND);
 
@@ -210,7 +210,7 @@ export const editPlayer = async ({
     const conflict = await playerExistsInClub({
       nickname: payload.nickname,
       clubId: player.clubId,
-      excludePlayerId: id,
+      excludePlayerId: playerId,
     });
     if (conflict) {
       throw new AppError(ERRORS.PLAYER_EXISTS_ERROR);
@@ -224,15 +224,19 @@ export const editPlayer = async ({
     const [currentPlayer] = await db
       .select()
       .from(players)
-      .where(eq(players.id, id));
+      .where(eq(players.id, playerId));
     if (!currentPlayer) throw new AppError(ERRORS.PLAYER_NOT_EDITED);
     return currentPlayer;
   }
 
   const result = (
-    await db.update(players).set(payload).where(eq(players.id, id)).returning()
+    await db
+      .update(players)
+      .set(payload)
+      .where(eq(players.id, playerId))
+      .returning()
   ).at(0);
-  revalidatePath(`/player/${id}`);
+  revalidatePath(`/player/${playerId}`);
 
   if (!result) throw new AppError(ERRORS.PLAYER_NOT_EDITED);
   return result;

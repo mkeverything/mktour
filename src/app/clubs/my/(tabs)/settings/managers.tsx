@@ -15,7 +15,6 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { ERRORS } from '@/lib/errors';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Item,
@@ -27,9 +26,9 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ERRORS } from '@/lib/errors';
 import { ClubManagerModel } from '@/server/zod/clubs';
 import { Trash2, User2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { FC } from 'react';
 import { toast } from 'sonner';
@@ -39,7 +38,6 @@ const ClubManagersList: FC<{ clubId: string; userId: string }> = ({
   userId,
 }) => {
   const { data, status, error } = useClubManagers(clubId);
-  const t = useTranslations('Club.Dashboard.Settings');
   const { translateError } = useIntlError();
   const user = data?.find(
     ({ clubs_to_users: { userId } }) => userId === userId,

@@ -75,7 +75,7 @@ export const playerFormSchema = playersInsertSchema.omit({
 export const playerEditSchema = playersUpdateSchema
   .pick({ nickname: true, realname: true })
   .extend({
-    id: z.string(),
+    playerId: z.string(),
     nickname: z
       .string()
       .trim()

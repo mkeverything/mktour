@@ -134,7 +134,7 @@ const PlayerItem: FC<{
         </ComboModal.Header>
         <EditPlayerForm
           clubId={player.clubId}
-          player={player}
+          player={{ playerId: player.id, ...player }}
           status={statusInClub}
           setOpen={() => null}
         />
