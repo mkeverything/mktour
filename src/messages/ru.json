@@ -240,7 +240,7 @@
     "MAX_NICKNAME_LENGTH": "максимум 30 букв",
     "MAX_PEAK_RATING": "пиковый рейтинг слишком высокий",
     "MAX_RATING": "похоже здесь читер",
-    "MIN_NICKNAME_LENGTH": "минимум три буквы",
+    "MIN_NICKNAME_LENGTH": "минимум две буквы",
     "MIN_PEAK_RATING": "отрицательный пиковый рейтинг??",
     "MIN_RATING": "отрицательный рейтинг??",
     "NOT_CLUB_ADMIN": "вы не админ клуба",

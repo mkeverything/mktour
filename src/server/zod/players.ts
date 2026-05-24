@@ -33,7 +33,7 @@ export const playersInsertSchema = createInsertSchema(players, {
   nickname: (s) =>
     s
       .trim()
-      .min(3, {
+      .min(2, {
         error: ERRORS.MIN_NICKNAME_LENGTH,
       })
       .max(30, {

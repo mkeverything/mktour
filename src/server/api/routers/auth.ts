@@ -111,7 +111,10 @@ export const authRouter = {
   validatePlayerNickname: protectedProcedure
     .input(
       z.object({
-        nickname: z.string().trim().min(1),
+        nickname: z
+          .string()
+          .trim()
+          .min(2, { error: ERRORS.MIN_NICKNAME_LENGTH }),
         clubId: z.string(),
       }),
     )

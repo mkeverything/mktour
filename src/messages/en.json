@@ -240,7 +240,7 @@
     "MAX_NICKNAME_LENGTH": "nickname must be at most 30 characters long",
     "MAX_PEAK_RATING": "peak rating is too high",
     "MAX_RATING": "no cheaters allowed",
-    "MIN_NICKNAME_LENGTH": "nickname must be at least 3 characters long",
+    "MIN_NICKNAME_LENGTH": "nickname must be at least 2 characters long",
     "MIN_PEAK_RATING": "negative peak rating??",
     "MIN_RATING": "negative rating??",
     "NOT_CLUB_ADMIN": "sorry! you are not a club admin",
