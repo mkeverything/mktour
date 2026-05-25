@@ -8,12 +8,7 @@
  */
 
 import { validateRequest } from '@/lib/auth/lucia';
-import {
-  APP_ERROR_TRPC_CODES,
-  AppError,
-  ERRORS,
-  getAppErrorCode,
-} from '@/lib/errors';
+import { AppError, ERRORS } from '@/lib/errors';
 import { db } from '@/server/db';
 import { apiTokens, users } from '@/server/db/schema/users';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
@@ -24,7 +19,7 @@ import {
 } from '@/server/zod/common';
 import { StatusInClub } from '@/server/zod/enums';
 import { UserModel } from '@/server/zod/users';
-import { initTRPC, TRPCError } from '@trpc/server';
+import { initTRPC } from '@trpc/server';
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
 import { Session } from 'lucia';
@@ -142,26 +137,7 @@ export const createTRPCRouter = t.router;
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-const appErrorMiddleware = t.middleware(async ({ next }) => {
-  const result = await next();
-
-  if (!result.ok) {
-    const error = result.error;
-
-    if (error instanceof TRPCError) {
-      throw error;
-    }
-
-    const code = getAppErrorCode(error);
-    const trpcCode = APP_ERROR_TRPC_CODES[code] ?? 'BAD_REQUEST';
-
-    throw new TRPCError({ code: trpcCode, message: code });
-  }
-
-  return result;
-});
-
-export const publicProcedure = t.procedure.use(appErrorMiddleware);
+export const publicProcedure = t.procedure;
 
 /**
  * Protected (authenticated) procedure
@@ -238,5 +214,3 @@ export const tournamentAdminProcedure = protectedProcedure
     }
     return opts.next();
   });
-
-// export type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;

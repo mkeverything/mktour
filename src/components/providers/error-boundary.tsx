@@ -7,7 +7,7 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { AlertTriangle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import posthog from 'posthog-js';
@@ -16,13 +16,13 @@ import { FallbackProps } from 'react-error-boundary';
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const t = useTranslations('Errors');
-  const code = getAppErrorCode(error);
+  const message = getAppErrorMessage(error);
 
   useEffect(() => {
     posthog.capture('app_error_boundary', {
-      error_code: code,
+      error_code: message,
     });
-  }, [code]);
+  }, [message]);
 
   return (
     <div
@@ -36,7 +36,7 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         </CardHeader>
         <CardContent>
           <pre className="bg-muted overflow-auto rounded-md p-3 text-sm">
-            {t(code)}
+            {t(message)}
           </pre>
         </CardContent>
         <CardFooter className="flex gap-2">

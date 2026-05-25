@@ -1,4 +1,4 @@
-import { ERRORS, getAppErrorCode } from '@/lib/errors';
+import { ERRORS, getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -24,10 +24,12 @@ export default function useDeleteClubMutation(
         setOpen(false);
       },
       onError: (error) => {
-        if (getAppErrorCode(error) === ERRORS.ZERO_CLUBS) {
+        if (getAppErrorMessage(error) === ERRORS.ZERO_CLUBS) {
           toast.error(tErrors(ERRORS.ZERO_CLUBS), { id: 'zeroClubsError' });
         } else {
-          toast.error(tErrors(getAppErrorCode(error)), { id: 'serverError' });
+          toast.error(tErrors(getAppErrorMessage(error)), {
+            id: 'serverError',
+          });
         }
       },
     }),

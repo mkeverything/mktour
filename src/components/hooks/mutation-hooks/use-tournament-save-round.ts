@@ -1,4 +1,4 @@
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTRPC } from '@/components/trpc/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -81,7 +81,7 @@ export default function useSaveRound(props: SaveRoundMutationProps) {
             roundNumber,
           }),
         });
-        toast.error(tErrors(getAppErrorCode(error)));
+        toast.error(tErrors(getAppErrorMessage(error)));
       },
     }),
   );

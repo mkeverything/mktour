@@ -283,6 +283,7 @@
     "UNIT_NICKNAME_TAKEN": "team nickname is already used in this club",
     "UNIT_PLAYERS_NOT_FOUND": "could not find selected players",
     "UNKNOWN_ERROR": "unknown server error, sorry!",
+    "VALIDATION_ERROR": "data is invalid",
     "UNSUPPORTED_TOURNAMENT_FORMAT": "unsupported tournament format",
     "USERID_NOT_FOUND_IN_CONTEXT": "user id not found in context",
     "USER_MISMATCH": "user mismatch",

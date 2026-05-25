@@ -1,4 +1,4 @@
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -16,7 +16,7 @@ export default function useEditUserMutation(queryClient: QueryClient) {
           queryKey: trpc.auth.info.queryKey(),
         });
       },
-      onError: (error) => toast.error(tErrors(getAppErrorCode(error))),
+      onError: (error) => toast.error(tErrors(getAppErrorMessage(error))),
     }),
   );
 }

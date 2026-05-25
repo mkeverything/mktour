@@ -28,15 +28,14 @@ export const useTournamentRemoveUnit = (tournamentId: string) => {
           removeUnitById(previousUnits, unitId),
         );
       },
-      onError: (_err, { unitId }, context) => {
+      onError: (err, { unitId }, context) => {
         rollbackOptimisticPreStartRound(context);
         const unit = context?.previousUnits?.find((u) => u.id === unitId);
         toast.error(
-          translateError(_err, {
+          translateError(err, {
             fallback: ERRORS.UNIT_NOT_REMOVED,
             options: { player: unit?.unitNickname ?? '' },
           }),
-          { id: 'remove-player-error', duration: 3000 },
         );
       },
       onSuccess: applyServerPreStartUnitsIfLatest,

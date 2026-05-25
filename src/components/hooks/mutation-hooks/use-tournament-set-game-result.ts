@@ -1,6 +1,6 @@
 'use client';
 
-import { ERRORS, getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { UnitModel } from '@/server/zod/tournaments';
 import { DashboardMessage } from '@/types/tournament-ws-events';
@@ -160,11 +160,7 @@ export default function useTournamentSetGameResult(
         });
       },
       onError: (error) => {
-        if (getAppErrorCode(error) === ERRORS.PLAYER_RESULT_SETTING_DISABLED) {
-          toast.error(tErrors(ERRORS.PLAYER_RESULT_SETTING_DISABLED));
-          return;
-        }
-        toast.error(tErrors(getAppErrorCode(error)));
+        toast.error(tErrors(getAppErrorMessage(error)));
         console.log(error);
       },
     }),

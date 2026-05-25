@@ -1,6 +1,6 @@
 'use client';
 
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
@@ -42,7 +42,7 @@ export default function useTournamentStart(
         });
       },
       onError: (error) => {
-        toast.error(tErrors(getAppErrorCode(error)));
+        toast.error(tErrors(getAppErrorMessage(error)));
         console.log(error);
       },
     }),

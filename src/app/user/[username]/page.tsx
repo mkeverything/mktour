@@ -1,6 +1,6 @@
 import Profile from '@/app/user/[username]/profile';
 import { BASE_URL } from '@/lib/config/urls';
-import { ERRORS, getAppErrorCode } from '@/lib/errors';
+import { ERRORS, getAppErrorMessage } from '@/lib/errors';
 import { publicCaller } from '@/server/api';
 import { UserPlayerClubModel } from '@/server/zod/players';
 import { TournamentModel } from '@/server/zod/tournaments';
@@ -18,7 +18,7 @@ export default async function UserPage(props: TournamentPageProps) {
       username: params.username,
     });
   } catch (e: unknown) {
-    if (getAppErrorCode(e) === ERRORS.USER_NOT_FOUND) notFound();
+    if (getAppErrorMessage(e) === ERRORS.USER_NOT_FOUND) notFound();
     throw e;
   }
   const isOwner = !!user && user.username === params.username;
@@ -57,7 +57,7 @@ export async function generateMetadata(
       username: params.username,
     });
   } catch (e: unknown) {
-    if (getAppErrorCode(e) === ERRORS.USER_NOT_FOUND) notFound();
+    if (getAppErrorMessage(e) === ERRORS.USER_NOT_FOUND) notFound();
     throw e;
   }
 

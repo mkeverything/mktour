@@ -1,4 +1,4 @@
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -19,7 +19,7 @@ export default function useEditClubMutation(queryClient: QueryClient) {
       },
       onError: (error) => {
         if (isLinkTeamError(error)) return;
-        toast.error(tErrors(getAppErrorCode(error)));
+        toast.error(tErrors(getAppErrorMessage(error)));
       },
     }),
   );
