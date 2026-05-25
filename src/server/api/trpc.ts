@@ -146,11 +146,14 @@ const appErrorMiddleware = t.middleware(async ({ next }) => {
   const result = await next();
 
   if (!result.ok) {
-    const code = getAppErrorCode(result.error);
-    const trpcCode =
-      code === ERRORS.UNKNOWN_ERROR
-        ? 'INTERNAL_SERVER_ERROR'
-        : (APP_ERROR_TRPC_CODES[code] ?? 'BAD_REQUEST');
+    const error = result.error;
+
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
+    const code = getAppErrorCode(error);
+    const trpcCode = APP_ERROR_TRPC_CODES[code] ?? 'BAD_REQUEST';
 
     throw new TRPCError({ code: trpcCode, message: code });
   }
