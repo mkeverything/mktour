@@ -26,8 +26,8 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 
 ## errors and i18n
 
-- never throw native `Error` for app/domain failures; throw `new AppError(ERRORS.SOME_CODE)`
-- never hard-code user-facing error messages; add an `ERRORS` code and translations in every locale
+- never throw native `Error` for app/domain failures; throw `new AppError(PREDEFINED_ERROR_MESSAGE)`
+- never hard-code user-facing error messages; add an `ERRORS` message and translations in every locale
 
 ## optimistic updates
 

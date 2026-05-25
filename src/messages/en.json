@@ -269,6 +269,7 @@
     "RATING_CALCULATION_ERROR": "sorry! rating calculation failed",
     "RELATION_EXISTS": "this user is already a club manager",
     "ROUND_ALREADY_HAS_RESULTS": "this round already has results",
+    "SESSION_VALIDATION_TIMEOUT": "session validation timed out",
     "SHORT_CLUB_NAME": "too short for a chess club name",
     "TEAM_PLAYERS_SHOULD_BE_DIFFERENT": "team must consist of two different players",
     "TIME_TRAVEL": "is it a time travel?",

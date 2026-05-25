@@ -1,5 +1,6 @@
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { BASE_URL } from '@/lib/config/urls';
+import { AppError } from '@/lib/errors';
 import { adapter } from '@/server/db/lucia-adapter';
 
 import { UserModel } from '@/server/zod/users';
@@ -49,7 +50,10 @@ export const uncachedValidateRequest = async (): Promise<
 
   try {
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('session validation timeout')), 4000),
+      setTimeout(
+        () => reject(new AppError('SESSION_VALIDATION_TIMEOUT')),
+        4000,
+      ),
     );
 
     const result = await Promise.race([
@@ -102,7 +106,7 @@ export const validateRequest = cache(async () => {
     // timeout prevents hanging on Vercel
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(
-        () => reject(new Error('Cached session validation timeout')),
+        () => reject(new AppError('SESSION_VALIDATION_TIMEOUT')),
         4000,
       ),
     );

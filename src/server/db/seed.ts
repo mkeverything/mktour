@@ -70,6 +70,7 @@ export const seedComprehensiveTestData = async () => {
             },
           ]),
           rating: f.int({ minValue: 1200, maxValue: 2800 }),
+          ratingPeak: f.default({ defaultValue: null }),
           ratingDeviation: f.int({ minValue: 50, maxValue: 300 }),
           ratingVolatility: f.number({
             minValue: 0.05,

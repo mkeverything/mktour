@@ -269,6 +269,7 @@
     "RATING_CALCULATION_ERROR": "простите! случилась какая-то ошибка при расчёте рейтинга",
     "RELATION_EXISTS": "этот пользователь уже и так админ",
     "ROUND_ALREADY_HAS_RESULTS": "для этого тура уже есть результаты",
+    "SESSION_VALIDATION_TIMEOUT": "не полвучилось верифицировать сессию",
     "SHORT_CLUB_NAME": "слишком коротко",
     "TEAM_PLAYERS_SHOULD_BE_DIFFERENT": "команда должна состоять из разных игроков",
     "TIME_TRAVEL": "путешествуем во времени?",

@@ -1,5 +1,3 @@
-import { useIntlError } from '@/components/hooks/use-intl-error';
-import { AppError } from '@/lib/errors';
 import {
   appendUnitIfMissing,
   createDoublesUnit,
@@ -7,7 +5,9 @@ import {
   removePlayersOutByIds,
 } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/unit-helpers';
 import { useSharedPreStart } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-shared-pre-start';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
+import { AppError } from '@/lib/errors';
 import { newid } from '@/lib/utils';
 import { type PlayerWithUsernameModel } from '@/server/zod/players';
 import { UnitModel } from '@/server/zod/tournaments';
@@ -52,7 +52,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
         );
 
         if (!firstPlayer || !secondPlayer) {
-          throw new AppError(doublesErrors.playersNotFound);
+          throw new AppError('UNIT_PLAYERS_NOT_FOUND');
         }
 
         const newUnit = createDoublesUnit({
