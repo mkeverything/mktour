@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 import { db } from '@/server/db';
@@ -51,7 +51,7 @@ export const userRouter = createTRPCRouter({
     .query(async (opts) => {
       const { input } = opts;
       const user = await getUserInfoByUsername(input.username);
-      if (!user) throw new AppError(ERRORS.USER_NOT_FOUND);
+      if (!user) throw new AppError('USER_NOT_FOUND');
       return user;
     }),
   clubs: publicProcedure

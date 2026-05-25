@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import {
   ChessTournamentEntity,
   RoundProps,
@@ -380,7 +380,7 @@ export function generateSwissRound({
         pairingLogger.withMetadata(failureInfo).debug('Pairing failed');
       }
 
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause:
           `Swiss pairing failed at round ${roundNumber} for scoregroup ${score}: ` +
           `No valid pairing found after trying all alterations. ` +

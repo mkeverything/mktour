@@ -1,6 +1,6 @@
 'use server';
 
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
@@ -37,7 +37,7 @@ export async function addNewSoloUnit({
   addedAt?: Date;
 }): Promise<UnitModel[]> {
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new AppError(ERRORS.TOURNAMENT_NOT_FOUND);
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
 
   const playerId = player.id ?? newid();
   return await db.transaction(async (tx) => {
@@ -72,21 +72,19 @@ export async function addSoloUnit(
   const database = options.database ?? db;
 
   if (!options.skipAuth) {
-    if (!userId) throw new AppError(ERRORS.UNAUTHENTICATED);
+    if (!userId) throw new AppError('UNAUTHENTICATED');
     const { user } = await validateRequest();
-    if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
-    if (user.id !== userId) throw new AppError(ERRORS.USER_MISMATCH);
+    if (!user) throw new AppError('UNAUTHENTICATED');
+    if (user.id !== userId) throw new AppError('USER_MISMATCH');
     const { status } = await getStatusInTournament(user.id, tournamentId);
-    if (status === 'viewer')
-      throw new AppError(ERRORS.NOT_TOURNAMENT_ORGANIZER);
+    if (status === 'viewer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   }
 
   const tournament = await getTournamentById(tournamentId, database);
-  if (!tournament) throw new AppError(ERRORS.TOURNAMENT_NOT_FOUND);
-  if (tournament.startedAt)
-    throw new AppError(ERRORS.TOURNAMENT_ALREADY_STARTED);
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+  if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
   if (tournament.type !== 'solo') {
-    throw new AppError(ERRORS.NOT_SOLO_TOURNAMENT);
+    throw new AppError('NOT_SOLO_TOURNAMENT');
   }
 
   const unitId = requestedUnitId ?? newid();
@@ -120,7 +118,7 @@ export async function addSoloUnit(
       )
       .limit(1);
     if (existingMembership.length > 0) {
-      throw new AppError(ERRORS.PLAYER_ALREADY_IN_UNIT);
+      throw new AppError('PLAYER_ALREADY_IN_UNIT');
     }
 
     await d.insert(tournament_units).values(unit);

@@ -5,7 +5,6 @@ import {
 import { useSharedPreStart } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-shared-pre-start';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
-import { ERRORS } from '@/lib/errors';
 import { newid } from '@/lib/utils';
 import { type PlayerWithUsernameModel } from '@/server/zod/players';
 import { UnitModel } from '@/server/zod/tournaments';
@@ -57,7 +56,7 @@ export const useTournamentAddExistingPlayer = (tournamentId: string) => {
         }
         toast.error(
           translateError(_err, {
-            fallback: ERRORS.UNIT_NOT_ADDED,
+            fallback: 'UNIT_NOT_ADDED',
             options: { player: data.player.nickname },
           }),
           { id: `add-player-error-${data.player.id}` },

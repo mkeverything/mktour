@@ -5,7 +5,6 @@ import {
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { ERRORS } from '@/lib/errors';
 import { clubsSelectSchema } from '@/server/zod/clubs';
 import {
   gameResultEnum,
@@ -85,7 +84,7 @@ export const reorderTournamentUnitsInputSchema = z.object({
   unitIds: z
     .array(z.string())
     .refine((ids) => new Set(ids).size === ids.length, {
-      message: ERRORS.TOURNAMENT_UNIT_IDS_NOT_UNIQUE,
+      message: 'TOURNAMENT_UNIT_IDS_NOT_UNIQUE',
     }),
 });
 export const withdrawTournamentUnitInputSchema = z.object({
@@ -149,7 +148,7 @@ export const newTournamentFormSchemaConfig = {
       return dateString >= todayString;
     },
     {
-      message: ERRORS.TIME_TRAVEL,
+      message: 'TIME_TRAVEL',
     },
   ),
   format: tournamentFormatEnum,
@@ -170,15 +169,15 @@ export const addDoublesUnitSchema = z
     nickname: z
       .string()
       .trim()
-      .min(2, { error: ERRORS.MIN_NICKNAME_LENGTH })
-      .max(30, { error: ERRORS.MAX_NICKNAME_LENGTH }),
+      .min(2, { error: 'MIN_NICKNAME_LENGTH' })
+      .max(30, { error: 'MAX_NICKNAME_LENGTH' }),
     unitId: unitSchema.shape.id.optional(),
     firstPlayerId: playerInUnitSchema.shape.id,
     secondPlayerId: playerInUnitSchema.shape.id,
   })
   .refine((value) => value.firstPlayerId !== value.secondPlayerId, {
     path: ['secondPlayerId'],
-    message: ERRORS.TEAM_PLAYERS_SHOULD_BE_DIFFERENT,
+    message: 'TEAM_PLAYERS_SHOULD_BE_DIFFERENT',
   });
 
 export const editDoublesUnitSchema = addDoublesUnitSchema.required({
@@ -187,7 +186,7 @@ export const editDoublesUnitSchema = addDoublesUnitSchema.required({
 
 /** form schema: nickname optional (derive on submit when empty). api still requires min(2). */
 export const addDoublesUnitFormSchema = addDoublesUnitSchema.safeExtend({
-  nickname: z.string().trim().max(30, { error: ERRORS.MAX_NICKNAME_LENGTH }),
+  nickname: z.string().trim().max(30, { error: 'MAX_NICKNAME_LENGTH' }),
 });
 
 export type TournamentInfoModel = z.infer<typeof tournamentInfoSchema>;

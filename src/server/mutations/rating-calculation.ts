@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import {
   glicko2Calculator,
   GlickoGameResult,
@@ -110,7 +110,7 @@ function toRatedGames(
     const blackPlayer = playerRatings.get(game.blackPlayerId);
 
     if (!whitePlayer || !blackPlayer) {
-      throw new AppError(ERRORS.RATING_CALCULATION_ERROR, {
+      throw new AppError('RATING_CALCULATION_ERROR', {
         cause: `rated game ${game.id} has missing player rating data`,
       });
     }
@@ -166,7 +166,7 @@ function getScoreFromResult(
     case '1/2-1/2':
       return 0.5;
     default:
-      throw new AppError(ERRORS.RATING_CALCULATION_ERROR, {
+      throw new AppError('RATING_CALCULATION_ERROR', {
         cause: `invalid game result: ${result}`,
       });
   }
@@ -219,7 +219,7 @@ export async function calculateAndApplyGlickoRatings(
     .then((rows) => rows[0]);
 
   if (!tournament) {
-    throw new AppError(ERRORS.TOURNAMENT_NOT_FOUND);
+    throw new AppError('TOURNAMENT_NOT_FOUND');
   }
 
   if (!tournament.rated) {

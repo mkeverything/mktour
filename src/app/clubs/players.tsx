@@ -14,7 +14,6 @@ import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ERRORS } from '@/lib/errors';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
@@ -49,7 +48,7 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
 
   if (!useSearch && playersInfinite.status === 'error') {
     const message = translateError(playersInfinite.error, {
-      fallback: ERRORS.POSSIBLE_PLAYERS_NOT_LOADED,
+      fallback: 'POSSIBLE_PLAYERS_NOT_LOADED',
     });
     toast.error(message);
     return <p>{message}</p>;

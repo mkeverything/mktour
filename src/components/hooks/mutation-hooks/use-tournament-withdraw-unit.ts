@@ -3,7 +3,6 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
-import { ERRORS } from '@/lib/errors';
 import { settlePendingGamesAsForfeit } from '@/lib/utils';
 import type { GameModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -115,7 +114,7 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
         );
         toast.error(
           translateError(_err, {
-            fallback: ERRORS.UNIT_NOT_WITHDRAWN,
+            fallback: 'UNIT_NOT_WITHDRAWN',
             options: { player: unit?.unitNickname ?? '' },
           }),
           {

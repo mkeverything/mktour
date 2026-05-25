@@ -1,6 +1,5 @@
-import { doublesErrors } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
 import { useIntlError } from '@/components/hooks/use-intl-error';
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import {
   appendUnitIfMissing,
   createDoublesUnit,
@@ -41,7 +40,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
         >(keys.playersOut);
 
         if (hasDuplicateUnitNickname(previousUnits, nickname)) {
-          throw new AppError(doublesErrors.nicknameTaken);
+          throw new AppError('UNIT_NICKNAME_TAKEN');
         }
 
         const playersOut = previousPlayersOut ?? [];
@@ -81,7 +80,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
           queryClient.setQueryData(keys.playersOut, context.previousPlayersOut);
         }
 
-        toast.error(translateError(error, { fallback: ERRORS.UNIT_NOT_ADDED }));
+        toast.error(translateError(error, { fallback: 'UNIT_NOT_ADDED' }));
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
       onSettled: () => invalidatePreStartState({ playersOut: true }),

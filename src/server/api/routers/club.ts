@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import meta from '@/server/api/meta';
@@ -275,7 +275,7 @@ export const clubRouter = createTRPCRouter({
         ...input,
         username: opts.ctx.user.username,
       });
-      if (!newClub) throw new AppError(ERRORS.CLUB_NOT_FOUND);
+      if (!newClub) throw new AppError('CLUB_NOT_FOUND');
       return newClub;
     }),
   leave: clubAdminProcedure
@@ -284,7 +284,7 @@ export const clubRouter = createTRPCRouter({
     .output(z.object({ clubs: z.array(z.string()) }))
     .mutation(async ({ ctx, input }) => {
       if (Object.keys(ctx.clubs).length === 1)
-        throw new AppError(ERRORS.CANNOT_LEAVE_ONLY_CLUB);
+        throw new AppError('CANNOT_LEAVE_ONLY_CLUB');
       await leaveClub({ clubId: input.clubId, userId: ctx.user.id });
 
       revalidateTag(CACHE_TAGS.AUTH, 'max');

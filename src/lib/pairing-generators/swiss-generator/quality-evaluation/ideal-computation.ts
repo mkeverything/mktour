@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 /**
  * Theoretical ideal computation functions for quality criteria
  *
@@ -462,7 +462,7 @@ export function computeIdealC8FutureCriteriaCompliance(
   );
 
   if (optimalNextBracketDownfloaterScores === null) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause:
         `Failed to find optimal downfloater set for C8 ideal computation. ` +
         `Expected ${nextBracketMinDownfloaterCount} downfloaters from ${nextBracketAllPlayers.length} players.`,

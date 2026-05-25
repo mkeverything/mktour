@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { cache } from 'react';
 
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
 import { clubs_to_users } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
@@ -25,7 +25,7 @@ export const getStatusInTournament = cache(
         .where(eq(tournaments.id, tournamentId))
     ).at(0);
     const clubId = tournament?.clubId;
-    if (!clubId) throw new AppError(ERRORS.TOURNAMENT_NOT_FOUND);
+    if (!clubId) throw new AppError('TOURNAMENT_NOT_FOUND');
 
     const dbStatus = (
       await db

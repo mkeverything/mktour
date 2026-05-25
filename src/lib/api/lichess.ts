@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import { Team } from '@/types/lichess-api';
 import { cookies } from 'next/headers';
 
@@ -11,7 +11,7 @@ export const getUserLichessTeams = async (
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!res.ok) {
-      throw new AppError(ERRORS.LICHESS_API_ERROR, {
+      throw new AppError('LICHESS_API_ERROR', {
         cause: `failed to fetch teams: ${res.statusText}`,
       });
     }

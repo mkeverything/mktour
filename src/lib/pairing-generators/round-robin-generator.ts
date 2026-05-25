@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import {
   convertUnitToEntity,
   generateRoundPairs,
@@ -75,7 +75,7 @@ function generatePairsCycle(
 ) {
   // the artifact of the generator functions compatiblity
   if (typeof roundNumber === 'undefined')
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: "THE ROUND NUMBER WASN'T PASSED",
     });
 
@@ -83,7 +83,7 @@ function generatePairsCycle(
   const constantPairingNumber = pairingNumbersFlat.shift();
 
   if (typeof constantPairingNumber === 'undefined')
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'THE PAIRING NUMBER ARRAY HAS EXHAUSTED, UNEXPECTED!',
     }); // #TODO: create a custom error for that.
 
@@ -96,7 +96,7 @@ function generatePairsCycle(
     const lastPairingNumber = pairingNumbersFlat.shift();
     if (lastPairingNumber) pairingNumbersFlat.push(lastPairingNumber);
     else
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: 'THE PAIRING NUMBER ARRAY HAS EXHAUSTED, UNEXEPECTED!',
       });
   }

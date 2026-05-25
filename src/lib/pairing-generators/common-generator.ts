@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import type {
   FloatHistoryItem,
   FloatType,
@@ -182,7 +182,7 @@ export function countPlayerResults(
         break;
 
       default:
-        throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        throw new AppError('PAIRING_GENERATOR_ERROR', {
           cause: `Invalid game result: ${game.result}`,
         });
     }
@@ -327,7 +327,7 @@ export function convertUnitToEntity(
   allGames: GameModel[],
 ): ChessTournamentEntity {
   if (unitModel.number === null) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'NUMBER_IS_NULL',
     }); // FIXME - this is leftover, doesn't look right after we separate pairingNumber from number
   }

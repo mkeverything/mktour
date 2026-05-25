@@ -1,5 +1,4 @@
 import {
-  ERRORS,
   getAppErrorMessage,
   getAppErrorTrpcCode,
   type AppErrorMessage,
@@ -21,7 +20,7 @@ export const useIntlError = () => {
     const message = getAppErrorMessage(error);
     const trpcCode = getAppErrorTrpcCode(message);
     const resolvedMessage =
-      message === ERRORS.UNKNOWN_ERROR && props.fallback
+      message === 'UNKNOWN_ERROR' && props.fallback
         ? props.fallback
         : `${message} (${trpcCode})`;
 
@@ -33,5 +32,5 @@ export const useIntlError = () => {
     options?: TranslationValues,
   ) => tErrors(message, options);
 
-  return { translateMessage, translateError };
+  return { translateMessage, translateCode: translateMessage, translateError };
 };

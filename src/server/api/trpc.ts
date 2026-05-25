@@ -8,7 +8,7 @@
  */
 
 import { validateRequest } from '@/lib/auth/lucia';
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
 import { apiTokens, users } from '@/server/db/schema/users';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
@@ -157,7 +157,7 @@ export const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   }
 
   if (!user) {
-    throw new AppError(ERRORS.UNAUTHENTICATED);
+    throw new AppError('UNAUTHENTICATED');
   }
   return next({
     ctx: {
@@ -192,7 +192,7 @@ export const clubAdminProcedure = protectedProcedure
       (clubId) => clubId === opts.input.clubId,
     );
     if (!isAdmin) {
-      throw new AppError(ERRORS.NOT_CLUB_ADMIN);
+      throw new AppError('NOT_CLUB_ADMIN');
     }
     return opts.next({
       ctx: {
@@ -210,7 +210,7 @@ export const tournamentAdminProcedure = protectedProcedure
       opts.input.tournamentId,
     );
     if (status !== 'organizer') {
-      throw new AppError(ERRORS.NOT_TOURNAMENT_ORGANIZER);
+      throw new AppError('NOT_TOURNAMENT_ORGANIZER');
     }
     return opts.next();
   });

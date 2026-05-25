@@ -1,4 +1,3 @@
-import { ERRORS } from '@/lib/errors';
 import { affiliations, players } from '@/server/db/schema/players';
 import { affiliationStatusEnum } from '@/server/zod/enums';
 import { tournamentSchema } from '@/server/zod/tournaments';
@@ -17,27 +16,27 @@ export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
       .min(0, {
-        error: ERRORS.MIN_RATING,
+        error: 'MIN_RATING',
       })
       .max(3000, {
-        error: ERRORS.MAX_RATING,
+        error: 'MAX_RATING',
       }),
   ratingPeak: (s) =>
     s
       .min(0, {
-        error: ERRORS.MIN_PEAK_RATING,
+        error: 'MIN_PEAK_RATING',
       })
       .max(3000, {
-        error: ERRORS.MAX_PEAK_RATING,
+        error: 'MAX_PEAK_RATING',
       }),
   nickname: (s) =>
     s
       .trim()
       .min(2, {
-        error: ERRORS.MIN_NICKNAME_LENGTH,
+        error: 'MIN_NICKNAME_LENGTH',
       })
       .max(30, {
-        error: ERRORS.MAX_NICKNAME_LENGTH,
+        error: 'MAX_NICKNAME_LENGTH',
       }),
 });
 export const playersUpdateSchema = createUpdateSchema(players);
@@ -79,8 +78,8 @@ export const playerEditSchema = playersUpdateSchema
     nickname: z
       .string()
       .trim()
-      .min(2, { error: ERRORS.MIN_NICKNAME_LENGTH })
-      .max(30, { error: ERRORS.MAX_NICKNAME_LENGTH })
+      .min(2, { error: 'MIN_NICKNAME_LENGTH' })
+      .max(30, { error: 'MAX_NICKNAME_LENGTH' })
       .optional(),
     realname: z.string().max(50).nullable().optional(),
   });

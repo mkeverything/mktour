@@ -1,6 +1,6 @@
 import '@/lib/config/env';
 
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 
 export const BASE_URL =
   process.env.NODE_ENV === 'production'
@@ -30,7 +30,7 @@ export const verifyTestDatabase = () => {
   const isTestEnv = process.env.NODE_ENV === 'test';
 
   if (!isTestEnv) {
-    throw new AppError(ERRORS.CONFIG_ERROR, {
+    throw new AppError('CONFIG_ERROR', {
       cause: `operation requires NODE_ENV=test (current: ${process.env.NODE_ENV})`,
     });
   }
@@ -39,7 +39,7 @@ export const verifyTestDatabase = () => {
   const isTestUrl = dbUrl.toLowerCase().includes('test');
 
   if (!isTestUrl) {
-    throw new AppError(ERRORS.CONFIG_ERROR, {
+    throw new AppError('CONFIG_ERROR', {
       cause: `database url does not appear to be a test database: ${dbUrl.substring(0, 50)}...`,
     });
   }

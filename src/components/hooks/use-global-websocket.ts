@@ -3,7 +3,6 @@
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
 import { SOCKET_URL } from '@/lib/config/urls';
-import { ERRORS } from '@/lib/errors';
 import { handleGlobalSocketMessage } from '@/lib/handle-global-socket-messages';
 import { GlobalMessage } from '@/types/notifications';
 import { useQueryClient } from '@tanstack/react-query';
@@ -24,7 +23,7 @@ export const useGlobalWebsocket = (encryptedAuthSession: string | null) => {
         message,
         queryClient,
         trpc,
-        translateCode(ERRORS.WEBSOCKET_MESSAGE_NOT_SENT),
+        translateCode('WEBSOCKET_MESSAGE_NOT_SENT'),
       );
     },
     [queryClient, trpc, translateCode],
@@ -32,7 +31,7 @@ export const useGlobalWebsocket = (encryptedAuthSession: string | null) => {
 
   const stableOnReconnectStop = useCallback(() => {
     setTimeout(() => toast.dismiss('wsError'));
-    toast.error(translateCode(ERRORS.WEBSOCKET_FAILED), {
+    toast.error(translateCode('WEBSOCKET_FAILED'), {
       id: 'wsError',
     });
   }, [translateCode]);

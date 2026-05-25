@@ -7,7 +7,6 @@ import { useTournamentCreate } from '@/components/hooks/mutation-hooks/use-tourn
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import TypeCard from '@/components/ui-custom/type-card';
 import { Button } from '@/components/ui/button';
-import { ERRORS } from '@/lib/errors';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
@@ -108,7 +107,7 @@ export default function NewTournamentForm({
         onError: (e) => {
           console.error(e);
           toast.error(
-            translateError(e, { fallback: ERRORS.TOURNAMENT_NOT_CREATED }),
+            translateError(e, { fallback: 'TOURNAMENT_NOT_CREATED' }),
           );
         },
       },

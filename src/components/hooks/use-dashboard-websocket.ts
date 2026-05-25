@@ -1,7 +1,6 @@
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
 import { SOCKET_URL } from '@/lib/config/urls';
-import { ERRORS } from '@/lib/errors';
 import { handleSocketMessage } from '@/lib/handle-dashboard-socket-message';
 
 import { DashboardMessage } from '@/types/tournament-ws-events';
@@ -37,7 +36,7 @@ export const useDashboardWebsocket = (
         message,
         queryClient,
         id,
-        translateCode(ERRORS.WEBSOCKET_MESSAGE_NOT_SENT),
+        translateCode('WEBSOCKET_MESSAGE_NOT_SENT'),
         setRoundInView,
         trpc,
       );
@@ -48,7 +47,7 @@ export const useDashboardWebsocket = (
     reconnectInterval: 3000,
     onReconnectStop: () => {
       setTimeout(() => toast.dismiss('wsError'));
-      toast.error(translateCode(ERRORS.WEBSOCKET_FAILED), {
+      toast.error(translateCode('WEBSOCKET_FAILED'), {
         id: 'wsError',
       });
     },

@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 /**
  * Initialization functions for Edmonds' Blossom Algorithm
  *
@@ -44,12 +44,12 @@ export function buildAdjacencyList(graph: Graph): Map<VertexKey, NeighbourSet> {
 
     // Guard: ensure vertices exist in adjacency list
     if (sourceNeighbours === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Source vertex ${sourceKey} not found in adjacency list`,
       });
     }
     if (targetNeighbours === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Target vertex ${targetKey} not found in adjacency list`,
       });
     }
@@ -222,7 +222,7 @@ function resetVerticesToTrivialBlossoms(state: MatchingState): void {
   for (const [vertexKey, vertexState] of state.vertices) {
     const trivialBlossomId = baseToBlossomId.get(vertexKey);
     if (trivialBlossomId === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Trivial blossom not found for vertex ${vertexKey}`,
       });
     }

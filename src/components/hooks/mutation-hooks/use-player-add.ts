@@ -1,6 +1,5 @@
 import { useTRPC } from '@/components/trpc/client';
 import { useIntlError } from '@/components/hooks/use-intl-error';
-import { ERRORS } from '@/lib/errors';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -17,9 +16,7 @@ export const usePlayerAddMutation = (queryClient: QueryClient) => {
         });
       },
       onError: (error) => {
-        toast.error(
-          translateError(error, { fallback: ERRORS.PLAYER_NOT_CREATED }),
-        );
+        toast.error(translateError(error, { fallback: 'PLAYER_NOT_CREATED' }));
       },
     }),
   );

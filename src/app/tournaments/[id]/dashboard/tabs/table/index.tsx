@@ -27,7 +27,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ERRORS } from '@/lib/errors';
 import {
   sortUnitsByResultsWithMaps,
   type SortedUnitsResult,
@@ -120,10 +119,10 @@ const TournamentTable = () => {
   if (units.isError) {
     toast.error(
       translateError(units.error, {
-        fallback: ERRORS.TOURNAMENT_UNITS_NOT_LOADED,
+        fallback: 'TOURNAMENT_UNITS_NOT_LOADED',
       }),
       {
-        id: 'query-added-players',
+        id: 'TOURNAMENT_UNITS_NOT_LOADED',
         duration: 3000,
       },
     );

@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 /**
  * Weighted Maximum Matching using Edmonds' Blossom Algorithm
  *
@@ -112,7 +112,7 @@ function processTightNeighbour(
     const neighbourState = state.vertices.get(neighbourKey);
 
     if (neighbourState === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Neighbour ${neighbourKey} not found in state`,
       });
     }
@@ -247,7 +247,7 @@ function applyDeltaAndExpand(
 
     const blossom = state.blossoms.get(delta.blossomId);
     if (blossom === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Blossom ${delta.blossomId} not found for expansion`,
       });
     }
@@ -284,7 +284,7 @@ function requeueSLabelledVertices(state: WeightedMatchingState): void {
   for (const [vertexKey, vertexState] of state.vertices) {
     const blossom = state.blossoms.get(vertexState.inBlossom);
     if (blossom === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Blossom ${vertexState.inBlossom} not found for vertex ${vertexKey}`,
       });
     }
@@ -369,7 +369,7 @@ function performSearchStage(
   while (result === null) {
     iterationCount++;
     if (iterationCount > MAX_STAGE_ITERATIONS) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Infinite loop in performSearchStage after ${iterationCount} iterations`,
       });
     }
