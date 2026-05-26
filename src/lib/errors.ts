@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import type { TRPC_ERROR_CODE_KEY } from '@trpc/server/rpc';
 
-export const APP_ERROR_MESSAGES = [
+export const ERRORS = [
   'UNKNOWN_ERROR',
   'VALIDATION_ERROR',
   'UNAUTHENTICATED',
@@ -97,15 +97,12 @@ export const APP_ERROR_MESSAGES = [
   'ZERO_CLUBS',
 ] as const;
 
-export type AppErrorMessage = (typeof APP_ERROR_MESSAGES)[number];
+export type AppErrorMessage = (typeof ERRORS)[number];
 
 export const isAppErrorMessage = (value: unknown): value is AppErrorMessage =>
-  APP_ERROR_MESSAGES.includes(value as AppErrorMessage);
+  ERRORS.includes(value as AppErrorMessage);
 
-export const APP_ERROR_TRPC_CODES: Record<
-  AppErrorMessage,
-  TRPC_ERROR_CODE_KEY
-> = {
+export const ERROR_TRPC_CODES: Record<AppErrorMessage, TRPC_ERROR_CODE_KEY> = {
   VALIDATION_ERROR: 'BAD_REQUEST',
   UNAUTHENTICATED: 'UNAUTHORIZED',
 
@@ -212,7 +209,7 @@ export const APP_ERROR_TRPC_CODES: Record<
 
 export const getAppErrorTrpcCode = (
   message: AppErrorMessage,
-): TRPC_ERROR_CODE_KEY => APP_ERROR_TRPC_CODES[message];
+): TRPC_ERROR_CODE_KEY => ERROR_TRPC_CODES[message];
 
 export class AppError extends TRPCError {
   constructor(message: AppErrorMessage, options?: ErrorOptions) {
