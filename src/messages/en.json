@@ -210,6 +210,11 @@
       "you": "you"
     }
   },
+  "ErrorBoundary": {
+    "title": "something went wrong",
+    "tryAgain": "try again",
+    "reloadPage": "reload page"
+  },
   "Errors": {
     "AFFILIATION_EXISTS": "this user is already affiliated",
     "AFFILIATION_NOT_FOUND": "affiliation not found",

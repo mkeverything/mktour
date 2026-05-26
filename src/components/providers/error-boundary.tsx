@@ -15,7 +15,8 @@ import { useEffect } from 'react';
 import { FallbackProps } from 'react-error-boundary';
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
-  const t = useTranslations('Errors');
+  const t = useTranslations('ErrorBoundary');
+  const tErrors = useTranslations('Errors');
   const message = getAppErrorMessage(error);
 
   useEffect(() => {
@@ -32,21 +33,21 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-row items-center gap-2">
           <AlertTriangle className="text-destructive size-6" />
-          <h2 className="text-lg font-semibold">Something went wrong</h2>
+          <h2 className="text-lg font-semibold">{t('title')}</h2>
         </CardHeader>
         <CardContent>
           <pre className="bg-muted overflow-auto rounded-md p-3 text-sm">
-            {t(message)}
+            {tErrors(message)}
           </pre>
         </CardContent>
         <CardFooter className="flex gap-2">
           {resetErrorBoundary && (
             <Button onClick={resetErrorBoundary} variant="default">
-              Try again
+              {t('tryAgain')}
             </Button>
           )}
           <Button onClick={() => window.location.reload()} variant="outline">
-            Reload page
+            {t('reloadPage')}
           </Button>
         </CardFooter>
       </Card>

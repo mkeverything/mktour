@@ -210,6 +210,11 @@
       "you": "вы"
     }
   },
+  "ErrorBoundary": {
+    "title": "что-то пошло не так",
+    "tryAgain": "попробовать снова",
+    "reloadPage": "перезагрузить страницу"
+  },
   "Errors": {
     "AFFILIATION_EXISTS": "пользователь уже привязан к игроку",
     "AFFILIATION_NOT_FOUND": "пользователь не привязан к игроку",
