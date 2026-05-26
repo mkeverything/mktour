@@ -25,5 +25,5 @@ export const useIntlError = () => {
     options?: TranslationValues,
   ) => tErrors(message, options);
 
-  return { translateMessage, translateCode: translateMessage, translateError };
+  return { translateMessage, translateError };
 };

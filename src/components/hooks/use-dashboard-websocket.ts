@@ -15,7 +15,7 @@ export const useDashboardWebsocket = (
   queryClient: QueryClient,
   setRoundInView: Dispatch<SetStateAction<number>>,
 ) => {
-  const { translateCode } = useIntlError();
+  const { translateMessage } = useIntlError();
   const trpc = useTRPC();
   const protocols = session ? session : 'guest';
   return useWebSocket(`${SOCKET_URL}/tournament/${id}`, {
@@ -36,7 +36,7 @@ export const useDashboardWebsocket = (
         message,
         queryClient,
         id,
-        translateCode('WEBSOCKET_MESSAGE_NOT_SENT'),
+        translateMessage('WEBSOCKET_MESSAGE_NOT_SENT'),
         setRoundInView,
         trpc,
       );
@@ -47,7 +47,7 @@ export const useDashboardWebsocket = (
     reconnectInterval: 3000,
     onReconnectStop: () => {
       setTimeout(() => toast.dismiss('wsError'));
-      toast.error(translateCode('WEBSOCKET_FAILED'), {
+      toast.error(translateMessage('WEBSOCKET_FAILED'), {
         id: 'wsError',
       });
     },
