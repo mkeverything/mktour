@@ -106,11 +106,14 @@ const t = initTRPC
   .create({
     transformer: superjson,
     errorFormatter({ shape, error }) {
+      const isValidationError = error.cause instanceof ZodError;
+
       return {
         ...shape,
+        message: isValidationError ? 'VALIDATION_ERROR' : shape.message,
         data: {
           ...shape.data,
-          zodError: error.cause instanceof ZodError ? error.cause : null,
+          zodError: isValidationError ? error.cause : null,
         },
       };
     },
