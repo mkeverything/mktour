@@ -16,11 +16,13 @@ import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { CircleX, Trash2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { redirect, useParams } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { FC, useState } from 'react';
 
-const DeletePlayer: FC<{ clubId: string }> = ({ clubId }) => {
-  const { id: playerId } = useParams<{ id: string }>();
+const DeletePlayer: FC<{ clubId: string; playerId: string }> = ({
+  clubId,
+  playerId,
+}) => {
   const queryClient = useQueryClient();
   const { mutate, isPending, isSuccess } = useDeletePlayerMutation(
     queryClient,

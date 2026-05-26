@@ -75,7 +75,7 @@ const EditPlayerForm: FC<{
             {editPlayerMutation.isPending ? <LoadingSpinner /> : <Save />}
             <FormattedMessage id="Common.save" />
           </Button>
-          {status && <DeletePlayer clubId={clubId} />}
+          {status && <DeletePlayer clubId={clubId} playerId={playerId} />}
         </div>
       </form>
     </Form>
