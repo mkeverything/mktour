@@ -183,12 +183,9 @@ export const getAppErrorTrpcCode = (
   APP_ERROR_TRPC_CODES[message] ?? APP_ERROR_TRPC_CODES['UNKNOWN_ERROR']!;
 
 export class AppError extends TRPCError {
-  readonly code: TRPC_ERROR_CODE_KEY;
-
   constructor(message: AppErrorMessage, options?: ErrorOptions) {
     super({ code: getAppErrorTrpcCode(message), message, ...options });
     this.name = 'AppError';
-    this.code = getAppErrorTrpcCode(message);
   }
 }
 
