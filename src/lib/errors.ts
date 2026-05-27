@@ -211,9 +211,21 @@ export const getAppErrorTrpcCode = (
   message: AppErrorMessage,
 ): TRPC_ERROR_CODE_KEY => ERROR_TRPC_CODES[message];
 
+/**
+ * @param message - one of the ERRORS.
+ * @param options.details - PUBLIC additional details to be attached to the error.
+ * @param options.cause - INTERNAL cause of the error.
+ */
 export class AppError extends TRPCError {
-  constructor(message: AppErrorMessage, options?: ErrorOptions) {
-    super({ code: getAppErrorTrpcCode(message), message, ...options });
+  public readonly details: unknown;
+
+  constructor(
+    message: AppErrorMessage,
+    options?: ErrorOptions & { details?: unknown },
+  ) {
+    const { details, ...trpcOptions } = options ?? {};
+    super({ code: getAppErrorTrpcCode(message), message, ...trpcOptions });
+    this.details = details;
     this.name = 'AppError';
   }
 }
