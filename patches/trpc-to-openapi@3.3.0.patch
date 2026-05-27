@@ -5,7 +5,7 @@ diff --git a/node_modules/trpc-to-openapi/.bun-tag-a7a2e4ba60c9b6fd b/.bun-tag-a
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/cjs/adapters/node-http/core.js b/dist/cjs/adapters/node-http/core.js
-index 198f48ecccc6251abe20a7f733a617cd8461fd35..bc9e494f9068429397154db595ddf51a43a4c2ed 100644
+index 198f48ecccc6251abe20a7f733a617cd8461fd35..0481dd212250c7c4b091185bdbfbe4ad0401c740 100644
 --- a/dist/cjs/adapters/node-http/core.js
 +++ b/dist/cjs/adapters/node-http/core.js
 @@ -2,7 +2,6 @@
@@ -16,7 +16,7 @@ index 198f48ecccc6251abe20a7f733a617cd8461fd35..bc9e494f9068429397154db595ddf51a
  const v4_1 = require("zod/v4");
  const generator_1 = require("../../generator");
  const utils_1 = require("../../utils");
-@@ -48,7 +47,7 @@ const createOpenApiNodeHttpHandler = (opts) => {
+@@ -49,7 +48,7 @@ const createOpenApiNodeHttpHandler = (opts) => {
                      return;
                  }
                  throw new server_1.TRPCError({
@@ -119,7 +119,7 @@ index fc873fec9b998a19150a7cc3173c8abd7f32ddf7..c7ed8ca52f09ca9bca344893f941f13b
                          id: `error.${code}`,
                      }),
 diff --git a/dist/esm/adapters/node-http/core.mjs b/dist/esm/adapters/node-http/core.mjs
-index bc28e259be6deb8165013115f662739dab278a6f..3bd4b850735b50d9561ce383cb7bd7e46027f5ef 100644
+index bc28e259be6deb8165013115f662739dab278a6f..138438ee2210ef2a7d3060eafaac54730b2fd335 100644
 --- a/dist/esm/adapters/node-http/core.mjs
 +++ b/dist/esm/adapters/node-http/core.mjs
 @@ -1,5 +1,4 @@
@@ -128,7 +128,7 @@ index bc28e259be6deb8165013115f662739dab278a6f..3bd4b850735b50d9561ce383cb7bd7e4
  import { ZodArray } from 'zod/v4';
  import { generateOpenApiDocument } from '../../generator/index.mjs';
  import { acceptsRequestBody, normalizePath, getInputOutputParsers, coerceSchema, instanceofZodTypeLikeVoid, instanceofZodTypeObject, instanceofZodTypeOptional, unwrapZodType, zodSupportsCoerce, getContentType, getRequestSignal, } from '../../utils/index.mjs';
-@@ -47,7 +46,7 @@ export const createOpenApiNodeHttpHandler = (opts) => {
+@@ -45,7 +44,7 @@ export const createOpenApiNodeHttpHandler = (opts) => {
                      return;
                  }
                  throw new TRPCError({
