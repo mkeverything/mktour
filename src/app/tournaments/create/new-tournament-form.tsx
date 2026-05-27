@@ -34,9 +34,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { dateToLocalDateString } from '@/lib/local-date';
 import { ClubModel } from '@/server/zod/clubs';
 import {
-  dateToLocalDateString,
   NewTournamentFormModel,
   newTournamentFormSchema,
 } from '@/server/zod/tournaments';
@@ -46,10 +46,10 @@ import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useEffect, useTransition } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
-import posthog from 'posthog-js';
 
 export default function NewTournamentForm({
   clubs,
@@ -61,7 +61,6 @@ export default function NewTournamentForm({
       title: '',
       format: undefined,
       date: new Date(),
-      timestamp: 0,
       type: 'solo',
       rated: true,
     },

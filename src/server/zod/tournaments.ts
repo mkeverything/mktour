@@ -1,3 +1,7 @@
+import {
+  dateToLocalDateString,
+  getLocalDateStringValidationError,
+} from '@/lib/local-date';
 import { players } from '@/server/db/schema/players';
 import {
   games,
@@ -124,36 +128,25 @@ export const tournamentAuthStatusSchema = z.union([
     })),
 ]);
 
-const getTodayDateString = (): string => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+const localDateStringSchema = z.string().superRefine((value, ctx) => {
+  const error = getLocalDateStringValidationError(value);
+  if (error) {
+    ctx.addIssue({ code: 'custom', message: error });
+  }
+});
 
-export const dateToLocalDateString = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-export const newTournamentFormSchemaConfig = {
+const newTournamentFormSchemaConfig = {
   title: z.string().optional(),
-  date: z.date().refine(
-    (date) => {
-      const dateString = dateToLocalDateString(date);
-      const todayString = getTodayDateString();
-      return dateString >= todayString;
-    },
-    {
-      message: 'TIME_TRAVEL',
-    },
-  ),
+  date: z.date().superRefine((date, ctx) => {
+    const error = getLocalDateStringValidationError(
+      dateToLocalDateString(date),
+    );
+    if (error) {
+      ctx.addIssue({ code: 'custom', message: error });
+    }
+  }),
   format: tournamentFormatEnum,
   type: tournamentTypeEnum,
-  timestamp: z.number(),
   clubId: z.string(),
   rated: z.boolean(),
 };
@@ -161,7 +154,7 @@ export const newTournamentFormSchemaConfig = {
 export const newTournamentFormSchema = z.object(newTournamentFormSchemaConfig);
 export const tournamentCreateInputSchema = z.object({
   ...newTournamentFormSchemaConfig,
-  date: z.string(),
+  date: localDateStringSchema,
 });
 
 export const addDoublesUnitSchema = z

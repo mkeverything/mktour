@@ -1,10 +1,10 @@
 'use server';
 
-import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
+import { AppError } from '@/lib/errors';
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
-import { baselineUnitSort } from '@/lib/tournament-results';
 import {
+  baselineUnitSort,
   buildScoreMaps,
   hasSameStanding,
   sortUnitsByResults,
@@ -48,13 +48,12 @@ export const createTournament = async (
     date: string;
   },
 ) => {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
+  if (values.type !== 'solo' && values.rated) {
+    throw new AppError('DOUBLES_TOURNAMENT_CANNOT_BE_RATED');
+  }
   const newTournamentID = newid();
-  const resolvedRated = values.type === 'doubles' ? false : values.rated;
   const newTournament = tournamentsInsertSchema.parse({
     ...values,
-    rated: resolvedRated,
     id: newTournamentID,
     createdAt: new Date(),
     closedAt: null,
