@@ -230,6 +230,11 @@ export class AppError extends TRPCError {
   }
 }
 
+export const toAppError = (error: unknown): AppError => {
+  if (error instanceof AppError) return error;
+  return new AppError('UNKNOWN_ERROR', { cause: error });
+};
+
 export const getAppErrorMessage = (error: unknown): AppErrorMessage => {
   if (error instanceof AppError) return error.message as AppErrorMessage;
   if (error instanceof Error && isAppErrorMessage(error.message)) {
