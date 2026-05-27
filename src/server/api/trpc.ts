@@ -10,6 +10,7 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
+import { clubs as clubsTable } from '@/server/db/schema/clubs';
 import { apiTokens, users } from '@/server/db/schema/users';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { getUserClubIds } from '@/server/queries/get-user-clubs';
@@ -182,6 +183,12 @@ export const clubAdminProcedure = protectedProcedure
       (clubId) => clubId === opts.input.clubId,
     );
     if (!isAdmin) {
+      const club = await db
+        .select({ id: clubsTable.id })
+        .from(clubsTable)
+        .where(eq(clubsTable.id, opts.input.clubId))
+        .get();
+      if (!club) throw new AppError('CLUB_NOT_FOUND');
       throw new AppError('NOT_CLUB_ADMIN');
     }
     return opts.next({
