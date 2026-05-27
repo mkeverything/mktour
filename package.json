@@ -155,5 +155,8 @@
     "esbuild",
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "patchedDependencies": {
+    "trpc-to-openapi@3.3.0": "patches/trpc-to-openapi@3.3.0.patch"
+  }
 }

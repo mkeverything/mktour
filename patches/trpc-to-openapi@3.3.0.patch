@@ -1,0 +1,215 @@
+diff --git a/node_modules/trpc-to-openapi/.bun-tag-2f186681d2d14590 b/.bun-tag-2f186681d2d14590
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/trpc-to-openapi/.bun-tag-a7a2e4ba60c9b6fd b/.bun-tag-a7a2e4ba60c9b6fd
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/dist/cjs/adapters/node-http/core.js b/dist/cjs/adapters/node-http/core.js
+index 198f48ecccc6251abe20a7f733a617cd8461fd35..3973e126bea13bef7e5240b45d5ef75d53902ffa 100644
+--- a/dist/cjs/adapters/node-http/core.js
++++ b/dist/cjs/adapters/node-http/core.js
+@@ -2,7 +2,6 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.createOpenApiNodeHttpHandler = void 0;
+ const server_1 = require("@trpc/server");
+-const unstable_core_do_not_import_1 = require("@trpc/server/unstable-core-do-not-import");
+ const v4_1 = require("zod/v4");
+ const generator_1 = require("../../generator");
+ const utils_1 = require("../../utils");
+@@ -139,22 +138,24 @@ const createOpenApiNodeHttpHandler = (opts) => {
+                 info,
+                 eagerGeneration: true,
+             });
+-            const errorShape = (0, unstable_core_do_not_import_1.getErrorShape)({
+-                config: router._def._config,
+-                error,
+-                type: (_f = procedure === null || procedure === void 0 ? void 0 : procedure.type) !== null && _f !== void 0 ? _f : 'unknown',
+-                path: procedure === null || procedure === void 0 ? void 0 : procedure.path,
+-                input,
+-                ctx,
+-            });
+             const isInputValidationError = error.code === 'BAD_REQUEST' &&
+                 error.cause instanceof Error &&
+                 error.cause.name === 'ZodError';
++            const isParseError = error.code === 'PARSE_ERROR';
+             const statusCode = (_h = (_g = meta === null || meta === void 0 ? void 0 : meta.status) !== null && _g !== void 0 ? _g : errors_1.TRPC_ERROR_CODE_HTTP_STATUS[error.code]) !== null && _h !== void 0 ? _h : 500;
+             const headers = (_j = meta === null || meta === void 0 ? void 0 : meta.headers) !== null && _j !== void 0 ? _j : {};
+-            const body = Object.assign(Object.assign({}, errorShape), { message: isInputValidationError
+-                    ? 'Input validation failed'
+-                    : ((_l = (_k = errorShape === null || errorShape === void 0 ? void 0 : errorShape.message) !== null && _k !== void 0 ? _k : error.message) !== null && _l !== void 0 ? _l : 'An error occurred'), code: error.code, issues: isInputValidationError ? error.cause.issues : undefined });
++            const details = isInputValidationError
++                ? error.cause.issues.map(({ message, path }) => path.length > 0 ? { message, path } : { message })
++                : isParseError
++                    ? [{ message: error.message }]
++                    : typeof error.details === 'string'
++                        ? [{ message: error.details }]
++                        : [];
++            const body = {
++                message: isInputValidationError || isParseError ? 'VALIDATION_ERROR' : ((_k = error.message) !== null && _k !== void 0 ? _k : 'An error occurred'),
++                code: error.code,
++                details,
++            };
+             sendResponse(statusCode, headers, body);
+         }
+     };
+diff --git a/dist/cjs/generator/schema.d.ts b/dist/cjs/generator/schema.d.ts
+index d00fdebd17bbd6b94fa51006abd64a62af5a3a4b..720d8d2666ab6d7864fd10a4d7af847a5f2df795 100644
+--- a/dist/cjs/generator/schema.d.ts
++++ b/dist/cjs/generator/schema.d.ts
+@@ -7,8 +7,9 @@ import { HttpMethods } from './paths';
+ export declare const getParameterObjects: (schema: z.ZodObject<z.ZodRawShape>, required: boolean, pathParameters: string[], headersSchema: ZodObject | undefined, inType: "all" | "path" | "query") => ZodOpenApiParameters | undefined;
+ export declare const getRequestBodyObject: (schema: z.ZodObject<z.ZodRawShape>, required: boolean, pathParameters: string[], contentTypes: OpenApiContentType[]) => ZodOpenApiRequestBodyObject | undefined;
+ export declare const hasInputs: (schema: unknown) => boolean;
+-export declare const errorResponseObject: (code?: TRPCError["code"], message?: string, issues?: {
++export declare const errorResponseObject: (code?: TRPCError["code"], message?: string, details?: {
+     message: string;
++    path?: (string | number)[];
+ }[]) => ZodOpenApiResponseObject;
+ export declare const errorResponseFromStatusCode: (status: number) => ZodOpenApiResponseObject;
+ export declare const errorResponseFromMessage: (status: number, message: string) => ZodOpenApiResponseObject;
+diff --git a/dist/cjs/generator/schema.js b/dist/cjs/generator/schema.js
+index fc873fec9b998a19150a7cc3173c8abd7f32ddf7..c7ed8ca52f09ca9bca344893f941f13bc407bf38 100644
+--- a/dist/cjs/generator/schema.js
++++ b/dist/cjs/generator/schema.js
+@@ -126,7 +126,7 @@ exports.getRequestBodyObject = getRequestBodyObject;
+ const hasInputs = (schema) => (0, utils_1.instanceofZodType)(schema) && !(0, utils_1.instanceofZodTypeLikeVoid)((0, utils_1.unwrapZodType)(schema, true));
+ exports.hasInputs = hasInputs;
+ const errorResponseObjectByCode = {};
+-const errorResponseObject = (code = 'INTERNAL_SERVER_ERROR', message, issues) => {
++const errorResponseObject = (code = 'INTERNAL_SERVER_ERROR', message, details) => {
+     var _a;
+     if (!errorResponseObjectByCode[code]) {
+         errorResponseObjectByCode[code] = {
+@@ -143,12 +143,14 @@ const errorResponseObject = (code = 'INTERNAL_SERVER_ERROR', message, issues) =>
+                             description: 'The error code',
+                             example: code !== null && code !== void 0 ? code : 'INTERNAL_SERVER_ERROR',
+                         }),
+-                        issues: v4_1.z
+-                            .array(v4_1.z.object({ message: v4_1.z.string() }))
+-                            .optional()
++                        details: v4_1.z
++                            .array(v4_1.z.object({
++                            message: v4_1.z.string(),
++                            path: v4_1.z.array(v4_1.z.union([v4_1.z.string(), v4_1.z.number()])).optional(),
++                        }))
+                             .meta({
+-                            description: 'An array of issues that were responsible for the error',
+-                            example: issues !== null && issues !== void 0 ? issues : [],
++                            description: 'An array of public details that were responsible for the error',
++                            example: details !== null && details !== void 0 ? details : [],
+                         }),
+                     })
+                         .meta({
+@@ -157,7 +159,7 @@ const errorResponseObject = (code = 'INTERNAL_SERVER_ERROR', message, issues) =>
+                         example: {
+                             code: code !== null && code !== void 0 ? code : 'INTERNAL_SERVER_ERROR',
+                             message: message !== null && message !== void 0 ? message : 'Internal server error',
+-                            issues: issues !== null && issues !== void 0 ? issues : [],
++                            details: details !== null && details !== void 0 ? details : [],
+                         },
+                         id: `error.${code}`,
+                     }),
+diff --git a/dist/esm/adapters/node-http/core.mjs b/dist/esm/adapters/node-http/core.mjs
+index bc28e259be6deb8165013115f662739dab278a6f..737d643057b9bcd48c18230952e88e8f6c2a272b 100644
+--- a/dist/esm/adapters/node-http/core.mjs
++++ b/dist/esm/adapters/node-http/core.mjs
+@@ -1,5 +1,4 @@
+ import { TRPCError } from '@trpc/server';
+-import { getErrorShape } from '@trpc/server/unstable-core-do-not-import';
+ import { ZodArray } from 'zod/v4';
+ import { generateOpenApiDocument } from '../../generator/index.mjs';
+ import { acceptsRequestBody, normalizePath, getInputOutputParsers, coerceSchema, instanceofZodTypeLikeVoid, instanceofZodTypeObject, instanceofZodTypeOptional, unwrapZodType, zodSupportsCoerce, getContentType, getRequestSignal, } from '../../utils/index.mjs';
+@@ -138,26 +137,23 @@ export const createOpenApiNodeHttpHandler = (opts) => {
+                 info,
+                 eagerGeneration: true,
+             });
+-            const errorShape = getErrorShape({
+-                config: router._def._config,
+-                error,
+-                type: procedure?.type ?? 'unknown',
+-                path: procedure?.path,
+-                input,
+-                ctx,
+-            });
+             const isInputValidationError = error.code === 'BAD_REQUEST' &&
+                 error.cause instanceof Error &&
+                 error.cause.name === 'ZodError';
++            const isParseError = error.code === 'PARSE_ERROR';
+             const statusCode = meta?.status ?? TRPC_ERROR_CODE_HTTP_STATUS[error.code] ?? 500;
+             const headers = meta?.headers ?? {};
++            const details = isInputValidationError
++                ? error.cause.issues.map(({ message, path }) => path.length > 0 ? { message, path } : { message })
++                : isParseError
++                    ? [{ message: error.message }]
++                    : typeof error.details === 'string'
++                        ? [{ message: error.details }]
++                        : [];
+             const body = {
+-                ...errorShape, // Pass the error through
+-                message: isInputValidationError
+-                    ? 'Input validation failed'
+-                    : (errorShape?.message ?? error.message ?? 'An error occurred'),
++                message: isInputValidationError || isParseError ? 'VALIDATION_ERROR' : (error.message ?? 'An error occurred'),
+                 code: error.code,
+-                issues: isInputValidationError ? error.cause.issues : undefined,
++                details,
+             };
+             sendResponse(statusCode, headers, body);
+         }
+diff --git a/dist/esm/generator/schema.d.ts b/dist/esm/generator/schema.d.ts
+index d00fdebd17bbd6b94fa51006abd64a62af5a3a4b..720d8d2666ab6d7864fd10a4d7af847a5f2df795 100644
+--- a/dist/esm/generator/schema.d.ts
++++ b/dist/esm/generator/schema.d.ts
+@@ -7,8 +7,9 @@ import { HttpMethods } from './paths';
+ export declare const getParameterObjects: (schema: z.ZodObject<z.ZodRawShape>, required: boolean, pathParameters: string[], headersSchema: ZodObject | undefined, inType: "all" | "path" | "query") => ZodOpenApiParameters | undefined;
+ export declare const getRequestBodyObject: (schema: z.ZodObject<z.ZodRawShape>, required: boolean, pathParameters: string[], contentTypes: OpenApiContentType[]) => ZodOpenApiRequestBodyObject | undefined;
+ export declare const hasInputs: (schema: unknown) => boolean;
+-export declare const errorResponseObject: (code?: TRPCError["code"], message?: string, issues?: {
++export declare const errorResponseObject: (code?: TRPCError["code"], message?: string, details?: {
+     message: string;
++    path?: (string | number)[];
+ }[]) => ZodOpenApiResponseObject;
+ export declare const errorResponseFromStatusCode: (status: number) => ZodOpenApiResponseObject;
+ export declare const errorResponseFromMessage: (status: number, message: string) => ZodOpenApiResponseObject;
+diff --git a/dist/esm/generator/schema.mjs b/dist/esm/generator/schema.mjs
+index f4e23f1a9221508581266928d175b4f56bfbb741..e4bb91ca71f661151533f5b7455b5239e57e620e 100644
+--- a/dist/esm/generator/schema.mjs
++++ b/dist/esm/generator/schema.mjs
+@@ -128,7 +128,7 @@ export const getRequestBodyObject = (schema, required, pathParameters, contentTy
+ };
+ export const hasInputs = (schema) => instanceofZodType(schema) && !instanceofZodTypeLikeVoid(unwrapZodType(schema, true));
+ const errorResponseObjectByCode = {};
+-export const errorResponseObject = (code = 'INTERNAL_SERVER_ERROR', message, issues) => {
++export const errorResponseObject = (code = 'INTERNAL_SERVER_ERROR', message, details) => {
+     if (!errorResponseObjectByCode[code]) {
+         errorResponseObjectByCode[code] = {
+             description: message ?? 'An error response',
+@@ -144,12 +144,14 @@ export const errorResponseObject = (code = 'INTERNAL_SERVER_ERROR', message, iss
+                             description: 'The error code',
+                             example: code ?? 'INTERNAL_SERVER_ERROR',
+                         }),
+-                        issues: z
+-                            .array(z.object({ message: z.string() }))
+-                            .optional()
++                        details: z
++                            .array(z.object({
++                            message: z.string(),
++                            path: z.array(z.union([z.string(), z.number()])).optional(),
++                        }))
+                             .meta({
+-                            description: 'An array of issues that were responsible for the error',
+-                            example: issues ?? [],
++                            description: 'An array of public details that were responsible for the error',
++                            example: details ?? [],
+                         }),
+                     })
+                         .meta({
+@@ -158,7 +160,7 @@ export const errorResponseObject = (code = 'INTERNAL_SERVER_ERROR', message, iss
+                         example: {
+                             code: code ?? 'INTERNAL_SERVER_ERROR',
+                             message: message ?? 'Internal server error',
+-                            issues: issues ?? [],
++                            details: details ?? [],
+                         },
+                         id: `error.${code}`,
+                     }),

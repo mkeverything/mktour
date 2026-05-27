@@ -26,7 +26,6 @@ import { Session } from 'lucia';
 import { NextRequest } from 'next/server';
 import superjson from 'superjson';
 import { OpenApiMeta } from 'trpc-to-openapi';
-import { ZodError } from 'zod';
 
 /**
  * 1. CONTEXT
@@ -105,23 +104,6 @@ const t = initTRPC
   .context<Awaited<ReturnType<typeof createTRPCContext>>>()
   .create({
     transformer: superjson,
-    errorFormatter({ shape, error }) {
-      const isValidationError = error.cause instanceof ZodError;
-      const details = isValidationError
-        ? error.cause.issues
-        : error instanceof AppError
-          ? error.details
-          : null;
-
-      return {
-        ...shape,
-        message: isValidationError ? 'VALIDATION_ERROR' : shape.message,
-        data: {
-          ...shape.data,
-          details,
-        },
-      };
-    },
   });
 
 /**
