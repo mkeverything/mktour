@@ -1,26 +1,23 @@
 import {
-  doublesErrors,
-  getDoublesErrorTranslationKey,
-} from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
-import {
   appendUnitIfMissing,
   createDoublesUnit,
   hasDuplicateUnitNickname,
   removePlayersOutByIds,
 } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/unit-helpers';
 import { useSharedPreStart } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-shared-pre-start';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
+import { AppError } from '@/lib/errors';
 import { newid } from '@/lib/utils';
 import { type PlayerWithUsernameModel } from '@/server/zod/players';
 import { UnitModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export const useTournamentAddDoublesUnit = (tournamentId: string) => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
-  const t = useTranslations('Tournament.AddPlayer');
+  const { translateError } = useIntlError();
   const {
     applyOptimisticPreStartRound,
     applyServerPreStartUnitsIfLatest,
@@ -43,7 +40,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
         >(keys.playersOut);
 
         if (hasDuplicateUnitNickname(previousUnits, nickname)) {
-          throw new Error(doublesErrors.nicknameTaken);
+          throw new AppError('UNIT_NICKNAME_TAKEN');
         }
 
         const playersOut = previousPlayersOut ?? [];
@@ -55,7 +52,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
         );
 
         if (!firstPlayer || !secondPlayer) {
-          throw new Error(doublesErrors.playersNotFound);
+          throw new AppError('UNIT_PLAYERS_NOT_FOUND');
         }
 
         const newUnit = createDoublesUnit({
@@ -83,7 +80,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
           queryClient.setQueryData(keys.playersOut, context.previousPlayersOut);
         }
 
-        toast.error(t(getDoublesErrorTranslationKey(error)));
+        toast.error(translateError(error, { fallback: 'UNIT_NOT_ADDED' }));
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
       onSettled: () => invalidatePreStartState({ playersOut: true }),

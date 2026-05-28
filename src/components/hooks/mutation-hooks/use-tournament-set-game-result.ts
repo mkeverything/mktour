@@ -1,5 +1,6 @@
 'use client';
 
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { UnitModel } from '@/server/zod/tournaments';
 import { DashboardMessage } from '@/types/tournament-ws-events';
@@ -11,7 +12,7 @@ export default function useTournamentSetGameResult(
   queryClient: QueryClient,
   { tournamentId, sendJsonMessage }: SetResultProps,
 ) {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.setGameResult.mutationOptions({
@@ -159,11 +160,7 @@ export default function useTournamentSetGameResult(
         });
       },
       onError: (error) => {
-        if (error.message === 'PLAYER_RESULT_SETTING_DISABLED') {
-          toast.error(t('player result setting disabled'));
-          return;
-        }
-        toast.error(t('server error'));
+        toast.error(tErrors(getAppErrorMessage(error)));
         console.log(error);
       },
     }),

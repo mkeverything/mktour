@@ -1,6 +1,7 @@
 'use client';
 
 import AffiliatedPlayerCard from '@/app/clubs/[id]/affiliated-player-card';
+import { turboPascal } from '@/app/fonts';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
@@ -100,7 +101,9 @@ const ClubHeader: FC<{
         <div className="gap-mk-2 flex items-start justify-between">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-              <CardTitle className="text-2xl">{club.name}</CardTitle>
+              <CardTitle className={`text-2xl ${turboPascal.className}`}>
+                {club.name}
+              </CardTitle>
               {club.lichessTeam && (
                 <Link
                   href={`https://lichess.org/team/${club.lichessTeam}`}

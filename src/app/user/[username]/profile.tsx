@@ -1,8 +1,8 @@
 'use client';
 
 import { turboPascal } from '@/app/fonts';
-import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
 import CancelAffiliationByClub from '@/app/player/[id]/cancel-affiliation-by-club';
+import CancelAffiliationByUser from '@/app/player/[id]/cancel-affiliation-by-user';
 import EditButton from '@/app/player/[id]/edit-button';
 import { UserWithPlayers } from '@/app/user/[username]/page';
 import FormattedMessage from '@/components/formatted-message';
@@ -382,7 +382,7 @@ const ClubPlayerCard: FC<
           <div className="flex items-center gap-1">
             {canEdit && (
               <EditButton
-                player={{ ...player, clubId: club.id }}
+                player={{ playerId: player.id, ...player, clubId: club.id }}
                 status={null}
                 canEditRealname={isClubAdmin}
               />

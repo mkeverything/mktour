@@ -5,6 +5,7 @@ import { TeamSelector } from '@/app/clubs/create/team-selector';
 import { turboPascal } from '@/app/fonts';
 import { LoadingSpinner } from '@/app/loading';
 import { useClubCreate } from '@/components/hooks/query-hooks/use-club-create';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -37,6 +38,7 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
   });
 
   const t = useTranslations('Club.New');
+  const { translateError } = useIntlError();
   const { mutate, isPending: isMutating } = useClubCreate();
   const router = useRouter();
   const [isNavigating, startNavigation] = useTransition();
@@ -61,7 +63,7 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
       },
       onError: (e) => {
         console.error(e);
-        toast.error(t('club not created'));
+        toast.error(translateError(e, { fallback: 'CLUB_NOT_CREATED' }));
       },
     });
   };

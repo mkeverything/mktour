@@ -16,27 +16,27 @@ export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
       .min(0, {
-        error: 'min rating',
+        error: 'MIN_RATING',
       })
       .max(3000, {
-        error: 'max rating',
+        error: 'MAX_RATING',
       }),
   ratingPeak: (s) =>
     s
       .min(0, {
-        error: 'min peak rating',
+        error: 'MIN_PEAK_RATING',
       })
       .max(3000, {
-        error: 'max peak rating',
+        error: 'MAX_PEAK_RATING',
       }),
   nickname: (s) =>
     s
       .trim()
-      .min(3, {
-        error: 'min nickname length',
+      .min(2, {
+        error: 'MIN_NICKNAME_LENGTH',
       })
       .max(30, {
-        error: 'max nickname length',
+        error: 'MAX_NICKNAME_LENGTH',
       }),
 });
 export const playersUpdateSchema = createUpdateSchema(players);
@@ -74,12 +74,12 @@ export const playerFormSchema = playersInsertSchema.omit({
 export const playerEditSchema = playersUpdateSchema
   .pick({ nickname: true, realname: true })
   .extend({
-    id: z.string(),
+    playerId: z.string(),
     nickname: z
       .string()
       .trim()
-      .min(2, { error: 'min nickname length' })
-      .max(30, { error: 'max nickname length' })
+      .min(2, { error: 'MIN_NICKNAME_LENGTH' })
+      .max(30, { error: 'MAX_NICKNAME_LENGTH' })
       .optional(),
     realname: z.string().max(50).nullable().optional(),
   });

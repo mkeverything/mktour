@@ -66,7 +66,12 @@ async function PlayerPageContent(props: PlayerPageProps) {
       {/* Action Toolbar */}
       <div className="flex justify-end gap-2">
         {canAffiliate && <AffiliateButton player={player} />}
-        {user && canEdit && <EditButton player={player} status={status} />}
+        {user && canEdit && (
+          <EditButton
+            player={{ playerId: player.id, ...player }}
+            status={status}
+          />
+        )}
         {canClaim && <ClaimPlayer userId={user.id} clubId={club.id} />}
       </div>
       <PlayerStats clubName={club.name} player={player} />

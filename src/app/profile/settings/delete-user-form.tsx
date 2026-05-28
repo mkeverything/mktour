@@ -3,6 +3,7 @@
 import { LoadingSpinner } from '@/app/loading';
 import useDeleteUserMutation from '@/components/hooks/mutation-hooks/use-user-delete';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -50,6 +51,7 @@ export default function DeleteUserForm({
   });
 
   const t = useTranslations('UserSettings');
+  const { translateMessage } = useIntlError();
   const checkboxes: Array<keyof IntlMessages['UserSettings']> = [
     'checkbox1',
     'checkbox2',
@@ -88,7 +90,7 @@ export default function DeleteUserForm({
                   autoComplete="off"
                   onPaste={(e) => {
                     e.preventDefault();
-                    toast.error(t('do it yourself'), {
+                    toast.error(translateMessage('PASTE_DISABLED'), {
                       dismissible: true,
                       id: 'doItYourself',
                     });

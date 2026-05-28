@@ -1,3 +1,4 @@
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -6,6 +7,7 @@ import { toast } from 'sonner';
 export default function useEditClubMutation(queryClient: QueryClient) {
   const trpc = useTRPC();
   const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   return useMutation(
     trpc.club.edit.mutationOptions({
       onSuccess: () => {
@@ -17,7 +19,7 @@ export default function useEditClubMutation(queryClient: QueryClient) {
       },
       onError: (error) => {
         if (isLinkTeamError(error)) return;
-        toast.error(t('server error'));
+        toast.error(tErrors(getAppErrorMessage(error)));
       },
     }),
   );

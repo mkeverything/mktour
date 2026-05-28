@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 /**
  * Mixed-radix weight computation for FIDE Swiss pairing criteria.
  *
@@ -607,7 +608,9 @@ export function computeMultipliers(
 
     const base = bases.get(criterion);
     if (base === undefined) {
-      throw new Error(`Base not found for criterion: ${criterion.name}`);
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: `Base not found for criterion: ${criterion.name}`,
+      });
     }
     currentMultiplier = currentMultiplier * base;
   }
@@ -630,7 +633,9 @@ export function computeMultipliers(
  */
 export function computeScoreTierPenalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('SCORE_TIER requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'SCORE_TIER requires regular penalty input',
+    });
   }
   const { whiteEntity, blackEntity } = penaltyInput.colouredPair;
   return Math.abs(whiteEntity.entityScore - blackEntity.entityScore);
@@ -651,7 +656,9 @@ export function computeScoreTierPenalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC5Penalty(penaltyInput: PenaltyInput): number {
   if (!isPabPenaltyInput(penaltyInput)) {
-    throw new Error('C5 requires PAB penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C5 requires PAB penalty input',
+    });
   }
   return penaltyInput.player.entityScore;
 }
@@ -667,7 +674,9 @@ export function computeC5Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC9Penalty(penaltyInput: PenaltyInput): number {
   if (!isPabPenaltyInput(penaltyInput)) {
-    throw new Error('C9 requires PAB penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C9 requires PAB penalty input',
+    });
   }
   const expectedGames = penaltyInput.context.roundNumber - 1;
   const playedGames = penaltyInput.player.previousGames.length;
@@ -688,7 +697,9 @@ export function computeC9Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC10Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C10 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C10 requires regular penalty input',
+    });
   }
   return countC10ViolationsInPair(penaltyInput.colouredPair, [
     ...penaltyInput.topscorers,
@@ -705,7 +716,9 @@ export function computeC10Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC11Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C11 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C11 requires regular penalty input',
+    });
   }
   return countC11ViolationsInPair(penaltyInput.colouredPair, [
     ...penaltyInput.topscorers,
@@ -722,7 +735,9 @@ export function computeC11Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC12Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C12 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C12 requires regular penalty input',
+    });
   }
   return countC12ViolationsInPair(penaltyInput.colouredPair);
 }
@@ -737,7 +752,9 @@ export function computeC12Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC13Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C13 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C13 requires regular penalty input',
+    });
   }
   return countC13ViolationsInPair(penaltyInput.colouredPair);
 }
@@ -792,7 +809,9 @@ function getMdpAndResident(
  */
 export function computeC14Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C14 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C14 requires regular penalty input',
+    });
   }
 
   const mdpResident = getMdpAndResident(penaltyInput.colouredPair);
@@ -813,7 +832,9 @@ export function computeC14Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC15Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C15 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C15 requires regular penalty input',
+    });
   }
 
   const mdpResident = getMdpAndResident(penaltyInput.colouredPair);
@@ -834,7 +855,9 @@ export function computeC15Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC16Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C16 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C16 requires regular penalty input',
+    });
   }
 
   const mdpResident = getMdpAndResident(penaltyInput.colouredPair);
@@ -855,7 +878,9 @@ export function computeC16Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeC17Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C17 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C17 requires regular penalty input',
+    });
   }
 
   const mdpResident = getMdpAndResident(penaltyInput.colouredPair);
@@ -890,7 +915,9 @@ function computeMdpResidentScoreDiff(mdpResident: MdpResidentPair): number {
  */
 export function computeC18Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C18 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C18 requires regular penalty input',
+    });
   }
 
   const prevRound = penaltyInput.context.roundNumber - 1;
@@ -939,7 +966,9 @@ function computeMdpScoreDiffPenaltyWithCriterion(
 /** C19: Score diff when resident upfloated previous round. */
 export function computeC19Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C19 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C19 requires regular penalty input',
+    });
   }
 
   const prevRound = penaltyInput.context.roundNumber - 1;
@@ -958,7 +987,9 @@ export function computeC19Penalty(penaltyInput: PenaltyInput): number {
 /** C20: MDP score diff when MDP downfloated two rounds ago. */
 export function computeC20Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C20 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C20 requires regular penalty input',
+    });
   }
 
   const twoRoundsAgo = penaltyInput.context.roundNumber - 2;
@@ -977,7 +1008,9 @@ export function computeC20Penalty(penaltyInput: PenaltyInput): number {
 /** C21: Score diff when resident upfloated two rounds ago. */
 export function computeC21Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('C21 requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C21 requires regular penalty input',
+    });
   }
 
   const twoRoundsAgo = penaltyInput.context.roundNumber - 2;
@@ -1009,7 +1042,9 @@ export function computeC21Penalty(penaltyInput: PenaltyInput): number {
  */
 export function computeRankingPenalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {
-    throw new Error('RANKING requires regular penalty input');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'RANKING requires regular penalty input',
+    });
   }
 
   const { whiteEntity, blackEntity } = penaltyInput.colouredPair;
@@ -1021,7 +1056,9 @@ export function computeRankingPenalty(penaltyInput: PenaltyInput): number {
   if (isSameScore) {
     const scoregroupSize = penaltyInput.context.scoregroupSizes.get(whiteScore);
     if (scoregroupSize === undefined) {
-      throw new Error(`Scoregroup size not found for score: ${whiteScore}`);
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: `Scoregroup size not found for score: ${whiteScore}`,
+      });
     }
 
     const idealDiff = Math.floor(scoregroupSize / 2);
@@ -1080,7 +1117,9 @@ export function getMultiplierOrThrow(
 ): bigint {
   const multiplier = multipliers.multipliers.get(criterion);
   if (multiplier === undefined) {
-    throw new Error(`Multiplier not found for criterion: ${criterion.name}`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Multiplier not found for criterion: ${criterion.name}`,
+    });
   }
   return multiplier;
 }

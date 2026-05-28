@@ -1,3 +1,4 @@
+import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTRPC } from '@/components/trpc/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -6,7 +7,7 @@ import { Dispatch, SetStateAction, useContext } from 'react';
 import { toast } from 'sonner';
 
 export default function useSaveRound(props: SaveRoundMutationProps) {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { sendJsonMessage } = useContext(DashboardContext);
@@ -80,7 +81,7 @@ export default function useSaveRound(props: SaveRoundMutationProps) {
             roundNumber,
           }),
         });
-        toast.error(t('server error'));
+        toast.error(tErrors(getAppErrorMessage(error)));
       },
     }),
   );

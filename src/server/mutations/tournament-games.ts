@@ -1,5 +1,6 @@
 'use server';
 
+import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { db, type Database } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
@@ -67,9 +68,9 @@ export async function saveRound({
   newGames: GameModel[];
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
+  if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  if (status === 'viewer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   const tournament = await db
     .select({
       format: tournaments.format,
@@ -78,7 +79,7 @@ export async function saveRound({
     .from(tournaments)
     .where(eq(tournaments.id, tournamentId))
     .then((rows) => rows.at(0));
-  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
 
   if (tournament.format === 'swiss') {
     const activeUnits = await db
@@ -101,7 +102,7 @@ export async function saveRound({
     );
 
     if (hasInvalidUnit) {
-      throw new Error('INVALID_UNIT_IN_PAIRING');
+      throw new AppError('INVALID_UNIT_IN_PAIRING');
     }
   }
   const existingDecidedGames = await db
@@ -116,7 +117,7 @@ export async function saveRound({
     )
     .limit(1);
   if (existingDecidedGames.length > 0) {
-    throw new Error('ROUND_ALREADY_HAS_RESULTS');
+    throw new AppError('ROUND_ALREADY_HAS_RESULTS');
   }
   await replaceRoundGames({ tournamentId, roundNumber, newGames });
 }
@@ -131,10 +132,10 @@ export async function setTournamentGameResult({
   result: GameResult;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
+  if (!user) throw new AppError('UNAUTHENTICATED');
   const { status: authStatus, unitId: authUnitId } =
     await getStatusInTournament(user.id, tournamentId);
-  if (authStatus === 'viewer') throw new Error('NOT_AUTHORIZED');
+  if (authStatus === 'viewer') throw new AppError('FORBIDDEN');
 
   const tournamentWithClub = (
     await db
@@ -147,11 +148,11 @@ export async function setTournamentGameResult({
       .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
       .where(eq(tournaments.id, tournamentId))
   ).at(0);
-  if (!tournamentWithClub) throw new Error('TOURNAMENT_NOT_FOUND');
+  if (!tournamentWithClub) throw new AppError('TOURNAMENT_NOT_FOUND');
   if (tournamentWithClub.startedAt === null)
-    throw new Error('TOURNAMENT_NOT_STARTED');
+    throw new AppError('TOURNAMENT_NOT_STARTED');
   if (tournamentWithClub.closedAt !== null) {
-    throw new Error('TOURNAMENT_ALREADY_FINISHED');
+    throw new AppError('TOURNAMENT_ALREADY_FINISHED');
   }
 
   await db.transaction(async (tx) => {
@@ -165,7 +166,7 @@ export async function setTournamentGameResult({
         .from(games)
         .where(and(eq(games.id, gameId), eq(games.tournamentId, tournamentId)))
     ).at(0);
-    if (!game) throw new Error('GAME_NOT_FOUND');
+    if (!game) throw new AppError('GAME_NOT_FOUND');
 
     const [whiteUnit, blackUnit] = await Promise.all([
       tx
@@ -191,21 +192,21 @@ export async function setTournamentGameResult({
     ]);
 
     if (!whiteUnit || !blackUnit) {
-      throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
+      throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
     }
 
     if (whiteUnit.isOut || blackUnit.isOut) {
-      throw new Error('WITHDRAWN_UNIT_CANNOT_PLAY');
+      throw new AppError('WITHDRAWN_UNIT_CANNOT_PLAY');
     }
 
     if (authStatus === 'player') {
       if (!tournamentWithClub.allowPlayersSetResults) {
-        throw new Error('PLAYER_RESULT_SETTING_DISABLED');
+        throw new AppError('PLAYER_RESULT_SETTING_DISABLED');
       }
 
       const isPlayerUnitInGame =
         authUnitId === game.whiteUnitId || authUnitId === game.blackUnitId;
-      if (!isPlayerUnitInGame) throw new Error('NOT_YOUR_GAME');
+      if (!isPlayerUnitInGame) throw new AppError('NOT_YOUR_GAME');
     }
 
     let nextResult: GameResult | null;
@@ -282,7 +283,7 @@ export async function applyGameResult({
     })
     .where(whiteMatch);
   if (!whiteUpdate.rowsAffected) {
-    throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
+    throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
   const blackUpdate = await database
@@ -295,7 +296,7 @@ export async function applyGameResult({
     })
     .where(blackMatch);
   if (!blackUpdate.rowsAffected) {
-    throw new Error('TOURNAMENT_UNIT_NOT_FOUND');
+    throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
   let prevResultMatch;
@@ -323,6 +324,6 @@ export async function applyGameResult({
       ),
     );
   if (!gameUpdate.rowsAffected) {
-    throw new Error('CONCURRENT_GAME_RESULT_UPDATE');
+    throw new AppError('CONCURRENT_GAME_RESULT_UPDATE');
   }
 }

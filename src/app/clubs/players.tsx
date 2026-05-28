@@ -7,6 +7,7 @@ import Empty from '@/components/empty';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
@@ -23,6 +24,7 @@ import { toast } from 'sonner';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   const t = useTranslations();
+  const { translateError } = useIntlError();
   const { playersCount } = useClubStats(selectedClub).data ?? {};
   const {
     data: searchResults,
@@ -45,8 +47,11 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   }
 
   if (!useSearch && playersInfinite.status === 'error') {
-    toast.error(playersInfinite.error.message);
-    return <p>{playersInfinite.error.message}</p>;
+    const message = translateError(playersInfinite.error, {
+      fallback: 'POSSIBLE_PLAYERS_NOT_LOADED',
+    });
+    toast.error(message);
+    return <p>{message}</p>;
   }
 
   return (
@@ -106,7 +111,7 @@ const PlayerItem: FC<{
 
   return (
     <ComboModal.Root>
-      <ComboModal.Trigger>
+      <ComboModal.Trigger asChild>
         <Card
           key={id}
           className="mk-card flex items-center justify-between truncate"
@@ -128,7 +133,7 @@ const PlayerItem: FC<{
         </ComboModal.Header>
         <EditPlayerForm
           clubId={player.clubId}
-          player={player}
+          player={{ playerId: player.id, ...player }}
           status={statusInClub}
           setOpen={() => null}
         />

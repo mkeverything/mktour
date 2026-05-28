@@ -5,6 +5,7 @@ import { LoadingSpinner } from '@/app/loading';
 import FormattedMessage from '@/components/formatted-message';
 import useDeleteClubManagerMutation from '@/components/hooks/mutation-hooks/use-club-delete-manager';
 import { useClubManagers } from '@/components/hooks/query-hooks/use-club-managers';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import {
   Close,
   Content,
@@ -27,7 +28,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClubManagerModel } from '@/server/zod/clubs';
 import { Trash2, User2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { FC } from 'react';
 import { toast } from 'sonner';
@@ -36,13 +36,15 @@ const ClubManagersList: FC<{ clubId: string; userId: string }> = ({
   clubId,
   userId,
 }) => {
-  const { data, status } = useClubManagers(clubId);
-  const t = useTranslations('Club.Dashboard.Settings');
+  const { data, status, error } = useClubManagers(clubId);
+  const { translateError } = useIntlError();
   const user = data?.find(
     ({ clubs_to_users: { userId } }) => userId === userId,
   );
 
-  if (status === 'error') toast.error(t('search users error'));
+  if (status === 'error') {
+    toast.error(translateError(error, { fallback: 'USERS_NOT_LOADED' }));
+  }
 
   return (
     <div className="gap-mk flex flex-col">

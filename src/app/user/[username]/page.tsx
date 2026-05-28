@@ -1,11 +1,10 @@
 import Profile from '@/app/user/[username]/profile';
 import { BASE_URL } from '@/lib/config/urls';
+import { getAppErrorMessage } from '@/lib/errors';
 import { publicCaller } from '@/server/api';
 import { UserPlayerClubModel } from '@/server/zod/players';
 import { TournamentModel } from '@/server/zod/tournaments';
 import { UserPublicModel } from '@/server/zod/users';
-import { TRPCError } from '@trpc/server';
-
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -19,7 +18,7 @@ export default async function UserPage(props: TournamentPageProps) {
       username: params.username,
     });
   } catch (e: unknown) {
-    if ((e as TRPCError).code === 'NOT_FOUND') notFound();
+    if (getAppErrorMessage(e) === 'USER_NOT_FOUND') notFound();
     throw e;
   }
   const isOwner = !!user && user.username === params.username;
@@ -58,7 +57,7 @@ export async function generateMetadata(
       username: params.username,
     });
   } catch (e: unknown) {
-    if ((e as TRPCError).code === 'NOT_FOUND') notFound();
+    if (getAppErrorMessage(e) === 'USER_NOT_FOUND') notFound();
     throw e;
   }
 

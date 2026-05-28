@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { db } from '@/server/db';
 import { user_notifications } from '@/server/db/schema/notifications';
@@ -11,7 +12,7 @@ export const changeNotificationStatus = async ({
   seen: boolean;
 }): Promise<void> => {
   const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
+  if (!user) throw new AppError('UNAUTHENTICATED');
   await db
     .update(user_notifications)
     .set({ isSeen: seen })
@@ -20,8 +21,8 @@ export const changeNotificationStatus = async ({
 
 export async function markAllNotificationsAsSeen(userId: string) {
   const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  if (user.id !== userId) throw new Error('UNAUTHORIZED_REQUEST');
+  if (!user) throw new AppError('UNAUTHENTICATED');
+  if (user.id !== userId) throw new AppError('UNAUTHENTICATED');
   await db
     .update(user_notifications)
     .set({ isSeen: true })

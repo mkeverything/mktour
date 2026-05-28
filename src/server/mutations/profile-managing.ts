@@ -1,5 +1,6 @@
 'use server';
 
+import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { db } from '@/server/db';
@@ -33,8 +34,8 @@ export const editUser = async (
 
 export const deleteUser = async ({ userId }: { userId: string }) => {
   const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
+  if (!user) throw new AppError('UNAUTHENTICATED');
+  if (user.id !== userId) throw new AppError('USER_MISMATCH');
 
   const subqueryToFilterMultipleAdmins = db
     .select({

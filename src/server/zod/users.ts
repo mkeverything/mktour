@@ -30,7 +30,7 @@ export const editProfileFormSchema = usersUpdateSchema
     rating: true,
   })
   .extend({
-    name: z.string().max(50, 'max 50').optional(),
+    name: z.string().max(50, 'MAX_50').optional(),
   });
 
 export const apiTokensSelectSchema = createSelectSchema(apiTokens);

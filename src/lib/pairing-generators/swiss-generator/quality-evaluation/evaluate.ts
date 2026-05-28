@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 /**
  * Evaluation functions for quality criteria
  *
@@ -210,9 +211,9 @@ function checkUniquePAB(
     return pabRecipient.previousGames.length === expectedGameCount;
   } else {
     // Multiple downfloaters in lowest bracket is invalid
-    throw new Error(
-      `Invalid state: ${pairingCandidate.downfloaters.length} downfloaters in lowest bracket`,
-    );
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Invalid state: ${pairingCandidate.downfloaters.length} downfloaters in lowest bracket`,
+    });
   }
 }
 
@@ -636,9 +637,9 @@ function evaluateC5MinimisePabScore(
     return pabRecipient.entityScore;
   } else {
     // Multiple downfloaters in lowest bracket is invalid
-    throw new Error(
-      `Invalid state: ${pairingCandidate.downfloaters.length} downfloaters in lowest bracket`,
-    );
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Invalid state: ${pairingCandidate.downfloaters.length} downfloaters in lowest bracket`,
+    });
   }
 }
 
@@ -797,9 +798,9 @@ function evaluateC8FutureCriteriaCompliance(
   }
 
   if (optimalScores === null) {
-    throw new Error(
-      `Failed to find a valid set of ${minDownfloaterCount} downfloaters for C8 compliance`,
-    );
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Failed to find a valid set of ${minDownfloaterCount} downfloaters for C8 compliance`,
+    });
   }
 
   // PAB score is lowest downfloater score if last bracket

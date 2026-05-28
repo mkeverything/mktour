@@ -18,7 +18,7 @@ export default async function MakeTournamentButton({
   return (
     <Button
       className={cn(
-        'm-auto flex h-28 min-h-28 w-full max-w-md flex-col gap-2 font-bold',
+        'm-auto flex h-28 min-h-28 w-full max-w-md flex-col gap-2 font-bold select-none',
         className,
       )}
       variant="default"

@@ -1,17 +1,17 @@
 'use client';
 
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
 import { SOCKET_URL } from '@/lib/config/urls';
 import { handleGlobalSocketMessage } from '@/lib/handle-global-socket-messages';
 import { GlobalMessage } from '@/types/notifications';
 import { useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
 import { useCallback } from 'react';
 import useWebSocket from 'react-use-websocket';
 import { toast } from 'sonner';
 
 export const useGlobalWebsocket = (encryptedAuthSession: string | null) => {
-  const t = useTranslations('Toasts');
+  const { translateMessage } = useIntlError();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
@@ -19,17 +19,22 @@ export const useGlobalWebsocket = (encryptedAuthSession: string | null) => {
     (event: MessageEvent<string>) => {
       if (!event.data) return;
       const message: GlobalMessage = JSON.parse(event.data);
-      handleGlobalSocketMessage(message, queryClient, trpc);
+      handleGlobalSocketMessage(
+        message,
+        queryClient,
+        trpc,
+        translateMessage('WEBSOCKET_MESSAGE_NOT_SENT'),
+      );
     },
-    [queryClient, trpc],
+    [queryClient, trpc, translateMessage],
   );
 
   const stableOnReconnectStop = useCallback(() => {
     setTimeout(() => toast.dismiss('wsError'));
-    toast.error(t('ws error'), {
+    toast.error(translateMessage('WEBSOCKET_FAILED'), {
       id: 'wsError',
     });
-  }, [t]);
+  }, [translateMessage]);
 
   return useWebSocket<GlobalMessage>(`${SOCKET_URL}/global`, {
     protocols:

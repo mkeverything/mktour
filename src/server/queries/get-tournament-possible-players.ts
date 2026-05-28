@@ -1,5 +1,7 @@
 'use server';
 
+import { AppError } from '@/lib/errors';
+
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
 import { players } from '@/server/db/schema/players';
@@ -20,7 +22,7 @@ export async function getTournamentPossiblePlayers(
     .where(eq(tournaments.id, tournamentId))
     .then((rows) => rows.at(0));
 
-  if (!tournament) throw new Error('TOURNAMENT_NOT_FOUND');
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
 
   const tournamentPlayerRows = db
     .select({ playerId: players_to_units.playerId })

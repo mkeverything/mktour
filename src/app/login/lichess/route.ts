@@ -11,6 +11,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   const codeVerifier = generateCodeVerifier();
   const url = lichess.createAuthorizationURL(state, codeVerifier, [
     'email:read',
+    'team:read',
     'team:write',
   ]);
 

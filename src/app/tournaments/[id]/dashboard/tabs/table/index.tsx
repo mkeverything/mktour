@@ -19,6 +19,7 @@ import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournamen
 import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import {
   Table,
   TableBody,
@@ -54,6 +55,7 @@ const TournamentTable = () => {
   const removeUnit = useTournamentRemoveUnit(id);
   const withdrawUnit = useTournamentWithdrawUnit(id);
   const t = useTranslations('Tournament.Table');
+  const { translateError } = useIntlError();
   const [selectedUnit, setSelectedUnit] = useState<UnitModel | null>(null);
   const hasStarted = !!tournament.data?.startedAt;
   const hasEnded = !!tournament.data?.closedAt;
@@ -115,10 +117,15 @@ const TournamentTable = () => {
   }
 
   if (units.isError) {
-    toast.error(t('added players error'), {
-      id: 'query-added-players',
-      duration: 3000,
-    });
+    toast.error(
+      translateError(units.error, {
+        fallback: 'TOURNAMENT_UNITS_NOT_LOADED',
+      }),
+      {
+        id: 'TOURNAMENT_UNITS_NOT_LOADED',
+        duration: 3000,
+      },
+    );
     return <TableLoading canSort={canSort} stats={stats} />;
   }
 
@@ -261,7 +268,10 @@ const SortableUnitRow = memo(function SortableUnitRow({
       hasEnded={hasEnded}
       index={index}
       isSelected={isSelected}
-      onSelect={() => setSelectedUnit(unit)}
+      onSelect={() => {
+        if (!window.getSelection()?.isCollapsed) return;
+        setSelectedUnit(unit);
+      }}
       unit={unit}
       renderStat={renderStat}
       stats={stats}

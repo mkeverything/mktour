@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 import {
   getDatabaseAuthToken,
   getDatabaseUrl,
@@ -14,17 +15,21 @@ const runMigrate = async () => {
   const DATABASE_AUTH_TOKEN = getDatabaseAuthToken();
 
   if (!DATABASE_URL) {
-    throw new Error('DATABASE_URL is not defined');
+    throw new AppError('CONFIG_ERROR', {
+      cause: 'DATABASE_URL is not defined',
+    });
   }
 
   if (!TEST_DATABASE_URL) {
-    throw new Error('TEST_DATABASE_URL is not defined');
+    throw new AppError('CONFIG_ERROR', {
+      cause: 'TEST_DATABASE_URL is not defined',
+    });
   }
 
   if (DATABASE_AUTH_TOKEN == TEST_DATABASE_AUTH_TOKEN) {
-    throw new Error(
-      'DATABASE_AUTH_TOKEN and TEST_DATABASE_AUTH_TOKEN are the same',
-    );
+    throw new AppError('CONFIG_ERROR', {
+      cause: 'DATABASE_AUTH_TOKEN and TEST_DATABASE_AUTH_TOKEN are the same',
+    });
   }
 
   const client = createClient({

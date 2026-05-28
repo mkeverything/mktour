@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentStart from '@/components/hooks/mutation-hooks/use-tournament-start';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -25,13 +26,13 @@ export default function StartTournamentButton() {
 
   const handleClick = () => {
     if (!units) {
-      throw new Error('NO_UNITS_DATA');
+      throw new AppError('NO_UNITS_DATA');
     }
     if (!data) {
-      throw new Error('NO_TOURNAMENT_DATA');
+      throw new AppError('NO_TOURNAMENT_DATA');
     }
     if (units.length < 2) {
-      throw new Error('NOT_ENOUGH_UNITS');
+      throw new AppError('NOT_ENOUGH_TOURNAMENT_UNITS');
     }
     startTournamentMutation.mutate(
       {

@@ -1,10 +1,8 @@
 'use client';
 
-import {
-  doublesErrors,
-  findDoublesUnitPlayer,
-  getDoublesErrorTranslationKey,
-} from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
+import { findDoublesUnitPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
+import { useIntlError } from '@/components/hooks/use-intl-error';
+import { AppError } from '@/lib/errors';
 import {
   hasDuplicateUnitNickname,
   removePlayersOutByIds,
@@ -13,13 +11,12 @@ import { useSharedPreStart } from '@/components/hooks/mutation-hooks/tournament-
 import { useTRPC } from '@/components/trpc/client';
 import { type UnitModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export const useTournamentEditDoublesUnit = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const t = useTranslations('Tournament.AddPlayer');
+  const { translateError } = useIntlError();
   const {
     applyOptimisticPreStartRound,
     applyServerPreStartUnitsIfLatest,
@@ -38,11 +35,11 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
         const currentUnit = previousUnits?.find((unit) => unit.id === unitId);
 
         if (firstPlayerId === secondPlayerId) {
-          throw new Error(doublesErrors.invalidDoublesPair);
+          throw new AppError('INVALID_DOUBLES_PAIR');
         }
-        if (!currentUnit) throw new Error(doublesErrors.playersNotFound);
+        if (!currentUnit) throw new AppError('UNIT_PLAYERS_NOT_FOUND');
         if (hasDuplicateUnitNickname(previousUnits, nickname, unitId)) {
-          throw new Error(doublesErrors.nicknameTaken);
+          throw new AppError('UNIT_NICKNAME_TAKEN');
         }
 
         const playersOut = previousPlayersOut ?? [];
@@ -58,7 +55,7 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
         );
 
         if (!firstPlayer || !secondPlayer) {
-          throw new Error(doublesErrors.playersNotFound);
+          throw new AppError('UNIT_PLAYERS_NOT_FOUND');
         }
 
         const nextUnit: UnitModel = {
@@ -89,7 +86,7 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
           queryClient.setQueryData(keys.playersOut, context.previousPlayersOut);
         }
 
-        toast.error(t(getDoublesErrorTranslationKey(error)));
+        toast.error(translateError(error, { fallback: 'UNIT_NOT_ADDED' }));
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
       onSettled: () => invalidatePreStartState({ playersOut: true }),

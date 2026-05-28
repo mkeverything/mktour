@@ -1,5 +1,6 @@
 'use client';
 
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
@@ -13,7 +14,7 @@ export default function useTournamentReset(
   sendJsonMessage: (_message: DashboardMessage) => void,
   setRoundInView: Dispatch<SetStateAction<number>>,
 ) {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.reset.mutationOptions({
@@ -24,8 +25,8 @@ export default function useTournamentReset(
         });
         setRoundInView(1);
       },
-      onError: () => {
-        toast.error(t('server error'));
+      onError: (error) => {
+        toast.error(tErrors(getAppErrorMessage(error)));
         queryClient.invalidateQueries({
           queryKey: trpc.tournament.pathKey(),
         });

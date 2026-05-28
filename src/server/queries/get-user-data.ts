@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 import { userPublicProfileTag } from '@/lib/cache-tags';
 import { db } from '@/server/db';
 import { affiliations } from '@/server/db/schema/players';
@@ -14,7 +15,7 @@ const getUserInfo = async (username: string) => {
     .from(users)
     .where(eq(users.username, username))
     .get();
-  if (!user) throw new Error('USER_NOT_FOUND');
+  if (!user) throw new AppError('USER_NOT_FOUND');
   return user;
 };
 

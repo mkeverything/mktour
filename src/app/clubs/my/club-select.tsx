@@ -22,10 +22,10 @@ const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
   const { data: clubs, status } = useAuthClubs();
   const queryClient = useQueryClient();
   const clubSelection = useAuthSelectClub(queryClient);
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
 
   if (status === 'error')
-    toast.error(t('server error'), {
+    toast.error(tErrors('UNKNOWN_ERROR'), {
       id: 'error',
       duration: 3000,
     });

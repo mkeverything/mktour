@@ -8,6 +8,7 @@ import {
 } from '@/components/notification-items';
 import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import Paginator from '@/components/ui-custom/paginator';
+import { getAppErrorMessage } from '@/lib/errors';
 import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
 import { RichTagsFunction, useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -15,6 +16,7 @@ import { FC, ReactNode } from 'react';
 
 const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
   const t = useTranslations('Club.Dashboard.Notifications');
+  const tErrors = useTranslations('Errors');
   const {
     data: notifications,
     fetchNextPage,
@@ -26,7 +28,7 @@ const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
   } = useClubNotifications(selectedClub);
 
   if (isLoading) return <ClubsNotificationsSkeletonList />;
-  if (status === 'error') return <p>{error.message}</p>;
+  if (status === 'error') return <p>{tErrors(getAppErrorMessage(error))}</p>;
   if (!notifications) return null;
 
   const allNotifications = notifications.pages.flatMap(
