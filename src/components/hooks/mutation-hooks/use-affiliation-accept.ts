@@ -1,4 +1,4 @@
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { AnyClubNotificationExtended } from '@/types/notifications';
 import { QueryClient, useMutation } from '@tanstack/react-query';
@@ -49,7 +49,7 @@ export default function useAffiliationAcceptByClubMutation({
         return { prevCache };
       },
       onError: (_err, { clubId }, context) => {
-        toast.error(tErrors(getAppErrorCode(_err)));
+        toast.error(tErrors(getAppErrorMessage(_err)));
         if (context?.prevCache) {
           queryClient.setQueryData(
             trpc.club.notifications.all.infiniteQueryKey({ clubId }),

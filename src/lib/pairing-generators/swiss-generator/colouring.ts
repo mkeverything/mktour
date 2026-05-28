@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import {
   ChessColour,
   ChessTournamentEntity,
@@ -67,7 +67,7 @@ function tryAlternateFromLastDifferentColours(
  */
 function getEntityInitialColour(entity: ChessTournamentEntity): ChessColour {
   if (entity.previousGames.length === 0) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'Entity has no previous games to determine initial colour',
     });
   }

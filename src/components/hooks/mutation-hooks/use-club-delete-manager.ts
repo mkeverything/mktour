@@ -1,5 +1,5 @@
 import { useTRPC } from '@/components/trpc/client';
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -44,7 +44,7 @@ export default function useDeleteClubManagerMutation() {
           trpc.club.managers.all.queryKey(),
           context?.previousState,
         );
-        toast.error(tErrors(getAppErrorCode(error)), { id: 'serverError' });
+        toast.error(tErrors(getAppErrorMessage(error)), { id: 'serverError' });
         console.error(error);
       },
     }),

@@ -4,7 +4,6 @@ import { useTournamentAddExistingPlayer } from '@/components/hooks/mutation-hook
 import { useTournamentPossiblePlayers } from '@/components/hooks/query-hooks/use-tournament-possible-players';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { Input } from '@/components/ui/input';
-import { ERRORS } from '@/lib/errors';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
@@ -104,7 +103,7 @@ const AddPlayer = ({
   if (possiblePlayers.status === 'error') {
     toast.error(
       translateError(possiblePlayers.error, {
-        fallback: ERRORS.POSSIBLE_PLAYERS_NOT_LOADED,
+        fallback: 'POSSIBLE_PLAYERS_NOT_LOADED',
       }),
       {
         id: 'query-possible-players',

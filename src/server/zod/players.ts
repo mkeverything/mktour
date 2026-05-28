@@ -1,4 +1,3 @@
-import { ERRORS } from '@/lib/errors';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { affiliations, players } from '@/server/db/schema/players';
 import { affiliationStatusEnum } from '@/server/zod/enums';
@@ -18,27 +17,27 @@ export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
       .min(GLICKO2_CONSTANTS.MIN_STARTING_RATING, {
-        error: ERRORS.MIN_STARTING_RATING,
+        error: 'MIN_STARTING_RATING',
       })
       .max(GLICKO2_CONSTANTS.MAX_STARTING_RATING, {
-        error: ERRORS.MAX_STARTING_RATING,
+        error: 'MAX_STARTING_RATING',
       }),
   ratingPeak: (s) =>
     s
       .min(GLICKO2_CONSTANTS.MIN_RATING, {
-        error: ERRORS.MIN_RATING,
+        error: 'MIN_PEAK_RATING',
       })
       .max(GLICKO2_CONSTANTS.MAX_RATING, {
-        error: ERRORS.MAX_RATING,
+        error: 'MAX_PEAK_RATING',
       }),
   nickname: (s) =>
     s
       .trim()
-      .min(3, {
-        error: ERRORS.MIN_NICKNAME_LENGTH,
+      .min(2, {
+        error: 'MIN_NICKNAME_LENGTH',
       })
       .max(30, {
-        error: ERRORS.MAX_NICKNAME_LENGTH,
+        error: 'MAX_NICKNAME_LENGTH',
       }),
 });
 export const playersUpdateSchema = createUpdateSchema(players);
@@ -80,8 +79,8 @@ export const playerEditSchema = playersUpdateSchema
     nickname: z
       .string()
       .trim()
-      .min(2, { error: ERRORS.MIN_NICKNAME_LENGTH })
-      .max(30, { error: ERRORS.MAX_NICKNAME_LENGTH })
+      .min(2, { error: 'MIN_NICKNAME_LENGTH' })
+      .max(30, { error: 'MAX_NICKNAME_LENGTH' })
       .optional(),
     realname: z.string().max(50).nullable().optional(),
   });

@@ -5,14 +5,10 @@ import en from '@/messages/en.json';
 import ru from '@/messages/ru.json';
 
 describe('error catalog', () => {
-  test('error codes and translations stay in sync', () => {
-    const codes = Object.values(ERRORS).sort();
+  test('error messages and translations stay in sync', () => {
+    const messages = ERRORS.toSorted();
 
-    expect(Object.keys(en.Errors).sort()).toEqual(codes);
-    expect(Object.keys(ru.Errors).sort()).toEqual(codes);
-
-    for (const [key, value] of Object.entries(ERRORS)) {
-      expect(key).toBe(value);
-    }
+    expect(Object.keys(en.Errors).sort()).toEqual(messages);
+    expect(Object.keys(ru.Errors).sort()).toEqual(messages);
   });
 });

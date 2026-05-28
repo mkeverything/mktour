@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 /**
  * Shared BFS infrastructure for Edmonds' Blossom Algorithm
  *
@@ -172,14 +172,14 @@ export function bfsSearchForAugmentingPath<State extends MatchingState>(
   while (state.queue.length > 0) {
     bfsIterations++;
     if (bfsIterations > MAX_BFS_ITERATIONS) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Infinite BFS loop after ${bfsIterations} iterations`,
       });
     }
 
     const currentVertex = state.queue.shift();
     if (currentVertex === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: 'Queue unexpectedly empty',
       });
     }

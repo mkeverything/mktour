@@ -7,7 +7,6 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { ERRORS } from '@/lib/errors';
 import { UserPublicModel } from '@/server/zod/users';
 import { VariantProps } from 'class-variance-authority';
 import { useTranslations } from 'next-intl';
@@ -48,7 +47,7 @@ const AddManager = ({
     return <Skeleton className="h-svh w-full pt-8" />;
   const error = affiliatedUsers.error ?? foundUsers.error;
   if (error) {
-    toast.error(translateError(error, { fallback: ERRORS.USERS_NOT_LOADED }), {
+    toast.error(translateError(error, { fallback: 'USERS_NOT_LOADED' }), {
       id: 'query-users',
       duration: 3000,
     });

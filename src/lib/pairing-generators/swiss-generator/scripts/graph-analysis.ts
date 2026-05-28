@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 /**
  * Graph connectivity analysis for tournament trace.
  *
@@ -73,7 +73,7 @@ function buildAdjacencyList(
     const targetNeighbours = adjacency.get(target);
 
     if (sourceNeighbours === undefined || targetNeighbours === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: 'Vertex missing from adjacency list after initialisation',
       });
     }
@@ -111,7 +111,7 @@ function bfsComponent(
   while (queue.length > 0) {
     const current = queue.shift();
     if (current === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: 'Queue unexpectedly empty',
       });
     }

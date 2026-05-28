@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import { eq } from 'drizzle-orm';
 
 import { baselineUnitSort, sortUnitsByResults } from '@/lib/tournament-results';
@@ -94,7 +94,7 @@ export async function getTournamentUnits(
     .from(tournaments)
     .where(eq(tournaments.id, id));
 
-  if (!tournament) throw new AppError(ERRORS.TOURNAMENT_NOT_FOUND);
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
 
   const [units, allGames] = await Promise.all([
     getRawTournamentUnits(id, database),

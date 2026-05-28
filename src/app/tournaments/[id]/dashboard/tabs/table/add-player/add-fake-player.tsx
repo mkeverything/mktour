@@ -2,7 +2,7 @@ import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-con
 import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-new-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { Button } from '@/components/ui/button';
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { newid } from '@/lib/utils';
 import { PlayerFormModel } from '@/server/zod/players';
@@ -17,7 +17,7 @@ const AddFakerPlayer: FC<{ setOpen: (_arg: boolean) => void }> = ({
   const tournament = useTournamentInfo(id);
   const returnToNewPlayer = () => null;
   const { userId } = useContext(DashboardContext);
-  if (!userId) throw new AppError(ERRORS.USERID_NOT_FOUND_IN_CONTEXT);
+  if (!userId) throw new AppError('USERID_NOT_FOUND_IN_CONTEXT');
   const { mutate } = useTournamentAddNewPlayer(id, returnToNewPlayer);
 
   const nickname =

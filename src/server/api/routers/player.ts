@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import {
   authProcedure,
@@ -162,7 +162,7 @@ export const playerRouter = {
       const isAdmin = Object.keys(clubs).find(
         (clubId) => clubId === player.clubId,
       );
-      if (!isAdmin) throw new AppError(ERRORS.NOT_CLUB_ADMIN);
+      if (!isAdmin) throw new AppError('NOT_CLUB_ADMIN');
       await deletePlayer(input);
     }),
   edit: protectedProcedure

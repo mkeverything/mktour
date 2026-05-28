@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 /**
  * Blossom and augmenting path operations for Edmonds' Blossom Algorithm
  *
@@ -47,7 +47,7 @@ function findChildIndex(
   const index = children.indexOf(childBlossomId);
 
   if (index === NOT_FOUND_IN_ARRAY) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: `Blossom ${childBlossomId} not found in children array`,
     });
   }
@@ -70,7 +70,7 @@ function updateChildrenAfterExpansion(
 ): void {
   for (const childBlossomId of blossom.children) {
     if (typeof childBlossomId === 'string') {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Children should only contain blossom IDs`,
       });
     }
@@ -82,7 +82,7 @@ function updateChildrenAfterExpansion(
     for (const vertexKey of leafVertices) {
       const vertexState = state.vertices.get(vertexKey);
       if (vertexState === undefined) {
-        throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        throw new AppError('PAIRING_GENERATOR_ERROR', {
           cause: `Vertex ${vertexKey} not found`,
         });
       }
@@ -301,14 +301,14 @@ function restoreChildrenToTopLevel(
   for (const childBlossomId of blossom.children) {
     // Type guard: ensure we only have blossom IDs
     if (typeof childBlossomId === 'string') {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Blossom ${blossom.id} children should only contain blossom IDs, not vertex keys`,
       });
     }
 
     const childBlossom = state.blossoms.get(childBlossomId);
     if (childBlossom === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Child blossom ${childBlossomId} not found in state`,
       });
     }
@@ -383,7 +383,7 @@ function relabelReachableChild(
 
   const baseState = state.vertices.get(child.base);
   if (baseState === undefined) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: `Child base vertex ${child.base} not found`,
     });
   }
@@ -413,14 +413,14 @@ function findLabeledLeafInChild(
   for (const vertex of leaves) {
     const vertexState = state.vertices.get(vertex);
     if (vertexState === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Vertex ${vertex} not found in state`,
       });
     }
 
     const blossom = state.blossoms.get(vertexState.inBlossom);
     if (blossom === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Blossom ${vertexState.inBlossom} not found for vertex ${vertex}`,
       });
     }
@@ -452,7 +452,7 @@ function relabelChildrenForDelta4(
   let labeledVertex = blossom.labelEdgeVertex;
 
   if (labelingVertex === null || labeledVertex === null) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: `T-blossom ${blossom.id} missing labelEnd/labelEdgeVertex`,
     });
   }
@@ -493,7 +493,7 @@ function relabelChildrenForDelta4(
     if (typeof childId === 'number') {
       const child = state.blossoms.get(childId);
       if (child === undefined) {
-        throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+        throw new AppError('PAIRING_GENERATOR_ERROR', {
           cause: `Child blossom ${childId} not found`,
         });
       }
@@ -534,7 +534,7 @@ export function addBlossom(
   // Get the LCA blossom to inherit its base
   const lcaBlossom = state.blossoms.get(lcaBlossomId);
   if (lcaBlossom === undefined) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: `LCA blossom ${lcaBlossomId} not found in state`,
     });
   }
@@ -604,7 +604,7 @@ export function addBlossom(
   for (const childBlossomId of childBlossomIds) {
     const childBlossom = state.blossoms.get(childBlossomId);
     if (childBlossom === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Child blossom ${childBlossomId} not found in state`,
       });
     }
@@ -630,7 +630,7 @@ export function addBlossom(
   for (const vertexKey of leafVertices) {
     const vertexState = state.vertices.get(vertexKey);
     if (vertexState === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Vertex ${vertexKey} not found in state`,
       });
     }
@@ -639,7 +639,7 @@ export function addBlossom(
     // These vertices can now scan from the S-labeled blossom
     const oldBlossom = state.blossoms.get(vertexState.inBlossom);
     if (oldBlossom === undefined) {
-      throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
         cause: `Blossom ${vertexState.inBlossom} not found for vertex ${vertexKey}`,
       });
     }
@@ -671,7 +671,7 @@ export function expandBlossom(
 ): void {
   const blossom = state.blossoms.get(blossomId);
   if (blossom === undefined) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: `Blossom ${blossomId} not found in state`,
     });
   }
@@ -720,7 +720,7 @@ function setMate(
 ): void {
   const vertexState = state.vertices.get(vertex);
   if (vertexState === undefined) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: `Vertex ${vertex} not found`,
     });
   }
@@ -780,7 +780,7 @@ function augmentOneStep(
   const nextSVertex = tBlossom.labelEnd;
   const nextSVertexMate = tBlossom.labelEdgeVertex;
   if (nextSVertex === null || nextSVertexMate === null) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'T-blossom missing labeledge',
     });
   }

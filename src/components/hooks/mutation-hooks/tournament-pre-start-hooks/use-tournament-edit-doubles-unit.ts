@@ -1,11 +1,8 @@
 'use client';
 
-import {
-  doublesErrors,
-  findDoublesUnitPlayer,
-} from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
+import { findDoublesUnitPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
 import { useIntlError } from '@/components/hooks/use-intl-error';
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 import {
   hasDuplicateUnitNickname,
   removePlayersOutByIds,
@@ -38,11 +35,11 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
         const currentUnit = previousUnits?.find((unit) => unit.id === unitId);
 
         if (firstPlayerId === secondPlayerId) {
-          throw new AppError(doublesErrors.invalidDoublesPair);
+          throw new AppError('INVALID_DOUBLES_PAIR');
         }
-        if (!currentUnit) throw new AppError(doublesErrors.playersNotFound);
+        if (!currentUnit) throw new AppError('UNIT_PLAYERS_NOT_FOUND');
         if (hasDuplicateUnitNickname(previousUnits, nickname, unitId)) {
-          throw new AppError(doublesErrors.nicknameTaken);
+          throw new AppError('UNIT_NICKNAME_TAKEN');
         }
 
         const playersOut = previousPlayersOut ?? [];
@@ -58,7 +55,7 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
         );
 
         if (!firstPlayer || !secondPlayer) {
-          throw new AppError(doublesErrors.playersNotFound);
+          throw new AppError('UNIT_PLAYERS_NOT_FOUND');
         }
 
         const nextUnit: UnitModel = {
@@ -89,7 +86,7 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
           queryClient.setQueryData(keys.playersOut, context.previousPlayersOut);
         }
 
-        toast.error(translateError(error, { fallback: ERRORS.UNIT_NOT_ADDED }));
+        toast.error(translateError(error, { fallback: 'UNIT_NOT_ADDED' }));
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
       onSettled: () => invalidatePreStartState({ playersOut: true }),

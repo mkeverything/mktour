@@ -1,5 +1,5 @@
 import { useTRPC } from '@/components/trpc/client';
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -39,7 +39,7 @@ export const useAuthSelectClub = (queryClient: QueryClient) => {
         }
       },
       onError: (error, _variables, context) => {
-        toast.error(tErrors(getAppErrorCode(error)), {
+        toast.error(tErrors(getAppErrorMessage(error)), {
           id: 'error',
           duration: 3000,
         });

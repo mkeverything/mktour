@@ -2,7 +2,6 @@ import { removeUnitById } from '@/components/hooks/mutation-hooks/tournament-pre
 import { useSharedPreStart } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-shared-pre-start';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
-import { ERRORS } from '@/lib/errors';
 import type { UnitModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -28,15 +27,14 @@ export const useTournamentRemoveUnit = (tournamentId: string) => {
           removeUnitById(previousUnits, unitId),
         );
       },
-      onError: (_err, { unitId }, context) => {
+      onError: (err, { unitId }, context) => {
         rollbackOptimisticPreStartRound(context);
         const unit = context?.previousUnits?.find((u) => u.id === unitId);
         toast.error(
-          translateError(_err, {
-            fallback: ERRORS.UNIT_NOT_REMOVED,
+          translateError(err, {
+            fallback: 'UNIT_NOT_REMOVED',
             options: { player: unit?.unitNickname ?? '' },
           }),
-          { id: 'remove-player-error', duration: 3000 },
         );
       },
       onSuccess: applyServerPreStartUnitsIfLatest,

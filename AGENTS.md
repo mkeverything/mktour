@@ -26,13 +26,8 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 
 ## errors and i18n
 
-- canonical error catalog: `src/lib/errors.ts`
-- never throw native `Error` for app/domain failures; throw `new AppError(ERRORS.SOME_CODE)`
-- never hard-code user-facing error messages; add an `ERRORS` code and translations in every locale
-- client error ui should translate error codes via `getAppErrorCode`, `useIntlError()`, or `useTranslations('Errors')`
-- keep `src/messages/en.json` and `src/messages/ru.json` structurally aligned
-- no hard-coded user-facing strings; use translation keys
-- when adding/changing error codes, run `bun test:noseed src/tests/errors.test.ts src/tests/messages.test.ts`
+- never throw native `Error` for app/domain failures; throw `new AppError(PREDEFINED_ERROR_MESSAGE)`
+- never hard-code user-facing error messages; add an `ERRORS` message and translations in every locale
 
 ## optimistic updates
 

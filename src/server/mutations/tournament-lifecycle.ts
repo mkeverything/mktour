@@ -1,10 +1,10 @@
 'use server';
 
-import { AppError, ERRORS } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
+import { AppError } from '@/lib/errors';
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
-import { baselineUnitSort } from '@/lib/tournament-results';
 import {
+  baselineUnitSort,
   buildScoreMaps,
   hasSameStanding,
   sortUnitsByResults,
@@ -48,13 +48,12 @@ export const createTournament = async (
     date: string;
   },
 ) => {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
+  if (values.type !== 'solo' && values.rated) {
+    throw new AppError('DOUBLES_TOURNAMENT_CANNOT_BE_RATED');
+  }
   const newTournamentID = newid();
-  const resolvedRated = values.type === 'doubles' ? false : values.rated;
   const newTournament = tournamentsInsertSchema.parse({
     ...values,
-    rated: resolvedRated,
     id: newTournamentID,
     createdAt: new Date(),
     closedAt: null,
@@ -78,15 +77,14 @@ async function resolveTournamentRoundsNumber({
 }) {
   if (format === 'swiss') {
     const units = await getTournamentUnits(tournamentId);
-    if (units.length < 2)
-      throw new AppError(ERRORS.NOT_ENOUGH_TOURNAMENT_UNITS);
+    if (units.length < 2) throw new AppError('NOT_ENOUGH_TOURNAMENT_UNITS');
 
     const maxRounds = getSwissMaxRoundsNumber(units.length);
     const resolvedRounds =
       roundsNumber ?? getSwissRecommendedRoundsNumber(units.length);
 
     if (resolvedRounds < 1 || resolvedRounds > maxRounds) {
-      throw new AppError(ERRORS.INVALID_ROUNDS_NUMBER);
+      throw new AppError('INVALID_ROUNDS_NUMBER');
     }
 
     return resolvedRounds;
@@ -95,7 +93,7 @@ async function resolveTournamentRoundsNumber({
     const units = await getTournamentUnits(tournamentId);
     return getRoundRobinRoundsNumber(units.length);
   }
-  throw new AppError(ERRORS.UNSUPPORTED_TOURNAMENT_FORMAT);
+  throw new AppError('UNSUPPORTED_TOURNAMENT_FORMAT');
 }
 
 export async function normalizeSwissRoundsNumber(
@@ -112,7 +110,7 @@ function getEligibleSwissUnits(
   units: Array<UnitModel>,
 ) {
   if (!tournament.startedAt && units.some((unit) => unit.isOut === true)) {
-    throw new AppError(ERRORS.INVALID_PRE_START_WITHDRAWN_UNIT);
+    throw new AppError('INVALID_PRE_START_WITHDRAWN_UNIT');
   }
 
   return tournament.startedAt
@@ -135,7 +133,7 @@ export async function normalizeSwissRoundsNumberInDatabase(
   const maxRounds = getSwissMaxRoundsNumber(eligibleUnits.length);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
   if (minRounds > maxRounds) {
-    throw new AppError(ERRORS.WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT);
+    throw new AppError('WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT');
   }
   const normalizedRounds = Math.min(
     Math.max(tournament.roundsNumber ?? minRounds, minRounds),
@@ -167,7 +165,7 @@ async function preparePreStartPairings(
 ): Promise<GameModel[]> {
   const currentUnits = await getRawTournamentUnits(tournamentId, database);
   if (currentUnits.length < 2) {
-    throw new AppError(ERRORS.NOT_ENOUGH_TOURNAMENT_UNITS);
+    throw new AppError('NOT_ENOUGH_TOURNAMENT_UNITS');
   }
   const units = await applyPreStartUnitOrder({
     tournamentId,
@@ -193,10 +191,9 @@ export async function startTournament({
   tournamentId: string;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
+  if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer')
-    throw new AppError(ERRORS.NOT_TOURNAMENT_ORGANIZER);
+  if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
 
   const finalRoundsNumber = await resolveTournamentRoundsNumber({
     tournamentId,
@@ -212,8 +209,7 @@ export async function startTournament({
       .where(
         and(eq(tournaments.id, tournamentId), isNull(tournaments.startedAt)),
       );
-    if (!value.rowsAffected)
-      throw new AppError(ERRORS.TOURNAMENT_ALREADY_STARTED);
+    if (!value.rowsAffected) throw new AppError('TOURNAMENT_ALREADY_STARTED');
     return roundGames;
   });
 }
@@ -224,10 +220,9 @@ export async function resetTournament({
   tournamentId: string;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
+  if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer')
-    throw new AppError(ERRORS.NOT_TOURNAMENT_ORGANIZER);
+  if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   await db.transaction(async (tx) => {
     const tournamentUpdate = await tx
       .update(tournaments)
@@ -240,7 +235,7 @@ export async function resetTournament({
         and(eq(tournaments.id, tournamentId), isNotNull(tournaments.startedAt)),
       );
     if (!tournamentUpdate.rowsAffected)
-      throw new AppError(ERRORS.TOURNAMENT_ALREADY_RESET);
+      throw new AppError('TOURNAMENT_ALREADY_RESET');
 
     await tx.delete(games).where(eq(games.tournamentId, tournamentId));
 
@@ -271,11 +266,10 @@ export async function finishTournament({
   closedAt: Date;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
+  if (!user) throw new AppError('UNAUTHENTICATED');
 
   const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer')
-    throw new AppError(ERRORS.NOT_TOURNAMENT_ORGANIZER);
+  if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
 
   await db.transaction(async (tx) => {
     const [tournament, allGames, unitsUnsorted] = await Promise.all([
@@ -284,10 +278,10 @@ export async function finishTournament({
       getRawTournamentUnits(tournamentId, tx),
     ]);
 
-    if (!tournament) throw new AppError(ERRORS.TOURNAMENT_NOT_FOUND);
+    if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
 
     if (allGames.some((game) => game.result === null)) {
-      throw new AppError(ERRORS.INCOMPLETE_GAMES);
+      throw new AppError('INCOMPLETE_GAMES');
     }
 
     if (closedAt) {
@@ -298,7 +292,7 @@ export async function finishTournament({
           and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)),
         );
       if (!result.rowsAffected)
-        throw new AppError(ERRORS.TOURNAMENT_ALREADY_FINISHED);
+        throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     }
 
     const sortedUnits = sortUnitsByResults(unitsUnsorted, tournament, allGames);
@@ -353,10 +347,9 @@ export async function deleteTournament({
   tournamentId: string;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
+  if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer')
-    throw new AppError(ERRORS.NOT_TOURNAMENT_ORGANIZER);
+  if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   await db.transaction(async (tx) => {
     const units = await tx
       .select({ id: tournament_units.id })
@@ -389,20 +382,16 @@ export async function updateSwissRoundsNumber({
   roundsNumber: number;
 }) {
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new AppError(ERRORS.TOURNAMENT_NOT_FOUND);
-  if (tournament.format !== 'swiss')
-    throw new AppError(ERRORS.NOT_SWISS_TOURNAMENT);
-  if (tournament.closedAt)
-    throw new AppError(ERRORS.TOURNAMENT_ALREADY_FINISHED);
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+  if (tournament.format !== 'swiss') throw new AppError('NOT_SWISS_TOURNAMENT');
+  if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
 
   const units = await getTournamentUnits(tournamentId);
   const eligibleUnits = getEligibleSwissUnits(tournament, units);
   const maxRounds = getSwissMaxRoundsNumber(eligibleUnits.length);
   const minRounds = tournament.startedAt ? tournament.ongoingRound : 1;
-  if (roundsNumber < minRounds)
-    throw new AppError(ERRORS.INVALID_ROUNDS_NUMBER);
-  if (roundsNumber > maxRounds)
-    throw new AppError(ERRORS.INVALID_ROUNDS_NUMBER);
+  if (roundsNumber < minRounds) throw new AppError('INVALID_ROUNDS_NUMBER');
+  if (roundsNumber > maxRounds) throw new AppError('INVALID_ROUNDS_NUMBER');
 
   await db
     .update(tournaments)

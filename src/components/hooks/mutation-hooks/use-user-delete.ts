@@ -1,4 +1,4 @@
-import { getAppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -14,7 +14,7 @@ export default function useDeleteUserMutation(queryClient: QueryClient) {
         toast.success(t('user deleted'));
         queryClient.invalidateQueries({ queryKey: trpc.user.pathKey() });
       },
-      onError: (e) => toast.error(tErrors(getAppErrorCode(e))),
+      onError: (e) => toast.error(tErrors(getAppErrorMessage(e))),
     }),
   );
 }

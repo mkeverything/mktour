@@ -26,7 +26,6 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ERRORS } from '@/lib/errors';
 import { ClubManagerModel } from '@/server/zod/clubs';
 import { Trash2, User2 } from 'lucide-react';
 import * as React from 'react';
@@ -44,7 +43,7 @@ const ClubManagersList: FC<{ clubId: string; userId: string }> = ({
   );
 
   if (status === 'error') {
-    toast.error(translateError(error, { fallback: ERRORS.USERS_NOT_LOADED }));
+    toast.error(translateError(error, { fallback: 'USERS_NOT_LOADED' }));
   }
 
   return (

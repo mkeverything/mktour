@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 /**
  * Combinatorics utilities for Swiss system pairing
  *
@@ -95,7 +95,7 @@ export function findSuccessorIndex<ArrayElementType>(
     candidateIndex--;
   }
 
-  throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+  throw new AppError('PAIRING_GENERATOR_ERROR', {
     cause: 'Successor index not found - this should never happen',
   });
 }

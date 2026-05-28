@@ -5,7 +5,6 @@ import {
 import Winners from '@/app/tournaments/[id]/dashboard/tabs/main/winners';
 import { useTournamentSummaryInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useIntlError } from '@/components/hooks/use-intl-error';
-import { ERRORS } from '@/lib/errors';
 import SwissRoundsNumber from '@/components/swiss-rounds-number';
 import {
   CalendarDays,
@@ -31,7 +30,7 @@ const TournamentInfoList = () => {
   if (isLoading) return <LoadingElement />;
   if (isError) {
     toast.error(
-      translateError(error, { fallback: ERRORS.TOURNAMENT_INFO_NOT_LOADED }),
+      translateError(error, { fallback: 'TOURNAMENT_INFO_NOT_LOADED' }),
       {
         id: 'query-info',
         duration: 3000,

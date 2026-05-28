@@ -14,7 +14,6 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ERRORS } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import {
   deleteUserFormSchema,
@@ -52,7 +51,7 @@ export default function DeleteUserForm({
   });
 
   const t = useTranslations('UserSettings');
-  const { translateCode } = useIntlError();
+  const { translateMessage } = useIntlError();
   const checkboxes: Array<keyof IntlMessages['UserSettings']> = [
     'checkbox1',
     'checkbox2',
@@ -91,7 +90,7 @@ export default function DeleteUserForm({
                   autoComplete="off"
                   onPaste={(e) => {
                     e.preventDefault();
-                    toast.error(translateCode(ERRORS.PASTE_DISABLED), {
+                    toast.error(translateMessage('PASTE_DISABLED'), {
                       dismissible: true,
                       id: 'doItYourself',
                     });

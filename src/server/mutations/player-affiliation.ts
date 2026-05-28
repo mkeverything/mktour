@@ -1,6 +1,6 @@
 'use server';
 
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 
 import { validateRequest } from '@/lib/auth/lucia';
 import { newid } from '@/lib/utils';
@@ -29,8 +29,8 @@ export async function requestAffiliation({
   clubId: string;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
-  if (user.id !== userId) throw new AppError(ERRORS.USER_MISMATCH);
+  if (!user) throw new AppError('UNAUTHENTICATED');
+  if (user.id !== userId) throw new AppError('USER_MISMATCH');
 
   const [existingPlayers, existingAffiliations] = await Promise.all([
     db
@@ -45,7 +45,7 @@ export async function requestAffiliation({
       ),
   ]);
   if (existingAffiliations.at(0) || existingPlayers.at(0))
-    throw new AppError(ERRORS.AFFILIATION_EXISTS);
+    throw new AppError('AFFILIATION_EXISTS');
 
   const createdAt = new Date();
 
@@ -83,17 +83,17 @@ export async function acceptAffiliationByClub({
   notificationId: string;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
+  if (!user) throw new AppError('UNAUTHENTICATED');
 
   const affiliation = await db.query.affiliations.findFirst({
     where: eq(affiliations.id, affiliationId),
   });
 
-  if (!affiliation) throw new AppError(ERRORS.AFFILIATION_NOT_FOUND);
+  if (!affiliation) throw new AppError('AFFILIATION_NOT_FOUND');
   if (affiliation.clubId !== user.selectedClub)
-    throw new AppError(ERRORS.CLUB_ID_NOT_MATCHING);
+    throw new AppError('CLUB_ID_NOT_MATCHING');
   if (affiliation.status !== 'requested_by_user')
-    throw new AppError(ERRORS.AFFILIATION_STATUS_NOT_REQUESTED);
+    throw new AppError('AFFILIATION_STATUS_NOT_REQUESTED');
 
   const newNotification: UserNotificationInsertModel = {
     id: newid(),
@@ -132,16 +132,16 @@ export async function rejectAffiliation({
   notificationId: string;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
+  if (!user) throw new AppError('UNAUTHENTICATED');
 
   const affiliation = await db.query.affiliations.findFirst({
     where: eq(affiliations.id, affiliationId),
   });
-  if (!affiliation) throw new AppError(ERRORS.AFFILIATION_NOT_FOUND);
+  if (!affiliation) throw new AppError('AFFILIATION_NOT_FOUND');
   if (affiliation.clubId !== user.selectedClub)
-    throw new AppError(ERRORS.CLUB_ID_NOT_MATCHING);
+    throw new AppError('CLUB_ID_NOT_MATCHING');
   if (affiliation.status !== 'requested_by_user')
-    throw new AppError(ERRORS.AFFILIATION_STATUS_NOT_REQUESTED);
+    throw new AppError('AFFILIATION_STATUS_NOT_REQUESTED');
 
   const newNotification: UserNotificationInsertModel = {
     id: newid(),
@@ -174,15 +174,15 @@ export async function abortAffiliationRequest({
   affiliationId: string;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new AppError(ERRORS.UNAUTHENTICATED);
-  if (user.id !== userId) throw new AppError(ERRORS.USER_MISMATCH);
+  if (!user) throw new AppError('UNAUTHENTICATED');
+  if (user.id !== userId) throw new AppError('USER_MISMATCH');
 
   const affiliation = await db.query.affiliations.findFirst({
     where: eq(affiliations.id, affiliationId),
   });
-  if (!affiliation) throw new AppError(ERRORS.AFFILIATION_NOT_FOUND);
+  if (!affiliation) throw new AppError('AFFILIATION_NOT_FOUND');
   if (affiliation.status !== 'requested_by_user')
-    throw new AppError(ERRORS.AFFILIATION_STATUS_NOT_REQUESTED);
+    throw new AppError('AFFILIATION_STATUS_NOT_REQUESTED');
 
   await Promise.all([
     db.delete(affiliations).where(eq(affiliations.id, affiliationId)),
@@ -209,7 +209,7 @@ export async function affiliateUser({
   const player = await db.query.players.findFirst({
     where: eq(players.id, playerId),
   });
-  if (!player) throw new AppError(ERRORS.PLAYER_NOT_FOUND);
+  if (!player) throw new AppError('PLAYER_NOT_FOUND');
 
   const existingAffiliation = await db.query.affiliations.findFirst({
     where: and(
@@ -219,7 +219,7 @@ export async function affiliateUser({
   });
 
   if (existingAffiliation?.status === 'active')
-    throw new AppError(ERRORS.ALREADY_AFFILIATED);
+    throw new AppError('ALREADY_AFFILIATED');
 
   // if user has a pending request, update it to active; otherwise create new
   const affiliationQuery = existingAffiliation
@@ -259,8 +259,8 @@ export async function cancelAffiliationByUser({
   const player = await db.query.players.findFirst({
     where: eq(players.id, playerId),
   });
-  if (!player) throw new AppError(ERRORS.PLAYER_NOT_FOUND);
-  if (player.userId !== userId) throw new AppError(ERRORS.USER_MISMATCH);
+  if (!player) throw new AppError('PLAYER_NOT_FOUND');
+  if (player.userId !== userId) throw new AppError('USER_MISMATCH');
 
   await Promise.all([
     db
@@ -297,9 +297,9 @@ export async function cancelAffiliationByClub({
   const player = await db.query.players.findFirst({
     where: eq(players.id, playerId),
   });
-  if (!player) throw new AppError(ERRORS.PLAYER_NOT_FOUND);
-  if (player.clubId !== clubId) throw new AppError(ERRORS.CLUB_MISMATCH);
-  if (!player.userId) throw new AppError(ERRORS.NO_AFFILIATION);
+  if (!player) throw new AppError('PLAYER_NOT_FOUND');
+  if (player.clubId !== clubId) throw new AppError('CLUB_MISMATCH');
+  if (!player.userId) throw new AppError('NO_AFFILIATION');
 
   const userId = player.userId;
 

@@ -1,5 +1,5 @@
-import { ERRORS, getAppErrorCode } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -20,10 +20,7 @@ export default function useDeletePlayerMutation(
           queryKey: trpc.club.players.infiniteQueryKey({ clubId }),
         });
       },
-      onError: (error) =>
-        getAppErrorCode(error) === ERRORS.PLAYER_HAS_TOURNAMENTS
-          ? toast.error(tErrors(ERRORS.PLAYER_HAS_TOURNAMENTS))
-          : toast.error(tErrors(getAppErrorCode(error))),
+      onError: (error) => toast.error(tErrors(getAppErrorMessage(error))),
     }),
   );
 }

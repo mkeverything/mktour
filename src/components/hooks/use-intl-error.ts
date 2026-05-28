@@ -1,4 +1,4 @@
-import { ERRORS, getAppErrorCode, type AppErrorCode } from '@/lib/errors';
+import { getAppErrorMessage, type AppErrorMessage } from '@/lib/errors';
 import { AppRouter } from '@/server/api';
 import { TRPCClientErrorLike } from '@trpc/client';
 import { TranslationValues, useTranslations } from 'next-intl';
@@ -9,19 +9,21 @@ export const useIntlError = () => {
   const translateError = (
     error: TRPCClientErrorLike<AppRouter>,
     props: {
-      fallback?: AppErrorCode;
+      fallback?: AppErrorMessage;
       options?: TranslationValues;
     } = {},
   ) => {
-    const code = getAppErrorCode(error);
-    return tErrors(
-      code === ERRORS.UNKNOWN_ERROR && props.fallback ? props.fallback : code,
-      props.options,
-    );
+    const message = getAppErrorMessage(error);
+    const resolvedMessage =
+      message === 'UNKNOWN_ERROR' && props.fallback ? props.fallback : message;
+
+    return tErrors(resolvedMessage, props.options);
   };
 
-  const translateCode = (code: AppErrorCode, options?: TranslationValues) =>
-    tErrors(code, options);
+  const translateMessage = (
+    message: AppErrorMessage,
+    options?: TranslationValues,
+  ) => tErrors(message, options);
 
-  return { translateCode, translateError };
+  return { translateMessage, translateError };
 };

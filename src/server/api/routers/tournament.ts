@@ -1,6 +1,8 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
+import meta from '@/server/api/meta';
 import {
+  clubAdminProcedure,
   protectedProcedure,
   publicProcedure,
   tournamentAdminProcedure,
@@ -42,7 +44,7 @@ import { getTournamentInfo } from '@/server/queries/get-tournament-info';
 import { getTournamentPossiblePlayers } from '@/server/queries/get-tournament-possible-players';
 import { getTournamentUnits } from '@/server/queries/get-tournament-units';
 import { tournamentIdInputSchema } from '@/server/zod/common';
-import { gameResultEnum, TournamentFormat } from '@/server/zod/enums';
+import { gameResultEnum, tournamentFormatEnum } from '@/server/zod/enums';
 import {
   playerFormSchema,
   playersWithUsernameSchema,
@@ -65,7 +67,8 @@ import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
 export const tournamentRouter = {
-  create: protectedProcedure
+  create: clubAdminProcedure
+    .meta(meta.tournamentsCreate)
     .input(tournamentCreateInputSchema)
     .output(z.object({ id: z.string() }))
     .mutation(async (opts) => {
@@ -81,6 +84,7 @@ export const tournamentRouter = {
         limit: z.number().min(1).max(100).optional().default(10),
       }),
     )
+    .meta(meta.tournamentsAll)
     .output(
       z.object({
         tournaments: z.array(tournamentWithClubSchema),
@@ -94,6 +98,7 @@ export const tournamentRouter = {
       });
     }),
   info: publicProcedure
+    .meta(meta.tournamentsInfo)
     .input(tournamentIdInputSchema)
     .output(tournamentInfoSchema)
     .query(async (opts) => {
@@ -247,7 +252,7 @@ export const tournamentRouter = {
     .input(
       tournamentIdInputSchema.extend({
         startedAt: z.date(),
-        format: z.custom<TournamentFormat>(),
+        format: tournamentFormatEnum,
         roundsNumber: z.number().int().min(1).nullable(),
       }),
     )

@@ -1,4 +1,4 @@
-import { AppError, ERRORS } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
 /**
  * Types, interfaces, and comparison utilities for quality evaluation
  *
@@ -102,7 +102,7 @@ export function checkCriterionPerfect(
   const value = report[criterion.id];
   const ideal = cache.get(criterion.id);
   if (ideal === undefined) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: `No cached ideal for criterion ${criterion.id}`,
     });
   }
@@ -136,7 +136,7 @@ export function isNumericPerfect(
   ideal: CriterionValue,
 ): boolean {
   if (typeof value !== 'number' || typeof ideal !== 'number') {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'isNumericPerfect: expected numeric values',
     });
   }
@@ -152,7 +152,7 @@ export function compareNumericValues(
   second: CriterionValue,
 ): number {
   if (typeof first !== 'number' || typeof second !== 'number') {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'compareNumericValues: expected numeric values',
     });
   }
@@ -201,7 +201,7 @@ export function isArrayPerfect(
   ideal: CriterionValue,
 ): boolean {
   if (!Array.isArray(value) || !Array.isArray(ideal)) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'isArrayPerfect: expected array values',
     });
   }
@@ -220,7 +220,7 @@ export function compareArrayValues(
   second: CriterionValue,
 ): number {
   if (!Array.isArray(first) || !Array.isArray(second)) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'compareArrayValues: expected array values',
     });
   }
@@ -250,7 +250,7 @@ export function isC8Perfect(
     !isFutureCriteriaCompliance(value) ||
     !isFutureCriteriaCompliance(ideal)
   ) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'isC8Perfect: expected FutureCriteriaCompliance values',
     });
   }
@@ -280,7 +280,7 @@ export function compareC8Values(
     !isFutureCriteriaCompliance(first) ||
     !isFutureCriteriaCompliance(second)
   ) {
-    throw new AppError(ERRORS.PAIRING_GENERATOR_ERROR, {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
       cause: 'compareC8Values: expected FutureCriteriaCompliance values',
     });
   }
