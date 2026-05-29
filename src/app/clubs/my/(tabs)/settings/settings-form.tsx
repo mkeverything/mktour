@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { shallowEqual } from '@/lib/utils';
-import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
+import { ClubFormModel, clubsEditSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
@@ -30,10 +30,6 @@ import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren } from 'react';
 import { useForm } from 'react-hook-form';
 import z from 'zod';
-
-const clubSettingsSchema = clubsInsertSchema
-  .omit({ lichessTeam: true })
-  .extend({ lichessTeam: z.string().optional().nullable() });
 
 const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   selectedClub,
@@ -63,7 +59,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     : defaultValues;
 
   const form = useForm<ClubFormModel>({
-    resolver: zodResolver(clubSettingsSchema),
+    resolver: zodResolver(clubsEditSchema),
     values: initialValues,
   });
 

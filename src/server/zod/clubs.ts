@@ -41,7 +41,7 @@ export const clubsInsertSchema = createInsertSchema(clubs, {
   description: z.string().nullish(),
 }).omit({ id: true, createdAt: true });
 
-export const clubsEditSchema = clubsInsertSchema.partial();
+export const clubsEditSchema = clubsInsertSchema;
 
 export const clubManagersSchema = z.object({
   user: usersSelectMinimalSchema,
