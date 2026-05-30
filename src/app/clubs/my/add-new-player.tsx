@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { PlayerFormModel, playerFormSchema } from '@/server/zod/players';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -153,8 +154,8 @@ const AddNewPlayer = () => {
                 <Slider
                   data-vaul-no-drag
                   step={50}
-                  min={0}
-                  max={3000}
+                  min={GLICKO2_CONSTANTS.MIN_STARTING_RATING}
+                  max={GLICKO2_CONSTANTS.MAX_STARTING_RATING}
                   className="w-full"
                   defaultValue={[value ?? 1500]}
                   onValueChange={(vals) => {

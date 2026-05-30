@@ -1,3 +1,4 @@
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { sqlite } from '@/server/db/index';
 import * as schema from '@/server/db/schema';
 import { and, eq, notInArray } from 'drizzle-orm';
@@ -69,9 +70,15 @@ export const seedComprehensiveTestData = async () => {
               value: f.string(),
             },
           ]),
-          rating: f.int({ minValue: 1200, maxValue: 2800 }),
+          rating: f.int({
+            minValue: GLICKO2_CONSTANTS.MIN_STARTING_RATING,
+            maxValue: GLICKO2_CONSTANTS.MAX_STARTING_RATING,
+          }),
           ratingPeak: f.default({ defaultValue: null }),
-          ratingDeviation: f.int({ minValue: 50, maxValue: 300 }),
+          ratingDeviation: f.int({
+            minValue: GLICKO2_CONSTANTS.MIN_RD,
+            maxValue: GLICKO2_CONSTANTS.MAX_RD,
+          }),
           ratingVolatility: f.number({
             minValue: 0.05,
             maxValue: 0.07,
