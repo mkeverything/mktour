@@ -1,5 +1,6 @@
 'use client';
 
+import type { ClubDashboardTab } from '@/app/clubs/my/tabMap';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
 import { useAuthClubs } from '@/components/hooks/query-hooks/use-user-clubs';
 import { Card } from '@/components/ui/card';
@@ -18,7 +19,10 @@ import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 import { toast } from 'sonner';
 
-const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
+const ClubSelect: FC<{ user: UserModel; currentTab?: ClubDashboardTab }> = ({
+  user,
+  currentTab,
+}) => {
   const { data: clubs, status } = useAuthClubs();
   const queryClient = useQueryClient();
   const clubSelection = useAuthSelectClub(queryClient);
@@ -36,9 +40,14 @@ const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
     a.id === user.selectedClub ? -1 : b.id === user.selectedClub ? 1 : 0,
   );
 
+  const rootClassName =
+    currentTab && !['players', 'tournaments'].includes(currentTab)
+      ? 'from-background w-full bg-linear-to-b to-transparent pb-10'
+      : 'w-full';
+
   if (clubs.length === 1)
     return (
-      <div className="w-full">
+      <div className={rootClassName}>
         <Card className="bg-card border-primary/10 shadow-background/50 w-full rounded-lg px-3 py-2 text-sm shadow-md">
           {placeholder}
         </Card>
@@ -53,8 +62,8 @@ const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
         })
       }
     >
-      <div className="w-full">
-        <SelectTrigger className="bg-card border-primary/10 shadow-background/50 w-full shadow-md">
+      <div className={rootClassName}>
+        <SelectTrigger className="bg-card border-primary/10 w-full">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
       </div>

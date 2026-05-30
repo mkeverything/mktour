@@ -50,8 +50,8 @@ export default function Dashboard({
           activeTab={tab}
           setTab={setTab}
         />
-        <div className="p-mk from-background bg-linear-to-b to-transparent pb-10">
-          <ClubSelect user={data} />
+        <div className="p-mk pb-0">
+          <ClubSelect user={data} currentTab={tab} />
         </div>
       </div>
       <div className="px-mk fixed h-[calc(100%-3.5rem)] w-full overflow-y-auto pt-22">
