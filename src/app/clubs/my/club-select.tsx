@@ -38,7 +38,7 @@ const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
 
   if (clubs.length === 1)
     return (
-      <div className="p-mk to-background m-auto w-full bg-linear-to-t from-transparent to-50% pb-0 lg:px-[20%]">
+      <div className="w-full">
         <Card className="bg-card border-primary/10 shadow-background/50 w-full rounded-lg px-3 py-2 text-sm shadow-md">
           {placeholder}
         </Card>
@@ -53,7 +53,7 @@ const ClubSelect: FC<{ user: UserModel }> = ({ user }) => {
         })
       }
     >
-      <div className="p-mk m-auto w-full lg:px-[20%]">
+      <div className="w-full">
         <SelectTrigger className="bg-card border-primary/10 shadow-background/50 w-full shadow-md">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

@@ -47,7 +47,7 @@ const ClubManagersList: FC<{ clubId: string; userId: string }> = ({
   }
 
   return (
-    <div className="gap-mk flex flex-col">
+    <div className="gap-mk-2 flex flex-col">
       <h2 className="pl-4 text-sm">
         <FormattedMessage id="Club.managers list" />
       </h2>
