@@ -91,7 +91,7 @@ const ClubPlayers: FC<{
 
   return (
     <div className="gap-mk flex h-full min-w-0 flex-col">
-      <div className="gap-mk flex pt-2 md:top-0 md:z-20">
+      <div className="gap-mk flex md:top-0 md:z-20">
         <ClubSearchInput
           search={search}
           setSearch={setSearch}
