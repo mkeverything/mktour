@@ -55,8 +55,11 @@ const Games: FC = () => {
           currentRound={1}
           currentTab={currentTab}
         />
-        <div className="p-mk md:px-mk-2">
-          <SkeletonList length={8} className="h-12 rounded-lg" />
+        <div className="px-mk md:px-mk-2 pt-2">
+          <SkeletonList
+            length={8}
+            className="mx-auto h-12 w-full rounded-lg lg:max-w-4xl"
+          />
         </div>
       </div>
     );
