@@ -75,12 +75,18 @@ const DashboardDesktop: FC<{
           selectedClub={selectedClub}
         />
         <Button
-          variant={openSettings ? 'default' : 'outline'}
+          variant="outline"
           size="icon"
+          className="relative active:scale-[0.97]"
           aria-label={t('settings')}
           onClick={() => setOpenSettings((prev) => !prev)}
         >
-          <Settings />
+          <Settings
+            className={`absolute transition-all duration-150 ease-out ${openSettings ? 'scale-75 opacity-0 blur-[1px]' : 'blur-0 scale-100 opacity-100'}`}
+          />
+          <X
+            className={`absolute transition-all duration-150 ease-out ${openSettings ? 'blur-0 scale-100 opacity-100' : 'scale-75 opacity-0 blur-[1px]'}`}
+          />
         </Button>
       </header>
 
