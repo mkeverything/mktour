@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { shallowEqual } from '@/lib/utils';
 import { ClubFormModel, clubsEditSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,7 +30,6 @@ import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren } from 'react';
 import { useForm } from 'react-hook-form';
-import z from 'zod';
 
 const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   selectedClub,
@@ -41,7 +41,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   const { data: teams = [], isFetching: isFetchingLichessTeams } = useQuery(
     trpc.auth.lichessTeams.queryOptions(),
   );
-  const clubSettingsMutation = useEditClubMutation(queryClient);
+  const { mutate, isPending } = useEditClubMutation(queryClient);
 
   const defaultValues = {
     name: '',
@@ -76,20 +76,10 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
             <form
               onSubmit={form.handleSubmit(async (data) => {
                 form.clearErrors('lichessTeam');
-                try {
-                  await clubSettingsMutation.mutateAsync({
-                    clubId: selectedClub,
-                    values: data,
-                  });
-                } catch (error) {
-                  const teamErrorMessage =
-                    getLichessTeamLinkErrorMessage(error);
-                  if (!teamErrorMessage) return;
-                  form.setError('lichessTeam', {
-                    type: 'custom',
-                    message: teamErrorMessage,
-                  });
-                }
+                mutate({
+                  clubId: selectedClub,
+                  values: data,
+                });
               })}
               className="flex flex-col gap-4"
               name="edit-club-form"
@@ -112,8 +102,26 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="pl-4">{t('description')}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        value={field.value ?? undefined}
+                        disabled={isFetching}
+                        className="field-sizing-content min-h-18 px-4"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {isFetchingLichessTeams ? (
-                <Skeleton className="h-9 w-full" />
+                <Skeleton className="my-2 h-9 w-full" />
               ) : (
                 <TeamSelector teams={teams} form={form} />
               )}
@@ -145,13 +153,13 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                 type="submit"
                 disabled={
                   shallowEqual(form.getValues(), initialValues) ||
-                  clubSettingsMutation.isPending ||
+                  isPending ||
                   isFetching ||
                   isFetchingLichessTeams
                 }
                 className="w-full"
               >
-                {clubSettingsMutation.isPending ? <LoadingSpinner /> : <Save />}
+                {isPending ? <LoadingSpinner /> : <Save />}
                 {t('save')}
               </Button>
             </form>
@@ -163,23 +171,3 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
 };
 
 export default ClubSettingsForm;
-
-function getLichessTeamLinkErrorMessage(error: unknown): string | null {
-  const result = z
-    .object({
-      data: z.object({
-        details: z.array(
-          z.object({ path: z.array(z.unknown()), message: z.string() }),
-        ),
-      }),
-    })
-    .safeParse(error);
-
-  return (
-    result.data?.data.details.find(
-      ({ message, path }) =>
-        message.startsWith('LINK_TEAM_ERROR') &&
-        path.join('.') === 'values.lichessTeam',
-    )?.message ?? null
-  );
-}

@@ -336,6 +336,7 @@
       "Settings": {
         "club settings": "general settings",
         "name": "name",
+        "description": "description",
         "save": "save",
         "search": "username",
         "cancel": "cancel",
