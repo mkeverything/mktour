@@ -1,11 +1,13 @@
 'use client';
 
 import { NewClubForm } from '@/app/clubs/create/new-club-form';
+import LichessLogo from '@/components/ui-custom/lichess-logo';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import {
@@ -29,6 +31,9 @@ export function TeamSelector({ teams, form }: TeamSelectorProps) {
         name="lichessTeam"
         render={({ field }) => (
           <FormItem>
+            <FormLabel className="sr-only">
+              {t('connect lichess team')}
+            </FormLabel>
             <Select
               onValueChange={field.onChange}
               defaultValue={field.value ?? undefined}
@@ -53,13 +58,19 @@ export function TeamSelector({ teams, form }: TeamSelectorProps) {
       key={Number(state)}
       render={({ field }) => (
         <FormItem>
+          <FormLabel className="sr-only">{t('connect lichess team')}</FormLabel>
           <Select
             onValueChange={field.onChange}
             defaultValue={field.value ? field.value : undefined}
           >
             <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder={t('connect lichess team')} />
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder={t('connect lichess team')}>
+                  {field.value && (
+                    <LichessLogo className="mr-2 inline size-3" />
+                  )}
+                  {teams.find((team) => team.value === field.value)?.label}
+                </SelectValue>
               </SelectTrigger>
             </FormControl>
             <SelectContent>
