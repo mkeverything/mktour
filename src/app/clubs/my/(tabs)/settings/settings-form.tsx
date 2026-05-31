@@ -121,7 +121,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                 )}
               />
               {isFetchingLichessTeams ? (
-                <Skeleton className="my-2 h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
               ) : (
                 <TeamSelector teams={teams} form={form} />
               )}

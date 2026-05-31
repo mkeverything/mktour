@@ -35,7 +35,7 @@ const DashboardDesktop: FC<{
   );
 
   return (
-    <div className="h-mk-content-height flex w-full flex-col overflow-hidden">
+    <div className="fixed inset-x-0 top-14 bottom-0 flex w-full flex-col overflow-hidden">
       <header className="gap-mk p-mk-2 flex items-center">
         <div className="w-full max-w-xs">
           <ClubSelect user={user} />
@@ -102,7 +102,7 @@ const DashboardDesktop: FC<{
           </DashboardColumn>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <ClubSettings selectedClub={selectedClub} userId={userId} />
         </div>
       )}

@@ -54,7 +54,7 @@ export default function Dashboard({
           <ClubSelect user={data} currentTab={tab} />
         </div>
       </div>
-      <div className="px-mk fixed h-[calc(100%-3.5rem)] w-full overflow-y-auto pt-22">
+      <div className="px-mk fixed h-[calc(100%-3.5rem)] w-full overflow-y-auto overscroll-contain pt-22">
         <ActiveTab
           userId={userId}
           selectedClub={data.selectedClub}
