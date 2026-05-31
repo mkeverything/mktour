@@ -121,6 +121,10 @@ button {
   }
 }
 
+@utility mk-scale {
+  scale: calc(1 - min(0.03, 5px / 100cqw));
+}
+
 @utility text-2xs {
   font-size: 10px;
 }

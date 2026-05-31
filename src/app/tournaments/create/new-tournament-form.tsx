@@ -78,9 +78,7 @@ export default function NewTournamentForm({
   const isDoubles = tournamentType === 'doubles';
 
   useEffect(() => {
-    if (isDoubles) {
-      form.setValue('rated', false);
-    }
+    form.setValue('rated', !isDoubles);
   }, [form, isDoubles]);
 
   const handleSubmit = (data: NewTournamentFormModel) => {
