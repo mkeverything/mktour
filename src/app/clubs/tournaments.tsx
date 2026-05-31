@@ -94,11 +94,16 @@ const ClubTournaments: FC<{
       <ScrollArea className="min-h-0 flex-1">
         <div className="mk-list">
           {!tournaments.length && (
-            <Empty className="text-center text-balance">
-              {stats?.tournamentsCount !== 0
-                ? t('GlobalSearch.not found')
-                : t('Empty.tournaments')}
-            </Empty>
+            <div className="flex flex-col items-center">
+              <Empty className="text-center text-balance">
+                {stats?.tournamentsCount !== 0
+                  ? t('GlobalSearch.not found')
+                  : t('Empty.tournaments')}
+              </Empty>
+              {statusInClub && stats?.tournamentsCount === 0 && (
+                <MakeTournament />
+              )}
+            </div>
           )}
           {tournaments.map((props) => (
             <TournamentItemIteratee key={props.id} tournament={props} />
@@ -112,7 +117,6 @@ const ClubTournaments: FC<{
           />
         </div>
       </ScrollArea>
-      {statusInClub && stats?.tournamentsCount === 0 && <MakeTournament />}
     </div>
   );
 };
