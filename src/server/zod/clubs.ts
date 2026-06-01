@@ -1,5 +1,6 @@
-import { validateLichessTeam } from '@/lib/zod/new-club-validation-action';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
+import { getClubByLichessTeam } from '@/server/queries/get-club-by-lichess-team';
+import { clubIdInputSchema } from '@/server/zod/common';
 import { statusInClubEnum } from '@/server/zod/enums';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
@@ -19,29 +20,51 @@ export const clubsToUsersSelectSchema = createSelectSchema(clubs_to_users, {
   status: statusInClubEnum,
 });
 
-export const clubsInsertSchema = createInsertSchema(clubs, {
+const clubsInsertSchemaBase = createInsertSchema(clubs, {
   name: (s) =>
     s
       .min(3, { error: 'SHORT_CLUB_NAME' })
       .max(100, { error: 'LONG_CLUB_NAME' }),
-  lichessTeam: (s) =>
-    s
-      .superRefine(async (lichessTeam, ctx) => {
-        if (!lichessTeam) return;
-        const team = await validateLichessTeam({ lichessTeam });
-
-        if (team) {
-          ctx.addIssue({
-            code: 'custom',
-            message: `LINK_TEAM_ERROR@%!!(&${team.id}@%!!(&${team.name}`,
-          });
-        }
-      })
-      .optional(),
+  lichessTeam: (s) => s.optional(),
   description: z.string().nullish(),
 }).omit({ id: true, createdAt: true });
 
-export const clubsEditSchema = clubsInsertSchema;
+async function validateLichessTeamLink(
+  ctx: z.RefinementCtx,
+  {
+    lichessTeam,
+    clubId,
+    path,
+  }: { lichessTeam?: string | null; clubId?: string; path: string[] },
+) {
+  const team = await getClubByLichessTeam({
+    lichessTeam,
+    excludeClubId: clubId,
+  });
+  if (!team) return;
+
+  ctx.addIssue({
+    code: 'custom',
+    path,
+    message: `LINK_TEAM_ERROR@%!!(&${team.id}@%!!(&${team.name}`,
+  });
+}
+
+export const clubsInsertSchema = clubsInsertSchemaBase.superRefine(
+  async ({ lichessTeam }, ctx) => {
+    await validateLichessTeamLink(ctx, { lichessTeam, path: ['lichessTeam'] });
+  },
+);
+
+export const clubsEditSchema = clubIdInputSchema
+  .extend({ values: clubsInsertSchemaBase })
+  .superRefine(async ({ clubId, values }, ctx) => {
+    await validateLichessTeamLink(ctx, {
+      lichessTeam: values.lichessTeam,
+      clubId,
+      path: ['values', 'lichessTeam'],
+    });
+  });
 
 export const clubManagersSchema = z.object({
   user: usersSelectMinimalSchema,

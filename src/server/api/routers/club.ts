@@ -1,6 +1,6 @@
-import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
+import { AppError } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import {
   clubAdminProcedure,
@@ -267,7 +267,7 @@ export const clubRouter = createTRPCRouter({
     }),
   edit: clubAdminProcedure
     .meta(meta.clubEdit)
-    .input(z.object({ values: clubsEditSchema }))
+    .input(clubsEditSchema)
     .output(clubsSelectSchema)
     .mutation(async (opts) => {
       const { input } = opts;
