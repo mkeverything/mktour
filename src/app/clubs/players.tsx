@@ -16,6 +16,7 @@ import Paginator from '@/components/ui-custom/paginator';
 import { ScrollArea } from '@/components/ui-custom/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
 import { UserRound, Users2 } from 'lucide-react';
@@ -172,11 +173,15 @@ const PlayerItem: FC<{
 
 const PlayerCard: FC<{ player: PlayerModel } & ComponentProps<typeof Card>> = ({
   player,
+  className,
   ...props
 }) => (
   <Card
     {...props}
-    className="mk-card grid w-full max-w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden"
+    className={cn(
+      'mk-card grid w-full max-w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden',
+      className,
+    )}
   >
     <span className="min-w-0 truncate text-sm">{player.nickname}</span>
     <div className="text-muted-foreground shrink-0 text-xs">
