@@ -47,7 +47,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useEffect, useTransition } from 'react';
+import { useRef, useTransition } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -76,10 +76,7 @@ export default function NewTournamentForm({
     name: 'type',
   });
   const isDoubles = tournamentType === 'doubles';
-
-  useEffect(() => {
-    form.setValue('rated', !isDoubles);
-  }, [form, isDoubles]);
+  const soloRatedRef = useRef(form.getValues('rated'));
 
   const handleSubmit = (data: NewTournamentFormModel) => {
     mutate(
@@ -230,7 +227,14 @@ export default function NewTournamentForm({
               render={({ field }) => (
                 <FormItem>
                   <RadioGroup
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      if (value === 'doubles') {
+                        soloRatedRef.current = form.getValues('rated');
+                        form.setValue('rated', false);
+                      }
+                      if (value === 'solo') form.setValue('rated', soloRatedRef.current);
+                      field.onChange(value);
+                    }}
                     defaultValue={field.value}
                     className="grid grid-cols-3 gap-2 sm:gap-4"
                   >
