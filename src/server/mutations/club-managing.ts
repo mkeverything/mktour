@@ -2,7 +2,7 @@
 
 import { AppError } from '@/lib/errors';
 
-import { getUserLichessTeams } from '@/lib/api/lichess';
+import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid } from '@/lib/utils';
@@ -75,7 +75,11 @@ export const editClub = async ({
   if (values.lichessTeam) {
     const userTeams = await getUserLichessTeams(username);
     const isTeamAdmin = userTeams.find((t) => t.id === values.lichessTeam);
-    if (!isTeamAdmin) throw new AppError('NOT_LICHESS_TEAM_ADMIN');
+    if (!isTeamAdmin) {
+      const team = await getLichessTeam(values.lichessTeam);
+      if (!team) throw new AppError('LICHESS_TEAM_NOT_FOUND');
+      throw new AppError('NOT_LICHESS_TEAM_ADMIN');
+    }
   }
 
   const newClub = await db
