@@ -57,13 +57,13 @@ export const clubsInsertSchema = clubsInsertSchemaBase.superRefine(
 );
 
 export const clubsEditSchema = clubIdInputSchema
-  .extend({ values: clubsInsertSchemaBase.partial() })
-  .superRefine(async ({ clubId, values }, ctx) => {
-    if (values.lichessTeam === undefined) return;
+  .extend(clubsInsertSchemaBase.partial().shape)
+  .superRefine(async ({ clubId, lichessTeam }, ctx) => {
+    if (lichessTeam === undefined) return;
     await validateLichessTeamLink(ctx, {
-      lichessTeam: values.lichessTeam,
+      lichessTeam,
       clubId,
-      path: ['values', 'lichessTeam'],
+      path: ['lichessTeam'],
     });
   });
 

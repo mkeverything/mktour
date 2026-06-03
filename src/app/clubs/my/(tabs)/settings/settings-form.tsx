@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { shallowEqual } from '@/lib/utils';
-import { ClubFormModel, clubsEditSchema } from '@/server/zod/clubs';
+import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
@@ -59,7 +59,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     : defaultValues;
 
   const form = useForm<ClubFormModel>({
-    resolver: zodResolver(clubsEditSchema),
+    resolver: zodResolver(clubsInsertSchema),
     values: initialValues,
   });
 
@@ -79,7 +79,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                 try {
                   await clubSettingsMutation.mutateAsync({
                     clubId: selectedClub,
-                    values: data,
+                    ...data,
                   });
                 } catch (error) {
                   const teamErrorMessage =
@@ -179,7 +179,7 @@ function getLichessTeamLinkErrorMessage(error: unknown): string | null {
     result.data?.data.details.find(
       ({ message, path }) =>
         message.startsWith('LINK_TEAM_ERROR') &&
-        path.join('.') === 'values.lichessTeam',
+        path.join('.') === 'lichessTeam',
     )?.message ?? null
   );
 }

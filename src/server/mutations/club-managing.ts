@@ -68,14 +68,10 @@ export const createClub = async (user: User, values: ClubFormModel) => {
 };
 
 export const editClub = async ({
-  clubId,
-  values,
   username,
-}: {
-  clubId: string;
-  values: ClubEditModel;
-  username: string;
-}) => {
+  clubId,
+  ...values
+}: ClubEditModel & { username: string }) => {
   if (values.lichessTeam) {
     const userTeams = await getUserLichessTeams(username);
     const isTeamAdmin = userTeams.find((t) => t.id === values.lichessTeam);
