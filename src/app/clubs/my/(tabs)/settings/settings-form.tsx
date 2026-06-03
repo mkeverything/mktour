@@ -21,6 +21,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import {
+  getLichessTeamLinkErrorMessage,
+  isLichessTeamLinkError,
+} from '@/lib/lichess-team-link-error';
 import { shallowEqual } from '@/lib/utils';
 import { ClubFormModel, getClubsEditFormSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,7 +33,6 @@ import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren } from 'react';
 import { useForm } from 'react-hook-form';
-import z from 'zod';
 
 const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   selectedClub,
@@ -82,12 +85,10 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                     ...data,
                   });
                 } catch (error) {
-                  const teamErrorMessage =
-                    getLichessTeamLinkErrorMessage(error);
-                  if (!teamErrorMessage) return;
+                  if (!isLichessTeamLinkError(error)) return;
                   form.setError('lichessTeam', {
                     type: 'custom',
-                    message: teamErrorMessage,
+                    message: getLichessTeamLinkErrorMessage(error) ?? '',
                   });
                 }
               })}
@@ -163,23 +164,3 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
 };
 
 export default ClubSettingsForm;
-
-function getLichessTeamLinkErrorMessage(error: unknown): string | null {
-  const result = z
-    .object({
-      data: z.object({
-        details: z.array(
-          z.object({ path: z.array(z.unknown()), message: z.string() }),
-        ),
-      }),
-    })
-    .safeParse(error);
-
-  return (
-    result.data?.data.details.find(
-      ({ message, path }) =>
-        message.startsWith('LINK_TEAM_ERROR') &&
-        path.join('.') === 'lichessTeam',
-    )?.message ?? null
-  );
-}

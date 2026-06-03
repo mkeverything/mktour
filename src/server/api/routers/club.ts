@@ -32,12 +32,14 @@ import getStatusInClub from '@/server/queries/get-status-in-club';
 import { getUserClubAffiliation } from '@/server/queries/get-user-club-affiliation';
 import {
   clubManagersSchema,
-  clubsEditSchema,
-  clubsInsertSchema,
   clubsSelectSchema,
   clubStatsSchema,
   publicPopularClubSchema,
 } from '@/server/zod/clubs';
+import {
+  clubsEditServerSchema,
+  clubsInsertServerSchema,
+} from '@/server/zod/clubs.server';
 import {
   clubIdInputSchema,
   notificationIdInputSchema,
@@ -86,7 +88,7 @@ export const clubRouter = createTRPCRouter({
     }),
   create: protectedProcedure
     .meta(meta.clubCreate)
-    .input(clubsInsertSchema)
+    .input(clubsInsertServerSchema)
     .output(clubsSelectSchema)
     .mutation(async (opts) => {
       const { input } = opts;
@@ -267,7 +269,7 @@ export const clubRouter = createTRPCRouter({
     }),
   edit: clubAdminProcedure
     .meta(meta.clubEdit)
-    .input(clubsEditSchema)
+    .input(clubsEditServerSchema)
     .output(clubsSelectSchema)
     .mutation(async (opts) => {
       const { input } = opts;
