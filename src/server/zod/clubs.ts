@@ -57,8 +57,9 @@ export const clubsInsertSchema = clubsInsertSchemaBase.superRefine(
 );
 
 export const clubsEditSchema = clubIdInputSchema
-  .extend({ values: clubsInsertSchemaBase })
+  .extend({ values: clubsInsertSchemaBase.partial() })
   .superRefine(async ({ clubId, values }, ctx) => {
+    if (values.lichessTeam === undefined) return;
     await validateLichessTeamLink(ctx, {
       lichessTeam: values.lichessTeam,
       clubId,
