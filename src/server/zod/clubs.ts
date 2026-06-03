@@ -56,6 +56,15 @@ export const clubsInsertSchema = clubsInsertSchemaBase.superRefine(
   },
 );
 
+export const getClubsEditFormSchema = (clubId: string) =>
+  clubsInsertSchemaBase.superRefine(async ({ lichessTeam }, ctx) => {
+    await validateLichessTeamLink(ctx, {
+      lichessTeam,
+      clubId,
+      path: ['lichessTeam'],
+    });
+  });
+
 export const clubsEditSchema = clubIdInputSchema
   .extend(clubsInsertSchemaBase.partial().shape)
   .superRefine(async ({ clubId, lichessTeam }, ctx) => {
