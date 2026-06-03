@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
 import { shallowEqual } from '@/lib/utils';
 import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,11 +30,6 @@ import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren } from 'react';
 import { useForm } from 'react-hook-form';
-import z from 'zod';
-
-const clubSettingsSchema = clubsInsertSchema
-  .omit({ lichessTeam: true })
-  .extend({ lichessTeam: z.string().optional().nullable() });
 
 const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   selectedClub,
@@ -63,8 +59,28 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     : defaultValues;
 
   const form = useForm<ClubFormModel>({
-    resolver: zodResolver(clubSettingsSchema),
+    resolver: zodResolver(clubsInsertSchema),
     values: initialValues,
+  });
+
+  const handleSubmit = form.handleSubmit(async (data) => {
+    form.clearErrors('lichessTeam');
+    clubSettingsMutation.mutate(
+      {
+        clubId: selectedClub,
+        ...data,
+      },
+      {
+        onError: (e) => {
+          const teamErrorMessage = getLichessTeamLinkErrorMessage(e);
+          if (!teamErrorMessage) return;
+          form.setError('lichessTeam', {
+            type: 'custom',
+            message: teamErrorMessage,
+          });
+        },
+      },
+    );
   });
 
   const t = useTranslations('Club.Dashboard.Settings');
@@ -78,23 +94,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
         <Card className="bg-background sm:bg-card border-none shadow-none sm:border-solid sm:shadow">
           <CardContent className="p-0 sm:px-6 sm:py-6">
             <form
-              onSubmit={form.handleSubmit(async (data) => {
-                form.clearErrors('lichessTeam');
-                try {
-                  await clubSettingsMutation.mutateAsync({
-                    clubId: selectedClub,
-                    values: data,
-                  });
-                } catch (error) {
-                  const teamErrorMessage =
-                    getLichessTeamLinkErrorMessage(error);
-                  if (!teamErrorMessage) return;
-                  form.setError('lichessTeam', {
-                    type: 'custom',
-                    message: teamErrorMessage,
-                  });
-                }
-              })}
+              onSubmit={handleSubmit}
               className="flex flex-col gap-4"
               name="edit-club-form"
             >
@@ -167,23 +167,3 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
 };
 
 export default ClubSettingsForm;
-
-function getLichessTeamLinkErrorMessage(error: unknown): string | null {
-  const result = z
-    .object({
-      data: z.object({
-        details: z.array(
-          z.object({ path: z.array(z.unknown()), message: z.string() }),
-        ),
-      }),
-    })
-    .safeParse(error);
-
-  return (
-    result.data?.data.details.find(
-      ({ message, path }) =>
-        message.startsWith('LINK_TEAM_ERROR') &&
-        path.join('.') === 'values.lichessTeam',
-    )?.message ?? null
-  );
-}

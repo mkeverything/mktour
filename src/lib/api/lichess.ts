@@ -24,3 +24,22 @@ export const getUserLichessTeams = async (
     return [];
   }
 };
+
+export const getLichessTeam = async (
+  lichessTeam: string,
+): Promise<Team | null> => {
+  const token = (await cookies()).get('token')?.value;
+  const res = await fetch(`https://lichess.org/api/team/${lichessTeam}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (res.status === 404) return null;
+
+  if (!res.ok) {
+    throw new AppError('LICHESS_API_ERROR', {
+      cause: `failed to fetch team: ${res.statusText}`,
+    });
+  }
+
+  return (await res.json()) as Team;
+};

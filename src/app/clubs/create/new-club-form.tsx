@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
 import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { UserModel } from '@/server/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -45,6 +46,7 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
   const isPending = isMutating || isNavigating || form.formState.isSubmitting;
 
   const handleSubmit = async (data: ClubFormModel) => {
+    form.clearErrors('lichessTeam');
     const dataWithDate = {
       ...data,
       createdAt: new Date(),
@@ -62,6 +64,15 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
         });
       },
       onError: (e) => {
+        const teamErrorMessage = getLichessTeamLinkErrorMessage(e);
+        if (teamErrorMessage) {
+          form.setError('lichessTeam', {
+            type: 'custom',
+            message: teamErrorMessage,
+          });
+          return;
+        }
+
         console.error(e);
         toast.error(translateError(e, { fallback: 'CLUB_NOT_CREATED' }));
       },
