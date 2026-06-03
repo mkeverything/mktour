@@ -21,12 +21,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import {
-  getLichessTeamLinkErrorMessage,
-  isLichessTeamLinkError,
-} from '@/lib/lichess-team-link-error';
+import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
 import { shallowEqual } from '@/lib/utils';
-import { ClubFormModel, getClubsEditFormSchema } from '@/server/zod/clubs';
+import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
@@ -62,7 +59,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     : defaultValues;
 
   const form = useForm<ClubFormModel>({
-    resolver: zodResolver(getClubsEditFormSchema(selectedClub)),
+    resolver: zodResolver(clubsInsertSchema),
     values: initialValues,
   });
 
@@ -85,10 +82,12 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                     ...data,
                   });
                 } catch (error) {
-                  if (!isLichessTeamLinkError(error)) return;
+                  const teamErrorMessage =
+                    getLichessTeamLinkErrorMessage(error);
+                  if (!teamErrorMessage) return;
                   form.setError('lichessTeam', {
                     type: 'custom',
-                    message: getLichessTeamLinkErrorMessage(error) ?? '',
+                    message: teamErrorMessage,
                   });
                 }
               })}

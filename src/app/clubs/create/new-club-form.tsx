@@ -17,10 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  getLichessTeamLinkErrorMessage,
-  isLichessTeamLinkError,
-} from '@/lib/lichess-team-link-error';
+import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
 import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { UserModel } from '@/server/zod/users';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -67,10 +64,11 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
         });
       },
       onError: (e) => {
-        if (isLichessTeamLinkError(e)) {
+        const teamErrorMessage = getLichessTeamLinkErrorMessage(e);
+        if (teamErrorMessage) {
           form.setError('lichessTeam', {
             type: 'custom',
-            message: getLichessTeamLinkErrorMessage(e) ?? '',
+            message: teamErrorMessage,
           });
           return;
         }

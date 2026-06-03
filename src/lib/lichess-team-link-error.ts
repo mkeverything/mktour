@@ -1,23 +1,13 @@
-import { AppError } from '@/lib/errors';
-
 export function getLichessTeamLinkErrorMessage(error: unknown): string | null {
-  if (!error || typeof error !== 'object') {
-    throw new AppError('UNEXPECTED_LINK_ERROR_SHAPE');
-  }
+  if (!error || typeof error !== 'object') return null;
 
   const message = (error as { message?: unknown }).message;
-  if (typeof message !== 'string') {
-    throw new AppError('UNEXPECTED_LINK_ERROR_SHAPE');
-  }
+  if (typeof message !== 'string') return null;
 
-  const issues = JSON.parse(message);
-  if (!Array.isArray(issues)) {
-    throw new AppError('UNEXPECTED_LINK_ERROR_SHAPE');
-  }
+  const issues = safeParseIssues(message);
+  if (!issues) return null;
 
   for (const issue of issues) {
-    if (!isIssue(issue)) throw new AppError('UNEXPECTED_LINK_ERROR_SHAPE');
-
     if (
       issue.message.startsWith('LINK_TEAM_ERROR') &&
       issue.path.join('.') === 'lichessTeam'
@@ -29,11 +19,12 @@ export function getLichessTeamLinkErrorMessage(error: unknown): string | null {
   return null;
 }
 
-export function isLichessTeamLinkError(error: unknown): boolean {
+function safeParseIssues(message: string) {
   try {
-    return getLichessTeamLinkErrorMessage(error) !== null;
+    const issues = JSON.parse(message);
+    return Array.isArray(issues) && issues.every(isIssue) ? issues : null;
   } catch {
-    return false;
+    return null;
   }
 }
 

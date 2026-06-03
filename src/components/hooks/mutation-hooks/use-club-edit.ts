@@ -1,6 +1,6 @@
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
-import { isLichessTeamLinkError } from '@/lib/lichess-team-link-error';
+import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ export default function useEditClubMutation(queryClient: QueryClient) {
         });
       },
       onError: (error) => {
-        if (isLichessTeamLinkError(error)) return;
+        if (getLichessTeamLinkErrorMessage(error)) return;
         toast.error(tErrors(getAppErrorMessage(error)));
       },
     }),

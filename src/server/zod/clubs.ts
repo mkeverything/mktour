@@ -28,8 +28,6 @@ export const clubsInsertSchema = createInsertSchema(clubs, {
   description: z.string().nullish(),
 }).omit({ id: true, createdAt: true });
 
-export const getClubsEditFormSchema = (_clubId: string) => clubsInsertSchema;
-
 export const clubsEditSchema = clubIdInputSchema.extend(
   clubsInsertSchema.partial().shape,
 );

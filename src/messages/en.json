@@ -306,7 +306,6 @@
     "TOURNAMENT_INFO_NOT_LOADED": "couldn't get tournament info from server",
     "TOURNAMENT_NOT_CREATED": "tournament making failed",
     "TOURNAMENT_UNITS_NOT_LOADED": "sorry! couldn't get added players from the server",
-    "UNEXPECTED_LINK_ERROR_SHAPE": "error happened while trying to handle lichess validation",
     "UNIT_NOT_ADDED": "sorry! couldn't add {player}",
     "UNIT_NOT_REMOVED": "sorry! couldn't remove {player}",
     "UNIT_NOT_WITHDRAWN": "sorry! couldn't withdraw {player}",

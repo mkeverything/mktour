@@ -4,11 +4,7 @@ import z from 'zod';
 
 async function validateLichessTeamLink(
   ctx: z.RefinementCtx,
-  {
-    lichessTeam,
-    clubId,
-    path,
-  }: { lichessTeam?: string | null; clubId?: string; path: string[] },
+  { lichessTeam, clubId }: { lichessTeam?: string | null; clubId?: string },
 ) {
   const team = await getClubByLichessTeam({
     lichessTeam,
@@ -18,14 +14,14 @@ async function validateLichessTeamLink(
 
   ctx.addIssue({
     code: 'custom',
-    path,
+    path: ['lichessTeam'],
     message: `LINK_TEAM_ERROR@%!!(&${team.id}@%!!(&${team.name}`,
   });
 }
 
 export const clubsInsertServerSchema = clubsInsertSchema.superRefine(
   async ({ lichessTeam }, ctx) => {
-    await validateLichessTeamLink(ctx, { lichessTeam, path: ['lichessTeam'] });
+    await validateLichessTeamLink(ctx, { lichessTeam });
   },
 );
 
@@ -35,7 +31,6 @@ export const clubsEditServerSchema = clubsEditSchema.superRefine(
     await validateLichessTeamLink(ctx, {
       lichessTeam,
       clubId,
-      path: ['lichessTeam'],
     });
   },
 );

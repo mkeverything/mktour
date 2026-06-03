@@ -306,7 +306,6 @@
     "TOURNAMENT_INFO_NOT_LOADED": "не получилось загрузить данные турнира с сервера",
     "TOURNAMENT_NOT_CREATED": "не получилось сделать турнир",
     "TOURNAMENT_UNITS_NOT_LOADED": "простите! не получилось загрузить игроков",
-    "UNEXPECTED_LINK_ERROR_SHAPE": "случилась ошибка во время проверки личесс-клуба",
     "UNIT_NOT_ADDED": "простите! не получилось добавить {player}",
     "UNIT_NOT_REMOVED": "простите! не получилось убрать {player}",
     "UNIT_NOT_WITHDRAWN": "простите! не получилось выписать {player}",
