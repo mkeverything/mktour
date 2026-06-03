@@ -19,8 +19,10 @@ import {
 } from '@/components/ui/select';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 
 export function TeamSelector({ teams, form }: TeamSelectorProps) {
+  const [open, setOpen] = useState(false);
   const t = useTranslations('Club.New');
 
   return (
@@ -38,6 +40,8 @@ export function TeamSelector({ teams, form }: TeamSelectorProps) {
               {t('connect lichess team')}
             </FormLabel>
             <Select
+              open={open}
+              onOpenChange={setOpen}
               onValueChange={field.onChange}
               value={field.value ?? ''}
               disabled={teams.length === 0}
@@ -73,6 +77,7 @@ export function TeamSelector({ teams, form }: TeamSelectorProps) {
                           shouldTouch: true,
                           shouldValidate: true,
                         });
+                        setOpen(false);
                       }}
                       style={{ pointerEvents: 'auto' }}
                     >
