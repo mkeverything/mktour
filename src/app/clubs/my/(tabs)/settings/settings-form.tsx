@@ -66,7 +66,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
 
   const handleSubmit = form.handleSubmit(async (data) => {
     form.clearErrors('lichessTeam');
-    clubSettingsMutation.mutate(
+    mutate(
       {
         clubId: selectedClub,
         ...data,
@@ -95,26 +95,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
         <Card className="bg-background sm:bg-card border-none shadow-none sm:border-solid sm:shadow">
           <CardContent className="p-0 sm:px-6 sm:py-6">
             <form
-              onSubmit={form.handleSubmit(async (data) => {
-                form.clearErrors('lichessTeam');
-                mutate(
-                  {
-                    clubId: selectedClub,
-                    ...data,
-                  },
-                  {
-                    onError: (e) => {
-                      const teamErrorMessage =
-                        getLichessTeamLinkErrorMessage(e);
-                      if (!teamErrorMessage) return;
-                      form.setError('lichessTeam', {
-                        type: 'custom',
-                        message: teamErrorMessage,
-                      });
-                    },
-                  },
-                );
-              })}
+              onSubmit={handleSubmit}
               className="flex flex-col gap-4"
               name="edit-club-form"
             >
