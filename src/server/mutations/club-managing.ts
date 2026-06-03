@@ -38,6 +38,11 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 export const createClub = async (user: User, values: ClubFormModel) => {
   const emptyClub = await getEmptyClub({ userId: user.id });
   if (emptyClub) throw new AppError('EMPTY_CLUB_EXISTS');
+  await validateLichessTeamAdmin({
+    lichessTeam: values.lichessTeam,
+    username: user.username,
+  });
+
   const id = newid();
   const createdAt = new Date();
   const newClub = {
@@ -72,15 +77,10 @@ export const editClub = async ({
   clubId,
   ...values
 }: ClubEditModel & { username: string }) => {
-  if (values.lichessTeam) {
-    const userTeams = await getUserLichessTeams(username);
-    const isTeamAdmin = userTeams.find((t) => t.id === values.lichessTeam);
-    if (!isTeamAdmin) {
-      const team = await getLichessTeam(values.lichessTeam);
-      if (!team) throw new AppError('LICHESS_TEAM_NOT_FOUND');
-      throw new AppError('NOT_LICHESS_TEAM_ADMIN');
-    }
-  }
+  await validateLichessTeamAdmin({
+    lichessTeam: values.lichessTeam,
+    username,
+  });
 
   const newClub = await db
     .update(clubs)
@@ -90,6 +90,24 @@ export const editClub = async ({
   revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
   return newClub.at(0);
 };
+
+async function validateLichessTeamAdmin({
+  lichessTeam,
+  username,
+}: {
+  lichessTeam?: string | null;
+  username: string;
+}) {
+  if (!lichessTeam) return;
+
+  const userTeams = await getUserLichessTeams(username);
+  const isTeamAdmin = userTeams.find((t) => t.id === lichessTeam);
+  if (isTeamAdmin) return;
+
+  const team = await getLichessTeam(lichessTeam);
+  if (!team) throw new AppError('LICHESS_TEAM_NOT_FOUND');
+  throw new AppError('NOT_LICHESS_TEAM_ADMIN');
+}
 
 type ClubDeleteProps = {
   clubId: string;
