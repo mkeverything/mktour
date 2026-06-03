@@ -157,10 +157,9 @@ const FormMessage = React.forwardRef<
 
   if (error?.message?.startsWith('LINK_TEAM_ERROR')) {
     const teamData = error.message.split('@%!!(&');
-    console.log({ teamData });
     body = (() => (
       <span>
-        {t('LICHESS_TEAM_ALREADY_LINKED')}&nbsp;
+        {t('LINK_TEAM_ERROR')}&nbsp;
         <a
           href={`${BASE_URL}/clubs/${teamData[1]}`}
           className="font-semibold underline underline-offset-2"

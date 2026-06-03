@@ -2,7 +2,7 @@
 
 import { AppError } from '@/lib/errors';
 
-import { getUserLichessTeams } from '@/lib/api/lichess';
+import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid } from '@/lib/utils';
@@ -20,7 +20,6 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
-import { getClubByLichessTeam } from '@/server/queries/get-club-by-lichess-team';
 import { getEmptyClub } from '@/server/queries/get-empty-club';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
@@ -39,12 +38,10 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 export const createClub = async (user: User, values: ClubFormModel) => {
   const emptyClub = await getEmptyClub({ userId: user.id });
   if (emptyClub) throw new AppError('EMPTY_CLUB_EXISTS');
-  if (values.lichessTeam) {
-    const existingClub = await getClubByLichessTeam({
-      lichessTeam: values.lichessTeam,
-    });
-    if (existingClub) throw new AppError('LICHESS_TEAM_ALREADY_LINKED');
-  }
+  await validateLichessTeamAdmin({
+    lichessTeam: values.lichessTeam,
+    username: user.username,
+  });
 
   const id = newid();
   const createdAt = new Date();
@@ -76,25 +73,14 @@ export const createClub = async (user: User, values: ClubFormModel) => {
 };
 
 export const editClub = async ({
-  clubId,
-  values,
   username,
-}: {
-  clubId: string;
-  values: ClubEditModel;
-  username: string;
-}) => {
-  if (values.lichessTeam) {
-    const userTeams = await getUserLichessTeams(username);
-    const isTeamAdmin = userTeams.find((t) => t.id === values.lichessTeam);
-    if (!isTeamAdmin) throw new AppError('NOT_LICHESS_TEAM_ADMIN');
-
-    const existingClub = await getClubByLichessTeam({
-      lichessTeam: values.lichessTeam,
-    });
-    if (existingClub && existingClub.id !== clubId)
-      throw new AppError('LICHESS_TEAM_ALREADY_LINKED');
-  }
+  clubId,
+  ...values
+}: ClubEditModel & { username: string }) => {
+  await validateLichessTeamAdmin({
+    lichessTeam: values.lichessTeam,
+    username,
+  });
 
   const newClub = await db
     .update(clubs)
@@ -104,6 +90,24 @@ export const editClub = async ({
   revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
   return newClub.at(0);
 };
+
+async function validateLichessTeamAdmin({
+  lichessTeam,
+  username,
+}: {
+  lichessTeam?: string | null;
+  username: string;
+}) {
+  if (!lichessTeam) return;
+
+  const userTeams = await getUserLichessTeams(username);
+  const isTeamAdmin = userTeams.find((t) => t.id === lichessTeam);
+  if (isTeamAdmin) return;
+
+  const team = await getLichessTeam(lichessTeam);
+  if (!team) throw new AppError('LICHESS_TEAM_NOT_FOUND');
+  throw new AppError('NOT_LICHESS_TEAM_ADMIN');
+}
 
 type ClubDeleteProps = {
   clubId: string;

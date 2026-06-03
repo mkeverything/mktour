@@ -22,8 +22,9 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
 import { shallowEqual } from '@/lib/utils';
-import { ClubFormModel, clubsEditSchema } from '@/server/zod/clubs';
+import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
@@ -59,8 +60,28 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     : defaultValues;
 
   const form = useForm<ClubFormModel>({
-    resolver: zodResolver(clubsEditSchema),
+    resolver: zodResolver(clubsInsertSchema),
     values: initialValues,
+  });
+
+  const handleSubmit = form.handleSubmit(async (data) => {
+    form.clearErrors('lichessTeam');
+    clubSettingsMutation.mutate(
+      {
+        clubId: selectedClub,
+        ...data,
+      },
+      {
+        onError: (e) => {
+          const teamErrorMessage = getLichessTeamLinkErrorMessage(e);
+          if (!teamErrorMessage) return;
+          form.setError('lichessTeam', {
+            type: 'custom',
+            message: teamErrorMessage,
+          });
+        },
+      },
+    );
   });
 
   const t = useTranslations('Club.Dashboard.Settings');
@@ -76,10 +97,23 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
             <form
               onSubmit={form.handleSubmit(async (data) => {
                 form.clearErrors('lichessTeam');
-                mutate({
-                  clubId: selectedClub,
-                  values: data,
-                });
+                mutate(
+                  {
+                    clubId: selectedClub,
+                    ...data,
+                  },
+                  {
+                    onError: (e) => {
+                      const teamErrorMessage =
+                        getLichessTeamLinkErrorMessage(e);
+                      if (!teamErrorMessage) return;
+                      form.setError('lichessTeam', {
+                        type: 'custom',
+                        message: teamErrorMessage,
+                      });
+                    },
+                  },
+                );
               })}
               className="flex flex-col gap-4"
               name="edit-club-form"

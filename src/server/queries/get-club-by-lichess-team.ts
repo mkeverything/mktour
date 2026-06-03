@@ -5,13 +5,16 @@ import { eq } from 'drizzle-orm';
 
 export async function getClubByLichessTeam({
   lichessTeam,
+  excludeClubId,
 }: {
   lichessTeam?: string | null;
+  excludeClubId?: string;
 }): Promise<ClubModel | undefined> {
   if (!lichessTeam) return undefined;
-  return await db
+  const club = await db
     .select()
     .from(clubs)
     .where(eq(clubs.lichessTeam, lichessTeam))
     .get();
+  return club?.id === excludeClubId ? undefined : club;
 }
