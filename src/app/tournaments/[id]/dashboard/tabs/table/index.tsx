@@ -14,6 +14,7 @@ import {
 import UnitDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/unit-drawer';
 import { useSortableUnitTable } from '@/app/tournaments/[id]/dashboard/tabs/table/use-sortable-unit-table';
 import { useTournamentRemoveUnit } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-remove-unit';
+import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
 import { useTournamentWithdrawUnit } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-unit';
 import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
 import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -54,6 +55,7 @@ const TournamentTable = () => {
   const { status, userId } = useContext(DashboardContext);
   const removeUnit = useTournamentRemoveUnit(id);
   const withdrawUnit = useTournamentWithdrawUnit(id);
+  const preStartLocked = useTournamentPreStartLocked(id);
   const t = useTranslations('Tournament.Table');
   const { translateError } = useIntlError();
   const [selectedUnit, setSelectedUnit] = useState<UnitModel | null>(null);
@@ -63,7 +65,7 @@ const TournamentTable = () => {
   const type = tournament.data?.type;
   const allGames = useTournamentGames(id);
   const stats = STATS_WITH_TIEBREAK;
-  const canSort = status === 'organizer' && !hasStarted;
+  const canSort = status === 'organizer' && !hasStarted && !preStartLocked;
 
   const {
     units: sortedUnits,
@@ -130,7 +132,13 @@ const TournamentTable = () => {
   }
 
   const handleDelete = () => {
-    if (userId && status === 'organizer' && !hasStarted && selectedUnit) {
+    if (
+      userId &&
+      status === 'organizer' &&
+      !hasStarted &&
+      !preStartLocked &&
+      selectedUnit
+    ) {
       removeUnit.mutate(
         {
           tournamentId: id,
@@ -235,6 +243,7 @@ const TournamentTable = () => {
           hasStarted={hasStarted}
           hasEnded={hasEnded}
           format={tournament.data?.format ?? 'swiss'}
+          preStartLocked={preStartLocked}
         />
       )}
     </div>

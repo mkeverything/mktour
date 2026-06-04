@@ -17,6 +17,7 @@ export default function useTournamentStart(
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.start.mutationOptions({
+      scope: { id: `tournament-pre-start:${tournamentId}` },
       onSuccess: (games, { startedAt }) => {
         if (startedAt) {
           toast.success(t('started'));

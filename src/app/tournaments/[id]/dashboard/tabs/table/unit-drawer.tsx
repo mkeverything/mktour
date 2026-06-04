@@ -36,6 +36,7 @@ const UnitDrawer: FC<{
   hasEnded: boolean;
   hasStarted: boolean;
   format: TournamentFormat;
+  preStartLocked: boolean;
 }> = ({
   unit,
   setSelectedUnit,
@@ -44,6 +45,7 @@ const UnitDrawer: FC<{
   handleDelete,
   handleWithdraw,
   format,
+  preStartLocked,
 }) => {
   const open = !!unit;
   const { status } = useContext(DashboardContext);
@@ -56,7 +58,11 @@ const UnitDrawer: FC<{
   const closeDrawer = () => setSelectedUnit(null);
   const comboOpen = open && !isEditingUnit;
   const canEditUnit =
-    status === 'organizer' && !hasStarted && !hasEnded && isDoublesUnit;
+    status === 'organizer' &&
+    !hasStarted &&
+    !hasEnded &&
+    !preStartLocked &&
+    isDoublesUnit;
   const editInitialValues: DoublesUnitInitialValues | null =
     unit.players.length === 2
       ? {
@@ -130,6 +136,7 @@ const UnitDrawer: FC<{
               handleDelete={handleDelete}
               handleWithdraw={handleWithdraw}
               closeDrawer={closeDrawer}
+              preStartLocked={preStartLocked}
             />
           )}
 
@@ -180,6 +187,7 @@ const DestructiveButton = ({
   closeDrawer,
   unit,
   format,
+  preStartLocked,
 }: {
   hasEnded: boolean;
   hasStarted: boolean;
@@ -188,6 +196,7 @@ const DestructiveButton = ({
   closeDrawer: () => void;
   unit: UnitModel;
   format: TournamentFormat;
+  preStartLocked: boolean;
 }) => {
   if (hasEnded) return null;
   if (hasStarted && format === 'swiss' && !unit.isOut) {
@@ -204,6 +213,7 @@ const DestructiveButton = ({
   if (hasStarted) return null;
   return (
     <DeleteButton
+      disabled={preStartLocked}
       handleDelete={() => {
         closeDrawer();
         handleDelete();
