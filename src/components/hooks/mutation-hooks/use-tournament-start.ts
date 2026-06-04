@@ -1,7 +1,7 @@
 'use client';
 
-import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -21,6 +21,19 @@ export default function useTournamentStart(
       onSuccess: (games, { startedAt }) => {
         if (startedAt) {
           toast.success(t('started'));
+          queryClient.setQueryData(
+            trpc.tournament.info.queryKey({ tournamentId }),
+            (previous) => {
+              if (!previous) return;
+              return {
+                ...previous,
+                tournament: {
+                  ...previous.tournament,
+                  startedAt,
+                },
+              };
+            },
+          );
           queryClient.setQueryData(
             trpc.tournament.roundGames.queryKey({
               tournamentId,
