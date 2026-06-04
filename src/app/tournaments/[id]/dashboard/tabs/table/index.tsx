@@ -13,8 +13,8 @@ import {
 } from '@/app/tournaments/[id]/dashboard/tabs/table/table-ui';
 import UnitDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/unit-drawer';
 import { useSortableUnitTable } from '@/app/tournaments/[id]/dashboard/tabs/table/use-sortable-unit-table';
-import { useTournamentRemoveUnit } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-remove-unit';
 import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
+import { useTournamentRemoveUnit } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-remove-unit';
 import { useTournamentWithdrawUnit } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-unit';
 import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
 import { useTournamentScoringInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -180,7 +180,7 @@ const TournamentTable = () => {
           <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
             <TableRow>
               {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
-              <TableHead className="h-11 w-6 p-0 text-center">#</TableHead>
+              <TableHead className="h-11 min-w-6 p-0 text-center">#</TableHead>
               <TableHead className="h-11 w-full min-w-10 p-0">
                 {t.rich(nameColumnIntl, {
                   count: units.data?.length ?? 0,
