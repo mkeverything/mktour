@@ -20,6 +20,7 @@ export const useTournamentRemoveUnit = (tournamentId: string) => {
 
   return useMutation(
     trpc.tournament.removeUnit.mutationOptions({
+      scope: { id: `tournament-pre-start:${tournamentId}` },
       onMutate: async ({ unitId }) => {
         await queryClient.cancelQueries({ queryKey: keys.playersOut });
         const previousUnits = queryClient.getQueryData<UnitModel[]>(keys.units);

@@ -25,6 +25,7 @@ export const useTournamentAddExistingPlayer = (tournamentId: string) => {
 
   return useMutation(
     trpc.tournament.addSoloUnit.mutationOptions({
+      scope: { id: `tournament-pre-start:${tournamentId}` },
       onMutate: async (data) => {
         data.unitId ??= newid();
         const { unitId, player, addedAt } = data;

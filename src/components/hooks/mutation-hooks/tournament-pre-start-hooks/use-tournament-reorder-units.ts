@@ -40,6 +40,7 @@ export const useTournamentReorderUnits = (tournamentId: string) => {
   const mutationOptions = trpc.tournament.reorderUnits.mutationOptions();
   return useMutation({
     ...mutationOptions,
+    scope: { id: `tournament-pre-start:${tournamentId}` },
     onMutate: ({ unitIds }) => applyReorderOptimistically(unitIds),
     onError: (_error, _variables, context) => {
       rollbackOptimisticPreStartRound(context);

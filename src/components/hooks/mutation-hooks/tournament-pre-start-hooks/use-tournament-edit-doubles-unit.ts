@@ -27,6 +27,7 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
 
   return useMutation(
     trpc.tournament.editDoublesUnit.mutationOptions({
+      scope: { id: `tournament-pre-start:${tournamentId}` },
       async onMutate({ unitId, nickname, firstPlayerId, secondPlayerId }) {
         await queryClient.cancelQueries({ queryKey: keys.playersOut });
 
