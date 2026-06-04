@@ -51,9 +51,11 @@ export default function useTournamentStart(
             games,
           });
         }
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.pathKey(),
-        });
+        if (queryClient.isMutating() === 1) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.tournament.pathKey(),
+          });
+        }
       },
       onError: (error) => {
         toast.error(tErrors(getAppErrorMessage(error)));
