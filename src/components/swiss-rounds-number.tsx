@@ -21,7 +21,11 @@ export default function SwissRoundsNumber({
   const { data: unitCount = 0 } = useTournamentActiveUnitsCount(tournamentId);
   const queryClient = useQueryClient();
   const { sendJsonMessage, status } = useContext(DashboardContext);
-  const { mutate } = useSaveRoundsNumberMutation(queryClient, sendJsonMessage);
+  const { mutate } = useSaveRoundsNumberMutation(
+    tournamentId,
+    queryClient,
+    sendJsonMessage,
+  );
 
   const isOrganizer = status === 'organizer';
   const isFinished = !!data?.closedAt;
