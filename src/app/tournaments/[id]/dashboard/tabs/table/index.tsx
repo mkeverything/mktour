@@ -58,7 +58,7 @@ const TournamentTable = () => {
   const preStartLocked = useTournamentPreStartLocked(id);
   const t = useTranslations('Tournament.Table');
   const { translateError } = useIntlError();
-  const [selectedUnit, setSelectedUnit] = useState<UnitModel | null>(null);
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const hasStarted = !!tournament.data?.startedAt;
   const hasEnded = !!tournament.data?.closedAt;
   const { data: user } = useAuth();
@@ -110,6 +110,14 @@ const TournamentTable = () => {
   const { activeUnit, activeUnitId, handleDragStart, handleDragEnd } =
     useSortableUnitTable(sortedUnits, canSort);
 
+  const selectedUnit = useMemo(
+    () =>
+      selectedUnitId
+        ? (sortedUnits.find((unit) => unit.id === selectedUnitId) ?? null)
+        : null,
+    [selectedUnitId, sortedUnits],
+  );
+
   if (
     units.isLoading ||
     tournament.isLoading ||
@@ -139,14 +147,11 @@ const TournamentTable = () => {
       !preStartLocked &&
       selectedUnit
     ) {
-      removeUnit.mutate(
-        {
-          tournamentId: id,
-          unitId: selectedUnit.id,
-          userId,
-        },
-        { onSuccess: () => setSelectedUnit(null) },
-      );
+      removeUnit.mutate({
+        tournamentId: id,
+        unitId: selectedUnit.id,
+        userId,
+      });
     }
   };
 
@@ -160,14 +165,11 @@ const TournamentTable = () => {
       selectedUnit &&
       !selectedUnit.isOut
     ) {
-      withdrawUnit.mutate(
-        {
-          tournamentId: id,
-          unitId: selectedUnit.id,
-          userId,
-        },
-        { onSuccess: () => setSelectedUnit(null) },
-      );
+      withdrawUnit.mutate({
+        tournamentId: id,
+        unitId: selectedUnit.id,
+        userId,
+      });
     }
   };
 
@@ -198,10 +200,10 @@ const TournamentTable = () => {
                 canSort={canSort}
                 hasEnded={hasEnded}
                 index={index}
-                isSelected={selectedUnit?.id === unit.id}
+                isSelected={selectedUnitId === unit.id}
                 unit={unit}
                 renderStat={statRenderers}
-                setSelectedUnit={setSelectedUnit}
+                setSelectedUnitId={setSelectedUnitId}
                 stats={stats}
                 user={user}
               />
@@ -235,9 +237,8 @@ const TournamentTable = () => {
       </DragDropProvider>
       {selectedUnit && (
         <UnitDrawer
-          key={selectedUnit.id}
           unit={selectedUnit}
-          setSelectedUnit={setSelectedUnit}
+          onClose={() => setSelectedUnitId(null)}
           handleDelete={handleDelete}
           handleWithdraw={handleWithdraw}
           hasStarted={hasStarted}
@@ -257,7 +258,7 @@ const SortableUnitRow = memo(function SortableUnitRow({
   isSelected,
   unit,
   renderStat,
-  setSelectedUnit,
+  setSelectedUnitId,
   stats,
   user,
 }: {
@@ -267,7 +268,7 @@ const SortableUnitRow = memo(function SortableUnitRow({
   isSelected: boolean;
   unit: UnitModel;
   renderStat: Record<Stat, (unit: UnitModel) => ReactNode>;
-  setSelectedUnit: Dispatch<SetStateAction<UnitModel | null>>;
+  setSelectedUnitId: Dispatch<SetStateAction<string | null>>;
   stats: Stat[];
   user: UserModel | null | undefined;
 }) {
@@ -279,7 +280,7 @@ const SortableUnitRow = memo(function SortableUnitRow({
       isSelected={isSelected}
       onSelect={() => {
         if (!window.getSelection()?.isCollapsed) return;
-        setSelectedUnit(unit);
+        setSelectedUnitId(unit.id);
       }}
       unit={unit}
       renderStat={renderStat}

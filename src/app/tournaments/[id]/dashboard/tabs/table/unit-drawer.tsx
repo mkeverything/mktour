@@ -30,7 +30,7 @@ import { FC, useContext, useState } from 'react';
 
 const UnitDrawer: FC<{
   unit: UnitModel;
-  setSelectedUnit: (_arg: null) => void;
+  onClose: () => void;
   handleDelete: () => void;
   handleWithdraw: () => void;
   hasEnded: boolean;
@@ -39,7 +39,7 @@ const UnitDrawer: FC<{
   preStartLocked: boolean;
 }> = ({
   unit,
-  setSelectedUnit,
+  onClose,
   hasEnded,
   hasStarted,
   handleDelete,
@@ -55,7 +55,7 @@ const UnitDrawer: FC<{
   const isDoublesUnit = unit.players.length === 2;
   const [isEditingUnit, setIsEditingUnit] = useState(false);
 
-  const closeDrawer = () => setSelectedUnit(null);
+  const closeDrawer = onClose;
   const comboOpen = open && !isEditingUnit;
   const canEditUnit =
     status === 'organizer' &&
