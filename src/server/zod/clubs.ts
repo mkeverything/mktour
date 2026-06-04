@@ -24,7 +24,7 @@ export const clubsInsertSchema = createInsertSchema(clubs, {
     s
       .min(3, { error: 'SHORT_CLUB_NAME' })
       .max(100, { error: 'LONG_CLUB_NAME' }),
-  lichessTeam: (s) => s.optional(),
+  lichessTeam: () => z.string().trim().min(1).nullish(),
   description: z.string().nullish(),
 }).omit({ id: true, createdAt: true });
 
