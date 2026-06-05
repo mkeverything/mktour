@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
 import { shallowEqual } from '@/lib/utils';
 import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
@@ -41,7 +42,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   const { data: teams = [], isFetching: isFetchingLichessTeams } = useQuery(
     trpc.auth.lichessTeams.queryOptions(),
   );
-  const clubSettingsMutation = useEditClubMutation(queryClient);
+  const { mutate, isPending } = useEditClubMutation(queryClient);
 
   const defaultValues = {
     name: '',
@@ -65,7 +66,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
 
   const handleSubmit = form.handleSubmit(async (data) => {
     form.clearErrors('lichessTeam');
-    clubSettingsMutation.mutate(
+    mutate(
       {
         clubId: selectedClub,
         ...data,
@@ -116,6 +117,24 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="pl-4">{t('description')}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        value={field.value ?? undefined}
+                        disabled={isFetching}
+                        className="field-sizing-content min-h-18 px-4"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {isFetchingLichessTeams ? (
                 <Skeleton className="h-9 w-full" />
               ) : (
@@ -149,13 +168,13 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                 type="submit"
                 disabled={
                   shallowEqual(form.getValues(), initialValues) ||
-                  clubSettingsMutation.isPending ||
+                  isPending ||
                   isFetching ||
                   isFetchingLichessTeams
                 }
                 className="w-full"
               >
-                {clubSettingsMutation.isPending ? <LoadingSpinner /> : <Save />}
+                {isPending ? <LoadingSpinner /> : <Save />}
                 {t('save')}
               </Button>
             </form>

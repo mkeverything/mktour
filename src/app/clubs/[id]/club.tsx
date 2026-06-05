@@ -4,18 +4,13 @@ import AffiliatedPlayerCard from '@/app/clubs/[id]/affiliated-player-card';
 import { turboPascal } from '@/app/fonts';
 import FormattedMessage from '@/components/formatted-message';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
-import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
+import { ClubPlayersSection } from '@/app/clubs/players';
+import { ClubTournamentsSection } from '@/app/clubs/tournaments';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
-import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
-import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
-import SkeletonList from '@/components/skeleton-list';
-import TournamentItemIteratee from '@/components/tournament-item';
 import { useTRPC } from '@/components/trpc/client';
-import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import HalfCard from '@/components/ui-custom/half-card';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
-import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -31,7 +26,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
-import { PlayerModel } from '@/server/zod/players';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Home, Trophy, Users2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -52,7 +46,7 @@ const ClubPage: FC<{
 
       <div className="gap-mk hidden md:grid md:grid-cols-2">
         <ClubTournamentsSection clubId={club.id} statusInClub={statusInClub} />
-        <ClubPlayersSection clubId={club.id} />
+        <ClubPlayersSection clubId={club.id} statusInClub={statusInClub} />
       </div>
 
       <div className="md:hidden">
@@ -72,7 +66,7 @@ const ClubPage: FC<{
             />
           </TabsContent>
           <TabsContent value="players">
-            <ClubPlayersSection clubId={club.id} />
+            <ClubPlayersSection clubId={club.id} statusInClub={statusInClub} />
           </TabsContent>
         </Tabs>
       </div>
@@ -286,155 +280,6 @@ const MostActivePlayers: FC<{ clubId: string }> = ({ clubId }) => {
         </Table>
       </CardContent>
     </Card>
-  );
-};
-
-const ClubTournamentsSection: FC<{
-  clubId: string;
-  statusInClub: StatusInClub | null;
-}> = ({ clubId, statusInClub }) => {
-  const {
-    data: searchResults,
-    search,
-    setSearch,
-    debouncedSearch,
-  } = useClubScopedSearch({
-    clubId,
-    type: 'tournaments',
-  });
-  const tournamentsInfinite = useClubTournaments(clubId);
-  const t = useTranslations();
-  const { data: stats } = useClubStats(clubId);
-
-  const isSearching = debouncedSearch.length > 0;
-  const tournamentsFromPage =
-    tournamentsInfinite?.data?.pages.flatMap((p) => p.tournaments) ?? [];
-
-  const tournaments = isSearching
-    ? (searchResults?.tournaments ?? [])
-    : tournamentsFromPage;
-
-  return (
-    <Card className="flex max-h-[512px] flex-col">
-      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Trophy className="size-4" />
-          <FormattedMessage id="Menu.tournaments" />
-          <span className="text-muted-foreground font-normal">
-            ({stats?.tournamentsCount ?? 0})
-          </span>
-        </CardTitle>
-        <ClubSearchInput search={search} setSearch={setSearch} />
-      </CardHeader>
-      <CardContent className="overflow-y-auto pt-3">
-        {!tournaments.length && (
-          <p className="text-muted-foreground py-4 text-center text-sm">
-            {stats?.tournamentsCount !== 0
-              ? t('GlobalSearch.not found')
-              : t('Empty.tournaments')}
-          </p>
-        )}
-        <div className="flex flex-col gap-2">
-          {tournaments.map((tournament) => (
-            <TournamentItemIteratee
-              key={tournament.id}
-              tournament={tournament}
-            />
-          ))}
-          <Paginator
-            disabled={debouncedSearch.length > 0}
-            hasNextPage={tournamentsInfinite.hasNextPage}
-            isFetchingNextPage={tournamentsInfinite.isFetchingNextPage}
-            fetchNextPage={tournamentsInfinite.fetchNextPage}
-            skeleton={<SkeletonList card length={3} />}
-          />
-        </div>
-        {statusInClub && stats?.tournamentsCount === 0 && (
-          <Button size="sm" variant="default" className="mt-2 w-full" asChild>
-            <Link href="/tournaments/create">
-              <FormattedMessage id="Home.make tournament" />
-            </Link>
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-const ClubPlayersSection: FC<{ clubId: string }> = ({ clubId }) => {
-  const {
-    data: searchResults,
-    search,
-    setSearch,
-    debouncedSearch,
-  } = useClubScopedSearch({
-    clubId,
-    type: 'players',
-  });
-  const playersInfinite = useClubPlayers(clubId);
-  const t = useTranslations();
-  const { playersCount } = useClubStats(clubId).data ?? {};
-
-  const isSearching = debouncedSearch.length > 0;
-  const playersFromPages =
-    playersInfinite.data?.pages.flatMap((p) => p.players) ?? [];
-  const players = isSearching
-    ? (searchResults?.players ?? [])
-    : playersFromPages;
-
-  return (
-    <Card className="flex max-h-[512px] flex-col">
-      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Users2 className="size-4" />
-          <FormattedMessage id="Club.Page.players" />
-          {!!playersCount && (
-            <span className="text-muted-foreground font-normal">
-              ({playersCount})
-            </span>
-          )}
-        </CardTitle>
-        <ClubSearchInput search={search} setSearch={setSearch} />
-      </CardHeader>
-      <CardContent className="overflow-y-auto pt-3">
-        {players.length === 0 && (
-          <p className="text-muted-foreground py-4 text-center text-sm">
-            {playersCount !== 0
-              ? t('GlobalSearch.not found')
-              : t('Empty.players')}
-          </p>
-        )}
-
-        {players.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {players.map((player) => (
-              <PlayerItem key={player.id} player={player} />
-            ))}
-            {!isSearching && (
-              <Paginator
-                hasNextPage={playersInfinite.hasNextPage}
-                isFetchingNextPage={playersInfinite.isFetchingNextPage}
-                fetchNextPage={playersInfinite.fetchNextPage}
-                skeleton={
-                  <SkeletonList card className="h-14 rounded-xl" length={3} />
-                }
-              />
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-const PlayerItem: FC<{ player: PlayerModel }> = ({ player }) => {
-  return (
-    <Link href={`/player/${player.id}`}>
-      <Card className="mk-card flex items-center justify-between truncate">
-        <span className="text-sm">{player.nickname}</span>
-        <div className="text-muted-foreground text-xs">{player.rating}</div>
-      </Card>
-    </Link>
   );
 };
 

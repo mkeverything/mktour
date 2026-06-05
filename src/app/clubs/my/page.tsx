@@ -14,6 +14,7 @@ export default async function ClubInfo() {
   const statusInClub = await publicCaller.club.authStatus({
     clubId: user.selectedClub || '',
   });
+  if (!statusInClub) redirect(`/clubs/${user.selectedClub}`);
 
   return (
     <HydrateClient>

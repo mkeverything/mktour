@@ -8,6 +8,7 @@ import {
 } from '@/components/notification-items';
 import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import Paginator from '@/components/ui-custom/paginator';
+import { ScrollArea } from '@/components/ui-custom/scroll-area';
 import { getAppErrorMessage } from '@/lib/errors';
 import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
 import { RichTagsFunction, useTranslations } from 'next-intl';
@@ -37,21 +38,23 @@ const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
 
   if (!allNotifications.length) return <Empty>{t('empty')}</Empty>;
   return (
-    <div className="mk-list">
-      {allNotifications.map((event) => (
-        <Notification
-          key={event.id}
-          data={event}
-          t={(value, values) => t.rich(`Notification.${value}`, values)}
+    <ScrollArea className="h-full">
+      <div className="mk-list">
+        {allNotifications.map((event) => (
+          <Notification
+            key={event.id}
+            data={event}
+            t={(value, values) => t.rich(`Notification.${value}`, values)}
+          />
+        ))}
+        <Paginator
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
+          skeleton={<ClubsNotificationsSkeletonList length={3} />}
         />
-      ))}
-      <Paginator
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        fetchNextPage={fetchNextPage}
-        skeleton={<ClubsNotificationsSkeletonList length={3} />}
-      />
-    </div>
+      </div>
+    </ScrollArea>
   );
 };
 

@@ -50,8 +50,11 @@ const RoundItem: FC<RoundItemProps> = ({
 
   if (isLoading || !info.data || !units)
     return (
-      <div className="mx-auto px-4 pt-2 lg:max-w-xl lg:px-0">
-        <SkeletonList length={8} className="h-12" />
+      <div className="px-mk md:px-mk-2 pt-2">
+        <SkeletonList
+          length={8}
+          className="mx-auto h-12 w-full rounded-lg lg:max-w-4xl"
+        />
       </div>
     );
 
