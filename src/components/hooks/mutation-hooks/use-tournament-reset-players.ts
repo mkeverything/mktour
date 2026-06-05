@@ -25,6 +25,17 @@ export default function useTournamentResetPlayers(
           trpc.tournament.units.queryKey({ tournamentId }),
           [],
         );
+        queryClient.setQueryData(
+          trpc.tournament.allGames.queryKey({ tournamentId }),
+          [],
+        );
+        queryClient.setQueryData(
+          trpc.tournament.roundGames.queryKey({
+            tournamentId,
+            roundNumber: 1,
+          }),
+          [],
+        );
         queryClient.invalidateQueries({
           queryKey: trpc.tournament.pathKey(),
         });

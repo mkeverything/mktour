@@ -246,6 +246,10 @@ export const handleSocketMessage = (
         [],
       );
       queryClient.setQueryData(
+        trpc.tournament.allGames.queryKey({ tournamentId }),
+        [],
+      );
+      queryClient.setQueryData(
         trpc.tournament.roundGames.queryKey({
           tournamentId,
           roundNumber: 1,
