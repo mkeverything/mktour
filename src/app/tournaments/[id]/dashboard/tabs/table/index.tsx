@@ -237,6 +237,7 @@ const TournamentTable = () => {
       </DragDropProvider>
       {selectedUnit && (
         <UnitDrawer
+          key={selectedUnit.id}
           unit={selectedUnit}
           onClose={() => setSelectedUnitId(null)}
           handleDelete={handleDelete}
