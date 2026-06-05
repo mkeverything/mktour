@@ -1,5 +1,5 @@
-import { AppError } from '@/lib/errors';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
 import useTournamentStart from '@/components/hooks/mutation-hooks/use-tournament-start';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
@@ -22,18 +22,11 @@ export default function StartTournamentButton() {
     id,
     sendJsonMessage,
   );
+  const preStartLocked = useTournamentPreStartLocked(id);
   const t = useTranslations('Tournament.Main');
 
   const handleClick = () => {
-    if (!units) {
-      throw new AppError('NO_UNITS_DATA');
-    }
-    if (!data) {
-      throw new AppError('NO_TOURNAMENT_DATA');
-    }
-    if (units.length < 2) {
-      throw new AppError('NOT_ENOUGH_TOURNAMENT_UNITS');
-    }
+    if (!data) return;
     startTournamentMutation.mutate(
       {
         startedAt: new Date(),
@@ -47,7 +40,7 @@ export default function StartTournamentButton() {
             tournament_id: data.tournament.id,
             format: data.tournament.format,
             rounds_number: data.tournament.roundsNumber,
-            unit_count: units.length,
+            unit_count: units?.length,
           });
         },
       },
@@ -57,17 +50,11 @@ export default function StartTournamentButton() {
   return (
     <Button
       className="isolate-touch md:col-span-2"
-      disabled={
-        !units || units?.length < 2 || startTournamentMutation.isPending
-      }
+      disabled={!units || units?.length < 2 || preStartLocked || !data}
       onClick={handleClick}
       size="lg"
     >
-      {startTournamentMutation.isPending ? (
-        <Loader2 className="animate-spin" />
-      ) : (
-        <CirclePlay />
-      )}
+      {preStartLocked ? <Loader2 className="animate-spin" /> : <CirclePlay />}
       {t('start tournament')}
     </Button>
   );

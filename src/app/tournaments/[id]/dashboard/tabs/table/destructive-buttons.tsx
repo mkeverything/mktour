@@ -13,11 +13,13 @@ import { UnitModel } from '@/server/zod/tournaments';
 import { LogOut, Trash2 } from 'lucide-react';
 import { FC } from 'react';
 
-export const DeleteButton: FC<{ handleDelete: () => void }> = ({
-  handleDelete,
-}) => (
+export const DeleteButton: FC<{
+  disabled?: boolean;
+  handleDelete: () => void;
+}> = ({ disabled, handleDelete }) => (
   <Button
     className="flex gap-2"
+    disabled={disabled}
     size="lg"
     variant="destructive"
     onClick={handleDelete}

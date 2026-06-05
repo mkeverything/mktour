@@ -1,7 +1,7 @@
 'use server';
 
-import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
+import { AppError } from '@/lib/errors';
 import { lowerEq } from '@/lib/sql-sqlite-string';
 import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
@@ -12,6 +12,7 @@ import {
   games,
   players_to_units,
   tournament_units,
+  tournaments,
 } from '@/server/db/schema/tournaments';
 import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
@@ -19,8 +20,8 @@ import type { GameResult } from '@/server/zod/enums';
 import type {
   AddDoublesUnitModel,
   EditDoublesUnitModel,
-  UnitModel,
   ReorderTournamentUnitsInputModel,
+  UnitModel,
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
 import { applyGameResult } from './tournament-games';
@@ -351,8 +352,15 @@ export async function resetTournamentUnits({
 }: {
   tournamentId: string;
 }) {
+  const tournament = await db
+    .select({ startedAt: tournaments.startedAt })
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .get();
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+  if (!!tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
+
   await db.transaction(async (tx) => {
-    await tx.delete(games).where(eq(games.tournamentId, tournamentId));
     const units = await tx
       .select({ id: tournament_units.id })
       .from(tournament_units)

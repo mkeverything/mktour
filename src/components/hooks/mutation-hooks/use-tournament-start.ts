@@ -1,7 +1,7 @@
 'use client';
 
-import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -17,9 +17,23 @@ export default function useTournamentStart(
   const trpc = useTRPC();
   return useMutation(
     trpc.tournament.start.mutationOptions({
+      scope: { id: `tournament-pre-start:${tournamentId}` },
       onSuccess: (games, { startedAt }) => {
         if (startedAt) {
           toast.success(t('started'));
+          queryClient.setQueryData(
+            trpc.tournament.info.queryKey({ tournamentId }),
+            (previous) => {
+              if (!previous) return;
+              return {
+                ...previous,
+                tournament: {
+                  ...previous.tournament,
+                  startedAt,
+                },
+              };
+            },
+          );
           queryClient.setQueryData(
             trpc.tournament.roundGames.queryKey({
               tournamentId,
@@ -37,9 +51,17 @@ export default function useTournamentStart(
             games,
           });
         }
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.pathKey(),
-        });
+        if (
+          queryClient.isMutating({
+            predicate: (mutation) =>
+              mutation.options.scope?.id ===
+              `tournament-pre-start:${tournamentId}`,
+          }) === 1
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: trpc.tournament.pathKey(),
+          });
+        }
       },
       onError: (error) => {
         toast.error(tErrors(getAppErrorMessage(error)));

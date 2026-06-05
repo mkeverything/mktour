@@ -31,6 +31,7 @@ export default function ResetTournamentPButton() {
     queryClient,
     sendJsonMessage,
     setRoundInView,
+    tournamentId,
   );
   const [open, setOpen] = useState(false);
   const t = useTranslations('Tournament.Main');

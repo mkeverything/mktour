@@ -13,6 +13,7 @@ import {
 } from '@/app/tournaments/[id]/dashboard/tabs/table/table-ui';
 import UnitDrawer from '@/app/tournaments/[id]/dashboard/tabs/table/unit-drawer';
 import { useSortableUnitTable } from '@/app/tournaments/[id]/dashboard/tabs/table/use-sortable-unit-table';
+import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
 import { useTournamentRemoveUnit } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-remove-unit';
 import { useTournamentWithdrawUnit } from '@/components/hooks/mutation-hooks/use-tournament-withdraw-unit';
 import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
@@ -54,16 +55,17 @@ const TournamentTable = () => {
   const { status, userId } = useContext(DashboardContext);
   const removeUnit = useTournamentRemoveUnit(id);
   const withdrawUnit = useTournamentWithdrawUnit(id);
+  const preStartLocked = useTournamentPreStartLocked(id);
   const t = useTranslations('Tournament.Table');
   const { translateError } = useIntlError();
-  const [selectedUnit, setSelectedUnit] = useState<UnitModel | null>(null);
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const hasStarted = !!tournament.data?.startedAt;
   const hasEnded = !!tournament.data?.closedAt;
   const { data: user } = useAuth();
   const type = tournament.data?.type;
   const allGames = useTournamentGames(id);
   const stats = STATS_WITH_TIEBREAK;
-  const canSort = status === 'organizer' && !hasStarted;
+  const canSort = status === 'organizer' && !hasStarted && !preStartLocked;
 
   const {
     units: sortedUnits,
@@ -108,6 +110,14 @@ const TournamentTable = () => {
   const { activeUnit, activeUnitId, handleDragStart, handleDragEnd } =
     useSortableUnitTable(sortedUnits, canSort);
 
+  const selectedUnit = useMemo(
+    () =>
+      selectedUnitId
+        ? (sortedUnits.find((unit) => unit.id === selectedUnitId) ?? null)
+        : null,
+    [selectedUnitId, sortedUnits],
+  );
+
   if (
     units.isLoading ||
     tournament.isLoading ||
@@ -130,15 +140,18 @@ const TournamentTable = () => {
   }
 
   const handleDelete = () => {
-    if (userId && status === 'organizer' && !hasStarted && selectedUnit) {
-      removeUnit.mutate(
-        {
-          tournamentId: id,
-          unitId: selectedUnit.id,
-          userId,
-        },
-        { onSuccess: () => setSelectedUnit(null) },
-      );
+    if (
+      userId &&
+      status === 'organizer' &&
+      !hasStarted &&
+      !preStartLocked &&
+      selectedUnit
+    ) {
+      removeUnit.mutate({
+        tournamentId: id,
+        unitId: selectedUnit.id,
+        userId,
+      });
     }
   };
 
@@ -152,14 +165,11 @@ const TournamentTable = () => {
       selectedUnit &&
       !selectedUnit.isOut
     ) {
-      withdrawUnit.mutate(
-        {
-          tournamentId: id,
-          unitId: selectedUnit.id,
-          userId,
-        },
-        { onSuccess: () => setSelectedUnit(null) },
-      );
+      withdrawUnit.mutate({
+        tournamentId: id,
+        unitId: selectedUnit.id,
+        userId,
+      });
     }
   };
 
@@ -172,7 +182,7 @@ const TournamentTable = () => {
           <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
             <TableRow>
               {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
-              <TableHead className="h-11 w-6 p-0 text-center">#</TableHead>
+              <TableHead className="h-11 min-w-6 p-0 text-center">#</TableHead>
               <TableHead className="h-11 w-full min-w-10 p-0">
                 {t.rich(nameColumnIntl, {
                   count: units.data?.length ?? 0,
@@ -190,10 +200,10 @@ const TournamentTable = () => {
                 canSort={canSort}
                 hasEnded={hasEnded}
                 index={index}
-                isSelected={selectedUnit?.id === unit.id}
+                isSelected={selectedUnitId === unit.id}
                 unit={unit}
                 renderStat={statRenderers}
-                setSelectedUnit={setSelectedUnit}
+                setSelectedUnitId={setSelectedUnitId}
                 stats={stats}
                 user={user}
               />
@@ -229,12 +239,13 @@ const TournamentTable = () => {
         <UnitDrawer
           key={selectedUnit.id}
           unit={selectedUnit}
-          setSelectedUnit={setSelectedUnit}
+          onClose={() => setSelectedUnitId(null)}
           handleDelete={handleDelete}
           handleWithdraw={handleWithdraw}
           hasStarted={hasStarted}
           hasEnded={hasEnded}
           format={tournament.data?.format ?? 'swiss'}
+          preStartLocked={preStartLocked}
         />
       )}
     </div>
@@ -248,7 +259,7 @@ const SortableUnitRow = memo(function SortableUnitRow({
   isSelected,
   unit,
   renderStat,
-  setSelectedUnit,
+  setSelectedUnitId,
   stats,
   user,
 }: {
@@ -258,7 +269,7 @@ const SortableUnitRow = memo(function SortableUnitRow({
   isSelected: boolean;
   unit: UnitModel;
   renderStat: Record<Stat, (unit: UnitModel) => ReactNode>;
-  setSelectedUnit: Dispatch<SetStateAction<UnitModel | null>>;
+  setSelectedUnitId: Dispatch<SetStateAction<string | null>>;
   stats: Stat[];
   user: UserModel | null | undefined;
 }) {
@@ -270,7 +281,7 @@ const SortableUnitRow = memo(function SortableUnitRow({
       isSelected={isSelected}
       onSelect={() => {
         if (!window.getSelection()?.isCollapsed) return;
-        setSelectedUnit(unit);
+        setSelectedUnitId(unit.id);
       }}
       unit={unit}
       renderStat={renderStat}

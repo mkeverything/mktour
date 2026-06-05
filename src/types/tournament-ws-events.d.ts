@@ -19,6 +19,7 @@ type DashboardMessage =
     }
   | { event: 'start-tournament'; startedAt: Date; games: GameModel[] } // it accepts date on input but has to be converted from string to date on incomming messages
   | { event: 'reset-tournament' }
+  | { event: 'reset-tournament-players' }
   | {
       event: 'new-round';
       roundNumber: GameModel['roundNumber'];

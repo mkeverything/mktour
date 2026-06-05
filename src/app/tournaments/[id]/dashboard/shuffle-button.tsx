@@ -1,6 +1,7 @@
 import { LoadingSpinner } from '@/app/loading';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import Fab from '@/components/fab';
+import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
 import { useTournamentReorderUnits } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-reorder-units';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
@@ -21,6 +22,8 @@ const ShuffleButton = () => {
   const { isPending, handleClick, tournament, units, games } = useShuffle();
   const { userId, status } = useContext(DashboardContext);
   const { isDesktop } = useContext(MediaQueryContext);
+  const { id: tournamentId } = useParams<{ id: string }>();
+  const preStartLocked = useTournamentPreStartLocked(tournamentId);
 
   if (
     tournament?.tournament.startedAt ||
@@ -36,7 +39,7 @@ const ShuffleButton = () => {
   const desktop = isSufficient ? (
     <Button
       onClick={handleClick}
-      disabled={isPending}
+      disabled={isPending || preStartLocked}
       size="icon-lg"
       variant="outline"
     >
@@ -46,7 +49,7 @@ const ShuffleButton = () => {
 
   const mobile = (
     <Fab
-      disabled={isPending || !isSufficient}
+      disabled={isPending || preStartLocked || !isSufficient}
       icon={!isPending ? Shuffle : Loader2}
       onClick={handleClick}
     />

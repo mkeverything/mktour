@@ -3,6 +3,7 @@ import AddDoublesUnit from '@/app/tournaments/[id]/dashboard/tabs/table/add-play
 import AddUnitDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-unit-drawer-content';
 import Fab from '@/components/fab';
 import FormattedMessage from '@/components/formatted-message';
+import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import SideDrawer from '@/components/ui-custom/side-drawer';
@@ -20,12 +21,13 @@ const AddUnitDrawer = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { status } = useContext(DashboardContext);
   const { isDesktop } = useContext(MediaQueryContext);
+  const preStartLocked = useTournamentPreStartLocked(tournamentId);
 
   useHotkeys(
     'shift+equal',
     (e) => {
       e.preventDefault();
-      setOpen((prev) => !prev);
+      if (!preStartLocked) setOpen((prev) => !prev);
     },
     { enableOnFormTags: true },
   );
@@ -33,6 +35,7 @@ const AddUnitDrawer = () => {
     'control+shift+equal',
     (e) => {
       e.preventDefault();
+      if (preStartLocked) return;
       setOpen((prev) => !prev);
       setAddingNewPlayer(true);
     },
@@ -40,7 +43,7 @@ const AddUnitDrawer = () => {
   );
 
   const handleChange = (state: boolean) => {
-    if (!isAnimating) {
+    if (!isAnimating && (!preStartLocked || !state)) {
       setOpen(state);
       setAddingNewPlayer(false);
       setValue('');
@@ -60,6 +63,7 @@ const AddUnitDrawer = () => {
     <Button
       variant="outline"
       className="size-10 lg:w-fit"
+      disabled={preStartLocked}
       onClick={() => handleChange(!open)}
     >
       <UserPlus />
@@ -71,6 +75,7 @@ const AddUnitDrawer = () => {
     <Fab
       container={open || isAnimating ? document.body : undefined}
       className={`${(open || isAnimating) && 'z-60 md:hidden'}`}
+      disabled={preStartLocked}
       onClick={() => handleChange(!open)}
       icon={open ? X : UserPlus}
     />

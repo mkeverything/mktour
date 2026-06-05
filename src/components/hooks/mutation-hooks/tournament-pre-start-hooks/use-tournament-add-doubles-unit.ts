@@ -28,6 +28,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
 
   return useMutation(
     trpc.tournament.addDoublesUnit.mutationOptions({
+      scope: { id: `tournament-pre-start:${tournamentId}` },
       async onMutate(data) {
         data.unitId ??= newid();
         const { unitId, nickname, firstPlayerId, secondPlayerId, addedAt } =

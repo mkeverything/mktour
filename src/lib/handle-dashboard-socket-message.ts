@@ -239,6 +239,20 @@ export const handleSocketMessage = (
       });
       setRoundInView(1);
       break;
+
+    case 'reset-tournament-players':
+      queryClient.setQueryData(
+        trpc.tournament.units.queryKey({ tournamentId }),
+        [],
+      );
+      queryClient.setQueryData(
+        trpc.tournament.roundGames.queryKey({
+          tournamentId,
+          roundNumber: 1,
+        }),
+        [],
+      );
+      break;
     case 'new-round':
       queryClient.setQueryData(
         trpc.tournament.roundGames.queryKey({

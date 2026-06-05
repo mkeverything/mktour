@@ -45,7 +45,14 @@ export const useSharedPreStart = (tournamentId: string) => {
   const invalidatePreStartState = (
     options: { playersOut?: boolean; info?: boolean; allGames?: boolean } = {},
   ) => {
-    if (!optimisticPreStartRound.isOnlyPendingPreStartRoundMutation()) return;
+    if (
+      queryClient.isMutating({
+        predicate: (mutation) =>
+          mutation.options.scope?.id === `tournament-pre-start:${tournamentId}`,
+      }) !== 1
+    ) {
+      return;
+    }
 
     queryClient.invalidateQueries({ queryKey: keys.roundGames });
     if (options.playersOut) {
