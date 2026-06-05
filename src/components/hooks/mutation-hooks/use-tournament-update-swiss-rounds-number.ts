@@ -49,7 +49,13 @@ export default function useSaveRoundsNumberMutation(
         }
       },
       onSettled: () => {
-        if (queryClient.isMutating() === 1) {
+        if (
+          queryClient.isMutating({
+            predicate: (mutation) =>
+              mutation.options.scope?.id ===
+              `tournament-pre-start:${tournamentId}`,
+          }) === 1
+        ) {
           queryClient.invalidateQueries({
             queryKey: trpc.tournament.info.pathKey(),
           });
