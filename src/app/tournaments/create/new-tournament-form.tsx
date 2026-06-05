@@ -131,6 +131,7 @@ export default function NewTournamentForm({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isPending}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -156,6 +157,7 @@ export default function NewTournamentForm({
                           >
                             <Button
                               variant="ghost"
+                              disabled={isPending}
                               className="text-muted-foreground flex h-[30px] w-full flex-row justify-end gap-2 pl-7 font-extrabold"
                             >
                               <PlusIcon fontStyle="bold" /> {t('new club')}
@@ -176,7 +178,7 @@ export default function NewTournamentForm({
                 <FormItem>
                   <FormLabel>{t('name')}</FormLabel>
                   <FormControl>
-                    <Input {...field} autoComplete="off" />
+                    <Input {...field} autoComplete="off" disabled={isPending} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -191,6 +193,7 @@ export default function NewTournamentForm({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isPending}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -232,14 +235,15 @@ export default function NewTournamentForm({
                         soloRatedRef.current = form.getValues('rated');
                         form.setValue('rated', false);
                       }
-                      if (value === 'solo') form.setValue('rated', soloRatedRef.current);
+                      if (value === 'solo')
+                        form.setValue('rated', soloRatedRef.current);
                       field.onChange(value);
                     }}
                     defaultValue={field.value}
                     className="grid grid-cols-3 gap-2 sm:gap-4"
                   >
-                    <TypeCard name="solo" />
-                    <TypeCard name="doubles" />
+                    <TypeCard name="solo" disabled={isPending} />
+                    <TypeCard name="doubles" disabled={isPending} />
                     <TypeCard name="team" disabled />
                   </RadioGroup>
                 </FormItem>
@@ -248,7 +252,9 @@ export default function NewTournamentForm({
             <FormField
               control={form.control}
               name="date"
-              render={({ field }) => <FormDatePicker field={field} />}
+              render={({ field }) => (
+                <FormDatePicker field={field} disabled={isPending} />
+              )}
             />
             <FormField
               control={form.control}
@@ -280,6 +286,7 @@ export default function NewTournamentForm({
                     <Switch
                       id="rated"
                       checked={field.value}
+                      disabled={isPending}
                       onCheckedChange={field.onChange}
                     />
                   )}
