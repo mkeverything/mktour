@@ -352,15 +352,16 @@ export async function resetTournamentUnits({
 }: {
   tournamentId: string;
 }) {
-  const tournament = await db
-    .select({ startedAt: tournaments.startedAt })
-    .from(tournaments)
-    .where(eq(tournaments.id, tournamentId))
-    .get();
-  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
-  if (!!tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
-
   await db.transaction(async (tx) => {
+    const tournament = await tx
+      .select({ startedAt: tournaments.startedAt })
+      .from(tournaments)
+      .where(eq(tournaments.id, tournamentId))
+      .get();
+    if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+    if (!!tournament.startedAt)
+      throw new AppError('TOURNAMENT_ALREADY_STARTED');
+
     const units = await tx
       .select({ id: tournament_units.id })
       .from(tournament_units)
