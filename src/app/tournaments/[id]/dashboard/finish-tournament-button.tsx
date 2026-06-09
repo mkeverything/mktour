@@ -5,7 +5,6 @@ import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournamen
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { Button } from '@/components/ui/button';
-import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
@@ -17,7 +16,6 @@ export default function FinishTournamentButton({
 }: {
   className?: string;
 }) {
-  const queryClient = useQueryClient();
   const { id: tournamentId } = useParams<{ id: string }>();
   const { sendJsonMessage } = useContext(DashboardContext);
   const t = useTranslations('Tournament.Main');
@@ -28,7 +26,7 @@ export default function FinishTournamentButton({
     roundNumber: info?.tournament.ongoingRound ?? 1,
   });
 
-  const { mutate, isPending } = useTournamentFinish(queryClient, {
+  const { mutate, isPending } = useTournamentFinish({
     tournamentId,
     sendJsonMessage,
   });

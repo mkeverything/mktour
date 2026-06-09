@@ -21,7 +21,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
   const {
     applyOptimisticPreStartRound,
     applyServerPreStartUnitsIfLatest,
-    invalidatePreStartState,
+    settle,
     keys,
     rollbackOptimisticPreStartRound,
   } = useSharedPreStart(tournamentId);
@@ -84,7 +84,7 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
         toast.error(translateError(error, { fallback: 'UNIT_NOT_ADDED' }));
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
-      onSettled: () => invalidatePreStartState({ playersOut: true }),
+      onSettled: () => settle('addDoublesUnit'),
     }),
   );
 };

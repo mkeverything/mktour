@@ -17,7 +17,6 @@ import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
 import type { UnitModel } from '@/server/zod/tournaments';
 import { and, eq } from 'drizzle-orm';
 import { createPlayer } from './club-managing';
-import { normalizeSwissRoundsNumberInDatabase } from './tournament-lifecycle';
 import { applyPreStartUnitOrder } from './tournament-unit-order';
 
 type SoloUnitDatabase = Pick<
@@ -123,7 +122,6 @@ export async function addSoloUnit(
 
     await d.insert(tournament_units).values(unit);
     await d.insert(players_to_units).values(playerUnit);
-    await normalizeSwissRoundsNumberInDatabase(tournamentId, d);
     const currentUnits = await getRawTournamentUnits(tournamentId, d);
     return await applyPreStartUnitOrder({
       tournamentId,

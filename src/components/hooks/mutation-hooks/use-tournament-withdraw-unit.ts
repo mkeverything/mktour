@@ -1,6 +1,7 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
 import { settlePendingGamesAsForfeit } from '@/lib/utils';
@@ -16,6 +17,7 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
   const tToasts = useTranslations('Toasts');
   const trpc = useTRPC();
   const { sendJsonMessage } = useContext(DashboardContext);
+  const { settle } = useTournamentCache(tournamentId);
 
   return useMutation(
     trpc.tournament.withdrawUnit.mutationOptions({
@@ -123,17 +125,7 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
           },
         );
       },
-      onSettled: () => {
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.tournament.withdrawUnit.mutationKey(),
-          }) === 1
-        ) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.pathKey(),
-          });
-        }
-      },
+      onSettled: () => settle('withdrawUnit'),
       onSuccess: (data, { unitId }) => {
         sendJsonMessage({ event: 'withdraw-unit', id: unitId });
         if (data.roundsNumberAutoDecreased && data.roundsNumber !== null) {

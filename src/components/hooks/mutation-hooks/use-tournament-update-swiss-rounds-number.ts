@@ -1,5 +1,6 @@
 'use client';
 
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardMessage } from '@/types/tournament-ws-events';
@@ -14,6 +15,7 @@ export default function useSaveRoundsNumberMutation(
 ) {
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.updateSwissRoundsNumber.mutationOptions({
       scope: { id: `tournament-pre-start:${tournamentId}` },
@@ -48,19 +50,7 @@ export default function useSaveRoundsNumberMutation(
           );
         }
       },
-      onSettled: () => {
-        if (
-          queryClient.isMutating({
-            predicate: (mutation) =>
-              mutation.options.scope?.id ===
-              `tournament-pre-start:${tournamentId}`,
-          }) === 1
-        ) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.info.pathKey(),
-          });
-        }
-      },
+      onSettled: () => settle('updateSwissRoundsNumber'),
     }),
   );
 }

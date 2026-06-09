@@ -1,33 +1,23 @@
 'use client';
 
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import { applyManualUnitOrder } from '@/lib/reorder-tournament-units';
 import { baselineUnitSort } from '@/lib/tournament-results';
-import type { UnitModel } from '@/server/zod/tournaments';
-import type { GameModel } from '@/server/zod/tournaments';
+import type { GameModel, UnitModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 export const useOptimisticPreStartRound = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { pendingWriters } = useTournamentCache(tournamentId);
   const unitsQueryKey = trpc.tournament.units.queryKey({ tournamentId });
   const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
     tournamentId,
     roundNumber: 1,
   });
-  const preStartRoundMutationKeys = useMemo(
-    () => [
-      trpc.tournament.addNewSoloUnit.mutationKey(),
-      trpc.tournament.addSoloUnit.mutationKey(),
-      trpc.tournament.addDoublesUnit.mutationKey(),
-      trpc.tournament.editDoublesUnit.mutationKey(),
-      trpc.tournament.removeUnit.mutationKey(),
-      trpc.tournament.reorderUnits.mutationKey(),
-    ],
-    [trpc],
-  );
 
   const buildOptimisticPreStartRound = useCallback(
     (units: UnitModel[], sortByBaseline = true) => {
@@ -96,12 +86,8 @@ export const useOptimisticPreStartRound = (tournamentId: string) => {
   );
 
   const isOnlyPendingPreStartRoundMutation = useCallback(
-    () =>
-      preStartRoundMutationKeys.reduce(
-        (count, mutationKey) => count + queryClient.isMutating({ mutationKey }),
-        0,
-      ) === 1,
-    [preStartRoundMutationKeys, queryClient],
+    () => pendingWriters('units') === 1,
+    [pendingWriters],
   );
 
   return {

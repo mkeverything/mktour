@@ -1,6 +1,7 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useOptimisticPreStartRound } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-optimistic-pre-start-round';
 import { useTRPC } from '@/components/trpc/client';
 import type { UnitModel } from '@/server/zod/tournaments';
@@ -12,6 +13,7 @@ export const useSharedPreStart = (tournamentId: string) => {
   const queryClient = useQueryClient();
   const { sendJsonMessage } = useContext(DashboardContext);
   const optimisticPreStartRound = useOptimisticPreStartRound(tournamentId);
+  const { settle } = useTournamentCache(tournamentId);
 
   const keys = {
     units: trpc.tournament.units.queryKey({ tournamentId }),
@@ -42,35 +44,11 @@ export const useSharedPreStart = (tournamentId: string) => {
     applyServerPreStartUnits(units);
   };
 
-  const invalidatePreStartState = (
-    options: { playersOut?: boolean; info?: boolean; allGames?: boolean } = {},
-  ) => {
-    if (
-      queryClient.isMutating({
-        predicate: (mutation) =>
-          mutation.options.scope?.id === `tournament-pre-start:${tournamentId}`,
-      }) !== 1
-    ) {
-      return;
-    }
-
-    queryClient.invalidateQueries({ queryKey: keys.roundGames });
-    if (options.playersOut) {
-      queryClient.invalidateQueries({ queryKey: keys.playersOut });
-    }
-    if (options.allGames ?? true) {
-      queryClient.invalidateQueries({ queryKey: keys.allGames });
-    }
-    if (options.info ?? true) {
-      queryClient.invalidateQueries({ queryKey: keys.info });
-    }
-  };
-
   return {
     keys,
     ...optimisticPreStartRound,
     applyServerPreStartUnits,
     applyServerPreStartUnitsIfLatest,
-    invalidatePreStartState,
+    settle,
   };
 };

@@ -198,7 +198,6 @@ export async function addDoublesUnit({
 
     await tx.insert(tournament_units).values(unit);
     await tx.insert(players_to_units).values(unitMembers);
-    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
     const currentUnits = await getRawTournamentUnits(tournamentId, tx);
     return await applyPreStartUnitOrder({
       tournamentId,
@@ -338,7 +337,6 @@ export async function editDoublesUnit({
         numberInUnit: 2,
       }),
     ]);
-    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
     const currentUnits = await getRawTournamentUnits(tournamentId, tx);
     return await applyPreStartUnitOrder({
       tournamentId,
