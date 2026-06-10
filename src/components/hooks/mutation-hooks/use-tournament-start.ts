@@ -1,5 +1,6 @@
 'use client';
 
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardMessage } from '@/types/tournament-ws-events';
@@ -15,6 +16,7 @@ export default function useTournamentStart(
   const t = useTranslations('Toasts');
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.start.mutationOptions({
       scope: { id: `tournament-pre-start:${tournamentId}` },
@@ -51,18 +53,8 @@ export default function useTournamentStart(
             games,
           });
         }
-        if (
-          queryClient.isMutating({
-            predicate: (mutation) =>
-              mutation.options.scope?.id ===
-              `tournament-pre-start:${tournamentId}`,
-          }) === 1
-        ) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.pathKey(),
-          });
-        }
       },
+      onSettled: () => settle('start'),
       onError: (error) => {
         toast.error(tErrors(getAppErrorMessage(error)));
         console.log(error);

@@ -21,7 +21,7 @@ export const useTournamentAddNewPlayer = (
   const {
     applyOptimisticPreStartRound,
     applyServerPreStartUnitsIfLatest,
-    invalidatePreStartState,
+    settle,
     keys,
     rollbackOptimisticPreStartRound,
   } = useSharedPreStart(tournamentId);
@@ -56,7 +56,7 @@ export const useTournamentAddNewPlayer = (
         );
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
-      onSettled: () => invalidatePreStartState(),
+      onSettled: () => settle('addNewSoloUnit'),
     }),
   );
 };

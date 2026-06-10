@@ -1,14 +1,14 @@
 'use client';
 
 import { findDoublesUnitPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/doubles-helpers';
-import { useIntlError } from '@/components/hooks/use-intl-error';
-import { AppError } from '@/lib/errors';
 import {
   hasDuplicateUnitNickname,
   removePlayersOutByIds,
 } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/unit-helpers';
 import { useSharedPreStart } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-shared-pre-start';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
+import { AppError } from '@/lib/errors';
 import { type UnitModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -20,7 +20,7 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
   const {
     applyOptimisticPreStartRound,
     applyServerPreStartUnitsIfLatest,
-    invalidatePreStartState,
+    settle,
     keys,
     rollbackOptimisticPreStartRound,
   } = useSharedPreStart(tournamentId);
@@ -90,7 +90,7 @@ export const useTournamentEditDoublesUnit = (tournamentId: string) => {
         toast.error(translateError(error, { fallback: 'UNIT_NOT_ADDED' }));
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
-      onSettled: () => invalidatePreStartState({ playersOut: true }),
+      onSettled: () => settle('editDoublesUnit'),
     }),
   );
 };

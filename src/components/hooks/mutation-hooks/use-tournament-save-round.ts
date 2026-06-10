@@ -1,16 +1,21 @@
-import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Dispatch, SetStateAction, useContext } from 'react';
 import { toast } from 'sonner';
 
-export default function useSaveRound(props: SaveRoundMutationProps) {
+export default function useSaveRound(
+  tournamentId: string,
+  props: SaveRoundMutationProps,
+) {
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { sendJsonMessage } = useContext(DashboardContext);
+  const { settle } = useTournamentCache(tournamentId);
 
   return useMutation(
     trpc.tournament.saveRound.mutationOptions({
@@ -39,29 +44,15 @@ export default function useSaveRound(props: SaveRoundMutationProps) {
           () => newGames,
         );
       },
-      onSuccess: (_data, { tournamentId, roundNumber, newGames }) => {
-        if (queryClient.isMutating() === 1) {
-          sendJsonMessage({
-            event: 'new-round',
-            roundNumber,
-            newGames,
-            isTournamentGoing: props.isTournamentGoing,
-          });
-          if (queryClient.isMutating() === 1) {
-            queryClient.invalidateQueries({
-              queryKey: trpc.tournament.roundGames.queryKey({
-                tournamentId,
-                roundNumber,
-              }),
-            });
-            if (props.isTournamentGoing) {
-              queryClient.invalidateQueries({
-                queryKey: trpc.tournament.pathKey(),
-              });
-            }
-          }
-        }
+      onSuccess: (_data, { roundNumber, newGames }) => {
+        sendJsonMessage({
+          event: 'new-round',
+          roundNumber,
+          newGames,
+          isTournamentGoing: props.isTournamentGoing,
+        });
       },
+      onSettled: () => settle('saveRound'),
       onError: (error, { tournamentId, roundNumber }) => {
         console.error(error);
         if (props.isTournamentGoing) {

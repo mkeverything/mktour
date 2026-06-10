@@ -1,5 +1,6 @@
 'use client';
 
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardMessage } from '@/types/tournament-ws-events';
@@ -16,6 +17,7 @@ export default function useTournamentResetPlayers(
 ) {
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.resetPlayers.mutationOptions({
       scope: { id: `tournament-pre-start:${tournamentId}` },
@@ -36,16 +38,11 @@ export default function useTournamentResetPlayers(
           }),
           [],
         );
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.pathKey(),
-        });
         setRoundInView(1);
       },
+      onSettled: () => settle('resetPlayers'),
       onError: (error) => {
         toast.error(tErrors(getAppErrorMessage(error)));
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.pathKey(),
-        });
       },
     }),
   );

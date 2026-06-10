@@ -13,7 +13,7 @@ export const useTournamentRemoveUnit = (tournamentId: string) => {
   const {
     applyOptimisticPreStartRound,
     applyServerPreStartUnitsIfLatest,
-    invalidatePreStartState,
+    settle,
     keys,
     rollbackOptimisticPreStartRound,
   } = useSharedPreStart(tournamentId);
@@ -39,7 +39,7 @@ export const useTournamentRemoveUnit = (tournamentId: string) => {
         );
       },
       onSuccess: applyServerPreStartUnitsIfLatest,
-      onSettled: () => invalidatePreStartState({ playersOut: true }),
+      onSettled: () => settle('removeUnit'),
     }),
   );
 };

@@ -1,19 +1,21 @@
 'use client';
 
-import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
 import { toast } from 'sonner';
 
-export default function useTournamentEditTitle() {
+export default function useTournamentEditTitle(tournamentId: string) {
   const { sendJsonMessage } = useContext(DashboardContext);
   const queryClient = useQueryClient();
   const t = useTranslations('Toasts');
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.editTitle.mutationOptions({
       onMutate: async ({ tournamentId, title }) => {
@@ -48,13 +50,7 @@ export default function useTournamentEditTitle() {
           );
         }
       },
-      onSettled: () => {
-        if (queryClient.isMutating() === 1) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.info.pathKey(),
-          });
-        }
-      },
+      onSettled: () => settle('editTitle'),
     }),
   );
 }

@@ -39,7 +39,7 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   const isOrganizer = status === 'organizer';
   const t = useTranslations('Tournament.Main');
 
-  const { mutate } = useTournamentEditTitle();
+  const { mutate } = useTournamentEditTitle(tournamentId);
 
   const handleTitleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {

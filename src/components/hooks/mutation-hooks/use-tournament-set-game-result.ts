@@ -1,7 +1,8 @@
 'use client';
 
-import { getAppErrorMessage } from '@/lib/errors';
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { UnitModel } from '@/server/zod/tournaments';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
@@ -14,6 +15,7 @@ export default function useTournamentSetGameResult(
 ) {
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.setGameResult.mutationOptions({
       onMutate: async ({ roundNumber }) => {
@@ -134,24 +136,6 @@ export default function useTournamentSetGameResult(
             });
           },
         );
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.tournament.setGameResult.mutationKey(),
-          }) === 1
-        ) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.roundGames.queryKey({
-              tournamentId,
-              roundNumber,
-            }),
-          });
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.units.queryKey({ tournamentId }),
-          });
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
-          });
-        }
         sendJsonMessage({
           event: 'set-game-result',
           gameId,
@@ -159,6 +143,7 @@ export default function useTournamentSetGameResult(
           roundNumber,
         });
       },
+      onSettled: () => settle('setGameResult'),
       onError: (error) => {
         toast.error(tErrors(getAppErrorMessage(error)));
         console.log(error);
@@ -168,6 +153,6 @@ export default function useTournamentSetGameResult(
 }
 
 type SetResultProps = {
-  tournamentId: string | undefined;
+  tournamentId: string;
   sendJsonMessage: (_message: DashboardMessage) => void;
 };

@@ -13,7 +13,7 @@ export const useTournamentReorderUnits = (tournamentId: string) => {
   const {
     applyOptimisticPreStartRound,
     applyServerPreStartUnitsIfLatest,
-    invalidatePreStartState,
+    settle,
     keys,
     rollbackOptimisticPreStartRound,
   } = useSharedPreStart(tournamentId);
@@ -46,6 +46,6 @@ export const useTournamentReorderUnits = (tournamentId: string) => {
       rollbackOptimisticPreStartRound(context);
     },
     onSuccess: applyServerPreStartUnitsIfLatest,
-    onSettled: () => invalidatePreStartState({ info: false }),
+    onSettled: () => settle('reorderUnits'),
   });
 };
