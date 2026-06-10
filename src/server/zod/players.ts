@@ -1,7 +1,7 @@
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { affiliations, players } from '@/server/db/schema/players';
-import { players_to_tournaments } from '@/server/db/schema/tournaments';
 import { affiliationStatusEnum } from '@/server/zod/enums';
-import { gameSchema, tournamentSchema } from '@/server/zod/tournaments';
+import { tournamentSchema } from '@/server/zod/tournaments';
 import {
   createInsertSchema,
   createSelectSchema,
@@ -16,28 +16,28 @@ export const playersWithUsernameSchema = createSelectSchema(players).extend({
 export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
-      .min(0, {
-        error: 'min rating',
+      .min(GLICKO2_CONSTANTS.MIN_STARTING_RATING, {
+        error: 'MIN_STARTING_RATING',
       })
-      .max(3000, {
-        error: 'max rating',
+      .max(GLICKO2_CONSTANTS.MAX_STARTING_RATING, {
+        error: 'MAX_STARTING_RATING',
       }),
   ratingPeak: (s) =>
     s
-      .min(0, {
-        error: 'min peak rating',
+      .min(GLICKO2_CONSTANTS.MIN_RATING, {
+        error: 'MIN_PEAK_RATING',
       })
-      .max(3000, {
-        error: 'max peak rating',
+      .max(GLICKO2_CONSTANTS.MAX_RATING, {
+        error: 'MAX_PEAK_RATING',
       }),
   nickname: (s) =>
     s
       .trim()
-      .min(3, {
-        error: 'min nickname length',
+      .min(2, {
+        error: 'MIN_NICKNAME_LENGTH',
       })
       .max(30, {
-        error: 'max nickname length',
+        error: 'MAX_NICKNAME_LENGTH',
       }),
 });
 export const playersUpdateSchema = createUpdateSchema(players);
@@ -75,67 +75,25 @@ export const playerFormSchema = playersInsertSchema.omit({
 export const playerEditSchema = playersUpdateSchema
   .pick({ nickname: true, realname: true })
   .extend({
-    id: z.string(),
+    playerId: z.string(),
     nickname: z
       .string()
       .trim()
-      .min(2, { error: 'min nickname length' })
-      .max(30, { error: 'max nickname length' })
+      .min(2, { error: 'MIN_NICKNAME_LENGTH' })
+      .max(30, { error: 'MAX_NICKNAME_LENGTH' })
       .optional(),
     realname: z.string().max(50).nullable().optional(),
   });
 
-export const playersToTournamentsSelectSchema = createSelectSchema(
-  players_to_tournaments,
-);
-
-export const playerTournamentSchema = playersToTournamentsSelectSchema
-  .pick({
-    pairingNumber: true,
-    teamNickname: true,
-    addedAt: true,
-    wins: true,
-    draws: true,
-    losses: true,
-    colorIndex: true,
-    isOut: true,
-    place: true,
-  })
-  .extend({
-    id: playersSelectSchema.shape.id,
-    nickname: playersSelectSchema.shape.nickname,
-    realname: playersSelectSchema.shape.realname,
-    rating: playersSelectSchema.shape.rating,
-    username: playersWithUsernameSchema.shape.username,
-    pairPlayers: z
-      .array(
-        z.object({
-          id: z.string(),
-          nickname: z.string(),
-          rating: z.number().optional(), // TODO: to remove this optional we need to change playersOut api
-        }),
-      )
-      .nullable(),
-  });
-
-export const preStartPlayerOrderResultSchema = z.object({
-  players: z.array(playerTournamentSchema),
-  games: z.array(gameSchema),
+export const statItemSchema = z.object({
+  value: z.number(),
+  rank: z.number(),
 });
 
 export const playerStatsSchema = z.object({
-  tournamentsPlayed: z.object({
-    value: z.number(),
-    rank: z.number(),
-  }),
-  gamesPlayed: z.object({
-    value: z.number(),
-    rank: z.number(),
-  }),
-  winRate: z.object({
-    value: z.number(),
-    rank: z.number(),
-  }),
+  tournamentsPlayed: statItemSchema,
+  gamesPlayed: statItemSchema,
+  winRate: statItemSchema,
   ratingPeakRank: z.number(),
 });
 
@@ -146,11 +104,6 @@ export const playerAuthStatsSchema = z.object({
   userPlayerNickname: z.string(),
   lastTournament: tournamentSchema.nullable(),
 });
-
-export type PlayerTournamentModel = z.infer<typeof playerTournamentSchema>;
-export type PreStartPlayerOrderResultModel = z.infer<
-  typeof preStartPlayerOrderResultSchema
->;
 
 export type AffiliationModel = z.infer<typeof affiliationsSelectSchema>;
 export type AffiliationInsertModel = z.infer<typeof affiliationsInsertSchema>;

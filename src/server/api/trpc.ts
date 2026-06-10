@@ -8,7 +8,9 @@
  */
 
 import { validateRequest } from '@/lib/auth/lucia';
+import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
+import { clubs as clubsTable } from '@/server/db/schema/clubs';
 import { apiTokens, users } from '@/server/db/schema/users';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { getUserClubIds } from '@/server/queries/get-user-clubs';
@@ -18,14 +20,13 @@ import {
 } from '@/server/zod/common';
 import { StatusInClub } from '@/server/zod/enums';
 import { UserModel } from '@/server/zod/users';
-import { initTRPC, TRPCError } from '@trpc/server';
+import { initTRPC } from '@trpc/server';
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
 import { Session } from 'lucia';
 import { NextRequest } from 'next/server';
 import superjson from 'superjson';
 import { OpenApiMeta } from 'trpc-to-openapi';
-import { ZodError } from 'zod';
 
 /**
  * 1. CONTEXT
@@ -104,15 +105,6 @@ const t = initTRPC
   .context<Awaited<ReturnType<typeof createTRPCContext>>>()
   .create({
     transformer: superjson,
-    errorFormatter({ shape, error }) {
-      return {
-        ...shape,
-        data: {
-          ...shape.data,
-          zodError: error.cause instanceof ZodError ? error.cause : null,
-        },
-      };
-    },
   });
 
 /**
@@ -146,7 +138,7 @@ export const publicProcedure = t.procedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
+export const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let { session, user } = ctx;
 
   if (!user) {
@@ -156,7 +148,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   }
 
   if (!user) {
-    throw new TRPCError({ code: 'UNAUTHORIZED' });
+    throw new AppError('UNAUTHENTICATED');
   }
   return next({
     ctx: {
@@ -166,7 +158,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   });
 });
 
-export const authProcedure = t.procedure.use(async ({ ctx, next }) => {
+export const authProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let { session, user } = ctx;
 
   if (!user) {
@@ -191,9 +183,13 @@ export const clubAdminProcedure = protectedProcedure
       (clubId) => clubId === opts.input.clubId,
     );
     if (!isAdmin) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-      });
+      const club = await db
+        .select({ id: clubsTable.id })
+        .from(clubsTable)
+        .where(eq(clubsTable.id, opts.input.clubId))
+        .get();
+      if (!club) throw new AppError('CLUB_NOT_FOUND');
+      throw new AppError('NOT_CLUB_ADMIN');
     }
     return opts.next({
       ctx: {
@@ -211,11 +207,7 @@ export const tournamentAdminProcedure = protectedProcedure
       opts.input.tournamentId,
     );
     if (status !== 'organizer') {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-      });
+      throw new AppError('NOT_TOURNAMENT_ORGANIZER');
     }
     return opts.next();
   });
-
-// export type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;

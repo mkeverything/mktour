@@ -27,7 +27,7 @@ const EditPlayerForm: FC<{
   setOpen: Dispatch<SetStateAction<boolean>>;
   canEditRealname?: boolean;
 }> = ({
-  player: { id, nickname, realname },
+  player: { playerId, nickname, realname },
   clubId,
   status,
   setOpen,
@@ -37,14 +37,14 @@ const EditPlayerForm: FC<{
   const router = useRouter();
   const form = useForm<PlayerEditModel>({
     defaultValues: {
-      id,
+      playerId,
       nickname,
       realname,
     },
   });
 
   const onSubmit = (values: PlayerEditModel) => {
-    const payload: PlayerEditModel = { id };
+    const payload: PlayerEditModel = { playerId };
     if (form.formState.dirtyFields.nickname) payload.nickname = values.nickname;
     if (form.formState.dirtyFields.realname) payload.realname = values.realname;
 
@@ -75,7 +75,7 @@ const EditPlayerForm: FC<{
             {editPlayerMutation.isPending ? <LoadingSpinner /> : <Save />}
             <FormattedMessage id="Common.save" />
           </Button>
-          {status && <DeletePlayer clubId={clubId} />}
+          {status && <DeletePlayer clubId={clubId} playerId={playerId} />}
         </div>
       </form>
     </Form>

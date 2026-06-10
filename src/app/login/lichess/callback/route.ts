@@ -61,8 +61,9 @@ export async function GET(request: Request): Promise<Response> {
       .email as string;
 
     cooks.set('token', tokens.accessToken(), {
-      sameSite: 'none',
-      secure: true,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     });
 
     const existingUser = (
@@ -110,7 +111,7 @@ export async function GET(request: Request): Promise<Response> {
     try {
       const userId = newid();
       const clubId = newid();
-      const ctuId = `${clubId}=${userId}`;
+      const ctuId = `${clubId}_${userId}`;
       const name = lichessUser.profile?.realName ?? null;
 
       await db.insert(clubs).values({

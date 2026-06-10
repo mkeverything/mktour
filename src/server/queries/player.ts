@@ -3,29 +3,38 @@ import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
   games,
-  players_to_tournaments,
+  players_to_units,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { PlayerAuthStatsModel, PlayerStatsModel } from '@/server/zod/players';
-import { and, count, desc, eq, getTableColumns, or, sum } from 'drizzle-orm';
+import {
+  and,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  getTableColumns,
+  or,
+} from 'drizzle-orm';
 
 // returns the last 5 tournaments a player participated in
-export async function getPlayersTournaments(
+export async function getPlayersTournamentsInfinite(
   playerId: string,
   limit: number = 5,
   offset: number = 0,
 ) {
   return await db
     .select({
-      ...getTableColumns(players_to_tournaments),
-      tournament: tournaments,
+      ...getTableColumns(tournaments),
     })
-    .from(players_to_tournaments)
+    .from(players_to_units)
     .innerJoin(
-      tournaments,
-      eq(players_to_tournaments.tournamentId, tournaments.id),
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
     )
-    .where(eq(players_to_tournaments.playerId, playerId))
+    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
+    .where(eq(players_to_units.playerId, playerId))
     .orderBy(desc(tournaments.createdAt))
     .limit(limit)
     .offset(offset);
@@ -48,20 +57,41 @@ export async function getPlayerStats(
       ratingPeakRank: 0,
     };
 
-  // Get stats for all players in the same club
   const clubPlayersStats = await db
     .select({
       playerId: players.id,
       ratingPeak: players.ratingPeak,
-      tournamentsPlayed: count(players_to_tournaments.id),
-      wins: sum(players_to_tournaments.wins),
-      losses: sum(players_to_tournaments.losses),
-      draws: sum(players_to_tournaments.draws),
+      tournamentsPlayed: countDistinct(players_to_units.id),
+      wins: countDistinct(
+        caseWhen(
+          or(
+            and(eq(games.whitePlayerId, players.id), eq(games.result, '1-0')),
+            and(eq(games.blackPlayerId, players.id), eq(games.result, '0-1')),
+          ),
+          games.id,
+        ).elseNull(),
+      ),
+      losses: countDistinct(
+        caseWhen(
+          or(
+            and(eq(games.whitePlayerId, players.id), eq(games.result, '0-1')),
+            and(eq(games.blackPlayerId, players.id), eq(games.result, '1-0')),
+          ),
+          games.id,
+        ).elseNull(),
+      ),
+      draws: countDistinct(
+        caseWhen(eq(games.result, '1/2-1/2'), games.id).elseNull(),
+      ),
     })
     .from(players)
+    .leftJoin(players_to_units, eq(players.id, players_to_units.playerId))
     .leftJoin(
-      players_to_tournaments,
-      eq(players.id, players_to_tournaments.playerId),
+      games,
+      or(
+        eq(players.id, games.whitePlayerId),
+        eq(players.id, games.blackPlayerId),
+      ),
     )
     .where(eq(players.clubId, player.clubId))
     .groupBy(players.id)
@@ -83,16 +113,16 @@ export async function getPlayerStats(
     };
   });
 
-  const byTournaments = [...statsWithCalculations].sort(
+  const byTournaments = statsWithCalculations.toSorted(
     (a, b) => b.tournamentsPlayed - a.tournamentsPlayed,
   );
-  const byGames = [...statsWithCalculations].sort(
+  const byGames = statsWithCalculations.toSorted(
     (a, b) => b.gamesPlayed - a.gamesPlayed,
   );
-  const byWinRate = [...statsWithCalculations].sort(
+  const byWinRate = statsWithCalculations.toSorted(
     (a, b) => b.winRate - a.winRate,
   );
-  const byRatingPeak = [...statsWithCalculations].sort(
+  const byRatingPeak = statsWithCalculations.toSorted(
     (a, b) => (b.ratingPeak ?? 0) - (a.ratingPeak ?? 0),
   );
 
@@ -152,8 +182,14 @@ export async function getPlayerAuthStats({
   if (playerId === authPlayerId) return null;
 
   const headToHeadCondition = or(
-    and(eq(games.whiteId, playerId), eq(games.blackId, authPlayerId)),
-    and(eq(games.whiteId, authPlayerId), eq(games.blackId, playerId)),
+    and(
+      eq(games.whitePlayerId, playerId),
+      eq(games.blackPlayerId, authPlayerId),
+    ),
+    and(
+      eq(games.whitePlayerId, authPlayerId),
+      eq(games.blackPlayerId, playerId),
+    ),
   );
 
   const headToHead = await db
@@ -161,8 +197,8 @@ export async function getPlayerAuthStats({
       playerWins: count(
         caseWhen(
           or(
-            and(eq(games.whiteId, playerId), eq(games.result, '1-0')),
-            and(eq(games.blackId, playerId), eq(games.result, '0-1')),
+            and(eq(games.whitePlayerId, playerId), eq(games.result, '1-0')),
+            and(eq(games.blackPlayerId, playerId), eq(games.result, '0-1')),
           ),
           1,
         ).elseNull(),
@@ -170,8 +206,8 @@ export async function getPlayerAuthStats({
       userWins: count(
         caseWhen(
           or(
-            and(eq(games.whiteId, authPlayerId), eq(games.result, '1-0')),
-            and(eq(games.blackId, authPlayerId), eq(games.result, '0-1')),
+            and(eq(games.whitePlayerId, authPlayerId), eq(games.result, '1-0')),
+            and(eq(games.blackPlayerId, authPlayerId), eq(games.result, '0-1')),
           ),
           1,
         ).elseNull(),

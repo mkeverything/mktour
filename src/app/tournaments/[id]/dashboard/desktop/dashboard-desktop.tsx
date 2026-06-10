@@ -25,7 +25,7 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   session,
   id,
   status,
-  playerId,
+  unitId,
   userId,
   currentRound,
 }) => {
@@ -45,10 +45,10 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
     () => ({
       sendJsonMessage,
       status,
-      playerId,
+      unitId,
       userId,
     }),
-    [playerId, sendJsonMessage, status, userId],
+    [unitId, sendJsonMessage, status, userId],
   );
   const tabValue = useMemo(() => ({ currentTab }), [currentTab]);
   const roundValue = useMemo(
@@ -133,7 +133,7 @@ interface DashboardDesktopProps extends TabProps {
   session: string | null;
   id: string;
   status: TournamentAuthStatus;
-  playerId: string | null;
+  unitId: string | null;
   userId: string | undefined;
   currentRound: number | null;
 }

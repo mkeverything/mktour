@@ -1,10 +1,11 @@
+import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export function useAffiliationCancelByClubMutation() {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   return useMutation(
@@ -17,7 +18,7 @@ export function useAffiliationCancelByClubMutation() {
           queryKey: trpc.club.notifications.all.queryKey({ clubId }),
         });
       },
-      onError: () => toast.error(t('server error')),
+      onError: (error) => toast.error(tErrors(getAppErrorMessage(error))),
     }),
   );
 }

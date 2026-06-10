@@ -1,17 +1,21 @@
 'use client';
 
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { DashboardMessage } from '@/types/tournament-ws-events';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
-export default function useTournamentFinish(
-  queryClient: QueryClient,
-  { tournamentId, sendJsonMessage }: SetStatusProps,
-) {
+export default function useTournamentFinish({
+  tournamentId,
+  sendJsonMessage,
+}: SetStatusProps) {
   const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.finish.mutationOptions({
       onSuccess: (_error, { closedAt }) => {
@@ -22,15 +26,10 @@ export default function useTournamentFinish(
             closedAt,
           });
         }
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.info.queryKey({ tournamentId }),
-        });
-        queryClient.invalidateQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-        });
       },
+      onSettled: () => settle('finish'),
       onError: (error) => {
-        toast.error(t('server error'));
+        toast.error(tErrors(getAppErrorMessage(error)));
         console.log(error);
       },
     }),
@@ -38,6 +37,6 @@ export default function useTournamentFinish(
 }
 
 type SetStatusProps = {
-  tournamentId: string | undefined;
+  tournamentId: string;
   sendJsonMessage: (_message: DashboardMessage) => void;
 };

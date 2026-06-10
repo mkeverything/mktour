@@ -12,7 +12,7 @@ const Dashboard: FC<TournamentPageContentProps> = ({
   session,
   id,
   status,
-  playerId,
+  unitId,
   currentRound,
 }) => {
   const [currentTab, setCurrentTab] = useState<DashboardTab>('main');
@@ -26,7 +26,7 @@ const Dashboard: FC<TournamentPageContentProps> = ({
       session={session}
       id={id}
       status={status}
-      playerId={playerId}
+      unitId={unitId}
       userId={userId}
       currentRound={currentRound}
     />
@@ -48,7 +48,7 @@ interface TournamentPageContentProps {
   session: string | null;
   id: string;
   status: TournamentAuthStatus;
-  playerId: string | null;
+  unitId: string | null;
   userId: string | undefined;
   currentRound: number | null;
 }

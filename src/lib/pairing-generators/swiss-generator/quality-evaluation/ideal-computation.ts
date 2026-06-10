@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 /**
  * Theoretical ideal computation functions for quality criteria
  *
@@ -152,9 +153,9 @@ export function willHaveSameColourThreeTimes(
   if (lastTwoGames.length < 2) {
     return false;
   } else if (newColour === ChessColour.White) {
-    return lastTwoGames.every((game) => game.whiteId === entity.entityId);
+    return lastTwoGames.every((game) => game.whiteUnitId === entity.entityId);
   } else {
-    return lastTwoGames.every((game) => game.blackId === entity.entityId);
+    return lastTwoGames.every((game) => game.blackUnitId === entity.entityId);
   }
 }
 
@@ -461,10 +462,11 @@ export function computeIdealC8FutureCriteriaCompliance(
   );
 
   if (optimalNextBracketDownfloaterScores === null) {
-    throw new Error(
-      `Failed to find optimal downfloater set for C8 ideal computation. ` +
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause:
+        `Failed to find optimal downfloater set for C8 ideal computation. ` +
         `Expected ${nextBracketMinDownfloaterCount} downfloaters from ${nextBracketAllPlayers.length} players.`,
-    );
+    });
   }
 
   // Step 6: Compute PAB score if next bracket is last

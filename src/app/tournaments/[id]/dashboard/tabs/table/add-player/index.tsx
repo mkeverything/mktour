@@ -1,8 +1,9 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import AddPairTeam from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-pair-team';
-import AddPlayerDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-player-drawer-content';
+import AddDoublesUnit from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-doubles-unit';
+import AddUnitDrawerContent from '@/app/tournaments/[id]/dashboard/tabs/table/add-player/add-unit-drawer-content';
 import Fab from '@/components/fab';
 import FormattedMessage from '@/components/formatted-message';
+import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import SideDrawer from '@/components/ui-custom/side-drawer';
@@ -12,7 +13,7 @@ import { useParams } from 'next/navigation';
 import { Dispatch, SetStateAction, useContext, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-const AddPlayerDrawer = () => {
+const AddUnitDrawer = () => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -20,12 +21,13 @@ const AddPlayerDrawer = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { status } = useContext(DashboardContext);
   const { isDesktop } = useContext(MediaQueryContext);
+  const preStartLocked = useTournamentPreStartLocked(tournamentId);
 
   useHotkeys(
     'shift+equal',
     (e) => {
       e.preventDefault();
-      setOpen((prev) => !prev);
+      if (!preStartLocked) setOpen((prev) => !prev);
     },
     { enableOnFormTags: true },
   );
@@ -33,6 +35,7 @@ const AddPlayerDrawer = () => {
     'control+shift+equal',
     (e) => {
       e.preventDefault();
+      if (preStartLocked) return;
       setOpen((prev) => !prev);
       setAddingNewPlayer(true);
     },
@@ -40,7 +43,7 @@ const AddPlayerDrawer = () => {
   );
 
   const handleChange = (state: boolean) => {
-    if (!isAnimating) {
+    if (!isAnimating && (!preStartLocked || !state)) {
       setOpen(state);
       setAddingNewPlayer(false);
       setValue('');
@@ -60,6 +63,7 @@ const AddPlayerDrawer = () => {
     <Button
       variant="outline"
       className="size-10 lg:w-fit"
+      disabled={preStartLocked}
       onClick={() => handleChange(!open)}
     >
       <UserPlus />
@@ -71,6 +75,7 @@ const AddPlayerDrawer = () => {
     <Fab
       container={open || isAnimating ? document.body : undefined}
       className={`${(open || isAnimating) && 'z-60 md:hidden'}`}
+      disabled={preStartLocked}
       onClick={() => handleChange(!open)}
       icon={open ? X : UserPlus}
     />
@@ -85,9 +90,9 @@ const AddPlayerDrawer = () => {
         setIsAnimating={setIsAnimating}
       >
         {isDoubles ? (
-          <AddPairTeam handleClose={() => handleChange(false)} />
+          <AddDoublesUnit handleClose={() => handleChange(false)} />
         ) : (
-          <AddPlayerDrawerContent
+          <AddUnitDrawerContent
             value={value}
             setValue={setValue}
             addingNewPlayer={addingNewPlayer}
@@ -108,4 +113,4 @@ export type DrawerProps = {
   setValue: Dispatch<SetStateAction<string>>;
 };
 
-export default AddPlayerDrawer;
+export default AddUnitDrawer;

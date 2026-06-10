@@ -58,7 +58,7 @@ export const playerMeta = {
   playersEdit: {
     openapi: {
       method: 'PATCH',
-      path: '/players/{id}',
+      path: '/players/{playerId}',
       summary: 'edit player',
       tags: ['players'],
     },

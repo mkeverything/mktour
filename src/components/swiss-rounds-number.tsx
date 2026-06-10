@@ -3,7 +3,7 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import useSaveRoundsNumberMutation from '@/components/hooks/mutation-hooks/use-tournament-update-swiss-rounds-number';
 import { useTournamentSwissRoundsInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useTournamentActivePlayersCount } from '@/components/hooks/query-hooks/use-tournament-players';
+import { useTournamentActiveUnitsCount } from '@/components/hooks/query-hooks/use-tournament-units';
 import { cn, getSwissMaxRoundsNumber } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
@@ -18,17 +18,20 @@ export default function SwissRoundsNumber({
 }: SwissRoundsNumberProps) {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data } = useTournamentSwissRoundsInfo(tournamentId);
-  const { data: playerCount = 0 } =
-    useTournamentActivePlayersCount(tournamentId);
+  const { data: unitCount = 0 } = useTournamentActiveUnitsCount(tournamentId);
   const queryClient = useQueryClient();
   const { sendJsonMessage, status } = useContext(DashboardContext);
-  const { mutate } = useSaveRoundsNumberMutation(queryClient, sendJsonMessage);
+  const { mutate } = useSaveRoundsNumberMutation(
+    tournamentId,
+    queryClient,
+    sendJsonMessage,
+  );
 
   const isOrganizer = status === 'organizer';
   const isFinished = !!data?.closedAt;
   const currentValue = data?.roundsNumber ?? 1;
-  const minValue = 1;
-  const maxValue = getSwissMaxRoundsNumber(playerCount);
+  const minValue = data?.startedAt ? data.ongoingRound : 1;
+  const maxValue = getSwissMaxRoundsNumber(unitCount);
   const boundedCurrentValue = Math.min(
     Math.max(currentValue, minValue),
     maxValue,

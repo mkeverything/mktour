@@ -1,7 +1,9 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
-import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/use-tournament-add-new-player';
+import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-new-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { Button } from '@/components/ui/button';
+import { AppError } from '@/lib/errors';
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { newid } from '@/lib/utils';
 import { PlayerFormModel } from '@/server/zod/players';
 import { faker } from '@faker-js/faker';
@@ -15,7 +17,7 @@ const AddFakerPlayer: FC<{ setOpen: (_arg: boolean) => void }> = ({
   const tournament = useTournamentInfo(id);
   const returnToNewPlayer = () => null;
   const { userId } = useContext(DashboardContext);
-  if (!userId) throw new Error('USERID_NOT_FOUND_IN_CONTEXT');
+  if (!userId) throw new AppError('USERID_NOT_FOUND_IN_CONTEXT');
   const { mutate } = useTournamentAddNewPlayer(id, returnToNewPlayer);
 
   const nickname =
@@ -29,7 +31,10 @@ const AddFakerPlayer: FC<{ setOpen: (_arg: boolean) => void }> = ({
     nickname,
     realname: null,
     clubId: tournament.data?.club?.id || '',
-    rating: faker.number.int({ min: 100, max: 3000 }),
+    rating: faker.number.int({
+      min: GLICKO2_CONSTANTS.MIN_STARTING_RATING,
+      max: GLICKO2_CONSTANTS.MAX_STARTING_RATING,
+    }),
     ratingDeviation: 350,
     ratingVolatility: faker.number.float({ min: 0.5, max: 1.2 }),
     ratingLastUpdateAt: new Date(),

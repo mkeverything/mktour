@@ -1,7 +1,9 @@
 'use client';
 
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
-import { PlayerTournamentModel } from '@/server/zod/players';
+import { getAppErrorMessage } from '@/lib/errors';
+import { UnitModel } from '@/server/zod/tournaments';
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -11,8 +13,9 @@ export default function useTournamentSetGameResult(
   queryClient: QueryClient,
   { tournamentId, sendJsonMessage }: SetResultProps,
 ) {
-  const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.setGameResult.mutationOptions({
       onMutate: async ({ roundNumber }) => {
@@ -23,15 +26,15 @@ export default function useTournamentSetGameResult(
           }),
         });
         await queryClient.cancelQueries({
-          queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+          queryKey: trpc.tournament.units.queryKey({ tournamentId }),
         });
       },
       onSuccess: (
         _res,
-        { gameId, result, roundNumber, prevResult, whiteId, blackId },
+        { gameId, result, roundNumber, prevResult, whiteUnitId, blackUnitId },
       ) => {
         function updatePlayerStats(
-          player: PlayerTournamentModel,
+          player: UnitModel,
           result: string,
           isWhite: boolean,
           isReset: boolean,
@@ -63,22 +66,22 @@ export default function useTournamentSetGameResult(
         // otherwise ui flickers and adds wrong order for a moment
         // while games are updated and players are being refetched
         queryClient.setQueryData(
-          trpc.tournament.playersIn.queryKey({ tournamentId }),
+          trpc.tournament.units.queryKey({ tournamentId }),
           (players) => {
             if (!players || !result) return players;
             return players.map((player) => {
               // Case 1: Toggling the same result (reset)
               if (prevResult === result) {
-                if (player.id === whiteId) {
+                if (player.id === whiteUnitId) {
                   return updatePlayerStats(player, result, true, true);
                 }
-                if (player.id === blackId) {
+                if (player.id === blackUnitId) {
                   return updatePlayerStats(player, result, false, true);
                 }
               }
               // Case 2: Changing from one result to another
               else if (prevResult && prevResult !== result) {
-                if (player.id === whiteId) {
+                if (player.id === whiteUnitId) {
                   // First remove old result
                   const updated = updatePlayerStats(
                     player,
@@ -89,7 +92,7 @@ export default function useTournamentSetGameResult(
                   // Then add new result
                   return updatePlayerStats(updated, result, true, false);
                 }
-                if (player.id === blackId) {
+                if (player.id === blackUnitId) {
                   // First remove old result
                   const updated = updatePlayerStats(
                     player,
@@ -103,10 +106,10 @@ export default function useTournamentSetGameResult(
               }
               // Case 3: Adding a new result where none existed before
               else if (!prevResult && result) {
-                if (player.id === whiteId) {
+                if (player.id === whiteUnitId) {
                   return updatePlayerStats(player, result, true, false);
                 }
-                if (player.id === blackId) {
+                if (player.id === blackUnitId) {
                   return updatePlayerStats(player, result, false, false);
                 }
               }
@@ -133,21 +136,6 @@ export default function useTournamentSetGameResult(
             });
           },
         );
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.tournament.setGameResult.mutationKey(),
-          }) === 1
-        ) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.roundGames.queryKey({
-              tournamentId,
-              roundNumber,
-            }),
-          });
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
-          });
-        }
         sendJsonMessage({
           event: 'set-game-result',
           gameId,
@@ -155,12 +143,9 @@ export default function useTournamentSetGameResult(
           roundNumber,
         });
       },
+      onSettled: () => settle('setGameResult'),
       onError: (error) => {
-        if (error.message === 'PLAYER_RESULT_SETTING_DISABLED') {
-          toast.error(t('player result setting disabled'));
-          return;
-        }
-        toast.error(t('server error'));
+        toast.error(tErrors(getAppErrorMessage(error)));
         console.log(error);
       },
     }),
@@ -168,6 +153,6 @@ export default function useTournamentSetGameResult(
 }
 
 type SetResultProps = {
-  tournamentId: string | undefined;
+  tournamentId: string;
   sendJsonMessage: (_message: DashboardMessage) => void;
 };

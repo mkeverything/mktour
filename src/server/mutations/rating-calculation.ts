@@ -1,87 +1,122 @@
+import { AppError } from '@/lib/errors';
 import {
   glicko2Calculator,
-  type GameResult,
-  type RatingUpdate,
+  GlickoGameResult,
+  RatingUpdate,
 } from '@/lib/glicko2';
+import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
   games,
-  players_to_tournaments,
+  players_to_units,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import type { GameResult as DbGameResult } from '@/server/zod/enums';
-import { and, eq } from 'drizzle-orm';
-import { db } from '@/server/db';
+import { and, asc, eq } from 'drizzle-orm';
+
+import type { GameResult } from '@/server/zod/enums';
+import type { PlayerModel } from '@/server/zod/players';
+import type { GameModel, PlayerUnitModel } from '@/server/zod/tournaments';
 
 type Tx = Pick<typeof db, 'select' | 'update'>;
+type PlayerRating = Pick<
+  PlayerModel,
+  'id' | 'rating' | 'ratingDeviation' | 'ratingVolatility'
+>;
+type TournamentPlayerRating = PlayerRating & {
+  unitId: PlayerUnitModel['unitId'];
+  ratingPeak: PlayerModel['ratingPeak'];
+};
+type RatedGameRow = Pick<
+  GameModel,
+  'id' | 'whitePlayerId' | 'blackPlayerId' | 'result'
+>;
+type CompletedRatedGameRow = RatedGameRow & {
+  whitePlayerId: NonNullable<RatedGameRow['whitePlayerId']>;
+  blackPlayerId: NonNullable<RatedGameRow['blackPlayerId']>;
+  result: NonNullable<RatedGameRow['result']>;
+};
+type RatedGame = CompletedRatedGameRow & {
+  whiteRating: number;
+  whiteRD: number;
+  blackRating: number;
+  blackRD: number;
+};
+type PlayerRatingUpdate = {
+  unitId: PlayerUnitModel['unitId'];
+  playerId: PlayerModel['id'];
+  update: RatingUpdate;
+  newPeak: NonNullable<PlayerModel['ratingPeak']> | null;
+};
 
-/**
- * Get all completed games for a tournament with player ratings
- */
-async function getTournamentGamesWithRatings(tournamentId: string, tx: Tx) {
-  const tournamentGames = await tx
+async function getTournamentGameRows(tournamentId: string, tx: Tx) {
+  return tx
     .select({
       id: games.id,
-      whiteId: games.whiteId,
-      blackId: games.blackId,
+      whitePlayerId: games.whitePlayerId,
+      blackPlayerId: games.blackPlayerId,
       result: games.result,
-      roundNumber: games.roundNumber,
     })
     .from(games)
     .where(eq(games.tournamentId, tournamentId));
+}
 
-  // Get all players in the tournament with their current ratings
-  const tournamentPlayers = await tx
+async function getTournamentPlayerRatings(
+  tournamentId: string,
+  tx: Tx,
+): Promise<TournamentPlayerRating[]> {
+  return tx
     .select({
+      unitId: players_to_units.unitId,
       id: players.id,
       rating: players.rating,
+      ratingPeak: players.ratingPeak,
       ratingDeviation: players.ratingDeviation,
       ratingVolatility: players.ratingVolatility,
     })
     .from(players)
+    .innerJoin(players_to_units, eq(players.id, players_to_units.playerId))
     .innerJoin(
-      players_to_tournaments,
-      eq(players.id, players_to_tournaments.playerId),
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
     )
-    .where(eq(players_to_tournaments.tournamentId, tournamentId));
+    .where(eq(tournament_units.tournamentId, tournamentId));
+}
 
-  const playerRatingMap = new Map(
-    tournamentPlayers.map((p) => [
-      p.id,
-      {
-        rating: p.rating,
-        ratingDeviation: p.ratingDeviation,
-        volatility: p.ratingVolatility, // SQLite stores floats directly
-      },
-    ]),
+function mapPlayerRatings(playerRows: PlayerRating[]) {
+  return new Map(playerRows.map((player) => [player.id, player]));
+}
+
+function isCompletedRatedGameRow(
+  game: RatedGameRow,
+): game is CompletedRatedGameRow {
+  return (
+    game.result !== null &&
+    game.whitePlayerId !== null &&
+    game.blackPlayerId !== null
   );
+}
 
-  // Convert games to results format
-  const gameResults: Array<{
-    whiteId: string;
-    blackId: string;
-    result: DbGameResult | null;
-    whiteRating: number;
-    whiteRD: number;
-    blackRating: number;
-    blackRD: number;
-  }> = [];
+function toRatedGames(
+  gameRows: RatedGameRow[],
+  playerRatings: Map<PlayerModel['id'], PlayerRating>,
+): RatedGame[] {
+  const ratedGames: RatedGame[] = [];
 
-  for (const game of tournamentGames) {
-    if (!game.result) continue; // Skip unfinished games
+  for (const game of gameRows) {
+    if (!isCompletedRatedGameRow(game)) continue;
 
-    const whitePlayer = playerRatingMap.get(game.whiteId);
-    const blackPlayer = playerRatingMap.get(game.blackId);
+    const whitePlayer = playerRatings.get(game.whitePlayerId);
+    const blackPlayer = playerRatings.get(game.blackPlayerId);
 
     if (!whitePlayer || !blackPlayer) {
-      console.warn(`Missing rating data for game ${game.id}`);
-      continue;
+      throw new AppError('RATING_CALCULATION_ERROR', {
+        cause: `rated game ${game.id} has missing player rating data`,
+      });
     }
 
-    gameResults.push({
-      whiteId: game.whiteId,
-      blackId: game.blackId,
-      result: game.result,
+    ratedGames.push({
+      ...game,
       whiteRating: whitePlayer.rating,
       whiteRD: whitePlayer.ratingDeviation,
       blackRating: blackPlayer.rating,
@@ -89,39 +124,24 @@ async function getTournamentGamesWithRatings(tournamentId: string, tx: Tx) {
     });
   }
 
-  return gameResults;
+  return ratedGames;
 }
 
-/**
- * Collect game results for a specific player from tournament games
- */
 function collectPlayerResults(
   playerId: string,
-  tournamentGames: Array<{
-    whiteId: string;
-    blackId: string;
-    result: DbGameResult | null;
-    whiteRating: number;
-    whiteRD: number;
-    blackRating: number;
-    blackRD: number;
-  }>,
-): GameResult[] {
-  const results: GameResult[] = [];
+  tournamentGames: RatedGame[],
+): GlickoGameResult[] {
+  const results: GlickoGameResult[] = [];
 
   for (const game of tournamentGames) {
-    if (!game.result) continue;
-
-    if (game.whiteId === playerId) {
-      // Player is white
+    if (game.whitePlayerId === playerId) {
       const score = getScoreFromResult(game.result, 'white');
       results.push({
         opponentRating: game.blackRating,
         opponentRatingDeviation: game.blackRD,
         score,
       });
-    } else if (game.blackId === playerId) {
-      // Player is black
+    } else if (game.blackPlayerId === playerId) {
       const score = getScoreFromResult(game.result, 'black');
       results.push({
         opponentRating: game.whiteRating,
@@ -134,11 +154,8 @@ function collectPlayerResults(
   return results;
 }
 
-/**
- * Convert game result to score (1=win, 0.5=draw, 0=loss)
- */
 function getScoreFromResult(
-  result: DbGameResult,
+  result: GameResult,
   perspective: 'white' | 'black',
 ): number {
   switch (result) {
@@ -149,18 +166,52 @@ function getScoreFromResult(
     case '1/2-1/2':
       return 0.5;
     default:
-      throw new Error(`Invalid game result: ${result}`);
+      throw new AppError('RATING_CALCULATION_ERROR', {
+        cause: `invalid game result: ${result}`,
+      });
   }
 }
 
-/**
- * Calculate and apply Glicko-2 ratings for all players in a tournament
- */
+function calculateNewPeak( // returns null only if old peak was null
+  currentPeak: PlayerModel['ratingPeak'],
+  update: RatingUpdate,
+) {
+  const isStable =
+    update.newRatingDeviation <
+    glicko2Calculator.getConstants().STABLE_RD_THRESHOLD;
+
+  if (!isStable) return currentPeak;
+  if (currentPeak !== null && update.newRating <= currentPeak) {
+    return currentPeak;
+  }
+
+  return update.newRating;
+}
+
+function calculatePlayerRatingUpdate(
+  player: TournamentPlayerRating,
+  tournamentGames: RatedGame[],
+): PlayerRatingUpdate {
+  const currentPlayer = glicko2Calculator.fromDbFormat(
+    player.rating,
+    player.ratingDeviation,
+    player.ratingVolatility,
+  );
+  const results = collectPlayerResults(player.id, tournamentGames);
+  const update = glicko2Calculator.calculateNewRatings(currentPlayer, results);
+
+  return {
+    unitId: player.unitId,
+    playerId: player.id,
+    update,
+    newPeak: calculateNewPeak(player.ratingPeak, update),
+  };
+}
+
 export async function calculateAndApplyGlickoRatings(
   tournamentId: string,
   tx: Tx,
 ) {
-  // Get tournament info to verify it's rated
   const tournament = await tx
     .select({ rated: tournaments.rated })
     .from(tournaments)
@@ -168,85 +219,36 @@ export async function calculateAndApplyGlickoRatings(
     .then((rows) => rows[0]);
 
   if (!tournament) {
-    throw new Error('Tournament not found');
+    throw new AppError('TOURNAMENT_NOT_FOUND');
   }
 
   if (!tournament.rated) {
     console.log(
-      `Tournament ${tournamentId} is not rated, skipping rating calculations`,
+      `tournament ${tournamentId} is not rated, skipping rating calculations`,
     );
     return;
   }
 
-  // Get all tournament games with ratings
-  const tournamentGames = await getTournamentGamesWithRatings(tournamentId, tx);
+  const [gameRows, tournamentPlayers] = await Promise.all([
+    getTournamentGameRows(tournamentId, tx),
+    getTournamentPlayerRatings(tournamentId, tx),
+  ]);
+  const tournamentGames = toRatedGames(
+    gameRows,
+    mapPlayerRatings(tournamentPlayers),
+  );
 
   if (tournamentGames.length === 0) {
-    console.log(`No completed games found for tournament ${tournamentId}`);
+    console.log(`no completed games found for tournament ${tournamentId}`);
     return;
   }
 
-  // Get all players in the tournament
-  const tournamentPlayers = await tx
-    .select({
-      id: players.id,
-      rating: players.rating,
-      ratingPeak: players.ratingPeak,
-      ratingDeviation: players.ratingDeviation,
-      ratingVolatility: players.ratingVolatility,
-    })
-    .from(players)
-    .innerJoin(
-      players_to_tournaments,
-      eq(players.id, players_to_tournaments.playerId),
-    )
-    .where(eq(players_to_tournaments.tournamentId, tournamentId));
+  const ratingUpdates = tournamentPlayers.map((player) =>
+    calculatePlayerRatingUpdate(player, tournamentGames),
+  );
 
-  // Calculate new ratings for each player
-  const ratingUpdates: Array<{
-    playerId: string;
-    update: RatingUpdate;
-    newPeak: number | null;
-  }> = [];
-
-  for (const player of tournamentPlayers) {
-    // Convert to calculation format
-    const currentPlayer = glicko2Calculator.fromDbFormat(
-      player.rating,
-      player.ratingDeviation,
-      player.ratingVolatility,
-    );
-
-    // Collect player's results
-    const results = collectPlayerResults(player.id, tournamentGames);
-
-    // Calculate new ratings
-    const update = glicko2Calculator.calculateNewRatings(
-      currentPlayer,
-      results,
-    );
-
-    let newPeak = player.ratingPeak;
-    const isStable =
-      update.newRatingDeviation <
-      glicko2Calculator.getConstants().STABLE_RD_THRESHOLD;
-
-    if (isStable) {
-      if (newPeak === null || update.newRating > newPeak) {
-        newPeak = update.newRating;
-      }
-    }
-
-    ratingUpdates.push({
-      playerId: player.id,
-      update,
-      newPeak,
-    });
-  }
-
-  // Apply all updates in parallel (caller provides the transaction)
   await Promise.all(
-    ratingUpdates.flatMap(({ playerId, update, newPeak }) => [
+    ratingUpdates.flatMap(({ unitId, playerId, update, newPeak }) => [
       tx
         .update(players)
         .set({
@@ -258,7 +260,7 @@ export async function calculateAndApplyGlickoRatings(
         })
         .where(eq(players.id, playerId)),
       tx
-        .update(players_to_tournaments)
+        .update(players_to_units)
         .set({
           newRating: update.newRating,
           newRatingDeviation: update.newRatingDeviation,
@@ -266,44 +268,37 @@ export async function calculateAndApplyGlickoRatings(
         })
         .where(
           and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, playerId),
+            eq(players_to_units.playerId, playerId),
+            eq(players_to_units.unitId, unitId),
           ),
         ),
     ]),
   );
 
   console.log(
-    `Updated ratings for ${ratingUpdates.length} players in tournament ${tournamentId}`,
+    `updated ratings for ${ratingUpdates.length}   players in tournament ${tournamentId}`,
   );
 
   return ratingUpdates;
 }
 
-/**
- * Get rating history for a player across tournaments
- */
-export async function getPlayerRatingHistory(playerId: string) {
+export async function _getPlayerRatingHistory(playerId: string) {
   const history = await db
     .select({
-      tournamentId: players_to_tournaments.tournamentId,
-      tournamentTitle: tournaments.title,
+      tournamentId: tournament_units.tournamentId,
       tournamentDate: tournaments.date,
-      newRating: players_to_tournaments.newRating,
-      newRatingDeviation: players_to_tournaments.newRatingDeviation,
-      newVolatility: players_to_tournaments.newVolatility,
-      place: players_to_tournaments.place,
-      wins: players_to_tournaments.wins,
-      losses: players_to_tournaments.losses,
-      draws: players_to_tournaments.draws,
+      newRating: players_to_units.newRating,
+      newRatingDeviation: players_to_units.newRatingDeviation,
+      newVolatility: players_to_units.newVolatility,
     })
-    .from(players_to_tournaments)
+    .from(players_to_units)
     .innerJoin(
-      tournaments,
-      eq(players_to_tournaments.tournamentId, tournaments.id),
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
     )
-    .where(eq(players_to_tournaments.playerId, playerId))
-    .orderBy(players_to_tournaments.tournamentId);
+    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
+    .where(eq(players_to_units.playerId, playerId))
+    .orderBy(asc(tournaments.date));
 
   return history;
 }

@@ -4,7 +4,7 @@ export interface GlickoPlayer {
   volatility: number;
 }
 
-export interface GameResult {
+export interface GlickoGameResult {
   opponentRating: number;
   opponentRatingDeviation: number;
   score: number; // 1 = win, 0.5 = draw, 0 = loss
@@ -22,6 +22,10 @@ export const GLICKO2_CONSTANTS = {
   DEFAULT_VOLATILITY: 0.06,
   MIN_RD: 30,
   MAX_RD: 350,
+  MIN_STARTING_RATING: 800,
+  MAX_STARTING_RATING: 2200,
+  MIN_RATING: 400,
+  MAX_RATING: 3400,
   TAU: 0.5,
   EPSILON: 0.000001,
   SCALE_FACTOR: 173.7178,
@@ -146,7 +150,7 @@ export class Glicko2Calculator {
    */
   public calculateNewRatings(
     player: GlickoPlayer,
-    results: GameResult[],
+    results: GlickoGameResult[],
   ): RatingUpdate {
     // if no games played, only apply RD increase
     if (results.length === 0) {
@@ -223,7 +227,10 @@ export class Glicko2Calculator {
     const { rating, rd } = this.fromGlicko2Scale(mu_new, phi_new);
 
     // apply constraints and round to integers for rating/RD, keep volatility as float
-    const finalRating = Math.round(rating);
+    const finalRating = Math.min(
+      Math.max(Math.round(rating), this.constants.MIN_RATING),
+      this.constants.MAX_RATING,
+    );
     const finalRD = Math.max(
       Math.min(Math.round(rd), this.constants.MAX_RD),
       this.constants.MIN_RD,

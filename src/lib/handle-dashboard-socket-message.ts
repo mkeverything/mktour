@@ -2,27 +2,28 @@
 // ws-handler
 
 import { useTRPC } from '@/components/trpc/client';
-import { baselinePlayerSort } from '@/lib/tournament-results';
+import { generatePreStartRoundGames } from '@/lib/pre-start-round';
+import { baselineUnitSort } from '@/lib/tournament-results';
 import { settlePendingGamesAsForfeit } from '@/lib/utils';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import type { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
 
-function parsePlayerBody(
-  body: PlayerTournamentModel & { addedAt?: Date | string | null },
-): PlayerTournamentModel {
+function parseUnitBody(
+  body: UnitModel & { addedAt?: Date | string | null },
+): UnitModel {
   return {
     ...body,
     addedAt: body.addedAt != null ? new Date(body.addedAt as string) : null,
   };
 }
 
-function parsePlayersBody(
-  body: Array<PlayerTournamentModel & { addedAt?: Date | string | null }>,
-): PlayerTournamentModel[] {
-  return body.map(parsePlayerBody);
+function parseUnitsBody(
+  body: Array<UnitModel & { addedAt?: Date | string | null }>,
+): UnitModel[] {
+  return body.map(parseUnitBody);
 }
 
 export const handleSocketMessage = (
@@ -34,53 +35,48 @@ export const handleSocketMessage = (
   trpc: ReturnType<typeof useTRPC>,
 ) => {
   switch (message.event) {
-    case 'edit-team-player': {
-      const body = parsePlayerBody(message.body);
+    case 'edit-doubles-unit': {
+      const unit = parseUnitBody(message.unit);
       queryClient.cancelQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+        queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
       queryClient.setQueryData(
-        trpc.tournament.playersIn.queryKey({ tournamentId }),
+        trpc.tournament.units.queryKey({ tournamentId }),
         (cache) => {
           if (!cache) return cache;
-          const result = cache.map((p) =>
-            p.id === message.previousId ? body : p,
-          );
-          if (body.id !== message.previousId) {
-            return result
-              .filter(
-                (p) => p.id !== body.id || (p.pairPlayers?.length ?? 0) > 0,
-              )
-              .sort(baselinePlayerSort);
-          }
-          return result.sort(baselinePlayerSort);
+          return cache
+            .map((entry) => (entry.id === unit.id ? unit : entry))
+            .sort(baselineUnitSort);
         },
       );
       queryClient.invalidateQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+        queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.playersOut.queryKey({ tournamentId }),
       });
       break;
     }
-    case 'prestart-round-updated': {
-      const players = parsePlayersBody(message.players);
+    case 'prestart-units-updated': {
+      const units = parseUnitsBody(message.units);
       const roundGamesQueryKey = trpc.tournament.roundGames.queryKey({
         tournamentId,
-        roundNumber: message.roundNumber,
+        roundNumber: 1,
       });
       queryClient.cancelQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+        queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
       queryClient.cancelQueries({ queryKey: roundGamesQueryKey });
       queryClient.setQueryData(
-        trpc.tournament.playersIn.queryKey({ tournamentId }),
-        players,
+        trpc.tournament.units.queryKey({ tournamentId }),
+        units,
       );
-      queryClient.setQueryData(roundGamesQueryKey, message.games);
+      queryClient.setQueryData(
+        roundGamesQueryKey,
+        generatePreStartRoundGames({ units, tournamentId }),
+      );
       queryClient.invalidateQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+        queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
       queryClient.invalidateQueries({ queryKey: roundGamesQueryKey });
       queryClient.invalidateQueries({
@@ -94,18 +90,18 @@ export const handleSocketMessage = (
       });
       break;
     }
-    case 'withdraw-player':
+    case 'withdraw-unit':
       queryClient.cancelQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+        queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
       queryClient.cancelQueries({
         queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
       });
       queryClient.setQueryData(
-        trpc.tournament.playersIn.queryKey({ tournamentId }),
+        trpc.tournament.units.queryKey({ tournamentId }),
         (cache) =>
-          cache?.map((player) =>
-            player.id === message.id ? { ...player, isOut: true } : player,
+          cache?.map((unit) =>
+            unit.id === message.id ? { ...unit, isOut: true } : unit,
           ),
       );
       const currentAllGames = queryClient.getQueryData(
@@ -166,7 +162,7 @@ export const handleSocketMessage = (
         }),
       });
       queryClient.invalidateQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+        queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
       break;
     case 'start-tournament':
@@ -178,8 +174,22 @@ export const handleSocketMessage = (
           return cache;
         },
       );
+      queryClient.setQueryData(
+        trpc.tournament.roundGames.queryKey({
+          tournamentId,
+          roundNumber: 1,
+        }),
+        message.games,
+      );
+      queryClient.setQueryData(
+        trpc.tournament.allGames.queryKey({ tournamentId }),
+        message.games,
+      );
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.info.queryKey({ tournamentId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
       });
       break;
     case 'reset-tournament':
@@ -191,6 +201,27 @@ export const handleSocketMessage = (
           return cache;
         },
       );
+      const resetUnits = queryClient.getQueryData<UnitModel[]>(
+        trpc.tournament.units.queryKey({ tournamentId }),
+      );
+      queryClient.setQueryData(
+        trpc.tournament.allGames.queryKey({ tournamentId }),
+        [],
+      );
+      if (resetUnits) {
+        const orderedUnits = resetUnits.toSorted(baselineUnitSort);
+        queryClient.setQueryData(
+          trpc.tournament.units.queryKey({ tournamentId }),
+          orderedUnits,
+        );
+        queryClient.setQueryData(
+          trpc.tournament.roundGames.queryKey({
+            tournamentId,
+            roundNumber: 1,
+          }),
+          generatePreStartRoundGames({ units: orderedUnits, tournamentId }),
+        );
+      }
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.info.queryKey({ tournamentId }),
       });
@@ -198,9 +229,33 @@ export const handleSocketMessage = (
         queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
       });
       queryClient.invalidateQueries({
-        queryKey: trpc.tournament.playersIn.queryKey({ tournamentId }),
+        queryKey: trpc.tournament.roundGames.queryKey({
+          tournamentId,
+          roundNumber: 1,
+        }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
       setRoundInView(1);
+      break;
+
+    case 'reset-tournament-players':
+      queryClient.setQueryData(
+        trpc.tournament.units.queryKey({ tournamentId }),
+        [],
+      );
+      queryClient.setQueryData(
+        trpc.tournament.allGames.queryKey({ tournamentId }),
+        [],
+      );
+      queryClient.setQueryData(
+        trpc.tournament.roundGames.queryKey({
+          tournamentId,
+          roundNumber: 1,
+        }),
+        [],
+      );
       break;
     case 'new-round':
       queryClient.setQueryData(

@@ -8,7 +8,11 @@ import SkeletonList from '@/components/skeleton-list';
 import TournamentItemIteratee from '@/components/tournament-item';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import Paginator from '@/components/ui-custom/paginator';
+import { ScrollArea } from '@/components/ui-custom/scroll-area';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatusInClub } from '@/server/zod/enums';
+import { Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
@@ -17,15 +21,46 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
   selectedClub,
   statusInClub,
 }) => {
+  return <ClubTournaments clubId={selectedClub} statusInClub={statusInClub} />;
+};
+
+export const ClubTournamentsSection: FC<{
+  clubId: string;
+  statusInClub: StatusInClub | null;
+}> = ({ clubId, statusInClub }) => {
+  const { data: stats } = useClubStats(clubId);
+
+  return (
+    <Card className="flex h-[32rem] flex-col">
+      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Trophy className="size-4" />
+          <FormattedMessage id="Menu.tournaments" />
+          <span className="text-muted-foreground font-normal">
+            ({stats?.tournamentsCount ?? 0})
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex min-h-0 flex-1 flex-col pt-3">
+        <ClubTournaments clubId={clubId} statusInClub={statusInClub} />
+      </CardContent>
+    </Card>
+  );
+};
+
+const ClubTournaments: FC<{
+  clubId: string;
+  statusInClub?: StatusInClub | null;
+}> = ({ clubId, statusInClub }) => {
   const t = useTranslations();
-  const { data: stats } = useClubStats(selectedClub);
+  const { data: stats } = useClubStats(clubId);
   const {
     data: searchResults,
     search,
     setSearch,
     debouncedSearch,
   } = useClubScopedSearch({
-    clubId: selectedClub,
+    clubId,
     type: 'tournaments',
   });
   const {
@@ -36,7 +71,7 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useClubTournaments(selectedClub);
+  } = useClubTournaments(clubId);
 
   const useSearch = debouncedSearch.length > 0;
 
@@ -52,27 +87,36 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
     return <p className="w-full">{failureReason?.message}</p>;
 
   return (
-    <div className="mk-list">
-      <ClubSearchInput search={search} setSearch={setSearch} />
-
-      {!tournaments.length && (
-        <Empty className="text-center text-balance">
-          {stats?.tournamentsCount !== 0
-            ? t('GlobalSearch.not found')
-            : t('Empty.tournaments')}
-        </Empty>
-      )}
-      {tournaments.map((props) => (
-        <TournamentItemIteratee key={props.id} tournament={props} />
-      ))}
-      <Paginator
-        disabled={useSearch}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        fetchNextPage={fetchNextPage}
-        skeleton={<SkeletonList card length={3} />}
-      />
-      {statusInClub && stats?.tournamentsCount === 0 && <MakeTournament />}
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="pb-2">
+        <ClubSearchInput search={search} setSearch={setSearch} />
+      </div>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="mk-list">
+          {!tournaments.length && (
+            <div className="flex flex-col items-center">
+              <Empty className="text-center text-balance">
+                {stats?.tournamentsCount !== 0
+                  ? t('GlobalSearch.not found')
+                  : t('Empty.tournaments')}
+              </Empty>
+              {statusInClub && stats?.tournamentsCount === 0 && (
+                <MakeTournament />
+              )}
+            </div>
+          )}
+          {tournaments.map((props) => (
+            <TournamentItemIteratee key={props.id} tournament={props} />
+          ))}
+          <Paginator
+            disabled={useSearch}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={fetchNextPage}
+            skeleton={<SkeletonList card length={3} />}
+          />
+        </div>
+      </ScrollArea>
     </div>
   );
 };

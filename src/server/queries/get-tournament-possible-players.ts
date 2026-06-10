@@ -1,38 +1,47 @@
+'use server';
+
+import { AppError } from '@/lib/errors';
+
 import { db } from '@/server/db';
+import { users } from '@/server/db/schema';
 import { players } from '@/server/db/schema/players';
 import {
-  players_to_tournaments,
+  players_to_units,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { PlayerModel } from '@/server/zod/players';
-import { and, desc, eq, getTableColumns, isNull } from 'drizzle-orm';
+import type { PlayerWithUsernameModel } from '@/server/zod/players';
+import { and, desc, eq, getTableColumns, notInArray } from 'drizzle-orm';
 
 export async function getTournamentPossiblePlayers(
-  id: string,
-): Promise<Array<PlayerModel>> {
-  const [tournament] = await db
+  tournamentId: string,
+): Promise<PlayerWithUsernameModel[]> {
+  const tournament = await db
     .select({ clubId: tournaments.clubId })
     .from(tournaments)
-    .where(eq(tournaments.id, id));
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+    .where(eq(tournaments.id, tournamentId))
+    .then((rows) => rows.at(0));
 
-  const result = await db
-    .select(getTableColumns(players))
-    .from(players)
-    .leftJoin(
-      players_to_tournaments,
-      and(
-        eq(players.id, players_to_tournaments.playerId),
-        eq(players_to_tournaments.tournamentId, id),
-      ),
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+
+  const tournamentPlayerRows = db
+    .select({ playerId: players_to_units.playerId })
+    .from(players_to_units)
+    .innerJoin(
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
     )
+    .where(eq(tournament_units.tournamentId, tournamentId));
+
+  return await db
+    .select({ ...getTableColumns(players), username: users.username })
+    .from(players)
+    .leftJoin(users, eq(users.id, players.userId))
     .where(
       and(
         eq(players.clubId, tournament.clubId),
-        isNull(players_to_tournaments.playerId),
+        notInArray(players.id, tournamentPlayerRows),
       ),
     )
     .orderBy(desc(players.lastSeenAt));
-
-  return result as Array<PlayerModel>;
 }

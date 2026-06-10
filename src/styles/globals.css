@@ -25,7 +25,8 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    user-select: none;
+    -webkit-user-select: text;
+    user-select: text;
     height: 100dvh;
     overflow: auto;
     touch-action: pan-x pan-y;
@@ -82,7 +83,7 @@ button {
   height: 100%;
   width: 100%;
   padding: var(--spacing-mk);
-  padding-bottom: calc(var(--spacing) * 20);
+  /* padding-bottom: calc(var(--spacing) * 20); */
 
   @media screen and (min-width: 768px) {
     width: 66.6%;
@@ -106,7 +107,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-mk);
-  padding-bottom: 10dvh;
+  /* padding-bottom: 10dvh; */
 }
 
 @utility mk-link {
@@ -118,6 +119,10 @@ button {
   &:hover {
     opacity: 0.6;
   }
+}
+
+@utility mk-scale {
+  scale: calc(1 - min(0.03, 5px / 100cqw));
 }
 
 @utility text-2xs {

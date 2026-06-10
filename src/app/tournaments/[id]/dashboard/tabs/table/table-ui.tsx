@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PlayerTournamentModel } from '@/server/zod/players';
+import { UnitModel } from '@/server/zod/tournaments';
 import { UserModel } from '@/server/zod/users';
 import { useSortable } from '@dnd-kit/react/sortable';
 import { GripVertical, Scale, Trophy, UserRound } from 'lucide-react';
@@ -22,16 +22,16 @@ import { FC, PropsWithChildren, ReactNode } from 'react';
 
 import { Stat } from './column-types';
 
-export const PlayerTableRow: FC<{
+export const UnitTableRow: FC<{
   canSort: boolean;
   index: number;
-  player: PlayerTournamentModel;
+  unit: UnitModel;
   stats: Stat[];
   user: UserModel | null | undefined;
   hasEnded: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
-  renderStat: Record<Stat, (player: PlayerTournamentModel) => ReactNode>;
+  renderStat: Record<Stat, (unit: UnitModel) => ReactNode>;
   isDragSource?: boolean;
   isDropTarget?: boolean;
   tableRowRef?: React.Ref<HTMLTableRowElement>;
@@ -40,7 +40,7 @@ export const PlayerTableRow: FC<{
 }> = ({
   canSort,
   index,
-  player,
+  unit,
   stats,
   user,
   hasEnded,
@@ -60,7 +60,9 @@ export const PlayerTableRow: FC<{
       ref={tableRowRef}
       onClick={onSelect}
       className={[
-        player.username === user?.username ? 'bg-card/50 font-bold' : '',
+        unit.players.some((member) => member.userId === user?.id)
+          ? 'bg-card/50 font-bold'
+          : '',
         isSelected ? 'bg-card/70' : '',
         canSort ? 'cursor-default' : '',
         isDragSource ? 'opacity-30' : '',
@@ -84,43 +86,43 @@ export const PlayerTableRow: FC<{
         </TableCellStyled>
       )}
       <TableCell className="font-small w-6 text-center">
-        <Place player={player} hasEnded={hasEnded}>
+        <Place unit={unit} hasEnded={hasEnded}>
           {index + 1}
         </Place>
       </TableCell>
       <TableCellStyled className="font-small w-full max-w-0 min-w-10 truncate pl-0">
-        <Status player={player} user={user}>
-          {player.nickname}
+        <Status unit={unit} user={user}>
+          {unit.unitNickname}
         </Status>
       </TableCellStyled>
       {stats.map((stat) => (
         <StatCell key={stat} isOverlay={isOverlay} stat={stat}>
-          {renderStat[stat](player)}
+          {renderStat[stat](unit)}
         </StatCell>
       ))}
     </TableRow>
   );
 };
 
-export const SortableTableRow: FC<{
+export const SortableUnitTableRow: FC<{
   canSort: boolean;
   index: number;
-  player: PlayerTournamentModel;
+  unit: UnitModel;
   stats: Stat[];
   user: UserModel | null | undefined;
   hasEnded: boolean;
   isSelected: boolean;
   onSelect: () => void;
-  renderStat: Record<Stat, (player: PlayerTournamentModel) => ReactNode>;
+  renderStat: Record<Stat, (unit: UnitModel) => ReactNode>;
 }> = (props) => {
   const { ref, handleRef, isDragSource, isDropTarget } = useSortable({
-    id: props.player.id,
+    id: props.unit.id,
     index: props.index,
     disabled: !props.canSort,
   });
 
   return (
-    <PlayerTableRow
+    <UnitTableRow
       {...props}
       tableRowRef={ref}
       dragHandleRef={handleRef}
@@ -196,10 +198,12 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
   );
 };
 
-const Place: FC<
-  { player: PlayerTournamentModel; hasEnded: boolean } & PropsWithChildren
-> = ({ player, hasEnded, children }) => {
-  const place = player.place;
+const Place: FC<{ unit: UnitModel; hasEnded: boolean } & PropsWithChildren> = ({
+  unit,
+  hasEnded,
+  children,
+}) => {
+  const place = unit.place;
 
   if (!place || !hasEnded) return children;
 
@@ -212,25 +216,25 @@ const Place: FC<
 
 const Status: FC<
   {
-    player: PlayerTournamentModel;
+    unit: UnitModel;
     user: UserModel | null | undefined;
   } & PropsWithChildren
-> = ({ player, children }) => {
-  const pairPlayers = player.pairPlayers ?? [];
+> = ({ unit, children }) => {
+  const unitMembers = unit.players;
 
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
       <div
-        className={`gap-mk flex min-w-0 items-center ${player.isOut && 'text-muted-foreground line-through'}`}
+        className={`gap-mk flex min-w-0 items-center ${unit.isOut && 'text-muted-foreground line-through'}`}
       >
         <span className="truncate">{children}</span>
-        {player.username && (
+        {unit.players.some((member) => member.userId) && (
           <UserRound className="text-muted-foreground size-4 shrink-0" />
         )}
       </div>
-      {pairPlayers.length === 2 && (
+      {unitMembers.length > 1 && (
         <small className="text-muted-foreground text-2xs truncate">
-          {pairPlayers[0].nickname}, {pairPlayers[1].nickname}
+          {unitMembers.map((member) => member.nickname).join(', ')}
         </small>
       )}
     </div>

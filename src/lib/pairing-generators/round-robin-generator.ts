@@ -1,5 +1,6 @@
+import { AppError } from '@/lib/errors';
 import {
-  convertPlayerToEntity,
+  convertUnitToEntity,
   generateRoundPairs,
   getColouredPair,
   getGameToInsert,
@@ -31,7 +32,7 @@ export function generateRoundRobinRound({
 
   // checking if the set of layers is even, if not, making it even with a smart alg
   const matchedEntities = players.map((player) =>
-    convertPlayerToEntity(player, games),
+    convertUnitToEntity(player, games),
   );
 
   const playerCount = matchedEntities.length;
@@ -74,13 +75,17 @@ function generatePairsCycle(
 ) {
   // the artifact of the generator functions compatiblity
   if (typeof roundNumber === 'undefined')
-    throw new Error("THE ROUND NUMBER WASN'T PASSED");
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: "THE ROUND NUMBER WASN'T PASSED",
+    });
 
   // starting shifting process (cycling the circle of players, having one number fixed)
   const constantPairingNumber = pairingNumbersFlat.shift();
 
   if (typeof constantPairingNumber === 'undefined')
-    throw new Error('THE PAIRING NUMBER ARRAY HAS EXHAUSTED, UNEXPECTED!'); // #TODO: create a custom error for that.
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'THE PAIRING NUMBER ARRAY HAS EXHAUSTED, UNEXPECTED!',
+    }); // #TODO: create a custom error for that.
 
   // cycling process, where you just rotate the array
   for (
@@ -91,7 +96,9 @@ function generatePairsCycle(
     const lastPairingNumber = pairingNumbersFlat.shift();
     if (lastPairingNumber) pairingNumbersFlat.push(lastPairingNumber);
     else
-      throw new Error('THE PAIRING NUMBER ARRAY HAS EXHAUSTED, UNEXEPECTED!');
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: 'THE PAIRING NUMBER ARRAY HAS EXHAUSTED, UNEXEPECTED!',
+      });
   }
 
   // adding the first player, which is always fixed

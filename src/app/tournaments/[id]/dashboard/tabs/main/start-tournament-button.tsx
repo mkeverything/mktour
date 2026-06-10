@@ -1,7 +1,8 @@
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
 import useTournamentStart from '@/components/hooks/mutation-hooks/use-tournament-start';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useTournamentPlayers } from '@/components/hooks/query-hooks/use-tournament-players';
+import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { CirclePlay, Loader2 } from 'lucide-react';
@@ -15,23 +16,17 @@ export default function StartTournamentButton() {
   const { id } = useParams<{ id: string }>();
   const { data } = useTournamentInfo(id);
   const { sendJsonMessage } = useContext(DashboardContext);
-  const { data: players } = useTournamentPlayers(id);
-  const startTournamentMutation = useTournamentStart(queryClient, {
+  const { data: units } = useTournamentUnits(id);
+  const startTournamentMutation = useTournamentStart(
+    queryClient,
     id,
     sendJsonMessage,
-  });
+  );
+  const preStartLocked = useTournamentPreStartLocked(id);
   const t = useTranslations('Tournament.Main');
 
   const handleClick = () => {
-    if (!players) {
-      throw new Error('NO_PLAYERS_DATA');
-    }
-    if (!data) {
-      throw new Error('NO_TOURNAMENT_DATA');
-    }
-    if (players.length < 2) {
-      throw new Error('NOT_ENOUGH_PLAYERS');
-    }
+    if (!data) return;
     startTournamentMutation.mutate(
       {
         startedAt: new Date(),
@@ -45,7 +40,7 @@ export default function StartTournamentButton() {
             tournament_id: data.tournament.id,
             format: data.tournament.format,
             rounds_number: data.tournament.roundsNumber,
-            player_count: players.length,
+            unit_count: units?.length,
           });
         },
       },
@@ -55,17 +50,11 @@ export default function StartTournamentButton() {
   return (
     <Button
       className="isolate-touch md:col-span-2"
-      disabled={
-        !players || players?.length < 2 || startTournamentMutation.isPending
-      }
+      disabled={!units || units?.length < 2 || preStartLocked || !data}
       onClick={handleClick}
       size="lg"
     >
-      {startTournamentMutation.isPending ? (
-        <Loader2 className="animate-spin" />
-      ) : (
-        <CirclePlay />
-      )}
+      {preStartLocked ? <Loader2 className="animate-spin" /> : <CirclePlay />}
       {t('start tournament')}
     </Button>
   );

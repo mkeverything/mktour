@@ -16,7 +16,6 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { useQueryClient } from '@tanstack/react-query';
 import { RotateCcw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
@@ -28,12 +27,10 @@ export default function ResetTournamentButton({
   className?: string;
 }) {
   const { id: tournamentId } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
   const { sendJsonMessage } = useContext(DashboardContext);
   const { setRoundInView } = useContext(DashboardRoundContext);
   const { mutate, isPending } = useTournamentReset(
     tournamentId,
-    queryClient,
     sendJsonMessage,
     setRoundInView,
   );

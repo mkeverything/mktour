@@ -4,36 +4,74 @@ import AddPlayerDrawer from '@/app/clubs/my/add-new-player';
 import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import EditPlayerForm from '@/app/player/[id]/player-form';
 import Empty from '@/components/empty';
+import FormattedMessage from '@/components/formatted-message';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
+import { ScrollArea } from '@/components/ui-custom/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
-import { UserRound } from 'lucide-react';
+import { UserRound, Users2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC } from 'react';
+import { ComponentProps, FC } from 'react';
 import { toast } from 'sonner';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
+  return <ClubPlayers clubId={selectedClub} statusInClub={statusInClub} />;
+};
+
+export const ClubPlayersSection: FC<{
+  clubId: string;
+  statusInClub: StatusInClub | null;
+}> = ({ clubId, statusInClub }) => {
+  const { playersCount } = useClubStats(clubId).data ?? {};
+
+  return (
+    <Card className="flex h-[32rem] min-w-0 flex-col overflow-hidden">
+      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Users2 className="size-4" />
+          <FormattedMessage id="Club.Page.players" />
+          {!!playersCount && (
+            <span className="text-muted-foreground font-normal">
+              ({playersCount})
+            </span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col overflow-hidden pt-3">
+        <ClubPlayers clubId={clubId} statusInClub={statusInClub} />
+      </CardContent>
+    </Card>
+  );
+};
+
+const ClubPlayers: FC<{
+  clubId: string;
+  statusInClub?: StatusInClub | null;
+}> = ({ clubId, statusInClub }) => {
   const t = useTranslations();
-  const { playersCount } = useClubStats(selectedClub).data ?? {};
+  const { translateError } = useIntlError();
+  const { playersCount } = useClubStats(clubId).data ?? {};
   const {
     data: searchResults,
     search,
     setSearch,
     debouncedSearch,
   } = useClubScopedSearch({
-    clubId: selectedClub,
+    clubId,
     type: 'players',
   });
-  const playersInfinite = useClubPlayers(selectedClub);
+  const playersInfinite = useClubPlayers(clubId);
 
   const useSearch = debouncedSearch.length > 0;
   const playersFromPages =
@@ -45,13 +83,16 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   }
 
   if (!useSearch && playersInfinite.status === 'error') {
-    toast.error(playersInfinite.error.message);
-    return <p>{playersInfinite.error.message}</p>;
+    const message = translateError(playersInfinite.error, {
+      fallback: 'POSSIBLE_PLAYERS_NOT_LOADED',
+    });
+    toast.error(message);
+    return <p>{message}</p>;
   }
 
   return (
-    <div className="mk-list">
-      <div className="gap-mk flex">
+    <div className="gap-mk flex h-full min-w-0 flex-col">
+      <div className="gap-mk flex md:top-0 md:z-20">
         <ClubSearchInput
           search={search}
           setSearch={setSearch}
@@ -59,68 +100,61 @@ const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
         />
         {statusInClub && <AddPlayerDrawer />}
       </div>
-      <div className="mk-list">
-        {players.map((player) => (
-          <PlayerItemIteratee
-            key={player.id}
-            player={player}
-            statusInClub={statusInClub}
+      <ScrollArea className="h-full w-full max-w-full min-w-0">
+        <div className="mk-list w-full max-w-full min-w-0 overflow-hidden">
+          {players.map((player) => (
+            <PlayerItem
+              key={player.id}
+              player={player}
+              statusInClub={statusInClub}
+            />
+          ))}
+          {players.length === 0 && (
+            <Empty className="text-center text-balance">
+              {playersCount !== 0
+                ? t('GlobalSearch.not found')
+                : t('Empty.players')}
+            </Empty>
+          )}
+          <Paginator
+            disabled={useSearch}
+            hasNextPage={playersInfinite.hasNextPage}
+            isFetchingNextPage={playersInfinite.isFetchingNextPage}
+            fetchNextPage={playersInfinite.fetchNextPage}
+            skeleton={<ClubPlayersSkeletonList length={3} />}
           />
-        ))}
-        {players.length === 0 && (
-          <Empty className="text-center text-balance">
-            {playersCount !== 0
-              ? t('GlobalSearch.not found')
-              : t('Empty.players')}
-          </Empty>
-        )}
-        <Paginator
-          disabled={useSearch}
-          hasNextPage={playersInfinite.hasNextPage}
-          isFetchingNextPage={playersInfinite.isFetchingNextPage}
-          fetchNextPage={playersInfinite.fetchNextPage}
-          skeleton={<ClubPlayersSkeletonList length={3} />}
-        />
-      </div>
+        </div>
+      </ScrollArea>
     </div>
-  );
-};
-
-const PlayerItemIteratee = ({
-  player,
-  statusInClub,
-}: {
-  player: PlayerModel;
-  statusInClub: StatusInClub | null | undefined;
-}) => {
-  return (
-    <PlayerItem player={player} key={player.id} statusInClub={statusInClub} />
   );
 };
 
 const PlayerItem: FC<{
   player: PlayerModel;
-  statusInClub: StatusInClub | null | undefined;
+  statusInClub?: StatusInClub | null;
 }> = ({ player, statusInClub }) => {
-  const { id, nickname, rating } = player;
+  if (!statusInClub) {
+    return (
+      <Link
+        href={`/player/${player.id}`}
+        className="block w-full max-w-full min-w-0 overflow-hidden"
+      >
+        <PlayerCard player={player} />
+      </Link>
+    );
+  }
 
   return (
     <ComboModal.Root>
-      <ComboModal.Trigger>
-        <Card
-          key={id}
-          className="mk-card flex items-center justify-between truncate"
-        >
-          <span className="text-sm">{nickname}</span>
-          <div className="text-muted-foreground text-xs">{rating}</div>
-        </Card>
+      <ComboModal.Trigger asChild>
+        <PlayerCard player={player} />
       </ComboModal.Trigger>
       <ComboModal.Content>
         <ComboModal.Header>
           <ComboModal.Title>
             <Button variant="ghost" className="text-xl" asChild>
-              <Link href={`/player/${player?.id}`}>
-                <span>{nickname}</span>
+              <Link href={`/player/${player.id}`}>
+                <span>{player.nickname}</span>
                 <UserRound />
               </Link>
             </Button>
@@ -128,7 +162,7 @@ const PlayerItem: FC<{
         </ComboModal.Header>
         <EditPlayerForm
           clubId={player.clubId}
-          player={player}
+          player={{ playerId: player.id, ...player }}
           status={statusInClub}
           setOpen={() => null}
         />
@@ -136,6 +170,25 @@ const PlayerItem: FC<{
     </ComboModal.Root>
   );
 };
+
+const PlayerCard: FC<{ player: PlayerModel } & ComponentProps<typeof Card>> = ({
+  player,
+  className,
+  ...props
+}) => (
+  <Card
+    {...props}
+    className={cn(
+      'mk-card grid w-full max-w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden',
+      className,
+    )}
+  >
+    <span className="min-w-0 truncate text-sm">{player.nickname}</span>
+    <div className="text-muted-foreground shrink-0 text-xs">
+      {player.rating}
+    </div>
+  </Card>
+);
 
 const ClubPlayersSkeletonList: FC<SkeletonListProps> = ({ length }) => (
   <SkeletonList length={length} className="h-14" />

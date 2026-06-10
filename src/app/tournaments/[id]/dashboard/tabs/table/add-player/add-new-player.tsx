@@ -1,6 +1,6 @@
 import { LoadingSpinner } from '@/app/loading';
 import { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
-import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/use-tournament-add-new-player';
+import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-new-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { newid } from '@/lib/utils';
 import {
   PlayerFormModel,
@@ -159,8 +160,8 @@ const AddNewPlayer = ({
                 <Slider
                   data-vaul-no-drag
                   step={50}
-                  min={0}
-                  max={3000}
+                  min={GLICKO2_CONSTANTS.MIN_STARTING_RATING}
+                  max={GLICKO2_CONSTANTS.MAX_STARTING_RATING}
                   className="w-full"
                   value={[value ?? 1500]}
                   onValueChange={(vals) => {

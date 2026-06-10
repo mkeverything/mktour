@@ -1,18 +1,19 @@
 'use server';
 
+import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { db, type Database } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import {
   games,
-  players_to_tournaments,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { GameResult } from '@/server/zod/enums';
 import { GameModel } from '@/server/zod/tournaments';
 import { and, eq, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
-import { getPlayerResultDeltas } from './set-game-result-deltas';
+import { getUnitResultDeltas } from './set-game-result-deltas';
 
 export async function replaceRoundGames({
   tournamentId,
@@ -46,12 +47,7 @@ export async function replaceRoundGames({
       );
 
     if (newGames.length === 0) return;
-    await d.insert(games).values(
-      newGames.map((game) => {
-        const { blackNickname, whiteNickname, pairMembers, ...rest } = game;
-        return rest;
-      }),
-    );
+    await d.insert(games).values(newGames);
   };
 
   if (database) {
@@ -72,9 +68,9 @@ export async function saveRound({
   newGames: GameModel[];
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
+  if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
+  if (status === 'viewer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   const tournament = await db
     .select({
       format: tournaments.format,
@@ -83,35 +79,30 @@ export async function saveRound({
     .from(tournaments)
     .where(eq(tournaments.id, tournamentId))
     .then((rows) => rows.at(0));
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
 
   if (tournament.format === 'swiss') {
-    const activeParticipants = await db
+    const activeUnits = await db
       .select({
-        playerId: players_to_tournaments.playerId,
+        unitId: tournament_units.id,
       })
-      .from(players_to_tournaments)
+      .from(tournament_units)
       .where(
         and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          or(
-            isNull(players_to_tournaments.isOut),
-            eq(players_to_tournaments.isOut, false),
-          ),
+          eq(tournament_units.tournamentId, tournamentId),
+          or(isNull(tournament_units.isOut), eq(tournament_units.isOut, false)),
         ),
       );
 
-    const activePlayerIds = new Set(
-      activeParticipants.map((participant) => participant.playerId),
-    );
-    const hasInvalidParticipant = newGames.some(
+    const activeUnitIds = new Set(activeUnits.map((unit) => unit.unitId));
+    const hasInvalidUnit = newGames.some(
       (game) =>
-        !activePlayerIds.has(game.whiteId) ||
-        !activePlayerIds.has(game.blackId),
+        !activeUnitIds.has(game.whiteUnitId) ||
+        !activeUnitIds.has(game.blackUnitId),
     );
 
-    if (hasInvalidParticipant) {
-      throw new Error('INVALID_PLAYER_IN_PAIRING');
+    if (hasInvalidUnit) {
+      throw new AppError('INVALID_UNIT_IN_PAIRING');
     }
   }
   const existingDecidedGames = await db
@@ -126,7 +117,7 @@ export async function saveRound({
     )
     .limit(1);
   if (existingDecidedGames.length > 0) {
-    throw new Error('ROUND_ALREADY_HAS_RESULTS');
+    throw new AppError('ROUND_ALREADY_HAS_RESULTS');
   }
   await replaceRoundGames({ tournamentId, roundNumber, newGames });
 }
@@ -139,15 +130,12 @@ export async function setTournamentGameResult({
   tournamentId: string;
   gameId: string;
   result: GameResult;
-  whiteId: string;
-  blackId: string;
-  prevResult: GameResult | null;
-  roundNumber: number;
 }) {
   const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  const authStatus = await getStatusInTournament(user.id, tournamentId);
-  if (authStatus.status === 'viewer') throw new Error('NOT_AUTHORIZED');
+  if (!user) throw new AppError('UNAUTHENTICATED');
+  const { status: authStatus, unitId: authUnitId } =
+    await getStatusInTournament(user.id, tournamentId);
+  if (authStatus === 'viewer') throw new AppError('FORBIDDEN');
 
   const tournamentWithClub = (
     await db
@@ -160,84 +148,65 @@ export async function setTournamentGameResult({
       .innerJoin(clubs, eq(tournaments.clubId, clubs.id))
       .where(eq(tournaments.id, tournamentId))
   ).at(0);
-  if (!tournamentWithClub) throw new Error('TOURNAMENT NOT FOUND');
+  if (!tournamentWithClub) throw new AppError('TOURNAMENT_NOT_FOUND');
   if (tournamentWithClub.startedAt === null)
-    throw new Error('TOURNAMENT_NOT_STARTED');
+    throw new AppError('TOURNAMENT_NOT_STARTED');
   if (tournamentWithClub.closedAt !== null) {
-    throw new Error('TOURNAMENT_ALREADY_FINISHED');
+    throw new AppError('TOURNAMENT_ALREADY_FINISHED');
   }
 
   await db.transaction(async (tx) => {
     const game = (
       await tx
         .select({
-          whiteId: games.whiteId,
-          blackId: games.blackId,
+          whiteUnitId: games.whiteUnitId,
+          blackUnitId: games.blackUnitId,
           result: games.result,
         })
         .from(games)
         .where(and(eq(games.id, gameId), eq(games.tournamentId, tournamentId)))
     ).at(0);
-    if (!game) throw new Error('GAME_NOT_FOUND');
+    if (!game) throw new AppError('GAME_NOT_FOUND');
 
-    const [whiteParticipant, blackParticipant] = await Promise.all([
+    const [whiteUnit, blackUnit] = await Promise.all([
       tx
-        .select({
-          teamNickname: players_to_tournaments.teamNickname,
-          isOut: players_to_tournaments.isOut,
-        })
-        .from(players_to_tournaments)
+        .select({ isOut: tournament_units.isOut })
+        .from(tournament_units)
         .where(
           and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, game.whiteId),
+            eq(tournament_units.tournamentId, tournamentId),
+            eq(tournament_units.id, game.whiteUnitId),
           ),
         )
         .then((rows) => rows.at(0)),
       tx
-        .select({
-          teamNickname: players_to_tournaments.teamNickname,
-          isOut: players_to_tournaments.isOut,
-        })
-        .from(players_to_tournaments)
+        .select({ isOut: tournament_units.isOut })
+        .from(tournament_units)
         .where(
           and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, game.blackId),
+            eq(tournament_units.tournamentId, tournamentId),
+            eq(tournament_units.id, game.blackUnitId),
           ),
         )
         .then((rows) => rows.at(0)),
     ]);
 
-    if (whiteParticipant?.isOut || blackParticipant?.isOut) {
-      throw new Error('WITHDRAWN_PLAYER_CANNOT_PLAY');
+    if (!whiteUnit || !blackUnit) {
+      throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
     }
 
-    if (authStatus.status === 'player') {
-      if (!tournamentWithClub.allowPlayersSetResults) {
-        throw new Error('PLAYER_RESULT_SETTING_DISABLED');
-      }
-      const authParticipant = await tx
-        .select({
-          playerId: players_to_tournaments.playerId,
-          teamNickname: players_to_tournaments.teamNickname,
-        })
-        .from(players_to_tournaments)
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, authStatus.playerId),
-          ),
-        )
-        .then((rows) => rows.at(0));
+    if (whiteUnit.isOut || blackUnit.isOut) {
+      throw new AppError('WITHDRAWN_UNIT_CANNOT_PLAY');
+    }
 
-      const isPlayerInGame =
-        authStatus.playerId === game.whiteId ||
-        authStatus.playerId === game.blackId ||
-        (!!authParticipant?.teamNickname &&
-          (authParticipant.teamNickname === whiteParticipant?.teamNickname ||
-            authParticipant.teamNickname === blackParticipant?.teamNickname));
-      if (!isPlayerInGame) throw new Error('NOT_YOUR_GAME');
+    if (authStatus === 'player') {
+      if (!tournamentWithClub.allowPlayersSetResults) {
+        throw new AppError('PLAYER_RESULT_SETTING_DISABLED');
+      }
+
+      const isPlayerUnitInGame =
+        authUnitId === game.whiteUnitId || authUnitId === game.blackUnitId;
+      if (!isPlayerUnitInGame) throw new AppError('NOT_YOUR_GAME');
     }
 
     let nextResult: GameResult | null;
@@ -251,8 +220,8 @@ export async function setTournamentGameResult({
       database: tx,
       tournamentId,
       gameId,
-      whiteId: game.whiteId,
-      blackId: game.blackId,
+      whiteUnitId: game.whiteUnitId,
+      blackUnitId: game.blackUnitId,
       prevResult: game.result,
       nextResult,
     });
@@ -263,17 +232,14 @@ export async function setTournamentGameResult({
  * Applies a game result inside a caller-owned transaction.
  *
  * Pure DB logic — no auth, no transaction wrapping, no isOut guard, no toggle.
- * Callers (setTournamentGameResult, withdrawPlayer's forfeit loop) handle
+ * Callers (setTournamentGameResult, withdraw unit's forfeit loop) handle
  * those concerns themselves.
  *
  * Steps (top-to-bottom):
- *   1. Look up team nicknames for both participants in parallel.
- *   2. Build participant match clauses — team-wide via teamNickname for
- *      doubles, single-row by playerId for solo.
- *   3. Compute wins/draws/losses/colorIndex deltas via getPlayerResultDeltas.
- *   4. UPDATE white participant's stat counters with the deltas.
- *   5. UPDATE black participant's stat counters with the deltas.
- *   6. UPDATE the game row with nextResult and finishedAt, with optimistic
+ *   1. Compute wins/draws/losses/colorIndex deltas via getPlayerResultDeltas.
+ *   2. UPDATE white unit's stat counters with the deltas.
+ *   3. UPDATE black unit's stat counters with the deltas.
+ *   4. UPDATE the game row with nextResult and finishedAt, with optimistic
  *      concurrency check on prevResult.
  *
  * `finishedAt` is set to now when nextResult is non-null, cleared when
@@ -283,96 +249,54 @@ export async function applyGameResult({
   database,
   tournamentId,
   gameId,
-  whiteId,
-  blackId,
+  whiteUnitId,
+  blackUnitId,
   prevResult,
   nextResult,
 }: {
   database: Database;
   tournamentId: string;
   gameId: string;
-  whiteId: string;
-  blackId: string;
+  whiteUnitId: string;
+  blackUnitId: string;
   prevResult: GameResult | null;
   nextResult: GameResult | null;
 }): Promise<void> {
-  const [whiteParticipant, blackParticipant] = await Promise.all([
-    database
-      .select({ teamNickname: players_to_tournaments.teamNickname })
-      .from(players_to_tournaments)
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, whiteId),
-        ),
-      )
-      .limit(1)
-      .then((rows) => rows.at(0)),
-    database
-      .select({ teamNickname: players_to_tournaments.teamNickname })
-      .from(players_to_tournaments)
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, blackId),
-        ),
-      )
-      .limit(1)
-      .then((rows) => rows.at(0)),
-  ]);
+  const whiteMatch = and(
+    eq(tournament_units.tournamentId, tournamentId),
+    eq(tournament_units.id, whiteUnitId),
+  );
+  const blackMatch = and(
+    eq(tournament_units.tournamentId, tournamentId),
+    eq(tournament_units.id, blackUnitId),
+  );
 
-  let whiteMatch;
-  if (whiteParticipant?.teamNickname) {
-    whiteMatch = and(
-      eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.teamNickname, whiteParticipant.teamNickname),
-    );
-  } else {
-    whiteMatch = and(
-      eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.playerId, whiteId),
-    );
-  }
-
-  let blackMatch;
-  if (blackParticipant?.teamNickname) {
-    blackMatch = and(
-      eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.teamNickname, blackParticipant.teamNickname),
-    );
-  } else {
-    blackMatch = and(
-      eq(players_to_tournaments.tournamentId, tournamentId),
-      eq(players_to_tournaments.playerId, blackId),
-    );
-  }
-
-  const deltas = getPlayerResultDeltas(prevResult, nextResult);
+  const deltas = getUnitResultDeltas(prevResult, nextResult);
 
   const whiteUpdate = await database
-    .update(players_to_tournaments)
+    .update(tournament_units)
     .set({
-      wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.white.wins}`,
-      draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.white.draws}`,
-      losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.white.losses}`,
-      colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.white.colorIndex}`,
+      wins: sql`COALESCE(${tournament_units.wins}, 0) + ${deltas.white.wins}`,
+      draws: sql`COALESCE(${tournament_units.draws}, 0) + ${deltas.white.draws}`,
+      losses: sql`COALESCE(${tournament_units.losses}, 0) + ${deltas.white.losses}`,
+      colorIndex: sql`COALESCE(${tournament_units.colorIndex}, 0) + ${deltas.white.colorIndex}`,
     })
     .where(whiteMatch);
   if (!whiteUpdate.rowsAffected) {
-    throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+    throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
   const blackUpdate = await database
-    .update(players_to_tournaments)
+    .update(tournament_units)
     .set({
-      wins: sql`COALESCE(${players_to_tournaments.wins}, 0) + ${deltas.black.wins}`,
-      draws: sql`COALESCE(${players_to_tournaments.draws}, 0) + ${deltas.black.draws}`,
-      losses: sql`COALESCE(${players_to_tournaments.losses}, 0) + ${deltas.black.losses}`,
-      colorIndex: sql`COALESCE(${players_to_tournaments.colorIndex}, 0) + ${deltas.black.colorIndex}`,
+      wins: sql`COALESCE(${tournament_units.wins}, 0) + ${deltas.black.wins}`,
+      draws: sql`COALESCE(${tournament_units.draws}, 0) + ${deltas.black.draws}`,
+      losses: sql`COALESCE(${tournament_units.losses}, 0) + ${deltas.black.losses}`,
+      colorIndex: sql`COALESCE(${tournament_units.colorIndex}, 0) + ${deltas.black.colorIndex}`,
     })
     .where(blackMatch);
   if (!blackUpdate.rowsAffected) {
-    throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
+    throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
   let prevResultMatch;
@@ -400,6 +324,6 @@ export async function applyGameResult({
       ),
     );
   if (!gameUpdate.rowsAffected) {
-    throw new Error('CONCURRENT_GAME_RESULT_UPDATE');
+    throw new AppError('CONCURRENT_GAME_RESULT_UPDATE');
   }
 }

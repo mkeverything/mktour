@@ -1,19 +1,23 @@
 'use client';
 
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
 import { toast } from 'sonner';
 
-export default function useTournamentEditTitle() {
+export default function useTournamentEditTitle(tournamentId: string) {
   const { sendJsonMessage } = useContext(DashboardContext);
   const queryClient = useQueryClient();
   const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const { settle } = useTournamentCache(tournamentId);
   return useMutation(
-    trpc.tournament.editTournamentTitle.mutationOptions({
+    trpc.tournament.editTitle.mutationOptions({
       onMutate: async ({ tournamentId, title }) => {
         queryClient.cancelQueries({
           queryKey: trpc.tournament.info.queryKey({ tournamentId }),
@@ -38,7 +42,7 @@ export default function useTournamentEditTitle() {
         toast.success(t('tournament renamed'));
       },
       onError: (error, { tournamentId }, context) => {
-        toast.error(t('server error') + `: ` + error.message);
+        toast.error(tErrors(getAppErrorMessage(error)));
         if (context?.previousData) {
           queryClient.setQueryData(
             trpc.tournament.info.queryKey({ tournamentId }),
@@ -46,13 +50,7 @@ export default function useTournamentEditTitle() {
           );
         }
       },
-      onSettled: () => {
-        if (queryClient.isMutating() === 1) {
-          queryClient.invalidateQueries({
-            queryKey: trpc.tournament.info.pathKey(),
-          });
-        }
-      },
+      onSettled: () => settle('editTitle'),
     }),
   );
 }

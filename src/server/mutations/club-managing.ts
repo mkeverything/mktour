@@ -1,6 +1,8 @@
 'use server';
 
-import { getUserLichessTeams } from '@/lib/api/lichess';
+import { AppError } from '@/lib/errors';
+
+import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid } from '@/lib/utils';
@@ -13,11 +15,11 @@ import {
 import { affiliations, players } from '@/server/db/schema/players';
 import {
   games,
-  players_to_tournaments,
+  players_to_units,
+  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
-import { getClubByLichessTeam } from '@/server/queries/get-club-by-lichess-team';
 import { getEmptyClub } from '@/server/queries/get-empty-club';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
@@ -29,20 +31,17 @@ import {
 import { UserNotificationInsertModel } from '@/server/zod/notifications';
 import { PlayerEditModel, PlayerFormModel } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { TRPCError } from '@trpc/server';
 import { and, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
 export const createClub = async (user: User, values: ClubFormModel) => {
   const emptyClub = await getEmptyClub({ userId: user.id });
-  if (emptyClub) throw new Error('EMPTY_CLUB_EXISTS');
-  if (values.lichessTeam) {
-    const existingClub = await getClubByLichessTeam({
-      lichessTeam: values.lichessTeam,
-    });
-    if (existingClub) throw new Error('LICHESS_TEAM_ALREADY_LINKED');
-  }
+  if (emptyClub) throw new AppError('EMPTY_CLUB_EXISTS');
+  await validateLichessTeamAdmin({
+    lichessTeam: values.lichessTeam,
+    username: user.username,
+  });
 
   const id = newid();
   const createdAt = new Date();
@@ -52,7 +51,7 @@ export const createClub = async (user: User, values: ClubFormModel) => {
     createdAt,
   };
   const newRelation: ClubToUserModel = {
-    id: `${user.id}=${id}`,
+    id: `${user.id}_${id}`,
     clubId: id,
     userId: user.id,
     status: 'co-owner',
@@ -66,33 +65,22 @@ export const createClub = async (user: User, values: ClubFormModel) => {
       db.insert(clubs_to_users).values(newRelation),
       db.update(users).set({ selectedClub: id }).where(eq(users.id, user.id)),
     ]);
-    if (!returnedClub) throw new Error('CLUB_NOT_CREATED');
+    if (!returnedClub) throw new AppError('CLUB_NOT_CREATED');
     return returnedClub;
   } catch (e) {
-    throw new Error(`CLUB_NOT_CREATED: ${e}`);
+    throw new AppError('CLUB_NOT_CREATED', { cause: e });
   }
 };
 
 export const editClub = async ({
-  clubId,
-  values,
   username,
-}: {
-  clubId: string;
-  values: ClubEditModel;
-  username: string;
-}) => {
-  if (values.lichessTeam) {
-    const userTeams = await getUserLichessTeams(username);
-    const isTeamAdmin = userTeams.find((t) => t.id === values.lichessTeam);
-    if (!isTeamAdmin) throw new Error('NOT_LICHESS_TEAM_ADMIN');
-
-    const existingClub = await getClubByLichessTeam({
-      lichessTeam: values.lichessTeam,
-    });
-    if (existingClub && existingClub.id !== clubId)
-      throw new Error('LICHESS_TEAM_ALREADY_LINKED');
-  }
+  clubId,
+  ...values
+}: ClubEditModel & { username: string }) => {
+  await validateLichessTeamAdmin({
+    lichessTeam: values.lichessTeam,
+    username,
+  });
 
   const newClub = await db
     .update(clubs)
@@ -102,6 +90,24 @@ export const editClub = async ({
   revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
   return newClub.at(0);
 };
+
+async function validateLichessTeamAdmin({
+  lichessTeam,
+  username,
+}: {
+  lichessTeam?: string | null;
+  username: string;
+}) {
+  if (!lichessTeam) return;
+
+  const userTeams = await getUserLichessTeams(username);
+  const isTeamAdmin = userTeams.find((t) => t.id === lichessTeam);
+  if (isTeamAdmin) return;
+
+  const team = await getLichessTeam(lichessTeam);
+  if (!team) throw new AppError('LICHESS_TEAM_NOT_FOUND');
+  throw new AppError('NOT_LICHESS_TEAM_ADMIN');
+}
 
 type ClubDeleteProps = {
   clubId: string;
@@ -117,46 +123,53 @@ export const deleteClub = async ({
   return await deleteClubFunction({ clubId, userId, userDeletion });
 };
 
-export const createPlayer = async (player: PlayerFormModel) => {
+export const createPlayer = async (
+  player: PlayerFormModel,
+  options: {
+    database?: Pick<typeof db, 'insert'>;
+    id?: string;
+  } = {},
+) => {
   const nickname = normalizePlayerNickname(player.nickname);
   const taken = await playerExistsInClub({
     nickname,
     clubId: player.clubId,
   });
   if (taken) {
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: 'player exists error',
-    });
+    throw new AppError('PLAYER_EXISTS_ERROR');
   }
 
+  const database = options.database ?? db;
   const newPlayer = (
-    await db
+    await database
       .insert(players)
       .values({
         ...player,
         nickname,
         lastSeenAt: new Date(),
-        id: newid(),
+        id: options.id ?? newid(),
         ratingPeak: null,
       })
       .returning()
   ).at(0);
 
-  if (!newPlayer) throw new Error('PLAYER_NOT_CREATED');
+  if (!newPlayer) throw new AppError('PLAYER_NOT_CREATED');
   return newPlayer;
 };
 
-// FIXME
 export const deletePlayer = async ({ playerId }: { playerId: string }) => {
   const [playerTournament] = await db
-    .select({ tournamentId: players_to_tournaments.tournamentId })
-    .from(players_to_tournaments)
-    .where(eq(players_to_tournaments.playerId, playerId))
+    .select({ tournamentId: tournament_units.tournamentId })
+    .from(players_to_units)
+    .innerJoin(
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
+    )
+    .where(eq(players_to_units.playerId, playerId))
     .limit(1);
 
   if (playerTournament) {
-    throw new Error('PLAYER_HAS_TOURNAMENTS');
+    throw new AppError('PLAYER_HAS_TOURNAMENTS');
   }
 
   await db.transaction(async (tx) => {
@@ -171,13 +184,13 @@ export const editPlayer = async ({
   values: PlayerEditModel;
   user: User;
 }) => {
-  const { id, ...updates } = values;
+  const { playerId, ...updates } = values;
   const [player] = await db
     .select({ clubId: players.clubId, userId: players.userId })
     .from(players)
-    .where(eq(players.id, id));
+    .where(eq(players.id, playerId));
 
-  if (!player) throw new Error('PLAYER_NOT_FOUND');
+  if (!player) throw new AppError('PLAYER_NOT_FOUND');
 
   const isAffiliated = player.userId === user.id;
   const isClubAdmin = await getStatusInClub({
@@ -185,9 +198,9 @@ export const editPlayer = async ({
     clubId: player.clubId,
   });
 
-  if (!isAffiliated && !isClubAdmin) throw new Error('NOT_AUTHORIZED');
+  if (!isAffiliated && !isClubAdmin) throw new AppError('FORBIDDEN');
   if (!isClubAdmin && updates.realname !== undefined) {
-    throw new Error('NOT_AUTHORIZED');
+    throw new AppError('FORBIDDEN');
   }
 
   const payload = isClubAdmin
@@ -201,13 +214,10 @@ export const editPlayer = async ({
     const conflict = await playerExistsInClub({
       nickname: payload.nickname,
       clubId: player.clubId,
-      excludePlayerId: id,
+      excludePlayerId: playerId,
     });
     if (conflict) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'player exists error',
-      });
+      throw new AppError('PLAYER_EXISTS_ERROR');
     }
   }
 
@@ -218,17 +228,21 @@ export const editPlayer = async ({
     const [currentPlayer] = await db
       .select()
       .from(players)
-      .where(eq(players.id, id));
-    if (!currentPlayer) throw new Error('PLAYER_NOT_EDITED');
+      .where(eq(players.id, playerId));
+    if (!currentPlayer) throw new AppError('PLAYER_NOT_EDITED');
     return currentPlayer;
   }
 
   const result = (
-    await db.update(players).set(payload).where(eq(players.id, id)).returning()
+    await db
+      .update(players)
+      .set(payload)
+      .where(eq(players.id, playerId))
+      .returning()
   ).at(0);
-  revalidatePath(`/player/${id}`);
+  revalidatePath(`/player/${playerId}`);
 
-  if (!result) throw new Error('PLAYER_NOT_EDITED');
+  if (!result) throw new AppError('PLAYER_NOT_EDITED');
   return result;
 };
 
@@ -258,9 +272,10 @@ export const deleteClubFunction = async ({
     .limit(1);
 
   const userStatus = await getStatusInClub({ userId, clubId });
-  if (userStatus !== 'co-owner') throw new Error('UNAUTHORIZED');
+  if (userStatus !== 'co-owner') throw new AppError('UNAUTHENTICATED');
 
-  if (otherClubs.length === 0 && !userDeletion) throw new Error('ZERO_CLUBS');
+  if (otherClubs.length === 0 && !userDeletion)
+    throw new AppError('ZERO_CLUBS');
   if (!userDeletion) {
     await db
       .update(users)
@@ -272,12 +287,19 @@ export const deleteClubFunction = async ({
     .select({ id: tournaments.id })
     .from(tournaments)
     .where(eq(tournaments.clubId, clubId));
+  const clubUnitIds = db
+    .select({ id: tournament_units.id })
+    .from(tournament_units)
+    .where(inArray(tournament_units.tournamentId, clubTournamentIds));
 
   await db.batch([
     db.delete(games).where(inArray(games.tournamentId, clubTournamentIds)),
     db
-      .delete(players_to_tournaments)
-      .where(inArray(players_to_tournaments.tournamentId, clubTournamentIds)),
+      .delete(players_to_units)
+      .where(inArray(players_to_units.unitId, clubUnitIds)),
+    db
+      .delete(tournament_units)
+      .where(inArray(tournament_units.tournamentId, clubTournamentIds)),
 
     db.delete(affiliations).where(eq(affiliations.clubId, clubId)),
     db.delete(club_notifications).where(eq(club_notifications.clubId, clubId)),
@@ -316,16 +338,16 @@ export const addClubManager = async ({
     clubId,
   });
   if (authorStatus === 'admin' && status === 'co-owner')
-    throw new Error('NOT_AUTHORIZED');
+    throw new AppError('FORBIDDEN');
   const existingRelation = await db
     .select()
     .from(clubs_to_users)
     .where(
       and(eq(clubs_to_users.clubId, clubId), eq(clubs_to_users.userId, userId)),
     );
-  if (existingRelation.length > 0) throw new Error('RELATION_EXISTS');
+  if (existingRelation.length > 0) throw new AppError('RELATION_EXISTS');
   const newRelation: ClubToUserModel = {
-    id: `${clubId}=${userId}`,
+    id: `${clubId}_${userId}`,
     clubId: clubId,
     userId: userId,
     status,
@@ -389,8 +411,8 @@ export const deleteClubManager = async ({
     userId,
     clubId,
   });
-  if (targetStatus === 'co-owner') throw new Error('NOT_AUTHORIZED');
-  if (authorStatus !== 'co-owner') throw new Error('NOT_AUTHORIZED');
+  if (targetStatus === 'co-owner') throw new AppError('FORBIDDEN');
+  if (authorStatus !== 'co-owner') throw new AppError('FORBIDDEN');
   await db
     .delete(clubs_to_users)
     .where(
@@ -418,7 +440,7 @@ export const leaveClub = async ({
       )
       .limit(1)
   ).at(0)?.clubId;
-  if (!otherClubId) throw new Error('NO_OTHER_CLUB_CO_OWNER');
+  if (!otherClubId) throw new AppError('NO_OTHER_CLUB_CO_OWNER');
 
   await db.transaction(async (tx) => {
     await tx

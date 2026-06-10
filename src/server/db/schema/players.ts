@@ -1,9 +1,10 @@
 import { clubs } from '@/server/db/schema/clubs';
-import { players_to_tournaments } from '@/server/db/schema/tournaments';
+import { games, players_to_units } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { AffiliationStatus } from '@/server/zod/enums';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
+  check,
   integer,
   real,
   sqliteTable,
@@ -40,6 +41,11 @@ export const players = sqliteTable(
       table.clubId,
     ),
     uniqueIndex('player_user_club_unique_idx').on(table.userId, table.clubId),
+    check('player_rating_bounds', sql`${table.rating} between 400 and 3400`),
+    check(
+      'player_rating_peak_bounds',
+      sql`${table.ratingPeak} is null or ${table.ratingPeak} between 400 and 3400`,
+    ),
   ],
 );
 
@@ -76,7 +82,9 @@ export const affiliations = sqliteTable(
 
 export const players_relations = relations(players, ({ one, many }) => ({
   club: one(clubs, { fields: [players.clubId], references: [clubs.id] }),
-  tournaments: many(players_to_tournaments),
+  units: many(players_to_units),
+  gamesAsWhite: many(games, { relationName: 'gameWhitePlayer' }),
+  gamesAsBlack: many(games, { relationName: 'gameBlackPlayer' }),
 }));
 
 export const affiliations_relations = relations(affiliations, ({ one }) => ({

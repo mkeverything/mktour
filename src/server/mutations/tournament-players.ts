@@ -1,684 +1,135 @@
 'use server';
 
+import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
-import { normalizePlayerNickname } from '@/lib/player-nickname';
-import { lowerEq } from '@/lib/sql-sqlite-string';
+import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
+import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
-import { players } from '@/server/db/schema/players';
-import { games, players_to_tournaments } from '@/server/db/schema/tournaments';
+import {
+  players_to_units,
+  tournament_units,
+} from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
-import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
+import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
-import { GameResult } from '@/server/zod/enums';
-import {
-  AddDoublesTeamModel,
-  EditDoublesTeamModel,
-  PlayerToTournamentInsertModel,
-  ReorderTournamentPlayersInputModel,
-} from '@/server/zod/tournaments';
-import {
-  PreStartPlayerOrderResultModel,
-  PlayerFormModel,
-  PlayerInsertModel,
-} from '@/server/zod/players';
-import { TRPCError } from '@trpc/server';
-import { and, eq, inArray, isNull, ne, or } from 'drizzle-orm';
-import { applyGameResult } from './tournament-games';
-import {
-  normalizeSwissRoundsNumber,
-  normalizeSwissRoundsNumberInDatabase,
-} from './tournament-lifecycle';
-import {
-  applyPreStartPlayerOrder,
-  getTournamentOrderTargets,
-  reapplyPreStartOrder,
-} from './tournament-player-order';
+import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
+import { and, eq } from 'drizzle-orm';
+import { createPlayer } from './club-managing';
+import { applyPreStartUnitOrder } from './tournament-unit-order';
 
-export async function removePlayer({
-  tournamentId,
-  playerId,
-  userId,
-}: {
-  tournamentId: string;
-  playerId: string;
-  userId: string;
-}): Promise<PreStartPlayerOrderResultModel> {
-  const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
+type SoloUnitDatabase = Pick<
+  typeof db,
+  'delete' | 'insert' | 'select' | 'update'
+>;
 
-  if (tournament.type === 'doubles') {
-    const participant = await db
-      .select({ teamNickname: players_to_tournaments.teamNickname })
-      .from(players_to_tournaments)
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, playerId),
-        ),
-      )
-      .then((rows) => rows.at(0));
-    if (!participant) throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
-
-    return await db.transaction(async (tx) => {
-      await tx
-        .delete(games)
-        .where(
-          and(
-            eq(games.tournamentId, tournamentId),
-            or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
-          ),
-        );
-
-      if (participant.teamNickname) {
-        await tx
-          .delete(players_to_tournaments)
-          .where(
-            and(
-              eq(players_to_tournaments.tournamentId, tournamentId),
-              eq(players_to_tournaments.teamNickname, participant.teamNickname),
-            ),
-          );
-      } else {
-        await tx
-          .delete(players_to_tournaments)
-          .where(
-            and(
-              eq(players_to_tournaments.playerId, playerId),
-              eq(players_to_tournaments.tournamentId, tournamentId),
-            ),
-          );
-      }
-      await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
-      return await reapplyPreStartOrder(tournamentId, tx);
-    });
-  }
-
-  return await db.transaction(async (tx) => {
-    await tx
-      .delete(players_to_tournaments)
-      .where(
-        and(
-          eq(players_to_tournaments.playerId, playerId),
-          eq(players_to_tournaments.tournamentId, tournamentId),
-        ),
-      );
-    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
-    return await reapplyPreStartOrder(tournamentId, tx);
-  });
-}
-
-export async function addNewPlayer({
+export async function addNewSoloUnit({
   tournamentId,
   player,
+  unitId,
   addedAt,
 }: {
   tournamentId: string;
   player: PlayerFormModel & { id?: string };
+  unitId?: string;
   addedAt?: Date;
-}): Promise<PreStartPlayerOrderResultModel> {
-  const now = addedAt ?? new Date();
+}): Promise<UnitModel[]> {
   const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
-  if (tournament.type === 'doubles') {
-    throw new Error('DOUBLES_USE_PAIRS');
-  }
-  const nextPairingNumber = (
-    await getTournamentOrderTargets(tournamentId, tournament.type)
-  ).length;
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
 
   const playerId = player.id ?? newid();
-  const nickname = normalizePlayerNickname(player.nickname);
-  const taken = await playerExistsInClub({
-    nickname,
-    clubId: tournament.clubId,
-  });
-  if (taken) {
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: 'player exists error',
-    });
-  }
-
-  const playerToTournament: PlayerToTournamentInsertModel = {
-    playerId,
-    tournamentId,
-    id: `${playerId}=${tournamentId}`,
-    wins: 0,
-    losses: 0,
-    draws: 0,
-    colorIndex: 0,
-    place: null,
-    isOut: null,
-    pairingNumber: nextPairingNumber,
-    addedAt: now,
-    newRating: null,
-    newRatingDeviation: null,
-    newVolatility: null,
-  };
-
   return await db.transaction(async (tx) => {
-    await tx
-      .insert(players)
-      .values({ ...player, nickname, lastSeenAt: new Date(), id: playerId });
-    await tx.insert(players_to_tournaments).values(playerToTournament);
-    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
-    return await reapplyPreStartOrder(tournamentId, tx);
+    const createdPlayer = await createPlayer(
+      { ...player, clubId: tournament.clubId },
+      { database: tx, id: playerId },
+    );
+    return await addSoloUnit(
+      { tournamentId, player: createdPlayer, unitId, addedAt },
+      { database: tx, skipAuth: true },
+    );
   });
 }
 
-export async function reorderTournamentPlayers({
-  tournamentId,
-  playerIds,
-}: ReorderTournamentPlayersInputModel): Promise<PreStartPlayerOrderResultModel> {
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
-
-  const orderTargets = await getTournamentOrderTargets(
+export async function addSoloUnit(
+  {
     tournamentId,
-    tournament.type,
-  );
-
-  if (orderTargets.length !== playerIds.length) {
-    throw new Error('INVALID_PLAYERS_ORDER');
-  }
-
-  const orderTargetIds = new Set(
-    orderTargets.map((participant) => participant.id),
-  );
-  if (
-    playerIds.some((playerId) => !orderTargetIds.has(playerId)) ||
-    orderTargetIds.size !== playerIds.length
-  ) {
-    throw new Error('INVALID_PLAYERS_ORDER');
-  }
-
-  const orderTargetsById = new Map(
-    orderTargets.map((target) => [target.id, target]),
-  );
-
-  return await applyPreStartPlayerOrder({
-    tournamentId,
-    tournamentType: tournament.type,
-    orderedTargets: playerIds.map((playerId) => {
-      const target = orderTargetsById.get(playerId);
-      if (!target) throw new Error('INVALID_PLAYERS_ORDER');
-      return target;
-    }),
-  });
-}
-
-export async function addExistingPlayer({
-  tournamentId,
-  player,
-  userId,
-  addedAt,
-}: {
-  tournamentId: string;
-  player: PlayerInsertModel;
-  userId: string;
-  addedAt?: Date;
-}): Promise<PreStartPlayerOrderResultModel> {
+    player,
+    userId,
+    unitId: requestedUnitId,
+    addedAt,
+  }: {
+    tournamentId: string;
+    player: PlayerInsertModel;
+    userId?: string;
+    unitId?: string;
+    addedAt?: Date;
+  },
+  options: { database?: SoloUnitDatabase; skipAuth?: boolean } = {},
+): Promise<UnitModel[]> {
   const now = addedAt ?? new Date();
-  const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
-  if (tournament.type === 'doubles') {
-    throw new Error('DOUBLES_USE_PAIRS');
-  }
-  const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new Error('NOT_ADMIN');
-  const nextPairingNumber = (
-    await getTournamentOrderTargets(tournamentId, tournament.type)
-  ).length;
+  const database = options.database ?? db;
 
-  const playerToTournament: PlayerToTournamentInsertModel = {
+  if (!options.skipAuth) {
+    if (!userId) throw new AppError('UNAUTHENTICATED');
+    const { user } = await validateRequest();
+    if (!user) throw new AppError('UNAUTHENTICATED');
+    if (user.id !== userId) throw new AppError('USER_MISMATCH');
+    const { status } = await getStatusInTournament(user.id, tournamentId);
+    if (status === 'viewer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
+  }
+
+  const tournament = await getTournamentById(tournamentId, database);
+  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+  if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
+  if (tournament.type !== 'solo') {
+    throw new AppError('NOT_SOLO_TOURNAMENT');
+  }
+
+  const unitId = requestedUnitId ?? newid();
+  const unit = createUnit({
+    id: unitId,
+    size: 1,
+    tournamentId,
+    number: null,
+    addedAt: now,
+    nickname: player.nickname,
+  });
+  const playerUnit = createUnitMember({
     playerId: player.id,
-    tournamentId: tournamentId,
-    id: `${player.id}=${tournamentId}`,
-    wins: 0,
-    losses: 0,
-    draws: 0,
-    colorIndex: 0,
-    place: null,
-    isOut: null,
-    pairingNumber: nextPairingNumber,
-    addedAt: now,
-    newRating: null,
-    newRatingDeviation: null,
-    newVolatility: null,
-  };
-  return await db.transaction(async (tx) => {
-    await tx.insert(players_to_tournaments).values(playerToTournament);
-    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
-    return await reapplyPreStartOrder(tournamentId, tx);
+    unitId: unit.id,
+    numberInUnit: 1,
   });
-}
 
-export async function addDoublesTeam({
-  tournamentId,
-  nickname,
-  firstPlayerId,
-  secondPlayerId,
-  addedAt,
-}: AddDoublesTeamModel & {
-  tournamentId: string;
-  addedAt?: Date;
-}): Promise<PreStartPlayerOrderResultModel> {
-  const now = addedAt ?? new Date();
-  const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-
-  if (firstPlayerId === secondPlayerId) {
-    throw new Error('INVALID_DOUBLES_PAIR');
-  }
-
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
-  if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
-
-  const selectedPlayers = await db
-    .select({
-      id: players.id,
-      nickname: players.nickname,
-      rating: players.rating,
-    })
-    .from(players)
-    .where(
-      and(
-        eq(players.clubId, tournament.clubId),
-        or(eq(players.id, firstPlayerId), eq(players.id, secondPlayerId)),
-      ),
-    );
-
-  if (selectedPlayers.length !== 2) {
-    throw new Error('PAIR_PLAYERS_NOT_FOUND');
-  }
-
-  const existingPair = await db
-    .select({ id: players_to_tournaments.id })
-    .from(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.tournamentId, tournamentId),
-        or(
-          eq(players_to_tournaments.playerId, firstPlayerId),
-          eq(players_to_tournaments.playerId, secondPlayerId),
-        ),
-      ),
-    )
-    .limit(1);
-
-  if (existingPair.length > 0) {
-    throw new Error('PLAYER_ALREADY_IN_PAIR');
-  }
-
-  const existingNickname = await db
-    .select({ id: players_to_tournaments.id })
-    .from(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.tournamentId, tournamentId),
-        lowerEq(players_to_tournaments.teamNickname, nickname),
-      ),
-    )
-    .limit(1);
-
-  if (existingNickname.length > 0) {
-    throw new Error('PAIR_NICKNAME_TAKEN');
-  }
-
-  const nextPairingNumber = (
-    await getTournamentOrderTargets(tournamentId, tournament.type)
-  ).length;
-
-  const teamMembers: PlayerToTournamentInsertModel[] = [
-    {
-      playerId: firstPlayerId,
-      tournamentId,
-      id: `${firstPlayerId}=${tournamentId}`,
-      wins: 0,
-      losses: 0,
-      draws: 0,
-      colorIndex: 0,
-      place: null,
-      isOut: null,
-      pairingNumber: nextPairingNumber,
-      teamNickname: nickname,
-      numberInTeam: 1,
-      addedAt: now,
-      newRating: null,
-      newRatingDeviation: null,
-      newVolatility: null,
-    },
-    {
-      playerId: secondPlayerId,
-      tournamentId,
-      id: `${secondPlayerId}=${tournamentId}`,
-      wins: 0,
-      losses: 0,
-      draws: 0,
-      colorIndex: 0,
-      place: null,
-      isOut: null,
-      pairingNumber: nextPairingNumber,
-      teamNickname: nickname,
-      numberInTeam: 2,
-      addedAt: now,
-      newRating: null,
-      newRatingDeviation: null,
-      newVolatility: null,
-    },
-  ];
-
-  return await db.transaction(async (tx) => {
-    await tx.insert(players_to_tournaments).values(teamMembers);
-    await normalizeSwissRoundsNumberInDatabase(tournamentId, tx);
-    return await reapplyPreStartOrder(tournamentId, tx);
-  });
-}
-
-export async function editDoublesTeam({
-  tournamentId,
-  currentTeamPlayerId,
-  nickname,
-  firstPlayerId,
-  secondPlayerId,
-}: EditDoublesTeamModel & {
-  tournamentId: string;
-}): Promise<void> {
-  const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-
-  if (firstPlayerId === secondPlayerId) {
-    throw new Error('INVALID_DOUBLES_PAIR');
-  }
-
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  if (tournament.startedAt) throw new Error('TOURNAMENT_ALREADY_STARTED');
-  if (tournament.type !== 'doubles') throw new Error('NOT_DOUBLES_TOURNAMENT');
-
-  const participant = await db
-    .select({
-      teamNickname: players_to_tournaments.teamNickname,
-      addedAt: players_to_tournaments.addedAt,
-      pairingNumber: players_to_tournaments.pairingNumber,
-    })
-    .from(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.tournamentId, tournamentId),
-        eq(players_to_tournaments.playerId, currentTeamPlayerId),
-      ),
-    )
-    .then((rows) => rows.at(0));
-
-  if (!participant?.teamNickname) {
-    throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
-  }
-  const currentTeamNickname = participant.teamNickname;
-  const preservedAddedAt = participant.addedAt ?? new Date();
-  const preservedPairingNumber = participant.pairingNumber ?? 0;
-
-  const selectedPlayers = await db
-    .select({
-      id: players.id,
-      nickname: players.nickname,
-      rating: players.rating,
-    })
-    .from(players)
-    .where(
-      and(
-        eq(players.clubId, tournament.clubId),
-        or(eq(players.id, firstPlayerId), eq(players.id, secondPlayerId)),
-      ),
-    );
-
-  if (selectedPlayers.length !== 2) {
-    throw new Error('PAIR_PLAYERS_NOT_FOUND');
-  }
-
-  const currentTeamMembers = await db
-    .select({ playerId: players_to_tournaments.playerId })
-    .from(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.tournamentId, tournamentId),
-        eq(players_to_tournaments.teamNickname, currentTeamNickname),
-      ),
-    );
-
-  const currentTeamMemberIds = new Set(
-    currentTeamMembers.map((member) => member.playerId),
-  );
-
-  const occupiedPlayers = await db
-    .select({
-      playerId: players_to_tournaments.playerId,
-      teamNickname: players_to_tournaments.teamNickname,
-    })
-    .from(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.tournamentId, tournamentId),
-        inArray(players_to_tournaments.playerId, [
-          firstPlayerId,
-          secondPlayerId,
-        ]),
-      ),
-    );
-
-  const hasOtherTeamMember = occupiedPlayers.some(
-    (row) =>
-      !currentTeamMemberIds.has(row.playerId) &&
-      row.teamNickname !== currentTeamNickname,
-  );
-  if (hasOtherTeamMember) {
-    throw new Error('PLAYER_ALREADY_IN_PAIR');
-  }
-
-  const existingNickname = await db
-    .select({ id: players_to_tournaments.id })
-    .from(players_to_tournaments)
-    .where(
-      and(
-        eq(players_to_tournaments.tournamentId, tournamentId),
-        lowerEq(players_to_tournaments.teamNickname, nickname),
-        ne(players_to_tournaments.teamNickname, currentTeamNickname),
-      ),
-    )
-    .limit(1);
-
-  if (existingNickname.length > 0) {
-    throw new Error('PAIR_NICKNAME_TAKEN');
-  }
-
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(players_to_tournaments)
+  const run = async (d: SoloUnitDatabase) => {
+    const existingMembership = await d
+      .select({ id: players_to_units.id })
+      .from(players_to_units)
+      .innerJoin(
+        tournament_units,
+        eq(players_to_units.unitId, tournament_units.id),
+      )
       .where(
         and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.teamNickname, currentTeamNickname),
+          eq(tournament_units.tournamentId, tournamentId),
+          eq(players_to_units.playerId, player.id),
         ),
-      );
+      )
+      .limit(1);
+    if (existingMembership.length > 0) {
+      throw new AppError('PLAYER_ALREADY_IN_UNIT');
+    }
 
-    const selectedPlayersById = new Map(
-      selectedPlayers.map((each) => [each.id, each]),
-    );
-    const orderedPlayers = [firstPlayerId, secondPlayerId].map((id) => {
-      const player = selectedPlayersById.get(id);
-      if (!player) throw new Error('PAIR_PLAYERS_NOT_FOUND');
-      return player;
+    await d.insert(tournament_units).values(unit);
+    await d.insert(players_to_units).values(playerUnit);
+    const currentUnits = await getRawTournamentUnits(tournamentId, d);
+    return await applyPreStartUnitOrder({
+      tournamentId,
+      orderedUnits: currentUnits.toSorted(baselineUnitSort),
+      database: d,
     });
+  };
 
-    const [firstPlayer, secondPlayer] = orderedPlayers;
-
-    await tx.insert(players_to_tournaments).values([
-      {
-        playerId: firstPlayer.id,
-        tournamentId,
-        id: `${firstPlayer.id}=${tournamentId}`,
-        wins: 0,
-        losses: 0,
-        draws: 0,
-        colorIndex: 0,
-        place: null,
-        isOut: null,
-        pairingNumber: preservedPairingNumber,
-        teamNickname: nickname,
-        numberInTeam: 1,
-        addedAt: preservedAddedAt,
-        newRating: null,
-        newRatingDeviation: null,
-        newVolatility: null,
-      },
-      {
-        playerId: secondPlayer.id,
-        tournamentId,
-        id: `${secondPlayer.id}=${tournamentId}`,
-        wins: 0,
-        losses: 0,
-        draws: 0,
-        colorIndex: 0,
-        place: null,
-        isOut: null,
-        pairingNumber: preservedPairingNumber,
-        teamNickname: nickname,
-        numberInTeam: 2,
-        addedAt: preservedAddedAt,
-        newRating: null,
-        newRatingDeviation: null,
-        newVolatility: null,
-      },
-    ]);
-  });
-
-  await normalizeSwissRoundsNumber(tournamentId);
-}
-
-export async function resetTournamentPlayers({
-  tournamentId,
-}: {
-  tournamentId: string;
-}) {
-  await db.delete(games).where(eq(games.tournamentId, tournamentId));
-  await db
-    .delete(players_to_tournaments)
-    .where(eq(players_to_tournaments.tournamentId, tournamentId));
-}
-
-export async function withdrawPlayer({
-  tournamentId,
-  playerId,
-  userId,
-}: {
-  tournamentId: string;
-  playerId: string;
-  userId: string;
-}): Promise<{
-  roundsNumber: number | null;
-  roundsNumberAutoDecreased: boolean;
-}> {
-  const { user } = await validateRequest();
-  if (!user) throw new Error('UNAUTHORIZED_REQUEST');
-  if (user.id !== userId) throw new Error('USER_NOT_MATCHING');
-
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error('TOURNAMENT NOT FOUND');
-  if (tournament.format !== 'swiss') throw new Error('NOT_SWISS_TOURNAMENT');
-  if (!tournament.startedAt) throw new Error('TOURNAMENT_NOT_STARTED');
-  if (tournament.closedAt) throw new Error('TOURNAMENT_ALREADY_FINISHED');
-
-  const result = await db.transaction(async (tx) => {
-    const updateResult = await tx
-      .update(players_to_tournaments)
-      .set({ isOut: true })
-      .where(
-        and(
-          eq(players_to_tournaments.tournamentId, tournamentId),
-          eq(players_to_tournaments.playerId, playerId),
-          or(
-            isNull(players_to_tournaments.isOut),
-            eq(players_to_tournaments.isOut, false),
-          ),
-        ),
-      );
-
-    if (!updateResult.rowsAffected) {
-      const existingParticipant = await tx
-        .select({ isOut: players_to_tournaments.isOut })
-        .from(players_to_tournaments)
-        .where(
-          and(
-            eq(players_to_tournaments.tournamentId, tournamentId),
-            eq(players_to_tournaments.playerId, playerId),
-          ),
-        )
-        .then((rows) => rows.at(0));
-
-      if (existingParticipant?.isOut) {
-        throw new Error('PLAYER_ALREADY_WITHDRAWN');
-      }
-      throw new Error('TOURNAMENT_PLAYER_NOT_FOUND');
-    }
-
-    const pendingGames = await tx
-      .select({
-        id: games.id,
-        whiteId: games.whiteId,
-        blackId: games.blackId,
-      })
-      .from(games)
-      .where(
-        and(
-          eq(games.tournamentId, tournamentId),
-          isNull(games.result),
-          or(eq(games.whiteId, playerId), eq(games.blackId, playerId)),
-        ),
-      );
-
-    for (const pendingGame of pendingGames) {
-      const isWithdrawnWhite = pendingGame.whiteId === playerId;
-      let forfeitResult: GameResult;
-      if (isWithdrawnWhite) {
-        forfeitResult = '0-1';
-      } else {
-        forfeitResult = '1-0';
-      }
-
-      await applyGameResult({
-        database: tx,
-        tournamentId,
-        gameId: pendingGame.id,
-        whiteId: pendingGame.whiteId,
-        blackId: pendingGame.blackId,
-        prevResult: null,
-        nextResult: forfeitResult,
-      });
-    }
-
-    const normalizedRounds = await normalizeSwissRoundsNumberInDatabase(
-      tournamentId,
-      tx,
-    );
-
-    return {
-      roundsNumber: normalizedRounds?.roundsNumber ?? tournament.roundsNumber,
-      roundsNumberAutoDecreased: normalizedRounds?.wasChanged ?? false,
-    };
-  });
-
-  return result;
+  if (options.database) return await run(options.database);
+  return await db.transaction(async (tx) => run(tx));
 }

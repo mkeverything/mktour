@@ -1,4 +1,5 @@
 import { useTRPC } from '@/components/trpc/client';
+import { getAppErrorMessage } from '@/lib/errors';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -10,6 +11,7 @@ export default function useDeletePlayerMutation(
 ) {
   const trpc = useTRPC();
   const t = useTranslations('Toasts');
+  const tErrors = useTranslations('Errors');
   return useMutation(
     trpc.player.delete.mutationOptions({
       onSuccess: () => {
@@ -18,10 +20,7 @@ export default function useDeletePlayerMutation(
           queryKey: trpc.club.players.infiniteQueryKey({ clubId }),
         });
       },
-      onError: (error) =>
-        error.message === 'PLAYER_HAS_TOURNAMENTS'
-          ? toast.error(t('player has tournaments'))
-          : toast.error('sorry! server error happened: ' + error.message),
+      onError: (error) => toast.error(tErrors(getAppErrorMessage(error))),
     }),
   );
 }

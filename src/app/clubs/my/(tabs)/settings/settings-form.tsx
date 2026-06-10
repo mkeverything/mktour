@@ -21,6 +21,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
 import { shallowEqual } from '@/lib/utils';
 import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,11 +31,6 @@ import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren } from 'react';
 import { useForm } from 'react-hook-form';
-import z from 'zod';
-
-const clubSettingsSchema = clubsInsertSchema
-  .omit({ lichessTeam: true })
-  .extend({ lichessTeam: z.string().optional().nullable() });
 
 const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   selectedClub,
@@ -45,7 +42,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   const { data: teams = [], isFetching: isFetchingLichessTeams } = useQuery(
     trpc.auth.lichessTeams.queryOptions(),
   );
-  const clubSettingsMutation = useEditClubMutation(queryClient);
+  const { mutate, isPending } = useEditClubMutation(queryClient);
 
   const defaultValues = {
     name: '',
@@ -63,8 +60,28 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     : defaultValues;
 
   const form = useForm<ClubFormModel>({
-    resolver: zodResolver(clubSettingsSchema),
+    resolver: zodResolver(clubsInsertSchema),
     values: initialValues,
+  });
+
+  const handleSubmit = form.handleSubmit(async (data) => {
+    form.clearErrors('lichessTeam');
+    mutate(
+      {
+        clubId: selectedClub,
+        ...data,
+      },
+      {
+        onError: (e) => {
+          const teamErrorMessage = getLichessTeamLinkErrorMessage(e);
+          if (!teamErrorMessage) return;
+          form.setError('lichessTeam', {
+            type: 'custom',
+            message: teamErrorMessage,
+          });
+        },
+      },
+    );
   });
 
   const t = useTranslations('Club.Dashboard.Settings');
@@ -78,23 +95,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
         <Card className="bg-background sm:bg-card border-none shadow-none sm:border-solid sm:shadow">
           <CardContent className="p-0 sm:px-6 sm:py-6">
             <form
-              onSubmit={form.handleSubmit(async (data) => {
-                form.clearErrors('lichessTeam');
-                try {
-                  await clubSettingsMutation.mutateAsync({
-                    clubId: selectedClub,
-                    values: data,
-                  });
-                } catch (error) {
-                  const teamErrorMessage =
-                    getLichessTeamLinkErrorMessage(error);
-                  if (!teamErrorMessage) return;
-                  form.setError('lichessTeam', {
-                    type: 'custom',
-                    message: teamErrorMessage,
-                  });
-                }
-              })}
+              onSubmit={handleSubmit}
               className="flex flex-col gap-4"
               name="edit-club-form"
             >
@@ -110,6 +111,24 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                         disabled={isFetching}
                         autoComplete="off"
                         className="px-4"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="pl-4">{t('description')}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        value={field.value ?? undefined}
+                        disabled={isFetching}
+                        className="field-sizing-content min-h-18 px-4"
                       />
                     </FormControl>
                     <FormMessage />
@@ -149,13 +168,13 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                 type="submit"
                 disabled={
                   shallowEqual(form.getValues(), initialValues) ||
-                  clubSettingsMutation.isPending ||
+                  isPending ||
                   isFetching ||
                   isFetchingLichessTeams
                 }
                 className="w-full"
               >
-                {clubSettingsMutation.isPending ? <LoadingSpinner /> : <Save />}
+                {isPending ? <LoadingSpinner /> : <Save />}
                 {t('save')}
               </Button>
             </form>
@@ -167,65 +186,3 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
 };
 
 export default ClubSettingsForm;
-
-function getLichessTeamLinkErrorMessage(error: unknown): string | null {
-  const messagePattern =
-    /LINK_TEAM_ERROR@%!!\(&[^"'\]\}\s]+@%!!\(&[^"'\]\}\s]+/;
-
-  if (typeof error === 'string') {
-    const matched = error.match(messagePattern);
-    return matched ? matched[0] : null;
-  }
-
-  if (!error || typeof error !== 'object') return null;
-
-  const possibleZodErrors = [
-    (
-      error as {
-        data?: {
-          zodError?: {
-            issues?: Array<{
-              path?: unknown[];
-              message?: string;
-            }>;
-          };
-        };
-      }
-    ).data?.zodError,
-    (
-      error as {
-        shape?: {
-          data?: {
-            zodError?: {
-              issues?: Array<{
-                path?: unknown[];
-                message?: string;
-              }>;
-            };
-          };
-        };
-      }
-    ).shape?.data?.zodError,
-  ];
-
-  for (const zodError of possibleZodErrors) {
-    if (!zodError?.issues?.length) continue;
-
-    const linkTeamIssue = zodError.issues.find((issue) => {
-      if (!issue?.message?.startsWith('LINK_TEAM_ERROR')) return false;
-      if (!issue.path?.length) return true;
-      return issue.path.join('.') === 'values.lichessTeam';
-    });
-    if (linkTeamIssue?.message) return linkTeamIssue.message;
-  }
-
-  const errorMessage = (error as { message?: string }).message;
-  if (typeof errorMessage === 'string') {
-    const matched = errorMessage.match(messagePattern);
-    if (matched) return matched[0];
-  }
-
-  const serializedError = JSON.stringify(error);
-  const serializedMatch = serializedError.match(messagePattern);
-  return serializedMatch ? serializedMatch[0] : null;
-}

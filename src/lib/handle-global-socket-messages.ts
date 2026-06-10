@@ -10,6 +10,7 @@ export const handleGlobalSocketMessage = (
   message: GlobalMessage,
   queryClient: QueryClient,
   trpc: ReturnType<typeof useTRPC>,
+  errorMessage: string,
 ) => {
   switch (message.type) {
     case 'user':
@@ -22,7 +23,7 @@ export const handleGlobalSocketMessage = (
       });
       break;
     case 'error':
-      toast.error(message.message, { id: 'wsErrorMessage' });
+      toast.error(errorMessage, { id: 'wsErrorMessage' });
     default:
       break;
   }

@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import {
   authProcedure,
@@ -24,7 +25,7 @@ import { getUserClubIds } from '@/server/queries/get-user-clubs';
 import {
   getPlayerAuthStats,
   getPlayerStats,
-  getPlayersTournaments,
+  getPlayersTournamentsInfinite,
 } from '@/server/queries/player';
 import { clubsSelectSchema } from '@/server/zod/clubs';
 import {
@@ -40,9 +41,8 @@ import {
   playersSelectSchema,
   playerStatsSchema,
 } from '@/server/zod/players';
-import { playerToTournamentSchema } from '@/server/zod/tournaments';
+import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
-import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 export const playerRouter = {
@@ -72,10 +72,10 @@ export const playerRouter = {
   lastTournaments: publicProcedure
     .meta(meta.playersLastTournaments)
     .input(playerIdInputSchema)
-    .output(z.array(playerToTournamentSchema))
+    .output(z.array(tournamentSchema))
     .query(async (opts) => {
       const { input } = opts;
-      return await getPlayersTournaments(input.playerId);
+      return await getPlayersTournamentsInfinite(input.playerId);
     }),
   affiliation: {
     request: protectedProcedure
@@ -162,7 +162,7 @@ export const playerRouter = {
       const isAdmin = Object.keys(clubs).find(
         (clubId) => clubId === player.clubId,
       );
-      if (!isAdmin) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (!isAdmin) throw new AppError('NOT_CLUB_ADMIN');
       await deletePlayer(input);
     }),
   edit: protectedProcedure

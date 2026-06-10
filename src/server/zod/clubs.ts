@@ -1,5 +1,5 @@
-import { validateLichessTeam } from '@/lib/zod/new-club-validation-action';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
+import { clubIdInputSchema } from '@/server/zod/common';
 import { statusInClubEnum } from '@/server/zod/enums';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
@@ -22,26 +22,15 @@ export const clubsToUsersSelectSchema = createSelectSchema(clubs_to_users, {
 export const clubsInsertSchema = createInsertSchema(clubs, {
   name: (s) =>
     s
-      .min(3, { error: 'short club name' })
-      .max(100, { error: 'long club name' }),
-  lichessTeam: (s) =>
-    s
-      .superRefine(async (lichessTeam, ctx) => {
-        if (!lichessTeam) return;
-        const team = await validateLichessTeam({ lichessTeam });
-
-        if (team) {
-          ctx.addIssue({
-            code: 'custom',
-            message: `LINK_TEAM_ERROR@%!!(&${team.id}@%!!(&${team.name}`,
-          });
-        }
-      })
-      .optional(),
+      .min(3, { error: 'SHORT_CLUB_NAME' })
+      .max(100, { error: 'LONG_CLUB_NAME' }),
+  lichessTeam: () => z.string().trim().min(1).nullish(),
   description: z.string().nullish(),
 }).omit({ id: true, createdAt: true });
 
-export const clubsEditSchema = clubsInsertSchema.partial();
+export const clubsEditSchema = clubIdInputSchema.extend(
+  clubsInsertSchema.partial().shape,
+);
 
 export const clubManagersSchema = z.object({
   user: usersSelectMinimalSchema,

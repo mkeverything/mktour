@@ -1,10 +1,10 @@
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
 import { SOCKET_URL } from '@/lib/config/urls';
 import { handleSocketMessage } from '@/lib/handle-dashboard-socket-message';
 
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
 import { Dispatch, SetStateAction } from 'react';
 import useWebSocket from 'react-use-websocket';
 import { toast } from 'sonner';
@@ -15,16 +15,13 @@ export const useDashboardWebsocket = (
   queryClient: QueryClient,
   setRoundInView: Dispatch<SetStateAction<number>>,
 ) => {
-  const t = useTranslations('Toasts');
+  const { translateMessage } = useIntlError();
   const trpc = useTRPC();
   const protocols = session ? session : 'guest';
   return useWebSocket(`${SOCKET_URL}/tournament/${id}`, {
     protocols,
     onOpen: () => {
       setTimeout(() => toast.dismiss('wsError'));
-      // toast.success(t('ws success'), {
-      //   id: 'wsSuccess',
-      // });
     },
     shouldReconnect: () => true,
     heartbeat: {
@@ -39,7 +36,7 @@ export const useDashboardWebsocket = (
         message,
         queryClient,
         id,
-        t('ws message error'),
+        translateMessage('WEBSOCKET_MESSAGE_NOT_SENT'),
         setRoundInView,
         trpc,
       );
@@ -50,7 +47,7 @@ export const useDashboardWebsocket = (
     reconnectInterval: 3000,
     onReconnectStop: () => {
       setTimeout(() => toast.dismiss('wsError'));
-      toast.error(t('ws error'), {
+      toast.error(translateMessage('WEBSOCKET_FAILED'), {
         id: 'wsError',
       });
     },

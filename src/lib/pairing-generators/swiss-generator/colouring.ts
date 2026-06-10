@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 import {
   ChessColour,
   ChessTournamentEntity,
@@ -31,8 +32,9 @@ function tryAlternateFromLastDifferentColours(
     const secondGame = secondEntityGames[i];
 
     // Determine what colour each entity played in this round
-    const firstEntityWasWhite = firstGame.whiteId === firstEntity.entityId;
-    const secondEntityWasWhite = secondGame.whiteId === secondEntity.entityId;
+    const firstEntityWasWhite = firstGame.whiteUnitId === firstEntity.entityId;
+    const secondEntityWasWhite =
+      secondGame.whiteUnitId === secondEntity.entityId;
 
     // Check if they played different colours in this round
     if (firstEntityWasWhite !== secondEntityWasWhite) {
@@ -65,13 +67,15 @@ function tryAlternateFromLastDifferentColours(
  */
 function getEntityInitialColour(entity: ChessTournamentEntity): ChessColour {
   if (entity.previousGames.length === 0) {
-    throw new Error('Entity has no previous games to determine initial colour');
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'Entity has no previous games to determine initial colour',
+    });
   }
 
   const sortedGames = entity.previousGames.toSorted(compareGamesByRound);
   const firstGame = sortedGames[0];
 
-  return firstGame.whiteId === entity.entityId
+  return firstGame.whiteUnitId === entity.entityId
     ? ChessColour.White
     : ChessColour.Black;
 }

@@ -11,9 +11,8 @@ if (process.env.NODE_ENV === 'development') {
   globalRegistry?.clear();
 }
 
-const handler = (req: NextRequest) => {
-  // Handle incoming OpenAPI requests
-  return createOpenApiFetchHandler({
+const handler = async (req: NextRequest) => {
+  return await createOpenApiFetchHandler({
     endpoint: '/api',
     router: appRouter,
     createContext: () => createTRPCContext({ headers: req.headers, req }),

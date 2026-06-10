@@ -4,6 +4,7 @@ import { turboPascal } from '@/app/fonts';
 import { LoadingSpinner } from '@/app/loading';
 import FormDatePicker from '@/app/tournaments/create/form-date-picker';
 import { useTournamentCreate } from '@/components/hooks/mutation-hooks/use-tournament-create';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import TypeCard from '@/components/ui-custom/type-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,9 +34,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { dateToLocalDateString } from '@/lib/local-date';
 import { ClubModel } from '@/server/zod/clubs';
 import {
-  dateToLocalDateString,
   NewTournamentFormModel,
   newTournamentFormSchema,
 } from '@/server/zod/tournaments';
@@ -45,10 +46,10 @@ import { PlusIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useTransition } from 'react';
+import posthog from 'posthog-js';
+import { useRef, useTransition } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
-import posthog from 'posthog-js';
 
 export default function NewTournamentForm({
   clubs,
@@ -60,12 +61,12 @@ export default function NewTournamentForm({
       title: '',
       format: undefined,
       date: new Date(),
-      timestamp: 0,
       type: 'solo',
       rated: true,
     },
   });
   const t = useTranslations('MakeTournament');
+  const { translateError } = useIntlError();
   const { mutate, isPending: isMutating } = useTournamentCreate();
   const [isNavigating, startNavigation] = useTransition();
   const router = useRouter();
@@ -75,12 +76,7 @@ export default function NewTournamentForm({
     name: 'type',
   });
   const isDoubles = tournamentType === 'doubles';
-
-  useEffect(() => {
-    if (isDoubles) {
-      form.setValue('rated', false);
-    }
-  }, [form, isDoubles]);
+  const soloRatedRef = useRef(form.getValues('rated'));
 
   const handleSubmit = (data: NewTournamentFormModel) => {
     mutate(
@@ -104,7 +100,9 @@ export default function NewTournamentForm({
         },
         onError: (e) => {
           console.error(e);
-          toast.error(t('error'));
+          toast.error(
+            translateError(e, { fallback: 'TOURNAMENT_NOT_CREATED' }),
+          );
         },
       },
     );
@@ -133,6 +131,7 @@ export default function NewTournamentForm({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isPending}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -158,6 +157,7 @@ export default function NewTournamentForm({
                           >
                             <Button
                               variant="ghost"
+                              disabled={isPending}
                               className="text-muted-foreground flex h-[30px] w-full flex-row justify-end gap-2 pl-7 font-extrabold"
                             >
                               <PlusIcon fontStyle="bold" /> {t('new club')}
@@ -178,7 +178,7 @@ export default function NewTournamentForm({
                 <FormItem>
                   <FormLabel>{t('name')}</FormLabel>
                   <FormControl>
-                    <Input {...field} autoComplete="off" />
+                    <Input {...field} autoComplete="off" disabled={isPending} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -193,6 +193,7 @@ export default function NewTournamentForm({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isPending}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -229,12 +230,20 @@ export default function NewTournamentForm({
               render={({ field }) => (
                 <FormItem>
                   <RadioGroup
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      if (value === 'doubles') {
+                        soloRatedRef.current = form.getValues('rated');
+                        form.setValue('rated', false);
+                      }
+                      if (value === 'solo')
+                        form.setValue('rated', soloRatedRef.current);
+                      field.onChange(value);
+                    }}
                     defaultValue={field.value}
                     className="grid grid-cols-3 gap-2 sm:gap-4"
                   >
-                    <TypeCard name="solo" />
-                    <TypeCard name="doubles" />
+                    <TypeCard name="solo" disabled={isPending} />
+                    <TypeCard name="doubles" disabled={isPending} />
                     <TypeCard name="team" disabled />
                   </RadioGroup>
                 </FormItem>
@@ -243,7 +252,9 @@ export default function NewTournamentForm({
             <FormField
               control={form.control}
               name="date"
-              render={({ field }) => <FormDatePicker field={field} />}
+              render={({ field }) => (
+                <FormDatePicker field={field} disabled={isPending} />
+              )}
             />
             <FormField
               control={form.control}
@@ -275,6 +286,7 @@ export default function NewTournamentForm({
                     <Switch
                       id="rated"
                       checked={field.value}
+                      disabled={isPending}
                       onCheckedChange={field.onChange}
                     />
                   )}

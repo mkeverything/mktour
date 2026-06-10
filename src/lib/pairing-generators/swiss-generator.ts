@@ -1,7 +1,8 @@
+import { AppError } from '@/lib/errors';
 import {
   ChessTournamentEntity,
   RoundProps,
-  convertPlayerToEntity,
+  convertUnitToEntity,
   getGameToInsert,
   getNumberedPair,
 } from '@/lib/pairing-generators/common-generator';
@@ -36,7 +37,7 @@ import {
   isHeteroBracket,
 } from '@/lib/pairing-generators/swiss-generator/types';
 import { generateWeightedPairing } from '@/lib/pairing-generators/swiss-generator/weighted-pairing';
-import type { PlayerTournamentModel } from '@/server/zod/players';
+import type { UnitModel } from '@/server/zod/tournaments';
 import { GameModel } from '@/server/zod/tournaments';
 
 /*
@@ -56,7 +57,7 @@ export function generateSwissRound({
 
   // checking if the set of layers is even, if not, making it even with a smart alg
   const matchedEntities = players.map((player) =>
-    convertPlayerToEntity(player, games),
+    convertUnitToEntity(player, games),
   );
 
   const sortedEntities = getInitialOrdering(matchedEntities);
@@ -379,12 +380,13 @@ export function generateSwissRound({
         pairingLogger.withMetadata(failureInfo).debug('Pairing failed');
       }
 
-      throw new Error(
-        `Swiss pairing failed at round ${roundNumber} for scoregroup ${score}: ` +
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause:
+          `Swiss pairing failed at round ${roundNumber} for scoregroup ${score}: ` +
           `No valid pairing found after trying all alterations. ` +
           `Diagnostic info: Total players: ${totalPlayers}, ` +
           `Remaining brackets: ${remainingBrackets}.`,
-      );
+      });
     }
 
     // Use the best candidate found (best quality among those passing absolute criteria)
@@ -458,9 +460,8 @@ export function generateWeightedSwissRound({
     games?.filter((game) => game.roundNumber !== roundNumber) ?? [];
 
   // Convert player models to chess tournament entities with history
-  const convertPlayer = (
-    player: PlayerTournamentModel,
-  ): ChessTournamentEntity => convertPlayerToEntity(player, filteredGames);
+  const convertPlayer = (player: UnitModel): ChessTournamentEntity =>
+    convertUnitToEntity(player, filteredGames);
   const matchedEntities = players.map(convertPlayer);
 
   // Sort entities by initial ordering rules (score, then tiebreakers)

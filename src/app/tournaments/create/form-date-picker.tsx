@@ -19,9 +19,13 @@ import { ControllerRenderProps } from 'react-hook-form';
 
 interface FormDatePickerProps {
   field: ControllerRenderProps<NewTournamentFormModel, 'date'>;
+  disabled?: boolean;
 }
 
-export default function FormDatePicker({ field }: FormDatePickerProps) {
+export default function FormDatePicker({
+  field,
+  disabled,
+}: FormDatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const locale = useLocale();
   const localeMap: { [key: string]: Locale } = {
@@ -34,10 +38,12 @@ export default function FormDatePicker({ field }: FormDatePickerProps) {
       <FormItem>
         <FormControl>
           <div className="flex flex-col gap-3">
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover open={disabled ? false : open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
+                  type="button"
                   variant={'outline'}
+                  disabled={disabled}
                   className={cn(
                     'w-full justify-start text-left font-normal',
                     !field.value && 'text-muted-foreground',

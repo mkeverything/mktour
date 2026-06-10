@@ -7,7 +7,7 @@ export type DashboardTab = 'main' | 'table' | 'games';
 export const DashboardContext = createContext<DashboardContextType>({
   sendJsonMessage: () => null,
   status: 'viewer',
-  playerId: null,
+  unitId: null,
   userId: undefined,
 });
 
@@ -28,7 +28,7 @@ export const SelectedGameContext = createContext<SelectedGameContextType>({
 export type DashboardContextType = {
   sendJsonMessage: (_jsonMessage: DashboardMessage, _keep?: boolean) => void;
   status: TournamentAuthStatus;
-  playerId: string | null;
+  unitId: string | null;
   userId: string | undefined;
 };
 

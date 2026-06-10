@@ -4,6 +4,7 @@ import {
 } from '@/app/tournaments/[id]/dashboard/tabs/main';
 import Winners from '@/app/tournaments/[id]/dashboard/tabs/main/winners';
 import { useTournamentSummaryInfo } from '@/components/hooks/query-hooks/use-tournament-info';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import SwissRoundsNumber from '@/components/swiss-rounds-number';
 import {
   CalendarDays,
@@ -20,16 +21,21 @@ import { toast } from 'sonner';
 
 const TournamentInfoList = () => {
   const { id: tournamentId } = useParams<{ id: string }>();
-  const { data, isLoading, isError } = useTournamentSummaryInfo(tournamentId);
+  const { data, isLoading, isError, error } =
+    useTournamentSummaryInfo(tournamentId);
   const t = useTranslations('Tournament.Main');
+  const { translateError } = useIntlError();
   const locale = useLocale();
 
   if (isLoading) return <LoadingElement />;
   if (isError) {
-    toast.error("couldn't get tournament info from server", {
-      id: 'query-info',
-      duration: 3000,
-    });
+    toast.error(
+      translateError(error, { fallback: 'TOURNAMENT_INFO_NOT_LOADED' }),
+      {
+        id: 'query-info',
+        duration: 3000,
+      },
+    );
     return <LoadingElement />;
   }
   if (!data) return 'tournament info is `undefined` somehow';

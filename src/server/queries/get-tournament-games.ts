@@ -1,52 +1,56 @@
+import { generatePreStartRoundGames } from '@/lib/pre-start-round';
+import { baselineUnitSort } from '@/lib/tournament-results';
 import { db } from '@/server/db';
-import { players } from '@/server/db/schema/players';
-import { games } from '@/server/db/schema/tournaments';
-import { GameModel } from '@/server/zod/tournaments';
 import {
-  getDoublesTeamMembers,
-  getTournamentById,
-  enrichGamesWithDoublesInfo,
-} from './tournament-helpers';
+  games,
+  tournament_units,
+  tournaments,
+} from '@/server/db/schema/tournaments';
+import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
+import type { GameModel } from '@/server/zod/tournaments';
 import { aliasedTable, and, eq, getTableColumns } from 'drizzle-orm';
+
+function normalizeGames(rows: GameModel[]): GameModel[] {
+  return rows.sort((a, b) => a.gameNumber - b.gameNumber);
+}
+
+async function getTournamentStartedAt(
+  tournamentId: string,
+  database: Pick<typeof db, 'select'>,
+) {
+  return await database
+    .select({ startedAt: tournaments.startedAt })
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .then((rows) => rows.at(0)?.startedAt);
+}
+
+async function getPersistedTournamentGames(
+  tournamentId: string,
+  database: Pick<typeof db, 'select'>,
+): Promise<GameModel[]> {
+  const whiteUnit = aliasedTable(tournament_units, 'white_unit');
+  const blackUnit = aliasedTable(tournament_units, 'black_unit');
+  return await database
+    .select({
+      ...getTableColumns(games),
+      whiteNickname: whiteUnit.nickname,
+      blackNickname: blackUnit.nickname,
+    })
+    .from(games)
+    .where(eq(games.tournamentId, tournamentId))
+    .innerJoin(whiteUnit, eq(games.whiteUnitId, whiteUnit.id))
+    .innerJoin(blackUnit, eq(games.blackUnitId, blackUnit.id))
+    .orderBy(games.gameNumber);
+}
 
 export async function getTournamentGames(
   tournamentId: string,
   database: Pick<typeof db, 'select'> = db,
 ): Promise<GameModel[]> {
-  const whitePlayer = aliasedTable(players, 'white_player');
-  const blackPlayer = aliasedTable(players, 'black_player');
-  const gamesDb = await database
-    .select({
-      id: games.id,
-      tournamentId: games.tournamentId,
-      blackId: games.blackId,
-      whiteId: games.whiteId,
-      blackNickname: blackPlayer.nickname,
-      whiteNickname: whitePlayer.nickname,
-      roundNumber: games.roundNumber,
-      gameNumber: games.gameNumber,
-      roundName: games.roundName,
-      whitePrevGameId: games.whitePrevGameId,
-      blackPrevGameId: games.blackPrevGameId,
-      result: games.result,
-      finishedAt: games.finishedAt,
-    })
-    .from(games)
-    .where(eq(games.tournamentId, tournamentId))
-    .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
-    .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
-
-  const sortedGames: GameModel[] = gamesDb
-    .map((g) => ({ ...g, pairMembers: null }))
-    .sort((a, b) => a.gameNumber - b.gameNumber);
-  const tournament = await getTournamentById(tournamentId, database);
-  if (!tournament || tournament.type !== 'doubles') return sortedGames;
-
-  const doublesTeamMembers = await getDoublesTeamMembers(
-    tournamentId,
-    database,
-  );
-  return enrichGamesWithDoublesInfo(sortedGames, doublesTeamMembers);
+  const startedAt = await getTournamentStartedAt(tournamentId, database);
+  if (!startedAt) return [];
+  return await getPersistedTournamentGames(tournamentId, database);
 }
 
 export async function getTournamentRoundGames({
@@ -58,13 +62,24 @@ export async function getTournamentRoundGames({
   roundNumber: number;
   database?: Pick<typeof db, 'select'>;
 }): Promise<GameModel[]> {
-  const whitePlayer = aliasedTable(players, 'white_player');
-  const blackPlayer = aliasedTable(players, 'black_player');
+  const startedAt = await getTournamentStartedAt(tournamentId, database);
+
+  if (!startedAt) {
+    if (roundNumber !== 1) return [];
+    const units = (await getRawTournamentUnits(tournamentId, database)).sort(
+      baselineUnitSort,
+    );
+    if (units.length < 2) return [];
+    return generatePreStartRoundGames({ units, tournamentId });
+  }
+
+  const whiteUnit = aliasedTable(tournament_units, 'white_unit');
+  const blackUnit = aliasedTable(tournament_units, 'black_unit');
   const gamesDb = await database
     .select({
       ...getTableColumns(games),
-      blackNickname: blackPlayer.nickname,
-      whiteNickname: whitePlayer.nickname,
+      whiteNickname: whiteUnit.nickname,
+      blackNickname: blackUnit.nickname,
     })
     .from(games)
     .where(
@@ -73,18 +88,8 @@ export async function getTournamentRoundGames({
         eq(games.roundNumber, roundNumber),
       ),
     )
-    .innerJoin(whitePlayer, eq(games.whiteId, whitePlayer.id))
-    .innerJoin(blackPlayer, eq(games.blackId, blackPlayer.id));
+    .innerJoin(whiteUnit, eq(games.whiteUnitId, whiteUnit.id))
+    .innerJoin(blackUnit, eq(games.blackUnitId, blackUnit.id));
 
-  const sortedGames: GameModel[] = gamesDb
-    .map((g) => ({ ...g, pairMembers: null }))
-    .sort((a, b) => a.gameNumber - b.gameNumber);
-  const tournament = await getTournamentById(tournamentId, database);
-  if (!tournament || tournament.type !== 'doubles') return sortedGames;
-
-  const doublesTeamMembers = await getDoublesTeamMembers(
-    tournamentId,
-    database,
-  );
-  return enrichGamesWithDoublesInfo(sortedGames, doublesTeamMembers);
+  return normalizeGames(gamesDb);
 }

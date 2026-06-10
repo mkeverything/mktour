@@ -1,5 +1,7 @@
 import '@/lib/config/env';
 
+import { AppError } from '@/lib/errors';
+
 export const BASE_URL =
   process.env.NODE_ENV === 'production'
     ? process.env.NEXT_PUBLIC_BASE_URL
@@ -28,18 +30,18 @@ export const verifyTestDatabase = () => {
   const isTestEnv = process.env.NODE_ENV === 'test';
 
   if (!isTestEnv) {
-    throw new Error(
-      `🚨 CRITICAL: Operation requires NODE_ENV=test (current: ${process.env.NODE_ENV})`,
-    );
+    throw new AppError('CONFIG_ERROR', {
+      cause: `operation requires NODE_ENV=test (current: ${process.env.NODE_ENV})`,
+    });
   }
 
   const dbUrl = getDatabaseUrl() ?? '';
   const isTestUrl = dbUrl.toLowerCase().includes('test');
 
   if (!isTestUrl) {
-    throw new Error(
-      `🚨 CRITICAL: Database URL does not appear to be a test database. URL must contain "test". YOUR DATA IS AT RISK. Got: ${dbUrl.substring(0, 50)}...`,
-    );
+    throw new AppError('CONFIG_ERROR', {
+      cause: `database url does not appear to be a test database: ${dbUrl.substring(0, 50)}...`,
+    });
   }
 
   return true;

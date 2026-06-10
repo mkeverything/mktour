@@ -37,7 +37,7 @@ const CarouselContainer: FC<CarouselProps> = ({
   }, [api, currentTab, indexOfTab, handleSelect]);
 
   return (
-    <Carousel setApi={setApi} opts={{ loop: false }}>
+    <Carousel setApi={setApi} opts={{ loop: false }} className="select-none">
       {/* calculating content height to prevent carousel from overflow-y-scroll (screen - nav + controls) */}
       <CarouselContent className="h-[calc(100dvh-6rem)]">
         {tabs.map((tab) => (

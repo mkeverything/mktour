@@ -9,15 +9,17 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { PlayerTournamentModel } from '@/server/zod/players';
+import { UnitModel } from '@/server/zod/tournaments';
 import { LogOut, Trash2 } from 'lucide-react';
 import { FC } from 'react';
 
-export const DeleteButton: FC<{ handleDelete: () => void }> = ({
-  handleDelete,
-}) => (
+export const DeleteButton: FC<{
+  disabled?: boolean;
+  handleDelete: () => void;
+}> = ({ disabled, handleDelete }) => (
   <Button
     className="flex gap-2"
+    disabled={disabled}
     size="lg"
     variant="destructive"
     onClick={handleDelete}
@@ -28,9 +30,9 @@ export const DeleteButton: FC<{ handleDelete: () => void }> = ({
 );
 
 export const WithdrawButtonWithConfirmation: FC<{
-  selectedPlayer: PlayerTournamentModel;
+  selectedUnit: UnitModel;
   handleWithdraw: () => void;
-}> = ({ selectedPlayer, handleWithdraw }) => (
+}> = ({ selectedUnit, handleWithdraw }) => (
   <Root>
     <Trigger asChild>
       <Button className="flex gap-2" size="lg" variant="outline">
@@ -56,7 +58,7 @@ export const WithdrawButtonWithConfirmation: FC<{
         <LogOut />
         <FormattedMessage
           id="Tournament.Table.Player.Withdraw.confirm"
-          values={{ nickname: selectedPlayer.nickname }}
+          values={{ nickname: selectedUnit.unitNickname }}
         />
       </Button>
       <Close asChild>

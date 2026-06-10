@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/errors';
 /**
  * Tree operations for Edmonds' Blossom Algorithm
  *
@@ -44,7 +45,9 @@ export function traverseBlossomChain(
 ): void {
   const vertexState = state.vertices.get(vertexKey);
   if (vertexState === undefined) {
-    throw new Error(`Vertex ${vertexKey} not found in state`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Vertex ${vertexKey} not found in state`,
+    });
   }
 
   let currentBlossomId = vertexState.inBlossom;
@@ -59,13 +62,17 @@ export function traverseBlossomChain(
       console.error(
         `traverseBlossomChain: MAX DEPTH exceeded for vertex ${vertexKey}`,
       );
-      throw new Error(`Blossom chain too deep for ${vertexKey}`);
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: `Blossom chain too deep for ${vertexKey}`,
+      });
     }
     if (visitedBlossomIds.has(currentBlossomId)) {
       console.error(
         `traverseBlossomChain: CYCLE at blossom ${currentBlossomId}`,
       );
-      throw new Error(`Cycle in blossom chain at ${currentBlossomId}`);
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: `Cycle in blossom chain at ${currentBlossomId}`,
+      });
     }
     visitedBlossomIds.add(currentBlossomId);
     const isNonTrivial = currentBlossom.children.length > 1;
@@ -103,7 +110,9 @@ export function collectBlossomLeaves(
 ): VertexKey[] {
   const blossom = state.blossoms.get(blossomId);
   if (blossom === undefined) {
-    throw new Error(`Blossom ${blossomId} not found in state`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Blossom ${blossomId} not found in state`,
+    });
   }
 
   const leaves: VertexKey[] = [];
@@ -116,16 +125,22 @@ export function collectBlossomLeaves(
       console.error(
         `collectBlossomLeaves: MAX ITERATIONS at blossom ${blossomId}`,
       );
-      throw new Error(`Too many iterations in collectBlossomLeaves`);
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: `Too many iterations in collectBlossomLeaves`,
+      });
     }
     const childId = stack.pop();
     if (childId === undefined) {
-      throw new Error('Stack unexpectedly empty in collectBlossomLeaves');
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: 'Stack unexpectedly empty in collectBlossomLeaves',
+      });
     }
     const childBlossom = state.blossoms.get(childId);
 
     if (childBlossom === undefined) {
-      throw new Error(`Sub-blossom ${childId} not found in state`);
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: `Sub-blossom ${childId} not found in state`,
+      });
     }
 
     if (childBlossom.children.length === 1) {
@@ -164,7 +179,9 @@ export function findBaseWithBlossomId(
   traverseBlossomChain(state, vertexKey, captureTopLevel);
 
   if (result === null) {
-    throw new Error(`No blossom found for vertex ${vertexKey}`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `No blossom found for vertex ${vertexKey}`,
+    });
   }
 
   return result;
@@ -209,12 +226,16 @@ export function findDirectChildOf(
 ): BlossomId {
   const vertexState = state.vertices.get(vertexKey);
   if (vertexState === undefined) {
-    throw new Error(`Vertex ${vertexKey} not found in state`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Vertex ${vertexKey} not found in state`,
+    });
   }
 
   const outerBlossom = state.blossoms.get(outerBlossomId);
   if (outerBlossom === undefined) {
-    throw new Error(`Outer blossom ${outerBlossomId} not found`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Outer blossom ${outerBlossomId} not found`,
+    });
   }
 
   // Per NetworkX: bubble up from vertex using blossomparent until we find
@@ -229,7 +250,9 @@ export function findDirectChildOf(
         return blossomId;
       }
     }
-    throw new Error(`Trivial blossom not found for vertex ${vertexKey}`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Trivial blossom not found for vertex ${vertexKey}`,
+    });
   }
 
   // Case 2: vertex is in a non-trivial child - traverse UP from blossomParent
@@ -267,9 +290,9 @@ export function findDirectChildOf(
   traverseBlossomChain(state, vertexKey, findChildWithParent);
 
   if (result === null) {
-    throw new Error(
-      `Vertex ${vertexKey} is not inside blossom ${outerBlossomId}`,
-    );
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Vertex ${vertexKey} is not inside blossom ${outerBlossomId}`,
+    });
   }
 
   return result;
@@ -309,7 +332,9 @@ export function findBaseVertexInfo(
   const blossomState = state.blossoms.get(topLevelBlossomId);
 
   if (blossomState === undefined) {
-    throw new Error(`Blossom ${topLevelBlossomId} not found in state`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Blossom ${topLevelBlossomId} not found in state`,
+    });
   }
 
   const baseInfo: BaseVertexInfo = {
@@ -352,7 +377,9 @@ export function traverseTowardRoot(
       );
       console.error(`Start: ${startVertex}, Current: ${currentVertex}`);
       console.error(`Visited: ${[...visitedVertices].join(', ')}`);
-      throw new Error(`Cycle in traverseTowardRoot from ${startVertex}`);
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: `Cycle in traverseTowardRoot from ${startVertex}`,
+      });
     }
     if (visitedVertices.has(currentVertex)) {
       // Dump diagnostic info about each vertex in the cycle
@@ -368,10 +395,11 @@ export function traverseTowardRoot(
         );
       }
       console.error(`======================\n`);
-      throw new Error(
-        `Cycle in tree traversal: revisited ${currentVertex}. ` +
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause:
+          `Cycle in tree traversal: revisited ${currentVertex}. ` +
           `Path: ${[...visitedVertices].join(' -> ')} -> ${currentVertex}`,
-      );
+      });
     }
     visitedVertices.add(currentVertex);
 
@@ -382,7 +410,9 @@ export function traverseTowardRoot(
     const blossomState = state.blossoms.get(topLevelBlossomId);
 
     if (blossomState === undefined) {
-      throw new Error(`Blossom ${topLevelBlossomId} not found in state`);
+      throw new AppError('PAIRING_GENERATOR_ERROR', {
+        cause: `Blossom ${topLevelBlossomId} not found in state`,
+      });
     }
 
     const isRoot = isAlternatingTreeRoot(blossomState);
@@ -404,9 +434,9 @@ export function traverseTowardRoot(
       const labelEnd = blossomState.labelEnd;
       // Use null check (not NO_LABEL_ENDPOINT) so TypeScript narrows the type
       if (labelEnd === null) {
-        throw new Error(
-          `Blossom ${topLevelBlossomId} has label ${blossomState.label} but no labelEnd`,
-        );
+        throw new AppError('PAIRING_GENERATOR_ERROR', {
+          cause: `Blossom ${topLevelBlossomId} has label ${blossomState.label} but no labelEnd`,
+        });
       }
 
       currentVertex = labelEnd;
@@ -514,9 +544,9 @@ export function findAlternatingTreeRoot(
   traverseTowardRoot(state, vertex, captureRoot);
 
   if (rootVertex === null) {
-    throw new Error(
-      `Failed to find alternating tree root for vertex ${vertex}`,
-    );
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Failed to find alternating tree root for vertex ${vertex}`,
+    });
   }
 
   return rootVertex;
@@ -648,9 +678,9 @@ export function findLowestCommonAncestor(
   const intersection = findPathIntersection(state, vertexV, pathFromUWithEdges);
 
   if (intersection === null) {
-    throw new Error(
-      `No common ancestor found for vertices ${vertexU} and ${vertexV} - not in same tree`,
-    );
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `No common ancestor found for vertices ${vertexU} and ${vertexV} - not in same tree`,
+    });
   }
 
   return intersection;
@@ -684,10 +714,11 @@ export function assignLabel(
 
   // Per NetworkX: assert label.get(w) is None and label.get(b) is None
   if (blossomState.label !== Label.NONE) {
-    throw new Error(
-      `assignLabel: blossom ${blossomState.id} already has label ${blossomState.label}, ` +
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause:
+        `assignLabel: blossom ${blossomState.id} already has label ${blossomState.label}, ` +
         `cannot assign ${label}. Vertex=${vertex}, labelEnd=${labelEnd}`,
-    );
+    });
   }
 
   // Assign label and label endpoints to the blossom (per NetworkX: labels are per-blossom)
@@ -725,7 +756,9 @@ export function assignLabel(
 function isVertexFree(state: MatchingState, vertexKey: VertexKey): boolean {
   const vertexState = state.vertices.get(vertexKey);
   if (vertexState === undefined) {
-    throw new Error(`Vertex ${vertexKey} not found in state`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Vertex ${vertexKey} not found in state`,
+    });
   }
   return vertexState.mate === null;
 }
@@ -749,7 +782,9 @@ export function scanAndLabelNeighbours(
 ): ScanAndLabelResult {
   const neighbours = state.adjacencyList.get(vertex);
   if (neighbours === undefined) {
-    throw new Error(`Vertex ${vertex} not found in adjacency list`);
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Vertex ${vertex} not found in adjacency list`,
+    });
   }
 
   const { baseVertex: vertexBase } = findBaseVertexInfo(state, vertex);
@@ -781,11 +816,15 @@ export function scanAndLabelNeighbours(
           // In a blossom, base.mate is the external matched edge
           const baseState = state.vertices.get(neighbourBase);
           if (baseState === undefined) {
-            throw new Error(`Base vertex ${neighbourBase} not found`);
+            throw new AppError('PAIRING_GENERATOR_ERROR', {
+              cause: `Base vertex ${neighbourBase} not found`,
+            });
           }
           const baseMate = baseState.mate;
           if (baseMate === null) {
-            throw new Error(`T-vertex base ${neighbourBase} should be matched`);
+            throw new AppError('PAIRING_GENERATOR_ERROR', {
+              cause: `T-vertex base ${neighbourBase} should be matched`,
+            });
           }
 
           // Per NetworkX: assert mate's blossom is unlabeled before labeling

@@ -1,5 +1,6 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
+import { AppError } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import {
   clubAdminProcedure,
@@ -23,20 +24,22 @@ import {
   getPublicPopularClubs,
   getUserClubPlayer,
 } from '@/server/queries/club';
-import getAllClubs from '@/server/queries/get-all-clubs';
+import getAllClubsInfinite from '@/server/queries/get-all-clubs-infinite';
 import getClubNotifications from '@/server/queries/get-club-notifications';
 import { getClubStats } from '@/server/queries/get-club-stats';
-import { getClubTournaments } from '@/server/queries/get-club-tournaments';
+import { getClubTournamentsInfinite } from '@/server/queries/get-club-tournaments-infinite';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { getUserClubAffiliation } from '@/server/queries/get-user-club-affiliation';
 import {
   clubManagersSchema,
-  clubsEditSchema,
-  clubsInsertSchema,
   clubsSelectSchema,
   clubStatsSchema,
   publicPopularClubSchema,
 } from '@/server/zod/clubs';
+import {
+  clubsEditServerSchema,
+  clubsInsertServerSchema,
+} from '@/server/zod/clubs.server';
 import {
   clubIdInputSchema,
   notificationIdInputSchema,
@@ -68,7 +71,7 @@ export const clubRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      return await getAllClubs({
+      return await getAllClubsInfinite({
         limit: input.limit,
         cursor: input.cursor ?? undefined,
       });
@@ -85,7 +88,7 @@ export const clubRouter = createTRPCRouter({
     }),
   create: protectedProcedure
     .meta(meta.clubCreate)
-    .input(clubsInsertSchema)
+    .input(clubsInsertServerSchema)
     .output(clubsSelectSchema)
     .mutation(async (opts) => {
       const { input } = opts;
@@ -134,7 +137,7 @@ export const clubRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      return await getClubTournaments(
+      return await getClubTournamentsInfinite(
         opts.input.clubId,
         opts.input.limit,
         opts.input.cursor,
@@ -266,7 +269,7 @@ export const clubRouter = createTRPCRouter({
     }),
   edit: clubAdminProcedure
     .meta(meta.clubEdit)
-    .input(z.object({ values: clubsEditSchema }))
+    .input(clubsEditServerSchema)
     .output(clubsSelectSchema)
     .mutation(async (opts) => {
       const { input } = opts;
@@ -274,7 +277,7 @@ export const clubRouter = createTRPCRouter({
         ...input,
         username: opts.ctx.user.username,
       });
-      if (!newClub) throw new Error('CLUB_NOT_FOUND');
+      if (!newClub) throw new AppError('CLUB_NOT_FOUND');
       return newClub;
     }),
   leave: clubAdminProcedure
@@ -283,7 +286,7 @@ export const clubRouter = createTRPCRouter({
     .output(z.object({ clubs: z.array(z.string()) }))
     .mutation(async ({ ctx, input }) => {
       if (Object.keys(ctx.clubs).length === 1)
-        throw new Error('CANT_LEAVE_ONLY_CLUB');
+        throw new AppError('CANNOT_LEAVE_ONLY_CLUB');
       await leaveClub({ clubId: input.clubId, userId: ctx.user.id });
 
       revalidateTag(CACHE_TAGS.AUTH, 'max');

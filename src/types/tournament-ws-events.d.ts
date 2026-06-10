@@ -1,38 +1,38 @@
 import { GameResult } from '@/server/zod/enums';
-import { PlayerTournamentModel } from '@/server/zod/players';
-import { GameModel } from '@/server/zod/tournaments';
+import { GameModel, UnitModel } from '@/server/zod/tournaments';
 
 type DashboardMessage =
   | {
-      event: 'edit-team-player';
-      body: PlayerTournamentModel;
-      previousId: string;
+      event: 'edit-doubles-unit';
+      unit: UnitModel;
     }
   | {
-      event: 'prestart-round-updated';
-      players: PlayerTournamentModel[];
-      games: GameModel[];
-      roundNumber: 1;
+      event: 'prestart-units-updated';
+      units: UnitModel[];
     }
-  | { event: 'withdraw-player'; id: string }
+  | { event: 'withdraw-unit'; id: UnitModel['id'] }
   | {
       event: 'set-game-result';
-      gameId: string;
-      result: GameResult;
-      roundNumber: number;
+      gameId: GameModel['id'];
+      result: GameResult | null;
+      roundNumber: GameModel['roundNumber'];
     }
-  | { event: 'start-tournament'; startedAt: Date } // it accepts date on input but has to be converted from string to date on incomming messages
+  | { event: 'start-tournament'; startedAt: Date; games: GameModel[] } // it accepts date on input but has to be converted from string to date on incomming messages
   | { event: 'reset-tournament' }
+  | { event: 'reset-tournament-players' }
   | {
       event: 'new-round';
-      roundNumber: number;
+      roundNumber: GameModel['roundNumber'];
       newGames: GameModel[];
       isTournamentGoing: boolean;
     }
   | { event: 'finish-tournament'; closedAt: Date }
   | { event: 'delete-tournament' }
-  | { event: 'swiss-new-rounds-number'; roundsNumber: number }
-  | { event: 'tournament-title-changed'; title: string }
+  | {
+      event: 'swiss-new-rounds-number';
+      roundsNumber: TournamentModel['roundsNumber'];
+    }
+  | { event: 'tournament-title-changed'; title: TournamentModel['title'] }
   | ErrorMessage;
 
 type ErrorMessage = {

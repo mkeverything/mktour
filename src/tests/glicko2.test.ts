@@ -1,4 +1,4 @@
-import { glicko2Calculator, type GameResult } from '@/lib/glicko2';
+import { glicko2Calculator, type GlickoGameResult } from '@/lib/glicko2';
 import { describe, expect, it } from 'bun:test';
 
 describe('glicko-2', () => {
@@ -10,7 +10,7 @@ describe('glicko-2', () => {
       volatility: 0.06,
     };
 
-    const results: GameResult[] = [
+    const results: GlickoGameResult[] = [
       { opponentRating: 1000, opponentRatingDeviation: 50, score: 1.0 }, // Win against lower-rated
       { opponentRating: 1500, opponentRatingDeviation: 60, score: 0.5 }, // Draw against equal-rated
       { opponentRating: 1900, opponentRatingDeviation: 70, score: 0.0 }, // Loss against higher-rated
@@ -44,7 +44,7 @@ describe('glicko-2', () => {
       volatility: 0.06,
     };
 
-    const results: GameResult[] = [
+    const results: GlickoGameResult[] = [
       { opponentRating: 1600, opponentRatingDeviation: 50, score: 0.0 }, // Unexpected loss
       { opponentRating: 2000, opponentRatingDeviation: 60, score: 1.0 }, // Unexpected win
       { opponentRating: 1800, opponentRatingDeviation: 50, score: 0.0 }, // Unexpected loss
@@ -79,7 +79,7 @@ describe('glicko-2', () => {
       volatility: 0.06,
     };
 
-    const results: GameResult[] = []; // No games played
+    const results: GlickoGameResult[] = []; // No games played
 
     const update = glicko2Calculator.calculateNewRatings(
       inactivePlayer,
@@ -129,7 +129,7 @@ describe('glicko-2', () => {
       volatility: 0.06,
     };
 
-    const resultsHigh: GameResult[] = [
+    const resultsHigh: GlickoGameResult[] = [
       { opponentRating: 3000, opponentRatingDeviation: 50, score: 0.0 }, // Expected loss
     ];
 
@@ -140,7 +140,7 @@ describe('glicko-2', () => {
     // should lose very little rating for losing to a much stronger player
     expect(Math.abs(updateHigh.newRating - player.rating)).toBeLessThan(5);
 
-    const resultsLow: GameResult[] = [
+    const resultsLow: GlickoGameResult[] = [
       { opponentRating: 500, opponentRatingDeviation: 50, score: 1.0 }, // Expected win
     ];
 
@@ -158,7 +158,7 @@ describe('glicko-2', () => {
     };
 
     // 5 wins against equal opponents
-    const results: GameResult[] = Array(5).fill({
+    const results: GlickoGameResult[] = Array(5).fill({
       opponentRating: 1500,
       opponentRatingDeviation: 50,
       score: 1.0,

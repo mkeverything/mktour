@@ -28,8 +28,8 @@ export const userNotificationEventEnum = z.enum([
 export const tournamentFormatEnum = z.enum([
   'swiss',
   'round robin',
-  'single elimination',
-  'double elimination',
+  // 'single elimination',
+  // 'double elimination',
 ]);
 
 export const tournamentAuthStatusEnum = z.enum([
@@ -38,7 +38,7 @@ export const tournamentAuthStatusEnum = z.enum([
   'viewer',
 ]);
 
-export const tournamentTypeEnum = z.enum(['solo', 'doubles', 'team']);
+export const tournamentTypeEnum = z.enum(['solo', 'doubles']); //team removed until implementatin
 
 export const gameResultEnum = z.enum(['1-0', '0-1', '1/2-1/2']);
 
