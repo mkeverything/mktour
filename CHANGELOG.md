@@ -1,3 +1,38 @@
+# [1.9.0](https://github.com/mkeverything/mktour/compare/v1.8.2...v1.9.0) (2026-06-10)
+
+
+### Bug Fixes
+
+* added keeping colourPlayerIds in generators ([72fdcd2](https://github.com/mkeverything/mktour/commit/72fdcd26991ba128899c40b15383ebe6f3740c4f))
+* added lichess team server validation to club.create ([545599d](https://github.com/mkeverything/mktour/commit/545599de2627808e780bc514a8672f4d2b06f884))
+* added missing description field to club settings form ([b9adc49](https://github.com/mkeverything/mktour/commit/b9adc492a5f4f724eeeb22873edf5cc9eb9baab1))
+* added scope to tournament pre-start mutations to force consecutive execution ([fd09166](https://github.com/mkeverything/mktour/commit/fd091663eeb053ee81914f6b6a4200b17733a900))
+* added upper and lower boundaries for ratings ([477e9a3](https://github.com/mkeverything/mktour/commit/477e9a32cf6bac8b8229e1d907c09dea7669da17))
+* allow partial input for club edit requests ([2e0bb13](https://github.com/mkeverything/mktour/commit/2e0bb13dafb2d465f2986ebaad66b49b298ad47b))
+* clientside rounds-number min value ([9a6076a](https://github.com/mkeverything/mktour/commit/9a6076a3e4be1a3866a72f21dc06c6b991d722b6))
+* clubEdit now distincts 403 from 404 when linking lichess team ([0f334b1](https://github.com/mkeverything/mktour/commit/0f334b1d361677b60553415c2fd511d09a84e467))
+* correctly find  unit by id in `editDoublesUnit` ([8be53de](https://github.com/mkeverything/mktour/commit/8be53dee8b09b4345ab9a53a98d0dc24ab45bfb2))
+* editDoublesUnit issues with optimistic update ([966f433](https://github.com/mkeverything/mktour/commit/966f433a1ebab9f6b5a8ef5026164c34dc1e7dd4))
+* finally handled this clumsy link-team validation ([63b45c9](https://github.com/mkeverything/mktour/commit/63b45c95e8bdbb185ffa111e06f312cb1812302c))
+* finish-tournament button rendered during prestart on mobile ([327624e](https://github.com/mkeverything/mktour/commit/327624ee6a936cd4b868c8487654ca14042389d3))
+* fixed connecting clubs to lichess groups ([5d3e0d7](https://github.com/mkeverything/mktour/commit/5d3e0d7ced0a0708eb9f6ea8205b5f3823d4a2c3))
+* head-to-head stats compared colourUnitids to players (which always returned 0s) ([3a448a5](https://github.com/mkeverything/mktour/commit/3a448a5a967d96a4b44eeac0c7fc11054e28f28c))
+* player modal window (in tmt dashboard) got closed unexpectedly when background refetch happened ([861a062](https://github.com/mkeverything/mktour/commit/861a062b7e84c5307eebe5fc0077501a6e407dd5))
+* player now can be deleted directly from club dashboard ([4f3cc51](https://github.com/mkeverything/mktour/commit/4f3cc51ec598d7763795ad3fdb9b9eeebaafa801))
+* prevent queued pre-start mutations to drop optimistic rounds number ([e5d763b](https://github.com/mkeverything/mktour/commit/e5d763ba72dc9d55e963f0264e7230557579641c))
+* proper cache read and invalidation for rendering finish-tournament button ([501641c](https://github.com/mkeverything/mktour/commit/501641cbce94e5aa041ce912b0cd53f389ef105c))
+* rm error message from posthog capture ([59af199](https://github.com/mkeverything/mktour/commit/59af199a64d1196eb8b3ff41ed2eef820e690816))
+* send games inside `start-tournament` ws-message ([ede8e01](https://github.com/mkeverything/mktour/commit/ede8e01c73818b0122c2962f80e858fb2d1143c7))
+* server revalidation dropped custom order for doubles ([a7a70c2](https://github.com/mkeverything/mktour/commit/a7a70c2dc2f03bb31153144ad649fc8ee2a82e50))
+* show lichess team link conflict in club settings ([1c57167](https://github.com/mkeverything/mktour/commit/1c57167f7bafe99f840ea844e619c7bb50df52d9))
+* text selection inside club dashboard triggered swipe-handler ([e1342cb](https://github.com/mkeverything/mktour/commit/e1342cbd61309ea3d1f276aeb20fa60906b6478f))
+
+
+### Features
+
+* create tournament api endpoiont with all proper backend validations ([43e829c](https://github.com/mkeverything/mktour/commit/43e829ce22e4ba4628ecabd46001d2c334148d88))
+* desktop view for club dashboard ([556f310](https://github.com/mkeverything/mktour/commit/556f3105c84f9d0062706711f7313413bb9a709a))
+
 ## [1.8.2](https://github.com/mkeverything/mktour/compare/v1.8.1...v1.8.2) (2026-05-05)
 
 
