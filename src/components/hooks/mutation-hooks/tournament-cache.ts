@@ -4,24 +4,29 @@ import { useTRPC } from '@/components/trpc/client';
 import type { AppRouter } from '@/server/api';
 import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import type { inferRouterInputs } from '@trpc/server';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
-type TournamentProcedure = keyof inferRouterInputs<AppRouter>['tournament'];
+type TournamentInputs = inferRouterInputs<AppRouter>['tournament'];
 
-// the dashboard's cached read surface.
-const TOURNAMENT_QUERIES = [
-  'info',
-  'units',
-  'playersOut',
-  'roundGames',
-  'allGames',
-] as const satisfies readonly TournamentProcedure[];
-type TournamentQuery = (typeof TOURNAMENT_QUERIES)[number];
+// only procedures whose input carries a tournamentId can be tracked
+type TournamentScopedProcedure = {
+  [K in keyof TournamentInputs]: TournamentInputs[K] extends {
+    tournamentId: string;
+  }
+    ? K
+    : never;
+}[keyof TournamentInputs];
+
+type TournamentQuery =
+  | 'info'
+  | 'units'
+  | 'playersOut'
+  | 'roundGames'
+  | 'allGames';
 
 // single source of truth: which cached queries each mutation can dirty, on the
 // server and/or optimistically. side-effects count too — e.g. removing a unit
-// clamps roundsNumber, so it writes `info`. everything else (writer lookup,
-// invalidation timing) is derived from this map
+// clamps roundsNumber, so it writes `info`.
 const TOURNAMENT_CACHE_GRAPH = {
   addSoloUnit: ['units', 'roundGames', 'allGames', 'playersOut', 'info'],
   addNewSoloUnit: ['units', 'roundGames', 'allGames', 'info'],
@@ -42,66 +47,56 @@ const TOURNAMENT_CACHE_GRAPH = {
   editTitle: ['info'],
   updateSwissRoundsNumber: ['info'],
 } as const satisfies Partial<
-  Record<TournamentProcedure, readonly TournamentQuery[]>
+  Record<TournamentScopedProcedure, readonly TournamentQuery[]>
 >;
 
 type TournamentCacheMutation = keyof typeof TOURNAMENT_CACHE_GRAPH;
+
+const GRAPH_ENTRIES = Object.entries(TOURNAMENT_CACHE_GRAPH) as [
+  TournamentCacheMutation,
+  readonly TournamentQuery[],
+][];
+
+const hasTournamentId = (v: unknown): v is { tournamentId: string } =>
+  typeof v === 'object' && v !== null && 'tournamentId' in v;
 
 export const useTournamentCache = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  // inverse of the graph: query -> mutations that can dirty it.
-  const writersByQuery = useMemo(() => {
-    const map = {} as Record<TournamentQuery, TournamentCacheMutation[]>;
-    for (const query of TOURNAMENT_QUERIES) map[query] = [];
-    for (const mutation of Object.keys(
-      TOURNAMENT_CACHE_GRAPH,
-    ) as TournamentCacheMutation[]) {
-      for (const query of TOURNAMENT_CACHE_GRAPH[mutation]) {
-        map[query].push(mutation);
-      }
-    }
-    return map;
-  }, []);
-
-  // how many writers of this query are still in flight.
+  // how many in-flight mutations of this tournament can dirty the query.
   const pendingWriters = useCallback(
     (query: TournamentQuery) =>
-      writersByQuery[query].reduce(
-        (count, mutation) =>
+      GRAPH_ENTRIES.filter(([, queries]) => queries.includes(query)).reduce(
+        (count, [mutation]) =>
           count +
           queryClient.isMutating({
             mutationKey: trpc.tournament[mutation].mutationKey(),
+            predicate: ({ state }) =>
+              hasTournamentId(state.variables) &&
+              state.variables.tournamentId === tournamentId,
           }),
         0,
       ),
-    [writersByQuery, queryClient, trpc],
-  );
-
-  // a partial-input query key, so invalidation partial-matches every cached
-  // shape for this tournament (e.g. roundGames for any roundNumber). widened to
-  // QueryKey to drop the per-procedure output tag the union can't reconcile.
-  const invalidateQuery = useCallback(
-    (query: TournamentQuery) => {
-      const queryKey: QueryKey = trpc.tournament[query].queryKey({
-        tournamentId,
-      });
-      return queryClient.invalidateQueries({ queryKey });
-    },
     [queryClient, trpc, tournamentId],
   );
 
-  // invalidate each query a mutation touched, but only once no other writer can
-  // still re-dirty it (self is the only pending writer). called from onSettled.
+  // called from onSettled: invalidate each query the mutation touched, but
+  // only once no other writer can re-dirty it (self is the only pending one).
+  // the partial-input key matches every cached shape for this tournament
+  // (e.g. roundGames for any roundNumber).
   const settle = useCallback(
     (mutation: TournamentCacheMutation) => {
       for (const query of TOURNAMENT_CACHE_GRAPH[mutation]) {
-        if (pendingWriters(query) === 1) invalidateQuery(query);
+        if (pendingWriters(query) !== 1) continue;
+        const queryKey: QueryKey = trpc.tournament[query].queryKey({
+          tournamentId,
+        });
+        queryClient.invalidateQueries({ queryKey });
       }
     },
-    [pendingWriters, invalidateQuery],
+    [pendingWriters, queryClient, trpc, tournamentId],
   );
 
-  return { pendingWriters, invalidateQuery, settle };
+  return { pendingWriters, settle };
 };
