@@ -93,7 +93,7 @@ button {
   height: var(--spacing-mk-navbar-total-height);
   padding: var(--spacing-mk);
   padding-top: calc(var(--spacing-mk) + var(--spacing-mk-safe-area-top));
-  box-sizing: content-box;
+  box-sizing: border-box;
 
   @media screen and (min-width: 768px) {
     padding: var(--spacing-mk-2);
