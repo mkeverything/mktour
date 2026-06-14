@@ -91,12 +91,13 @@ button {
 
 @utility mk-navbar {
   height: var(--spacing-mk-navbar-total-height);
-  padding: calc(var(--spacing-mk) + var(--spacing-mk-safe-area-top))
-    var(--spacing-mk) var(--spacing-mk);
+  padding: var(--spacing-mk);
+  padding-top: calc(var(--spacing-mk) + var(--spacing-mk-safe-area-top));
+  box-sizing: content-box;
 
   @media screen and (min-width: 768px) {
-    padding: calc(var(--spacing-mk-2) + var(--spacing-mk-safe-area-top))
-      var(--spacing-mk-2) var(--spacing-mk-2);
+    padding: var(--spacing-mk-2);
+    padding-top: calc(var(--spacing-mk-2) + var(--spacing-mk-safe-area-top));
   }
 }
 
