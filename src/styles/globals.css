@@ -20,6 +20,10 @@
 }
 
 @layer utilities {
+  html {
+    background: var(--background);
+  }
+
   body {
     font-family: 'Main';
     text-rendering: optimizeLegibility;
@@ -31,7 +35,7 @@
     overflow: auto;
     touch-action: pan-x pan-y;
     scrollbar-gutter: stable;
-    padding-top: env(safe-area-inset-top);
+    background: var(--background);
   }
 
   /* latin */
@@ -70,13 +74,31 @@ button {
 }
 
 @theme {
+  --spacing-mk-safe-area-top: env(safe-area-inset-top, 0px);
   --spacing-mk: calc(var(--spacing) * 2);
   --spacing-mk-2: calc(var(--spacing-mk) * 2);
   --spacing-mk-3: calc(var(--spacing-mk) * 3);
   --spacing-mk-4: calc(var(--spacing-mk) * 4);
   --spacing-mk-card-height: calc(var(--spacing-mk) * 4);
   --spacing-mk-navbar-height: calc(var(--spacing) * 14);
-  --spacing-mk-content-height: calc(100svh - (var(--spacing-mk-navbar-height)));
+  --spacing-mk-navbar-total-height: calc(
+    var(--spacing-mk-navbar-height) + var(--spacing-mk-safe-area-top)
+  );
+  --spacing-mk-content-height: calc(
+    100svh - (var(--spacing-mk-navbar-total-height))
+  );
+}
+
+@utility mk-navbar {
+  height: var(--spacing-mk-navbar-total-height);
+  padding: var(--spacing-mk);
+  padding-top: calc(var(--spacing-mk) + var(--spacing-mk-safe-area-top));
+  box-sizing: border-box;
+
+  @media screen and (min-width: 768px) {
+    padding: var(--spacing-mk-2);
+    padding-top: calc(var(--spacing-mk-2) + var(--spacing-mk-safe-area-top));
+  }
 }
 
 @utility mk-container {

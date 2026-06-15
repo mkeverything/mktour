@@ -18,7 +18,7 @@ const Navigation: FC = () => {
   const showMobile = mounted ? isTablet : true;
 
   return (
-    <nav className="bg-background p-mk md:p-mk-2 h-mk-navbar-height fixed z-50 flex w-full items-center justify-between border-b">
+    <nav className="mk-navbar bg-background fixed top-0 z-50 flex w-full items-center justify-between border-b">
       <MktourNavbar />
       {showMobile ? <Mobile /> : <Desktop />}
     </nav>
