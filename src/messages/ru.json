@@ -378,9 +378,9 @@
         "Notification": {
           "affiliation_request_approved": "игрок <playerLink>{player}</playerLink> был привязан к юзеру <userLink>{user}</userLink>",
           "affiliation_request_rejected": "запрос <userLink>{user}</userLink> на привязку к <playerLink>{player}</playerLink> был отклонён",
-          "manager_left": "менеджер <userLink>{user}</userLink> покинул клуб",
+          "manager_left": "админ <userLink>{user}</userLink> покинул клуб",
           "affiliation_cancelled": "юзер <userLink>{user}</userLink> отменил привязку к <playerLink>{player}</playerLink>",
-          "player_merged": "игрок <playerLink>{player}</playerLink> теперь включает дубль {mergedPlayer}"
+          "player_merged": "игрок {mergedPlayer} объединён с игроком <playerLink>{player}</playerLink>"
         }
       }
     },
