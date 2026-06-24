@@ -75,6 +75,7 @@ export type ClubNotificationMetadataMap = {
     playerId: string;
   };
   affiliation_cancelled: { userId: string; playerId: string };
+  player_merged: { playerId: string; mergedPlayerNickname: string };
 };
 
 export type ClubNotificationExtendedModel = z.infer<

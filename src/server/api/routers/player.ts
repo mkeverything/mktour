@@ -20,6 +20,7 @@ import {
   rejectAffiliation,
   requestAffiliation,
 } from '@/server/mutations/player-affiliation';
+import { mergePlayers } from '@/server/mutations/player-merge';
 import getPlayer from '@/server/queries/get-player';
 import { getUserClubIds } from '@/server/queries/get-user-clubs';
 import {
@@ -38,6 +39,7 @@ import {
   playerAuthStatsSchema,
   playerEditSchema,
   playerFormSchema,
+  playerMergeInputSchema,
   playersSelectSchema,
   playerStatsSchema,
 } from '@/server/zod/players';
@@ -172,6 +174,12 @@ export const playerRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       return await editPlayer({ values: input, user: opts.ctx.user });
+    }),
+  merge: clubAdminProcedure
+    .input(playerMergeInputSchema)
+    .output(z.void())
+    .mutation(async ({ input }) => {
+      return await mergePlayers(input);
     }),
   stats: {
     public: publicProcedure

@@ -85,6 +85,11 @@ export const playerEditSchema = playersUpdateSchema
     realname: z.string().max(50).nullable().optional(),
   });
 
+export const playerMergeInputSchema = z.object({
+  basePlayerId: z.string(),
+  mergedPlayerId: z.string(),
+});
+
 export const statItemSchema = z.object({
   value: z.number(),
   rank: z.number(),
@@ -118,6 +123,7 @@ export type PlayerFormModel = z.infer<typeof playerFormSchema>;
 export type PlayerInsertModel = z.infer<typeof playersInsertSchema>;
 export type PlayerUpdateModel = z.infer<typeof playersUpdateSchema>;
 export type PlayerEditModel = z.infer<typeof playerEditSchema>;
+export type PlayerMergeInputModel = z.infer<typeof playerMergeInputSchema>;
 
 export const userPlayerClubSchema = z.object({
   club: z.object({ id: z.string(), name: z.string() }),

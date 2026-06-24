@@ -1,6 +1,7 @@
 'use client';
 
 import AddPlayerDrawer from '@/app/clubs/my/add-new-player';
+import MergePlayerDrawer from '@/app/clubs/my/merge-player-drawer';
 import { ClubTabProps } from '@/app/clubs/my/tabMap';
 import EditPlayerForm from '@/app/player/[id]/player-form';
 import Empty from '@/components/empty';
@@ -19,10 +20,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
-import { UserRound, Users2 } from 'lucide-react';
+import { Merge, UserRound, Users2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { ComponentProps, FC } from 'react';
+import { ComponentProps, FC, useState } from 'react';
 import { toast } from 'sonner';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
@@ -133,6 +134,9 @@ const PlayerItem: FC<{
   player: PlayerModel;
   statusInClub?: StatusInClub | null;
 }> = ({ player, statusInClub }) => {
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const t = useTranslations('Player.Merge');
+
   if (!statusInClub) {
     return (
       <Link
@@ -145,29 +149,50 @@ const PlayerItem: FC<{
   }
 
   return (
-    <ComboModal.Root>
-      <ComboModal.Trigger asChild>
-        <PlayerCard player={player} />
-      </ComboModal.Trigger>
-      <ComboModal.Content>
-        <ComboModal.Header>
-          <ComboModal.Title>
-            <Button variant="ghost" className="text-xl" asChild>
-              <Link href={`/player/${player.id}`}>
-                <span>{player.nickname}</span>
-                <UserRound />
-              </Link>
+    <>
+      <ComboModal.Root>
+        <ComboModal.Trigger asChild>
+          <PlayerCard player={player} />
+        </ComboModal.Trigger>
+        <ComboModal.Content>
+          <ComboModal.Header>
+            <ComboModal.Title>
+              <Button variant="ghost" className="text-xl" asChild>
+                <Link href={`/player/${player.id}`}>
+                  <span>{player.nickname}</span>
+                  <UserRound />
+                </Link>
+              </Button>
+            </ComboModal.Title>
+          </ComboModal.Header>
+          <EditPlayerForm
+            clubId={player.clubId}
+            player={{ playerId: player.id, ...player }}
+            status={statusInClub}
+            setOpen={() => null}
+          />
+          <ComboModal.Close asChild>
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-2 w-full"
+              onClick={() => setMergeOpen(true)}
+            >
+              <Merge />
+              {t('merge')}
             </Button>
-          </ComboModal.Title>
-        </ComboModal.Header>
-        <EditPlayerForm
+          </ComboModal.Close>
+        </ComboModal.Content>
+      </ComboModal.Root>
+      {mergeOpen && (
+        <MergePlayerDrawer
           clubId={player.clubId}
-          player={{ playerId: player.id, ...player }}
-          status={statusInClub}
-          setOpen={() => null}
+          sourcePlayer={player}
+          open={mergeOpen}
+          setOpen={setMergeOpen}
         />
-      </ComboModal.Content>
-    </ComboModal.Root>
+      )}
+    </>
   );
 };
 

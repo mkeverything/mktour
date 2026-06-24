@@ -14,6 +14,7 @@ export const clubNotificationEventEnum = z.enum([
   'affiliation_request_approved',
   'affiliation_request_rejected',
   'affiliation_cancelled',
+  'player_merged',
 ]);
 
 export const userNotificationEventEnum = z.enum([

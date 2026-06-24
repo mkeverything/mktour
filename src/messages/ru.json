@@ -191,6 +191,16 @@
     "cancel affiliation": "отвязать",
     "cancel affiliation by user description": "вы сейчас отвяжете себя от этого игрока. он не будет отображаться в вашем профиле и результаты его игр вы тоже заносить сами не сможете",
     "cancel affiliation by club description": "вы уберёте привязку пользователя к игроку вашего клуба",
+    "Merge": {
+      "affiliated user": "с личесом {user}",
+      "base": "основной игрок",
+      "cancel": "отмена",
+      "description": "выберите второго, чтобы объединить с {player}. <d>это будет нельзя отменить</d>",
+      "merge": "объединить игрока",
+      "rating tooltip": "рейтинг объединить нельзя, турниры игрока {player} станут как бы нерейтинговыми",
+      "result": "получится:",
+      "title": "объединение игроков"
+    },
     "Stats": {
       "gamesPlayed": "сыграно партий",
       "winRate": "победы",
@@ -272,9 +282,14 @@
     "PLAYER_ALREADY_IN_UNIT": "этот игрок уже есть в турнире",
     "PLAYER_EXISTS_ERROR": "этот игрок уже существует!",
     "PLAYER_HAS_TOURNAMENTS": "простите! нельзя удалять игрока, который участвовал в турнирах. для этого придётся удалить и турниры тоже",
+    "PLAYER_MERGE_BOTH_PENDING_AFFILIATIONS": "у обоих игроков есть ожидающие заявки на привязку",
+    "PLAYER_MERGE_BOTH_USER_LINKED": "оба игрока привязаны к пользователям",
+    "PLAYER_MERGE_SAME_PLAYER": "выберите двух разных игроков",
+    "PLAYER_MERGE_SHARED_TOURNAMENT": "эти игроки есть в одном турнире, пока их нельзя объединить",
     "PLAYER_NOT_CREATED": "простите! случилась какая-то ошибка и игрок не создан",
     "PLAYER_NOT_EDITED": "что-то слетело. не получилось отредактировать игрока",
     "PLAYER_NOT_FOUND": "не получилось найти игрока",
+    "PLAYER_NOT_IN_CLUB": "игрок не из этого клуба",
     "PLAYER_RESULT_SETTING_DISABLED": "админы клуба отключили возможность игрокам заносить результаты",
     "RATING_CALCULATION_ERROR": "простите! случилась какая-то ошибка при расчёте рейтинга",
     "RELATION_EXISTS": "этот пользователь уже и так админ",
@@ -364,7 +379,8 @@
           "affiliation_request_approved": "игрок <playerLink>{player}</playerLink> был привязан к юзеру <userLink>{user}</userLink>",
           "affiliation_request_rejected": "запрос <userLink>{user}</userLink> на привязку к <playerLink>{player}</playerLink> был отклонён",
           "manager_left": "менеджер <userLink>{user}</userLink> покинул клуб",
-          "affiliation_cancelled": "юзер <userLink>{user}</userLink> отменил привязку к <playerLink>{player}</playerLink>"
+          "affiliation_cancelled": "юзер <userLink>{user}</userLink> отменил привязку к <playerLink>{player}</playerLink>",
+          "player_merged": "игрок <playerLink>{player}</playerLink> теперь включает дубль {mergedPlayer}"
         }
       }
     },
@@ -423,6 +439,7 @@
     "affiliation approved": "заявка одобрена",
     "affiliation denied": "заявка отклонена",
     "player deleted": "игрок удалён",
+    "players merged": "игроки объединены",
     "player has tournaments": "простите! нельзя удалять игрока, который участвовал в турнире. для этого придётся удалить турнир тоже",
     "club updated": "клуб обновлён",
     "tournament renamed": "название турнира сохранено",
