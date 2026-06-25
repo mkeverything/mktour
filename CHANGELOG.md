@@ -1,3 +1,12 @@
+## [1.9.1](https://github.com/mkeverything/mktour/compare/v1.9.0...v1.9.1) (2026-06-25)
+
+
+### Bug Fixes
+
+* box sizing ([94fe6a8](https://github.com/mkeverything/mktour/commit/94fe6a81ad6a7f2ac2aff68469528e2eb54ffb5c))
+* mk-navbar shrinking ([547597a](https://github.com/mkeverything/mktour/commit/547597a810a44bdba017909224408ffe0df0e36c))
+* navbar layout and background transparency ([f3101aa](https://github.com/mkeverything/mktour/commit/f3101aa61b0c90df024df399b919100728cbaef8))
+
 # [1.9.0](https://github.com/mkeverything/mktour/compare/v1.8.2...v1.9.0) (2026-06-10)
 
 
