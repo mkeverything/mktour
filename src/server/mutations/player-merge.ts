@@ -27,129 +27,131 @@ export async function mergePlayers({
     throw new AppError('PLAYER_MERGE_SAME_PLAYER');
   }
 
-  const playerIds = [basePlayerId, mergedPlayerId];
-  const [basePlayer, mergedPlayer, affiliationRows, sharedTournament] =
-    await Promise.all([
-      db.select().from(players).where(eq(players.id, basePlayerId)).get(),
-      db.select().from(players).where(eq(players.id, mergedPlayerId)).get(),
-      db
-        .select()
-        .from(affiliations)
-        .where(inArray(affiliations.playerId, playerIds)),
-      db
-        .select({ tournamentId: tournament_units.tournamentId })
-        .from(players_to_units)
-        .innerJoin(
-          tournament_units,
-          eq(players_to_units.unitId, tournament_units.id),
-        )
-        .where(inArray(players_to_units.playerId, playerIds))
-        .groupBy(tournament_units.tournamentId)
-        .having(eq(countDistinct(players_to_units.playerId), 2))
-        .get(),
-    ]);
+  const identityInconsistencies = await db.transaction(async (tx) => {
+    const playerIds = [basePlayerId, mergedPlayerId];
+    const [basePlayer, mergedPlayer, affiliationRows, sharedTournament] =
+      await Promise.all([
+        tx.select().from(players).where(eq(players.id, basePlayerId)).get(),
+        tx.select().from(players).where(eq(players.id, mergedPlayerId)).get(),
+        tx
+          .select()
+          .from(affiliations)
+          .where(inArray(affiliations.playerId, playerIds)),
+        tx
+          .select({ tournamentId: tournament_units.tournamentId })
+          .from(players_to_units)
+          .innerJoin(
+            tournament_units,
+            eq(players_to_units.unitId, tournament_units.id),
+          )
+          .where(inArray(players_to_units.playerId, playerIds))
+          .groupBy(tournament_units.tournamentId)
+          .having(eq(countDistinct(players_to_units.playerId), 2))
+          .get(),
+      ]);
 
-  if (!basePlayer || !mergedPlayer) throw new AppError('PLAYER_NOT_FOUND');
-  if (basePlayer.clubId !== clubId || mergedPlayer.clubId !== clubId) {
-    throw new AppError('PLAYER_NOT_IN_CLUB');
-  }
-  if (sharedTournament) {
-    throw new AppError('PLAYER_MERGE_SHARED_TOURNAMENT', {
-      details: sharedTournament.tournamentId,
-    });
-  }
-
-  // an affiliation is "linked" when it correctly ties a player record to a
-  // user account, i.e. its playerId points at a player whose userId matches.
-  const activeAffiliations = affiliationRows.filter(
-    (a) => a.status === 'active',
-  );
-  const linkedAffiliations = activeAffiliations.filter((a) => {
-    const player = a.playerId === basePlayerId ? basePlayer : mergedPlayer;
-    return player.userId === a.userId;
-  });
-
-  // both players being properly linked to (different) users is a conflict
-  // we can't resolve automatically.
-  if (linkedAffiliations.length > 1) {
-    throw new AppError('PLAYER_MERGE_BOTH_USER_LINKED');
-  }
-
-  const keptAffiliation = linkedAffiliations[0] ?? null;
-  const linkedUserId = keptAffiliation?.userId ?? null;
-
-  const pendingAffiliations = affiliationRows.filter((a) =>
-    pendingStatuses.includes(a.status),
-  );
-  const basePlayerHasPending = pendingAffiliations.some(
-    (a) => a.playerId === basePlayerId,
-  );
-  const mergedPlayerHasPending = pendingAffiliations.some(
-    (a) => a.playerId === mergedPlayerId,
-  );
-
-  // neither player is linked yet, but both have pending requests — also a conflict.
-  if (!linkedUserId && basePlayerHasPending && mergedPlayerHasPending) {
-    throw new AppError('PLAYER_MERGE_BOTH_PENDING_AFFILIATIONS');
-  }
-
-  // any active affiliation other than the one we're keeping is stale and gets removed.
-  const orphanedActiveAffiliations = activeAffiliations.filter(
-    (a) => a.id !== keptAffiliation?.id,
-  );
-  const affiliationIdsToDelete = orphanedActiveAffiliations.map((a) => a.id);
-
-  // a confirmed link makes any pending requests redundant.
-  if (linkedUserId) {
-    affiliationIdsToDelete.push(...pendingAffiliations.map((a) => a.id));
-  }
-
-  // affiliations on the merged player that should follow it onto the base player.
-  const affiliationIdsToMove: string[] = [];
-  if (keptAffiliation?.playerId === mergedPlayerId) {
-    affiliationIdsToMove.push(keptAffiliation.id);
-  }
-  if (!linkedUserId) {
-    for (const a of pendingAffiliations) {
-      if (a.playerId === mergedPlayerId) affiliationIdsToMove.push(a.id);
+    if (!basePlayer || !mergedPlayer) throw new AppError('PLAYER_NOT_FOUND');
+    if (basePlayer.clubId !== clubId || mergedPlayer.clubId !== clubId) {
+      throw new AppError('PLAYER_NOT_IN_CLUB');
     }
-  }
-
-  // flag anything we couldn't fully reconcile so it can be reviewed later.
-  const identityInconsistencies: Array<{
-    playerId: string;
-    kind: 'active_affiliation_without_user' | 'user_without_active_affiliation';
-  }> = [];
-  for (const a of orphanedActiveAffiliations) {
-    identityInconsistencies.push({
-      playerId: a.playerId,
-      kind: 'active_affiliation_without_user',
-    });
-  }
-  for (const player of [basePlayer, mergedPlayer]) {
-    const hasLinkedAffiliation = linkedAffiliations.some(
-      (a) => a.playerId === player.id,
-    );
-    if (player.userId && !hasLinkedAffiliation) {
-      identityInconsistencies.push({
-        playerId: player.id,
-        kind: 'user_without_active_affiliation',
+    if (sharedTournament) {
+      throw new AppError('PLAYER_MERGE_SHARED_TOURNAMENT', {
+        details: sharedTournament.tournamentId,
       });
     }
-  }
 
-  // keep the higher peak rating, treating a missing value as "no peak yet".
-  const ratingPeak =
-    basePlayer.ratingPeak === null || mergedPlayer.ratingPeak === null
-      ? (basePlayer.ratingPeak ?? mergedPlayer.ratingPeak)
-      : Math.max(basePlayer.ratingPeak, mergedPlayer.ratingPeak);
-  const lastSeenAt =
-    basePlayer.lastSeenAt > mergedPlayer.lastSeenAt
-      ? basePlayer.lastSeenAt
-      : mergedPlayer.lastSeenAt;
-  const now = new Date();
+    // an affiliation is "linked" when it correctly ties a player record to a
+    // user account, i.e. its playerId points at a player whose userId matches.
+    const activeAffiliations = affiliationRows.filter(
+      (a) => a.status === 'active',
+    );
+    const linkedAffiliations = activeAffiliations.filter((a) => {
+      const player = a.playerId === basePlayerId ? basePlayer : mergedPlayer;
+      return player.userId === a.userId;
+    });
 
-  await db.transaction(async (tx) => {
+    // both players being properly linked to (different) users is a conflict
+    // we can't resolve automatically.
+    if (linkedAffiliations.length > 1) {
+      throw new AppError('PLAYER_MERGE_BOTH_USER_LINKED');
+    }
+
+    const keptAffiliation = linkedAffiliations[0] ?? null;
+    const linkedUserId = keptAffiliation?.userId ?? null;
+
+    const pendingAffiliations = affiliationRows.filter((a) =>
+      pendingStatuses.includes(a.status),
+    );
+    const basePlayerHasPending = pendingAffiliations.some(
+      (a) => a.playerId === basePlayerId,
+    );
+    const mergedPlayerHasPending = pendingAffiliations.some(
+      (a) => a.playerId === mergedPlayerId,
+    );
+
+    // neither player is linked yet, but both have pending requests — also a conflict.
+    if (!linkedUserId && basePlayerHasPending && mergedPlayerHasPending) {
+      throw new AppError('PLAYER_MERGE_BOTH_PENDING_AFFILIATIONS');
+    }
+
+    // any active affiliation other than the one we're keeping is stale and gets removed.
+    const orphanedActiveAffiliations = activeAffiliations.filter(
+      (a) => a.id !== keptAffiliation?.id,
+    );
+    const affiliationIdsToDelete = orphanedActiveAffiliations.map((a) => a.id);
+
+    // a confirmed link makes any pending requests redundant.
+    if (linkedUserId) {
+      affiliationIdsToDelete.push(...pendingAffiliations.map((a) => a.id));
+    }
+
+    // affiliations on the merged player that should follow it onto the base player.
+    const affiliationIdsToMove: string[] = [];
+    if (keptAffiliation?.playerId === mergedPlayerId) {
+      affiliationIdsToMove.push(keptAffiliation.id);
+    }
+    if (!linkedUserId) {
+      for (const a of pendingAffiliations) {
+        if (a.playerId === mergedPlayerId) affiliationIdsToMove.push(a.id);
+      }
+    }
+
+    // flag anything we couldn't fully reconcile so it can be reviewed later.
+    const identityInconsistencies: Array<{
+      playerId: string;
+      kind:
+        | 'active_affiliation_without_user'
+        | 'user_without_active_affiliation';
+    }> = [];
+    for (const a of orphanedActiveAffiliations) {
+      identityInconsistencies.push({
+        playerId: a.playerId,
+        kind: 'active_affiliation_without_user',
+      });
+    }
+    for (const player of [basePlayer, mergedPlayer]) {
+      const hasLinkedAffiliation = linkedAffiliations.some(
+        (a) => a.playerId === player.id,
+      );
+      if (player.userId && !hasLinkedAffiliation) {
+        identityInconsistencies.push({
+          playerId: player.id,
+          kind: 'user_without_active_affiliation',
+        });
+      }
+    }
+
+    // keep the higher peak rating, treating a missing value as "no peak yet".
+    const ratingPeak =
+      basePlayer.ratingPeak === null || mergedPlayer.ratingPeak === null
+        ? (basePlayer.ratingPeak ?? mergedPlayer.ratingPeak)
+        : Math.max(basePlayer.ratingPeak, mergedPlayer.ratingPeak);
+    const lastSeenAt =
+      basePlayer.lastSeenAt > mergedPlayer.lastSeenAt
+        ? basePlayer.lastSeenAt
+        : mergedPlayer.lastSeenAt;
+    const now = new Date();
+
     // free up the userId on the merged player first, otherwise assigning it
     // to the base player below could collide with a uniqueness constraint.
     if (linkedUserId === mergedPlayer.userId && linkedUserId !== null) {
@@ -220,6 +222,8 @@ export async function mergePlayers({
       },
     });
     await tx.delete(players).where(eq(players.id, mergedPlayerId));
+
+    return identityInconsistencies;
   });
 
   if (identityInconsistencies.length > 0) {
