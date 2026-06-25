@@ -14,8 +14,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerEditModel } from '@/server/zod/players';
-import { Save } from 'lucide-react';
-import { MessageKeys, NestedKeyOf } from 'next-intl';
+import { Merge, Save } from 'lucide-react';
+import { MessageKeys, NestedKeyOf, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Dispatch, FC, SetStateAction } from 'react';
 import { ControllerRenderProps, useForm, UseFormReturn } from 'react-hook-form';
@@ -26,13 +26,16 @@ const EditPlayerForm: FC<{
   status: StatusInClub | null | undefined;
   setOpen: Dispatch<SetStateAction<boolean>>;
   canEditRealname?: boolean;
+  onMerge?: () => void;
 }> = ({
   player: { playerId, nickname, realname },
   clubId,
   status,
   setOpen,
   canEditRealname = true,
+  onMerge,
 }) => {
+  const t = useTranslations('Player.Merge');
   const editPlayerMutation = useEditPlayerMutation();
   const router = useRouter();
   const form = useForm<PlayerEditModel>({
@@ -75,6 +78,17 @@ const EditPlayerForm: FC<{
             {editPlayerMutation.isPending ? <LoadingSpinner /> : <Save />}
             <FormattedMessage id="Common.save" />
           </Button>
+          {onMerge && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={onMerge}
+            >
+              <Merge />
+              {t('merge')}
+            </Button>
+          )}
           {status && <DeletePlayer clubId={clubId} playerId={playerId} />}
         </div>
       </form>

@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerModel } from '@/server/zod/players';
-import { Merge, UserRound, Users2 } from 'lucide-react';
+import { UserRound, Users2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ComponentProps, FC, useState } from 'react';
@@ -134,8 +134,8 @@ const PlayerItem: FC<{
   player: PlayerModel;
   statusInClub?: StatusInClub | null;
 }> = ({ player, statusInClub }) => {
+  const [open, setOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
-  const t = useTranslations('Player.Merge');
 
   if (!statusInClub) {
     return (
@@ -150,7 +150,7 @@ const PlayerItem: FC<{
 
   return (
     <>
-      <ComboModal.Root>
+      <ComboModal.Root open={open} onOpenChange={setOpen}>
         <ComboModal.Trigger asChild>
           <PlayerCard player={player} />
         </ComboModal.Trigger>
@@ -169,19 +169,12 @@ const PlayerItem: FC<{
             clubId={player.clubId}
             player={{ playerId: player.id, ...player }}
             status={statusInClub}
-            setOpen={() => null}
+            setOpen={setOpen}
+            onMerge={() => {
+              setOpen(false);
+              setMergeOpen(true);
+            }}
           />
-          <ComboModal.Close asChild>
-            <Button
-              type="button"
-              variant="secondary"
-              className="mt-2 w-full"
-              onClick={() => setMergeOpen(true)}
-            >
-              <Merge />
-              {t('merge')}
-            </Button>
-          </ComboModal.Close>
         </ComboModal.Content>
       </ComboModal.Root>
       {mergeOpen && (
