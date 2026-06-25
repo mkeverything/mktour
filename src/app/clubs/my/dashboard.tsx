@@ -44,7 +44,7 @@ export default function Dashboard({
     <SwipeHandlerProvider
       handleSwipe={(dir) => handleSwipe(dir, indexOfTab, tabs, setTab)}
     >
-      <div className="fixed top-14 z-10 w-full">
+      <div className="top-mk-navbar-total-height fixed z-10 w-full">
         <ClubDashboardTabList
           selectedClub={data.selectedClub}
           activeTab={tab}
@@ -54,7 +54,7 @@ export default function Dashboard({
           <ClubSelect user={data} currentTab={tab} />
         </div>
       </div>
-      <div className="px-mk fixed h-[calc(100%-3.5rem)] w-full overflow-y-auto overscroll-contain pt-22">
+      <div className="px-mk fixed h-[calc(100%-var(--spacing-mk-navbar-total-height))] w-full overflow-y-auto overscroll-contain pt-22">
         <ActiveTab
           userId={userId}
           selectedClub={data.selectedClub}

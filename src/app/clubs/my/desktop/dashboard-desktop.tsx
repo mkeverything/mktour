@@ -35,7 +35,7 @@ const DashboardDesktop: FC<{
   );
 
   return (
-    <div className="fixed inset-x-0 top-14 bottom-0 flex w-full flex-col overflow-hidden">
+    <div className="top-mk-navbar-total-height fixed inset-x-0 bottom-0 flex w-full flex-col overflow-hidden">
       <header className="gap-mk p-mk-2 flex items-center">
         <div className="w-full max-w-xs">
           <ClubSelect user={user} />

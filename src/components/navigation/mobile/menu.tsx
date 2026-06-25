@@ -84,7 +84,7 @@ const Menu: FC = () => {
         />
         <motion.ul variants={variants}>
           <ScrollArea
-            className="offset-4 grid h-[92svh] w-full gap-2 px-8 pt-8 pb-4"
+            className="offset-4 grid h-[92svh] w-full gap-2 px-8 pt-[calc(var(--spacing-mk-4)+var(--spacing-mk-safe-area-top))] pb-4"
             type="auto"
           >
             {NAVMENU_ITEMS.map((item, idx) => (
