@@ -285,7 +285,7 @@
     "PLAYER_MERGE_BOTH_PENDING_AFFILIATIONS": "both players have pending link requests",
     "PLAYER_MERGE_BOTH_USER_LINKED": "both players are linked to users",
     "PLAYER_MERGE_SAME_PLAYER": "choose two different players",
-    "PLAYER_MERGE_SHARED_TOURNAMENT": "these players cannot be merged cause they both are added to the a same tournament (as two different players)",
+    "PLAYER_MERGE_SHARED_TOURNAMENT": "these players cannot be merged cause they both are added to the same tournament (as two different players)",
     "PLAYER_NOT_CREATED": "sorry! player wasn't created",
     "PLAYER_NOT_EDITED": "sorry! player wasn't updated",
     "PLAYER_NOT_FOUND": "player not found",
