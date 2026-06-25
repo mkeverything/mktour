@@ -28,7 +28,7 @@ async function LayoutContent({ children }: PropsWithChildren) {
       <GlobalWebSocketProvider>
         <JsonLd />
         <Navigation />
-        <div className="pt-14">{children}</div>
+        <div className="pt-mk-navbar-total-height">{children}</div>
         <Analytics />
         <SpeedInsights />
         <Toaster richColors />
