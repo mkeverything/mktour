@@ -9,7 +9,6 @@ const bundleAnalyzer = withBundleAnalyzer({
 });
 
 const nextConfig = {
-  allowedDevOrigins: ["192.168.1.67"],
   cacheComponents: true,
   experimental: {
     useCache: true,
