@@ -267,7 +267,6 @@ const PlayerMergeOption: FC<{
       aria-pressed={selected}
       className="focus-visible:ring-ring w-full cursor-pointer space-y-1 p-4 text-left focus-visible:ring-2 focus-visible:outline-none"
       onClick={onClick}
-      onFocus={onClick}
     >
       <PlayerLabel player={player} />
       {player.realname && (
