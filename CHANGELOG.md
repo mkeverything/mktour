@@ -1,3 +1,15 @@
+# [1.10.0](https://github.com/mkeverything/mktour/compare/v1.9.1...v1.10.0) (2026-06-26)
+
+
+### Bug Fixes
+
+* gap in side-drawer ([9fbd040](https://github.com/mkeverything/mktour/commit/9fbd040913bcfb5bef905ec71b1e4bb17c08f2c2))
+
+
+### Features
+
+* merge players ([f4000f2](https://github.com/mkeverything/mktour/commit/f4000f25410cb4245d7d4190d5a4b19a72773eb6))
+
 ## [1.9.1](https://github.com/mkeverything/mktour/compare/v1.9.0...v1.9.1) (2026-06-25)
 
 
