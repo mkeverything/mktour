@@ -11,6 +11,7 @@ import Paginator from '@/components/ui-custom/paginator';
 import { ScrollArea } from '@/components/ui-custom/scroll-area';
 import { getAppErrorMessage } from '@/lib/errors';
 import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
+import { Merge } from 'lucide-react';
 import { RichTagsFunction, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, ReactNode } from 'react';
@@ -65,9 +66,14 @@ const Notification: FC<{
   const user = data.user;
   const player = data.player;
 
+  const mergedPlayer =
+    data.event === 'player_merged'
+      ? String(data.metadata.mergedPlayerNickname)
+      : '';
   const richValues = {
     user: user?.username ?? '',
     player: player?.nickname ?? '',
+    mergedPlayer,
     userLink: (chunks: ReactNode) =>
       user ? (
         <Link href={`/user/${user.username}`} className="mk-link">
@@ -139,6 +145,21 @@ const Notification: FC<{
           clubId={data.clubId}
         >
           {t(data.event, richValues)}
+        </NotificationItem>
+      );
+    case 'player_merged':
+      return (
+        <NotificationItem
+          notificationId={data.id}
+          key={data.id}
+          is_seen={data.isSeen}
+          type="club"
+          clubId={data.clubId}
+        >
+          <span>
+            <Merge className="mr-2 inline size-4 align-text-bottom" />
+            {t(data.event, richValues)}
+          </span>
         </NotificationItem>
       );
     default:

@@ -191,6 +191,16 @@
     "cancel affiliation": "disconnect",
     "cancel affiliation by user description": "you'll disconnect your account from this player. they won't show on your profile, and you won't be able to set their results",
     "cancel affiliation by club description": "you are going to remove this player's affiliation to the club.",
+    "Merge": {
+      "affiliated user": "with lichess {user}",
+      "base": "base player",
+      "cancel": "cancel",
+      "description": "choose a duplicate player to merge with <b>{player}</b>. <d>this cannot be undone</d>",
+      "merge": "merge player",
+      "rating tooltip": "rating cannot be combined, tournaments of {player} become kinda unrated",
+      "result": "result will be:",
+      "title": "merge player"
+    },
     "Stats": {
       "gamesPlayed": "games played",
       "winRate": "win rate",
@@ -272,9 +282,14 @@
     "PLAYER_ALREADY_IN_UNIT": "this player is already in the tournament",
     "PLAYER_EXISTS_ERROR": "this player already exists!",
     "PLAYER_HAS_TOURNAMENTS": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
+    "PLAYER_MERGE_BOTH_PENDING_AFFILIATIONS": "both players have pending link requests",
+    "PLAYER_MERGE_BOTH_USER_LINKED": "both players are linked to users",
+    "PLAYER_MERGE_SAME_PLAYER": "choose two different players",
+    "PLAYER_MERGE_SHARED_TOURNAMENT": "these players cannot be merged cause they both are added to the same tournament (as two different players)",
     "PLAYER_NOT_CREATED": "sorry! player wasn't created",
     "PLAYER_NOT_EDITED": "sorry! player wasn't updated",
     "PLAYER_NOT_FOUND": "player not found",
+    "PLAYER_NOT_IN_CLUB": "player is not in this club",
     "PLAYER_RESULT_SETTING_DISABLED": "club admins disabled player result submissions",
     "RATING_CALCULATION_ERROR": "sorry! rating calculation failed",
     "RELATION_EXISTS": "this user is already a club manager",
@@ -364,7 +379,8 @@
           "affiliation_request_approved": "player <playerLink>{player}</playerLink> is officially user <userLink>{user}</userLink>",
           "affiliation_request_rejected": "<userLink>{user}</userLink>'s request to link with <playerLink>{player}</playerLink> was rejected",
           "manager_left": "manager <userLink>{user}</userLink> has left the club",
-          "affiliation_cancelled": "<userLink>{user}</userLink> is no more linked to <playerLink>{player}</playerLink>"
+          "affiliation_cancelled": "<userLink>{user}</userLink> is no more linked to <playerLink>{player}</playerLink>",
+          "player_merged": "player <playerLink>{player}</playerLink> now includes duplicate {mergedPlayer}"
         }
       }
     },
@@ -423,6 +439,7 @@
     "affiliation approved": "request approved",
     "affiliation denied": "request denied",
     "player deleted": "player deleted",
+    "players merged": "players merged",
     "player has tournaments": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
     "club updated": "club updated",
     "tournament renamed": "tournament title has been updated",

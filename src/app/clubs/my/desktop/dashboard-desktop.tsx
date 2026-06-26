@@ -78,7 +78,7 @@ const DashboardDesktop: FC<{
           variant="outline"
           size="icon"
           className="relative active:scale-[0.97]"
-          aria-label={t('settings')}
+          aria-label={t('Dashboard.settings')}
           onClick={() => setOpenSettings((prev) => !prev)}
         >
           <Settings
