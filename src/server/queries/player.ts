@@ -1,3 +1,4 @@
+import { clubPlayerStatsTag } from '@/lib/cache-tags';
 import { caseWhen } from '@/lib/sql-case-when';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
@@ -15,8 +16,10 @@ import {
   desc,
   eq,
   getTableColumns,
+  isNotNull,
   or,
 } from 'drizzle-orm';
+import { cacheLife, cacheTag } from 'next/cache';
 
 // returns the last 5 tournaments a player participated in
 export async function getPlayersTournamentsInfinite(
@@ -40,73 +43,133 @@ export async function getPlayersTournamentsInfinite(
     .offset(offset);
 }
 
-export async function getPlayerStats(
-  playerId: string,
-): Promise<PlayerStatsModel> {
-  const player = await db
-    .select({ clubId: players.clubId, ratingPeak: players.ratingPeak })
-    .from(players)
-    .where(eq(players.id, playerId))
-    .get();
+type ClubPlayerStats = PlayerStatsModel & { playerId: string };
 
-  if (!player)
-    return {
-      tournamentsPlayed: { value: 0, rank: 0 },
-      gamesPlayed: { value: 0, rank: 0 },
-      winRate: { value: 0, rank: 0 },
-      ratingPeakRank: 0,
-    };
+type PlayerResultCounts = {
+  playerId: string;
+  wins: number;
+  losses: number;
+  draws: number;
+};
 
-  const clubPlayersStats = await db
+const EMPTY_PLAYER_STATS: PlayerStatsModel = {
+  tournamentsPlayed: { value: 0, rank: null },
+  gamesPlayed: { value: 0, rank: null },
+  winRate: { value: 0, rank: null },
+  ratingPeakRank: null,
+};
+
+function getCompetitionRanks<T>(
+  items: T[],
+  getValue: (item: T) => number,
+  getId: (item: T) => string,
+) {
+  const ranks = new Map<string, number>();
+  let previousValue: number | null = null;
+  let previousRank = 0;
+
+  items.forEach((item, index) => {
+    const value = getValue(item);
+    const rank = previousValue === value ? previousRank : index + 1;
+    ranks.set(getId(item), rank);
+    previousValue = value;
+    previousRank = rank;
+  });
+
+  return ranks;
+}
+
+function addResultCounts(
+  countsByPlayerId: Map<string, PlayerResultCounts>,
+  row: PlayerResultCounts,
+) {
+  const current = countsByPlayerId.get(row.playerId) ?? {
+    playerId: row.playerId,
+    wins: 0,
+    losses: 0,
+    draws: 0,
+  };
+  current.wins += Number(row.wins ?? 0);
+  current.losses += Number(row.losses ?? 0);
+  current.draws += Number(row.draws ?? 0);
+  countsByPlayerId.set(row.playerId, current);
+}
+
+async function getUncachedClubPlayerStats(
+  clubId: string,
+): Promise<ClubPlayerStats[]> {
+  const participationRows = await db
     .select({
-      playerId: players.id,
+      playerId: players_to_units.playerId,
       ratingPeak: players.ratingPeak,
-      tournamentsPlayed: countDistinct(players_to_units.id),
-      wins: countDistinct(
-        caseWhen(
-          or(
-            and(eq(games.whitePlayerId, players.id), eq(games.result, '1-0')),
-            and(eq(games.blackPlayerId, players.id), eq(games.result, '0-1')),
-          ),
-          games.id,
-        ).elseNull(),
-      ),
-      losses: countDistinct(
-        caseWhen(
-          or(
-            and(eq(games.whitePlayerId, players.id), eq(games.result, '0-1')),
-            and(eq(games.blackPlayerId, players.id), eq(games.result, '1-0')),
-          ),
-          games.id,
-        ).elseNull(),
-      ),
-      draws: countDistinct(
-        caseWhen(eq(games.result, '1/2-1/2'), games.id).elseNull(),
-      ),
+      tournamentsPlayed: countDistinct(tournaments.id),
     })
-    .from(players)
-    .leftJoin(players_to_units, eq(players.id, players_to_units.playerId))
-    .leftJoin(
-      games,
-      or(
-        eq(players.id, games.whitePlayerId),
-        eq(players.id, games.blackPlayerId),
-      ),
+    .from(players_to_units)
+    .innerJoin(players, eq(players.id, players_to_units.playerId))
+    .innerJoin(
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
     )
-    .where(eq(players.clubId, player.clubId))
-    .groupBy(players.id)
-    .orderBy(desc(players.lastSeenAt));
+    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
+    .where(and(eq(players.clubId, clubId), isNotNull(tournaments.closedAt)))
+    .groupBy(players_to_units.playerId);
 
-  const statsWithCalculations = clubPlayersStats.map((p) => {
-    const wins = Number(p.wins ?? 0);
-    const losses = Number(p.losses ?? 0);
-    const draws = Number(p.draws ?? 0);
+  const whiteRows = await db
+    .select({
+      playerId: players_to_units.playerId,
+      wins: count(caseWhen(eq(games.result, '1-0'), games.id).elseNull()),
+      losses: count(caseWhen(eq(games.result, '0-1'), games.id).elseNull()),
+      draws: count(caseWhen(eq(games.result, '1/2-1/2'), games.id).elseNull()),
+    })
+    .from(players_to_units)
+    .innerJoin(players, eq(players.id, players_to_units.playerId))
+    .innerJoin(
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
+    )
+    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
+    .innerJoin(games, eq(tournament_units.id, games.whiteUnitId))
+    .where(and(eq(players.clubId, clubId), isNotNull(tournaments.closedAt)))
+    .groupBy(players_to_units.playerId);
+
+  const blackRows = await db
+    .select({
+      playerId: players_to_units.playerId,
+      wins: count(caseWhen(eq(games.result, '0-1'), games.id).elseNull()),
+      losses: count(caseWhen(eq(games.result, '1-0'), games.id).elseNull()),
+      draws: count(caseWhen(eq(games.result, '1/2-1/2'), games.id).elseNull()),
+    })
+    .from(players_to_units)
+    .innerJoin(players, eq(players.id, players_to_units.playerId))
+    .innerJoin(
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
+    )
+    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
+    .innerJoin(games, eq(tournament_units.id, games.blackUnitId))
+    .where(and(eq(players.clubId, clubId), isNotNull(tournaments.closedAt)))
+    .groupBy(players_to_units.playerId);
+
+  const countsByPlayerId = new Map<string, PlayerResultCounts>();
+  whiteRows.forEach((row) => addResultCounts(countsByPlayerId, row));
+  blackRows.forEach((row) => addResultCounts(countsByPlayerId, row));
+
+  const statsWithCalculations = participationRows.map((p) => {
+    const counts = countsByPlayerId.get(p.playerId) ?? {
+      playerId: p.playerId,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+    };
+    const wins = Number(counts.wins ?? 0);
+    const losses = Number(counts.losses ?? 0);
+    const draws = Number(counts.draws ?? 0);
     const gamesPlayed = wins + losses + draws;
     const winRate = gamesPlayed > 0 ? wins / gamesPlayed : 0;
 
     return {
       playerId: p.playerId,
-      tournamentsPlayed: p.tournamentsPlayed,
+      tournamentsPlayed: Number(p.tournamentsPlayed ?? 0),
       gamesPlayed,
       winRate,
       ratingPeak: p.ratingPeak,
@@ -119,40 +182,79 @@ export async function getPlayerStats(
   const byGames = statsWithCalculations.toSorted(
     (a, b) => b.gamesPlayed - a.gamesPlayed,
   );
-  const byWinRate = statsWithCalculations.toSorted(
-    (a, b) => b.winRate - a.winRate,
+  const byWinRate = statsWithCalculations
+    .filter((p) => p.gamesPlayed > 0)
+    .toSorted((a, b) => b.winRate - a.winRate);
+  const byRatingPeak = statsWithCalculations
+    .filter((p) => p.ratingPeak !== null)
+    .toSorted((a, b) => (b.ratingPeak ?? 0) - (a.ratingPeak ?? 0));
+
+  const tournamentsRanks = getCompetitionRanks(
+    byTournaments,
+    (p) => p.tournamentsPlayed,
+    (p) => p.playerId,
   );
-  const byRatingPeak = statsWithCalculations.toSorted(
-    (a, b) => (b.ratingPeak ?? 0) - (a.ratingPeak ?? 0),
+  const gamesRanks = getCompetitionRanks(
+    byGames,
+    (p) => p.gamesPlayed,
+    (p) => p.playerId,
+  );
+  const winRateRanks = getCompetitionRanks(
+    byWinRate,
+    (p) => p.winRate,
+    (p) => p.playerId,
+  );
+  const ratingPeakRanks = getCompetitionRanks(
+    byRatingPeak,
+    (p) => p.ratingPeak ?? 0,
+    (p) => p.playerId,
   );
 
-  const playerStats = statsWithCalculations.find(
-    (p) => p.playerId === playerId,
-  );
-
-  if (!playerStats)
-    return {
-      tournamentsPlayed: { value: 0, rank: 0 },
-      gamesPlayed: { value: 0, rank: 0 },
-      winRate: { value: 0, rank: 0 },
-      ratingPeakRank: 0,
-    };
-
-  return {
+  return statsWithCalculations.map((p) => ({
+    playerId: p.playerId,
     tournamentsPlayed: {
-      value: playerStats.tournamentsPlayed,
-      rank: byTournaments.findIndex((p) => p.playerId === playerId) + 1,
+      value: p.tournamentsPlayed,
+      rank: tournamentsRanks.get(p.playerId) ?? null,
     },
     gamesPlayed: {
-      value: playerStats.gamesPlayed,
-      rank: byGames.findIndex((p) => p.playerId === playerId) + 1,
+      value: p.gamesPlayed,
+      rank: gamesRanks.get(p.playerId) ?? null,
     },
     winRate: {
-      value: Math.round(playerStats.winRate * 10000) / 100,
-      rank: byWinRate.findIndex((p) => p.playerId === playerId) + 1,
+      value: Math.round(p.winRate * 10000) / 100,
+      rank: winRateRanks.get(p.playerId) ?? null,
     },
-    ratingPeakRank: byRatingPeak.findIndex((p) => p.playerId === playerId) + 1,
-  };
+    ratingPeakRank: ratingPeakRanks.get(p.playerId) ?? null,
+  }));
+}
+
+export async function getCachedClubPlayerStats(
+  clubId: string,
+): Promise<ClubPlayerStats[]> {
+  'use cache';
+  if (process.env.NODE_ENV !== 'test') {
+    cacheLife({
+      stale: 1000 * 60 * 60 * 6,
+      revalidate: 1000 * 60 * 60 * 24,
+    });
+  }
+  cacheTag(clubPlayerStatsTag(clubId));
+  return await getUncachedClubPlayerStats(clubId);
+}
+
+export async function getPlayerStats(
+  playerId: string,
+): Promise<PlayerStatsModel> {
+  const player = await db
+    .select({ clubId: players.clubId })
+    .from(players)
+    .where(eq(players.id, playerId))
+    .get();
+
+  if (!player) return EMPTY_PLAYER_STATS;
+
+  const clubStats = await getCachedClubPlayerStats(player.clubId);
+  return clubStats.find((p) => p.playerId === playerId) ?? EMPTY_PLAYER_STATS;
 }
 
 export async function getPlayerAuthStats({

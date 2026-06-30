@@ -120,7 +120,13 @@ export const games = sqliteTable(
       .references(() => tournaments.id)
       .notNull(),
   },
-  (t) => [index('game_tournament_round_idx').on(t.tournamentId, t.roundNumber)],
+  (t) => [
+    index('game_tournament_round_idx').on(t.tournamentId, t.roundNumber),
+    index('game_white_unit_idx').on(t.whiteUnitId),
+    index('game_black_unit_idx').on(t.blackUnitId),
+    index('game_white_player_idx').on(t.whitePlayerId),
+    index('game_black_player_idx').on(t.blackPlayerId),
+  ],
 );
 
 export const tournaments_relations = relations(

@@ -92,14 +92,14 @@ export const playerMergeInputSchema = z.object({
 
 export const statItemSchema = z.object({
   value: z.number(),
-  rank: z.number(),
+  rank: z.number().nullable(),
 });
 
 export const playerStatsSchema = z.object({
   tournamentsPlayed: statItemSchema,
   gamesPlayed: statItemSchema,
   winRate: statItemSchema,
-  ratingPeakRank: z.number(),
+  ratingPeakRank: z.number().nullable(),
 });
 
 export const playerAuthStatsSchema = z.object({
