@@ -1,22 +1,26 @@
 // app/api/contact/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const ALLOWED_ORIGIN = 'https://mkeverything.ru';
+const ALLOWED_ORIGINS = ['https://mkeverything.ru', 'https://mkeverything.com'];
 
-function corsHeaders() {
+function corsHeaders(origin: string | null) {
   return {
-    'access-control-allow-origin': ALLOWED_ORIGIN,
+    'access-control-allow-origin':
+      origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
     'access-control-allow-methods': 'POST, OPTIONS',
     'access-control-allow-headers': 'content-type',
   };
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: corsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(req.headers.get('origin')),
+  });
 }
 
 export async function POST(req: NextRequest) {
-  const headers = corsHeaders();
+  const headers = corsHeaders(req.headers.get('origin'));
 
   let body: { email?: string };
   try {
