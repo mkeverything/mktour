@@ -19,7 +19,7 @@ const Result: FC<ResultProps> = ({ isPending, result, selected }) => {
   if (selected) {
     return (
       <div className="flex h-full w-full items-center justify-center select-none">
-        <small className="select-none">{t('draw')}</small>
+        <small className="text-sm select-none lg:text-base">{t('draw')}</small>
       </div>
     );
   }
@@ -43,7 +43,7 @@ const Result: FC<ResultProps> = ({ isPending, result, selected }) => {
     <Card className="divide-border flex h-full w-full min-w-0 flex-col divide-y rounded-md select-none">
       <div
         className={cn(
-          'text-2xs flex min-h-6 flex-1 items-center justify-center lg:text-xs',
+          'flex min-h-9 flex-1 items-center justify-center text-sm lg:text-base',
           result === '0-1' && 'opacity-30',
         )}
       >
@@ -51,7 +51,7 @@ const Result: FC<ResultProps> = ({ isPending, result, selected }) => {
       </div>
       <div
         className={cn(
-          'text-2xs flex min-h-6 flex-1 items-center justify-center lg:text-xs',
+          'flex min-h-9 flex-1 items-center justify-center text-sm lg:text-base',
           result === '1-0' && 'opacity-30',
         )}
       >

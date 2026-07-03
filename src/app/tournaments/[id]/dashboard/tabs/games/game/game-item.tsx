@@ -114,7 +114,7 @@ const GameItem: FC<GameProps> = ({
         onClick={handleOpenGame}
       >
         <Card
-          className={`relative grid grid-cols-4 overflow-hidden ${muted && 'opacity-50'} p-mk px-mk-2 gap-mk min-h-14 w-full min-w-0 items-stretch rounded-lg p-1 shadow-md transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerUnitInGame && 'border-3'}`}
+          className={`relative grid grid-cols-4 overflow-hidden ${muted && 'opacity-50'} p-mk px-mk-2 gap-mk min-h-20 w-full min-w-0 items-stretch rounded-lg p-2 shadow-md transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerUnitInGame && 'border-3'}`}
         >
           <div
             aria-hidden

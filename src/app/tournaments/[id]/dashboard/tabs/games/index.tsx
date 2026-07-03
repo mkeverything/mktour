@@ -6,6 +6,7 @@ import {
   SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import RoundControls from '@/app/tournaments/[id]/dashboard/tabs/games/round-controls';
+import { getGamesGridClassName } from '@/app/tournaments/[id]/dashboard/tabs/games/games-grid';
 import RoundItem from '@/app/tournaments/[id]/dashboard/tabs/games/round-item';
 import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
 import { useTournamentGamesOverviewInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -55,9 +56,9 @@ const Games: FC = () => {
           currentRound={1}
           currentTab={currentTab}
         />
-        <div className="gap-mk px-mk md:px-mk-2 grid grid-cols-2">
+        <div className={getGamesGridClassName(units)}>
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="min-h-14 w-full rounded-lg" />
+            <Skeleton key={i} className="min-h-20 w-full rounded-lg" />
           ))}
         </div>
       </div>

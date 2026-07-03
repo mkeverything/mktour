@@ -12,7 +12,7 @@ const Player: FC<PlayerProps> = ({
   <Button
     variant="ghost"
     className={cn(
-      'text-2xs px-mk h-auto min-h-6 w-full justify-start rounded-sm p-0 select-none lg:text-xs',
+      'px-mk h-auto min-h-9 w-full justify-start rounded-sm p-0 text-sm select-none lg:text-base',
       selected && isWinner && 'mk-link',
       className,
     )}

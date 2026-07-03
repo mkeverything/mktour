@@ -6,6 +6,7 @@ import {
   SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tournament-button';
+import { getGamesGridClassName } from '@/app/tournaments/[id]/dashboard/tabs/games/games-grid';
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
@@ -47,12 +48,13 @@ const RoundItem: FC<RoundItemProps> = ({
   const { status } = useContext(DashboardContext);
   const { selectedGameId, setSelectedGameId } = useContext(SelectedGameContext);
   const { sortedRound } = useRoundData(round, units);
+  const gamesGridClassName = getGamesGridClassName(units);
 
   if (isLoading || !info.data || !units)
     return (
-      <div className="gap-mk px-mk md:px-mk-2 grid grid-cols-2">
+      <div className={gamesGridClassName}>
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="min-h-14 w-full rounded-lg" />
+          <Skeleton key={i} className="min-h-20 w-full rounded-lg" />
         ))}
       </div>
     );
@@ -63,9 +65,9 @@ const RoundItem: FC<RoundItemProps> = ({
   const isOngoing = !!info.data.startedAt && !info.data.closedAt;
 
   return (
-    <div className="gap-mk px-mk md:px-mk-2 grid grid-cols-2">
+    <div className={gamesGridClassName}>
       {status === 'organizer' && isOngoing ? (
-        <div className="col-span-2">
+        <div className="col-span-full">
           <ActionButton roundNumber={roundNumber} />
         </div>
       ) : null}

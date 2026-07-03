@@ -97,13 +97,13 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
                 ref={containerRef}
                 className="p-mk px-mk-2 flex flex-1 gap-2 overflow-hidden lg:flex-row"
               >
-                <Card className="bg-background relative size-full overflow-hidden">
+                <Card className="bg-background relative h-full min-h-0 w-full flex-1 overflow-hidden lg:flex-[1]">
                   <CardContent className="flex size-full flex-col overflow-y-auto p-0">
                     <TournamentTable />
                     <Fades from="from-background" to="to-background" />
                   </CardContent>
                 </Card>
-                <Card className="bg-background relative size-full overflow-hidden">
+                <Card className="bg-background relative h-full min-h-0 w-full flex-1 overflow-hidden lg:flex-[2]">
                   <CardContent className="flex size-full flex-col overflow-y-auto p-0">
                     <Games />
                     <Fades from="from-background" to="to-background" />
