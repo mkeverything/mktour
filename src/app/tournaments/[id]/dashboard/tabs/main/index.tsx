@@ -12,10 +12,9 @@ import Center from '@/components/center';
 import useTournamentEditTitle from '@/components/hooks/mutation-hooks/use-tournament-edit-title';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
+import { MainTabLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import { InputGhost } from '@/components/ui-custom/input-ghost';
-import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Maximize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -63,17 +62,15 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
   return (
     <>
       <div className="px-mk pb-mk flex flex-col gap-0 md:hidden">
-        <HalfCard className="pb-mk-2 pt-mk-2 pl-mk-2 pr-1">
-          <TournamentTitle
-            controlledTitle={controlledTitle}
-            fallbackTitle={fallbackTitle}
-            handleTitleChange={handleTitleChange}
-            handleTitleUpdate={handleTitleUpdate}
-            isOrganizer={isOrganizer}
-            tournament={data.tournament}
-            mobile
-          />
-        </HalfCard>
+        <TournamentTitle
+          controlledTitle={controlledTitle}
+          fallbackTitle={fallbackTitle}
+          handleTitleChange={handleTitleChange}
+          handleTitleUpdate={handleTitleUpdate}
+          isOrganizer={isOrganizer}
+          tournament={data.tournament}
+          mobile
+        />
         <TournamentInfoList />
         {isOrganizer && <ActionButtons tournament={data.tournament} />}
       </div>
@@ -145,26 +142,7 @@ export const InfoItem: FC<{
   );
 };
 
-export const LoadingElement = () => {
-  return (
-    <div className="flex flex-col gap-4 p-4 md:pb-2">
-      <Skeleton className="h-24 w-full rounded-xl md:hidden" />
-      <Skeleton className="min-h-56 w-full rounded-xl md:hidden" />
-      <div className="md:gap-mk hidden md:flex">
-        <Skeleton className="h-11 w-full" />
-        <div className="hidden w-1/3 md:block">
-          <Skeleton className="h-11" />
-        </div>
-      </div>
-      <div className="mk-list hidden md:flex">
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-full" />
-      </div>
-    </div>
-  );
-};
+export const LoadingElement = MainTabLoadingSkeleton;
 
 const titleGhostClassName =
   'file:text-foreground placeholder:text-primary selection:bg-primary selection:text-primary-foreground dark:bg-background focus-visible:placeholder:text-muted-foreground w-full max-w-full min-w-0 rounded-md bg-transparent shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed';
@@ -223,7 +201,7 @@ const TournamentTitle = memo(function TournamentTitle({
     <div
       className={
         mobile
-          ? 'flex items-start gap-0'
+          ? 'py-mk-2 flex items-start gap-0 pl-4'
           : 'p-mk flex items-center justify-between md:pb-0'
       }
     >

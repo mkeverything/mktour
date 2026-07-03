@@ -6,13 +6,12 @@ import {
   SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import RoundControls from '@/app/tournaments/[id]/dashboard/tabs/games/round-controls';
-import { getGamesGridClassName } from '@/app/tournaments/[id]/dashboard/tabs/games/games-grid';
+import { GamesGridLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import RoundItem from '@/app/tournaments/[id]/dashboard/tabs/games/round-item';
 import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
 import { useTournamentGamesOverviewInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import Overlay from '@/components/overlay';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { FC, useContext, useState } from 'react';
@@ -56,13 +55,7 @@ const Games: FC = () => {
           currentRound={1}
           currentTab={currentTab}
         />
-        <div className="@container w-full">
-          <div className={getGamesGridClassName(units)}>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="min-h-20 w-full rounded-lg" />
-            ))}
-          </div>
-        </div>
+        <GamesGridLoadingSkeleton units={units} />
       </div>
     );
   }

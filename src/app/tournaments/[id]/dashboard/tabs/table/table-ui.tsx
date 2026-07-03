@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { UnitModel } from '@/server/zod/tournaments';
 import { UserModel } from '@/server/zod/users';
 import { useSortable } from '@dnd-kit/react/sortable';
@@ -158,7 +159,7 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
         <FormattedMessage id="Tournament.Table.loading" />
       </span>
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
           <TableRow>
             {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
             {!canSort && (
@@ -179,18 +180,18 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
               <TableRow key={i}>
                 {canSort && (
                   <TableCellStyled className="w-6">
-                    <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
+                    <Skeleton className="mx-auto size-4 rounded-sm" />
                   </TableCellStyled>
                 )}
                 {!canSort && (
                   <TableCellStyled className="font-small w-10 text-center">
-                    <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
+                    <Skeleton className="mx-auto size-4 rounded-sm" />
                   </TableCellStyled>
                 )}
                 <TableCellStyled
                   className={`font-small max-w-0 truncate ${canSort ? 'pl-2' : 'pl-0'}`}
                 >
-                  <div className="bg-muted h-4 w-40 animate-pulse rounded" />
+                  <Skeleton className="h-4 w-40" />
                 </TableCellStyled>
                 {Array(stats.length)
                   .fill(0)
@@ -199,7 +200,7 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
                       key={j}
                       className="min-w-8 text-center font-medium"
                     >
-                      <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
+                      <Skeleton className="mx-auto size-4 rounded-sm" />
                     </TableCellStyled>
                   ))}
               </TableRow>

@@ -6,6 +6,7 @@ import {
   SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tournament-button';
+import { GamesGridLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import { getGamesGridClassName } from '@/app/tournaments/[id]/dashboard/tabs/games/games-grid';
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
@@ -15,7 +16,6 @@ import { useTournamentRoundProgressInfo } from '@/components/hooks/query-hooks/u
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useRoundData } from '@/components/hooks/use-round-data';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
 import { AppError } from '@/lib/errors';
@@ -51,15 +51,7 @@ const RoundItem: FC<RoundItemProps> = ({
   const gamesGridClassName = getGamesGridClassName(units);
 
   if (isLoading || !info.data || !units)
-    return (
-      <div className="@container w-full">
-        <div className={gamesGridClassName}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="min-h-20 w-full rounded-lg" />
-          ))}
-        </div>
-      </div>
-    );
+    return <GamesGridLoadingSkeleton units={units} />;
 
   if (isError) return <Center>error</Center>;
   if (!round) return <Center>no round</Center>;

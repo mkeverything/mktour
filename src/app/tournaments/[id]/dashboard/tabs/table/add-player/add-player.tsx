@@ -1,3 +1,4 @@
+import { AddPlayerListLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddExistingPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-existing-player';
@@ -5,7 +6,6 @@ import { useTournamentPossiblePlayers } from '@/components/hooks/query-hooks/use
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { PlayerWithUsernameModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
@@ -97,7 +97,7 @@ const AddPlayer = ({
           placeholder={t('search')}
           onChange={(e) => setValue(e.target.value)}
         />
-        <Skeleton className="h-svh w-full pt-8" />
+        <AddPlayerListLoadingSkeleton />
       </div>
     );
   if (possiblePlayers.status === 'error') {
@@ -118,7 +118,7 @@ const AddPlayer = ({
           placeholder={t('search')}
           onChange={(e) => setValue(e.target.value)}
         />
-        <Skeleton className="h-svh w-full pt-8" />
+        <AddPlayerListLoadingSkeleton />
       </div>
     );
   }
