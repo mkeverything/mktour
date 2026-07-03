@@ -14,7 +14,7 @@ import { useTournamentRoundProgressInfo } from '@/components/hooks/query-hooks/u
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useRoundData } from '@/components/hooks/use-round-data';
-import SkeletonList from '@/components/skeleton-list';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
 import { AppError } from '@/lib/errors';
@@ -50,11 +50,10 @@ const RoundItem: FC<RoundItemProps> = ({
 
   if (isLoading || !info.data || !units)
     return (
-      <div className="px-mk md:px-mk-2 pt-2">
-        <SkeletonList
-          length={8}
-          className="mx-auto h-12 w-full rounded-lg lg:max-w-4xl"
-        />
+      <div className="gap-mk px-mk md:px-mk-2 grid grid-cols-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="min-h-14 w-full rounded-lg" />
+        ))}
       </div>
     );
 
@@ -64,9 +63,11 @@ const RoundItem: FC<RoundItemProps> = ({
   const isOngoing = !!info.data.startedAt && !info.data.closedAt;
 
   return (
-    <div className="mk-list px-mk md:px-mk-2 pt-2">
+    <div className="gap-mk px-mk md:px-mk-2 grid grid-cols-2">
       {status === 'organizer' && isOngoing ? (
-        <ActionButton roundNumber={roundNumber} />
+        <div className="col-span-2">
+          <ActionButton roundNumber={roundNumber} />
+        </div>
       ) : null}
       {sortedRound.map((game) => {
         return (

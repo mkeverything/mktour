@@ -6,7 +6,6 @@ import { useHotkeys } from 'react-hotkeys-hook';
 
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 const RoundControls: FC<RoundControlProps> = ({
   currentRound,
@@ -80,10 +79,6 @@ const RoundControls: FC<RoundControlProps> = ({
         >
           <ChevronRight />
         </Button>
-      </div>
-      <div className="gap-mk m-auto flex w-full max-w-4xl flex-1 justify-between">
-        <Card className="h-mk dark:bg-primary bg-secondary w-full rounded-lg" />
-        <Card className="h-mk dark:bg-secondary bg-primary w-full rounded-lg" />
       </div>
     </div>
   );

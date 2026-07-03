@@ -7,13 +7,14 @@ const Player: FC<PlayerProps> = ({
   isWinner,
   nickname,
   selected,
-  position,
   className,
 }) => (
   <Button
     variant="ghost"
     className={cn(
-      `text-2xs ${selected ? 'col-span-1' : 'col-span-2'} h-full w-full lg:text-xs ${!selected && position.text} w-full rounded-sm p-0 select-none ${selected && isWinner && 'mk-link'} ${className}`,
+      'text-2xs px-mk h-auto min-h-6 w-full justify-start rounded-sm p-0 select-none lg:text-xs',
+      selected && isWinner && 'mk-link',
+      className,
     )}
     onClick={handleMutate}
   >
@@ -27,10 +28,6 @@ type PlayerProps = {
   isWinner: boolean;
   selected: boolean;
   muted?: boolean;
-  position: {
-    justify: 'justify-self-start' | 'justify-self-end';
-    text: 'text-left' | 'text-right';
-  };
   className?: string;
 };
 

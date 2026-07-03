@@ -11,7 +11,7 @@ import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/s
 import { useTournamentGamesOverviewInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import Overlay from '@/components/overlay';
-import SkeletonList from '@/components/skeleton-list';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { FC, useContext, useState } from 'react';
@@ -55,11 +55,10 @@ const Games: FC = () => {
           currentRound={1}
           currentTab={currentTab}
         />
-        <div className="px-mk md:px-mk-2 pt-2">
-          <SkeletonList
-            length={8}
-            className="mx-auto h-12 w-full rounded-lg lg:max-w-4xl"
-          />
+        <div className="gap-mk px-mk md:px-mk-2 grid grid-cols-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="min-h-14 w-full rounded-lg" />
+          ))}
         </div>
       </div>
     );
