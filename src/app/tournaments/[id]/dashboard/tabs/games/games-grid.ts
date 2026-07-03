@@ -12,18 +12,18 @@ export function getPairCount(units: UnitModel[] | undefined) {
   return Math.floor((units?.length ?? 0) / 2);
 }
 
-export function useThreeGameColumns(units: UnitModel[] | undefined) {
+export function shouldUseThreeGameColumns(units: UnitModel[] | undefined) {
   return getPlayerCount(units) > PAIRS_THRESHOLD * 2;
 }
 
-export function useFullWidthGameItems(units: UnitModel[] | undefined) {
+export function shouldUseFullWidthGameItems(units: UnitModel[] | undefined) {
   return getPairCount(units) < FULL_WIDTH_PAIRS_THRESHOLD;
 }
 
 export function getGamesGridClassName(units: UnitModel[] | undefined) {
   return cn(
     'gap-mk px-mk md:px-mk-2 grid grid-cols-2',
-    useFullWidthGameItems(units) && 'max-lg:@max-3xl:grid-cols-1',
-    useThreeGameColumns(units) && 'lg:grid-cols-3',
+    shouldUseFullWidthGameItems(units) && 'max-lg:@max-3xl:grid-cols-1',
+    shouldUseThreeGameColumns(units) && 'lg:grid-cols-3',
   );
 }
