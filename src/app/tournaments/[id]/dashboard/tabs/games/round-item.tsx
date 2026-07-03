@@ -52,10 +52,12 @@ const RoundItem: FC<RoundItemProps> = ({
 
   if (isLoading || !info.data || !units)
     return (
-      <div className={gamesGridClassName}>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="min-h-20 w-full rounded-lg" />
-        ))}
+      <div className="@container w-full">
+        <div className={gamesGridClassName}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="min-h-20 w-full rounded-lg" />
+          ))}
+        </div>
       </div>
     );
 
@@ -65,23 +67,25 @@ const RoundItem: FC<RoundItemProps> = ({
   const isOngoing = !!info.data.startedAt && !info.data.closedAt;
 
   return (
-    <div className={gamesGridClassName}>
-      {status === 'organizer' && isOngoing ? (
-        <div className="col-span-full">
-          <ActionButton roundNumber={roundNumber} />
-        </div>
-      ) : null}
-      {sortedRound.map((game) => {
-        return (
-          <GamesIteratee
-            key={game.id}
-            selected={selectedGameId === game.id}
-            setSelectedGameId={setSelectedGameId}
-            onOpenStartTournamentDrawer={onOpenStartTournamentDrawer}
-            {...game}
-          />
-        );
-      })}
+    <div className="@container w-full">
+      <div className={gamesGridClassName}>
+        {status === 'organizer' && isOngoing ? (
+          <div className="col-span-full">
+            <ActionButton roundNumber={roundNumber} />
+          </div>
+        ) : null}
+        {sortedRound.map((game) => {
+          return (
+            <GamesIteratee
+              key={game.id}
+              selected={selectedGameId === game.id}
+              setSelectedGameId={setSelectedGameId}
+              onOpenStartTournamentDrawer={onOpenStartTournamentDrawer}
+              {...game}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 };

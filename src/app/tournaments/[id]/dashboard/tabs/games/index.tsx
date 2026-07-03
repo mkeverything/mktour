@@ -56,10 +56,12 @@ const Games: FC = () => {
           currentRound={1}
           currentTab={currentTab}
         />
-        <div className={getGamesGridClassName(units)}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="min-h-20 w-full rounded-lg" />
-          ))}
+        <div className="@container w-full">
+          <div className={getGamesGridClassName(units)}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="min-h-20 w-full rounded-lg" />
+            ))}
+          </div>
         </div>
       </div>
     );
