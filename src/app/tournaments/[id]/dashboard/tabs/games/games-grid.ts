@@ -13,7 +13,7 @@ export function useThreeGameColumns(units: UnitModel[] | undefined) {
 
 export function getGamesGridClassName(units: UnitModel[] | undefined) {
   return cn(
-    'gap-mk px-mk md:px-mk-2 grid',
-    useThreeGameColumns(units) ? 'grid-cols-3' : 'grid-cols-2',
+    'gap-mk px-mk md:px-mk-2 grid grid-cols-2',
+    useThreeGameColumns(units) && 'lg:grid-cols-3',
   );
 }
