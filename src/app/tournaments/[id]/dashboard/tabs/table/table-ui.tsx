@@ -85,12 +85,16 @@ export const UnitTableRow: FC<{
           </div>
         </TableCellStyled>
       )}
-      <TableCell className="font-small w-6 text-center">
-        <Place unit={unit} hasEnded={hasEnded}>
-          {index + 1}
-        </Place>
-      </TableCell>
-      <TableCellStyled className="font-small w-full max-w-0 min-w-10 truncate pl-0">
+      {!canSort && (
+        <TableCell className="font-small w-6 text-center">
+          <Place unit={unit} hasEnded={hasEnded}>
+            {index + 1}
+          </Place>
+        </TableCell>
+      )}
+      <TableCellStyled
+        className={`font-small w-full max-w-0 min-w-10 truncate ${canSort ? 'pl-2' : 'pl-0'}`}
+      >
         <Status unit={unit} user={user}>
           {unit.unitNickname}
         </Status>
@@ -157,8 +161,12 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
         <TableHeader>
           <TableRow>
             {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
-            <TableHeadStyled className="text-center">#</TableHeadStyled>
-            <TableHeadStyled className="w-full min-w-10 p-0">
+            {!canSort && (
+              <TableHeadStyled className="text-center">#</TableHeadStyled>
+            )}
+            <TableHeadStyled
+              className={`w-full min-w-10 p-0 ${canSort ? 'pl-2' : ''}`}
+            >
               <FormattedMessage id="Player.name" />
             </TableHeadStyled>
             <TableStatsHeads stats={stats} />
@@ -174,10 +182,14 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
                     <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
                   </TableCellStyled>
                 )}
-                <TableCellStyled className="font-small w-10 text-center">
-                  <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
-                </TableCellStyled>
-                <TableCellStyled className="font-small max-w-0 truncate pl-0">
+                {!canSort && (
+                  <TableCellStyled className="font-small w-10 text-center">
+                    <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
+                  </TableCellStyled>
+                )}
+                <TableCellStyled
+                  className={`font-small max-w-0 truncate ${canSort ? 'pl-2' : 'pl-0'}`}
+                >
                   <div className="bg-muted h-4 w-40 animate-pulse rounded" />
                 </TableCellStyled>
                 {Array(stats.length)

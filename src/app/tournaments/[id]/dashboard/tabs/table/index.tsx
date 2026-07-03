@@ -182,8 +182,14 @@ const TournamentTable = () => {
           <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
             <TableRow>
               {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
-              <TableHead className="h-11 min-w-6 p-0 text-center">#</TableHead>
-              <TableHead className="h-11 w-full min-w-10 p-0">
+              {!canSort && (
+                <TableHead className="h-11 min-w-6 p-0 text-center">
+                  #
+                </TableHead>
+              )}
+              <TableHead
+                className={`h-11 w-full min-w-10 p-0 ${canSort ? 'pl-2' : ''}`}
+              >
                 {t.rich(nameColumnIntl, {
                   count: units.data?.length ?? 0,
                   small: (chunks) =>
