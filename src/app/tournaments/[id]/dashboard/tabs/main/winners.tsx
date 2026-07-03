@@ -43,10 +43,8 @@ const WinnerCard: FC<{
   units: UnitModel[];
   label: string;
 }> = ({ place, units, label }) => (
-  <div className="bg-primary/5 border-primary/10 flex gap-4 rounded-xl border p-4">
-    <div className="bg-primary/10 flex size-10 shrink-0 items-center justify-center rounded-lg">
-      <Medal className={`size-5 ${medalColour[place - 1]}`} />
-    </div>
+  <div className="bg-primary/5 border-primary/10 flex items-center gap-4 rounded-xl border p-4">
+    <Medal className={`size-6 shrink-0 ${medalColour[place - 1]}`} />
     <div className="flex min-w-0 flex-col gap-1.5">
       <span className="text-muted-foreground text-xs">{label}</span>
       {units.map((unit) => (
