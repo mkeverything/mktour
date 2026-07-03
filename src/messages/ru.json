@@ -518,7 +518,16 @@
       "unrated": "не рейтинговый",
       "save": "сохранить",
       "fullscreen": "развернуть на весь экран",
-      "minimize": "свернуть"
+      "minimize": "свернуть",
+      "club": "клуб",
+      "type": "тип",
+      "format": "формат",
+      "date": "дата",
+      "rating": "рейтинг",
+      "winners": "победители",
+      "first place": "1-е место",
+      "second place": "2-е место",
+      "third place": "3-е место"
     },
     "Results": {
       "1-0": "1 - 0",
