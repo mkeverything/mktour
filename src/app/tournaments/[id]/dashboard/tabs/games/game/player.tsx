@@ -27,7 +27,6 @@ type PlayerProps = {
   nickname: string | null;
   isWinner: boolean;
   selected: boolean;
-  muted?: boolean;
   className?: string;
 };
 

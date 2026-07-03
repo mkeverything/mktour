@@ -90,7 +90,6 @@ const GameItem: FC<GameProps> = ({
   const resultProps: ResultProps = {
     isPending: mutation.isPending,
     result,
-    selected,
   };
 
   useOutsideClick(() => {
