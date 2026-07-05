@@ -113,38 +113,31 @@ const GameItem: FC<GameProps> = ({
         onClick={handleOpenGame}
       >
         <Card
-          className={`relative grid grid-cols-4 overflow-hidden ${muted && 'opacity-50'} p-mk px-mk-2 gap-mk min-h-20 w-full min-w-0 items-stretch rounded-lg p-2 shadow-md transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerUnitInGame && 'border-3'}`}
+          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 gap-mk h-12 w-full min-w-0 items-center rounded-lg p-1 shadow-md transition-all select-none ${isActive ? 'grid-cols-3' : 'grid-cols-5'} ${!isActive && 'pointer-events-none'} ${isPlayerUnitInGame && 'border-3'}`}
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute top-0 bottom-0 left-0 flex w-[3px] flex-col"
-          >
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-black" />
-          </div>
-          <div className="divide-border col-span-3 flex min-h-0 flex-col justify-center divide-y">
-            <Player
-              isWinner={result === '1-0'}
-              handleMutate={() => handleMutate('1-0')}
-              selected={isActive}
-              nickname={whiteNickname}
-              className={`${unitId === whiteUnitId && 'font-bold'}`}
-            />
-            <Player
-              isWinner={result === '0-1'}
-              handleMutate={() => handleMutate('0-1')}
-              selected={isActive}
-              nickname={blackNickname}
-              className={`${unitId === blackUnitId && 'font-bold'}`}
-            />
-          </div>
+          <Player
+            isWinner={result === '1-0'}
+            handleMutate={() => handleMutate('1-0')}
+            selected={isActive}
+            nickname={whiteNickname}
+            position={{ justify: 'justify-self-start', text: 'text-left' }}
+            className={`${unitId === whiteUnitId && 'font-bold'}`}
+          />
           <Button
             variant="ghost"
             onClick={() => handleMutate('1/2-1/2')}
-            className={`col-span-1 flex h-full w-full justify-center rounded-sm p-0 select-none ${isActive && draw && 'mk-link'}`}
+            className={`mx-mk-2 gap-mk col-span-1 flex size-full ${!isActive && 'max-w-10'} justify-self-center rounded-sm p-0 select-none ${isActive && draw && 'mk-link'}`}
           >
             <Result {...resultProps} selected={isActive} />
           </Button>
+          <Player
+            isWinner={result === '0-1'}
+            handleMutate={() => handleMutate('0-1')}
+            selected={isActive}
+            nickname={blackNickname}
+            position={{ justify: 'justify-self-end', text: 'text-right' }}
+            className={`${unitId === blackUnitId && 'font-bold'}`}
+          />
         </Card>
       </motion.div>
     </PortalWrapper>

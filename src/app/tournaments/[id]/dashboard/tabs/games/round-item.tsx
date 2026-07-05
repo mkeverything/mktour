@@ -7,6 +7,7 @@ import {
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tournament-button';
 import { GamesGridLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
+import { GamesColorIndication } from '@/app/tournaments/[id]/dashboard/tabs/games/games-color-indication';
 import { getGamesGridClassName } from '@/app/tournaments/[id]/dashboard/tabs/games/games-grid';
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
@@ -60,7 +61,8 @@ const RoundItem: FC<RoundItemProps> = ({
 
   return (
     <div className="@container w-full">
-      <div className={gamesGridClassName}>
+      <GamesColorIndication units={units} />
+      <div className={`${gamesGridClassName} pt-mk`}>
         {status === 'organizer' && isOngoing ? (
           <div className="col-span-full">
             <ActionButton roundNumber={roundNumber} />

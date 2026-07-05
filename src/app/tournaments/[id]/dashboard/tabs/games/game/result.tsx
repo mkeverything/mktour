@@ -19,43 +19,41 @@ const Result: FC<ResultProps> = ({ isPending, result, selected }) => {
   if (selected) {
     return (
       <div className="flex h-full w-full items-center justify-center select-none">
-        <small className="text-sm select-none lg:text-base">{t('draw')}</small>
+        <small className="select-none">{t('draw')}</small>
       </div>
     );
   }
 
-  const whiteScore = !result
-    ? ''
-    : result === '1-0'
-      ? '1'
-      : result === '1/2-1/2'
-        ? '½'
-        : '0';
-  const blackScore = !result
-    ? ''
-    : result === '0-1'
-      ? '1'
-      : result === '1/2-1/2'
-        ? '½'
-        : '0';
+  if (!result) {
+    return (
+      <Card className="relative grid h-full w-24 min-w-16 grid-cols-2 rounded-md select-none">
+        <div className="flex w-full items-center justify-center" />
+        <div className="border-l-muted flex w-full items-center justify-center border-l" />
+      </Card>
+    );
+  }
+
+  const parsedResult = result.split('-');
+  const left = parsedResult?.at(0) === '1/2' ? '½' : parsedResult?.at(0);
+  const right = parsedResult?.at(1) === '1/2' ? '½' : parsedResult?.at(1);
 
   return (
-    <Card className="divide-border flex h-full w-full min-w-0 flex-col divide-y rounded-md select-none">
+    <Card className="grid h-full w-24 min-w-16 grid-cols-2 rounded-md select-none">
       <div
         className={cn(
-          'flex min-h-9 flex-1 items-center justify-center text-sm lg:text-base',
+          'flex w-full items-center justify-center opacity-60',
           result === '0-1' && 'opacity-30',
         )}
       >
-        {whiteScore}
+        {left ?? ''}
       </div>
       <div
         className={cn(
-          'flex min-h-9 flex-1 items-center justify-center text-sm lg:text-base',
+          'border-l-muted flex w-full items-center justify-center border-l opacity-60',
           result === '1-0' && 'opacity-30',
         )}
       >
-        {blackScore}
+        {right ?? ''}
       </div>
     </Card>
   );

@@ -1,6 +1,8 @@
 'use client';
 
+import { GamesColorIndication } from '@/app/tournaments/[id]/dashboard/tabs/games/games-color-indication';
 import { getGamesGridClassName } from '@/app/tournaments/[id]/dashboard/tabs/games/games-grid';
+import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UnitModel } from '@/server/zod/tournaments';
@@ -55,9 +57,10 @@ export function MainTabLoadingSkeleton() {
 export function GamesGridLoadingSkeleton({ units }: { units?: UnitModel[] }) {
   return (
     <div className="@container w-full">
-      <div className={getGamesGridClassName(units)}>
+      <GamesColorIndication units={units} />
+      <div className={cn(getGamesGridClassName(units), 'pt-mk')}>
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="min-h-20 w-full rounded-lg shadow-md" />
+          <Skeleton key={i} className="h-12 w-full rounded-lg shadow-md" />
         ))}
       </div>
     </div>

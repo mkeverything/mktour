@@ -7,12 +7,13 @@ const Player: FC<PlayerProps> = ({
   isWinner,
   nickname,
   selected,
+  position,
   className,
 }) => (
   <Button
     variant="ghost"
     className={cn(
-      'px-mk h-auto min-h-9 w-full justify-start rounded-sm p-0 text-sm select-none lg:text-base',
+      `text-2xs ${selected ? 'col-span-1' : 'col-span-2'} h-full w-full lg:text-xs ${!selected && position.text} w-full rounded-sm p-0 select-none`,
       selected && isWinner && 'mk-link',
       className,
     )}
@@ -27,6 +28,10 @@ type PlayerProps = {
   nickname: string | null;
   isWinner: boolean;
   selected: boolean;
+  position: {
+    justify: 'justify-self-start' | 'justify-self-end';
+    text: 'text-left' | 'text-right';
+  };
   className?: string;
 };
 
