@@ -55,7 +55,7 @@ const Games: FC = () => {
           currentRound={1}
           currentTab={currentTab}
         />
-        <GamesGridLoadingSkeleton units={units} />
+        <GamesGridLoadingSkeleton />
       </div>
     );
   }

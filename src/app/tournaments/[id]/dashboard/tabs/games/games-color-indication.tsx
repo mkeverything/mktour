@@ -1,11 +1,5 @@
-import {
-  getGamesGridClassName,
-  shouldUseFullWidthGameItems,
-  shouldUseThreeGameColumns,
-} from '@/app/tournaments/[id]/dashboard/tabs/games/games-grid';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { UnitModel } from '@/server/zod/tournaments';
 import { FC } from 'react';
 
 const ColorHint: FC<{ className?: string }> = ({ className }) => (
@@ -15,15 +9,12 @@ const ColorHint: FC<{ className?: string }> = ({ className }) => (
   </div>
 );
 
-export function GamesColorIndication({ units }: { units?: UnitModel[] }) {
-  const fullWidth = shouldUseFullWidthGameItems(units);
-  const threeColumns = shouldUseThreeGameColumns(units);
-
+export function GamesColorIndication() {
   return (
-    <div className={getGamesGridClassName(units)}>
+    <div className="gap-mk px-mk md:px-mk-2 grid grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3">
       <ColorHint />
-      <ColorHint className={fullWidth ? 'max-lg:@max-3xl:hidden' : undefined} />
-      {threeColumns ? <ColorHint className="hidden lg:flex" /> : null}
+      <ColorHint className="hidden @3xl:flex" />
+      <ColorHint className="hidden @6xl:flex" />
     </div>
   );
 }
