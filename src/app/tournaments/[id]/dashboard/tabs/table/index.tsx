@@ -181,8 +181,9 @@ const TournamentTable = () => {
         <Table className="pt-0">
           <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
             <TableRow>
-              {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
-              {!canSort && (
+              {canSort ? (
+                <TableHead className="w-6">&nbsp;</TableHead>
+              ) : (
                 <TableHead className="h-11 min-w-6 p-0 text-center">
                   #
                 </TableHead>
