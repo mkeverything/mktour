@@ -1,5 +1,3 @@
-'use client';
-
 import { GamesColorIndication } from '@/app/tournaments/[id]/dashboard/tabs/games/games-color-indication';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';

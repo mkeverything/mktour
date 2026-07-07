@@ -8,21 +8,9 @@ import { FC } from 'react';
 const Result: FC<ResultProps> = ({ isPending, result, selected }) => {
   const t = useTranslations('Tournament.Results');
 
-  if (isPending) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  if (isPending) return <LoadingSpinner />;
 
-  if (selected) {
-    return (
-      <div className="flex h-full w-full items-center justify-center select-none">
-        <small className="select-none">{t('draw')}</small>
-      </div>
-    );
-  }
+  if (selected) return <small className="select-none">{t('draw')}</small>;
 
   if (!result) {
     return (
