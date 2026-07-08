@@ -2,6 +2,7 @@
 
 import { turboPascal } from '@/app/fonts';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { MainTabLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import ShuffleButton from '@/app/tournaments/[id]/dashboard/shuffle-button';
 import ActionButtons, {
   DestructiveTournamentButtonsComboModal,
@@ -12,7 +13,6 @@ import Center from '@/components/center';
 import useTournamentEditTitle from '@/components/hooks/mutation-hooks/use-tournament-edit-title';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
-import { MainTabLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import { InputGhost } from '@/components/ui-custom/input-ghost';
 import { Button } from '@/components/ui/button';
 import { Maximize2 } from 'lucide-react';
@@ -28,7 +28,7 @@ import {
   useState,
 } from 'react';
 
-const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
+const Main: FC = () => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data, isLoading } = useTournamentInfo(tournamentId);
   const { status } = useContext(DashboardContext);
@@ -47,6 +47,15 @@ const Main: FC<{ toggleFullscreen?: () => void }> = ({ toggleFullscreen }) => {
     },
     [],
   );
+
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await containerRef.current.requestFullscreen();
+    }
+  }, []);
 
   const handleTitleUpdate = useCallback(() => {
     if (controlledTitle !== tournamentTitle)

@@ -76,15 +76,6 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
     };
   }, []);
 
-  const toggleFullscreen = useCallback(async () => {
-    if (!containerRef.current) return;
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    } else {
-      await containerRef.current.requestFullscreen();
-    }
-  }, []);
-
   return (
     <DashboardContext.Provider value={dashboardValue}>
       <DashboardTabContext.Provider value={tabValue}>
@@ -92,7 +83,7 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
           <SelectedGameContext.Provider value={selectedGameValue}>
             <Overlay open={!!selectedGameId} />
             <div className="h-mk-content-height relative inset-0 flex flex-col overflow-hidden">
-              <Main toggleFullscreen={toggleFullscreen} />
+              <Main />
               <div
                 ref={containerRef}
                 className="p-mk px-mk-2 flex flex-1 gap-2 overflow-hidden lg:flex-row"
