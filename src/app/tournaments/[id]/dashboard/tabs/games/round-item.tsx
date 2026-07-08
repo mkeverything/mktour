@@ -7,7 +7,6 @@ import {
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tournament-button';
 import { GamesGridLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
-import { GamesColorIndication } from '@/app/tournaments/[id]/dashboard/tabs/games/games-color-indication';
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
@@ -56,26 +55,23 @@ const RoundItem: FC<RoundItemProps> = ({
   const isOngoing = !!info.data.startedAt && !info.data.closedAt;
 
   return (
-    <div className="@container w-full">
-      <GamesColorIndication />
-      <div className="gap-mk px-mk md:px-mk-2 pt-mk grid grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3">
-        {status === 'organizer' && isOngoing ? (
-          <div className="col-span-full">
-            <ActionButton roundNumber={roundNumber} />
-          </div>
-        ) : null}
-        {sortedRound.map((game) => {
-          return (
-            <GamesIteratee
-              key={game.id}
-              selected={selectedGameId === game.id}
-              setSelectedGameId={setSelectedGameId}
-              onOpenStartTournamentDrawer={onOpenStartTournamentDrawer}
-              {...game}
-            />
-          );
-        })}
-      </div>
+    <div className="gap-mk px-mk md:px-mk-2 pt-mk grid grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3">
+      {status === 'organizer' && isOngoing ? (
+        <div className="col-span-full">
+          <ActionButton roundNumber={roundNumber} />
+        </div>
+      ) : null}
+      {sortedRound.map((game) => {
+        return (
+          <GamesIteratee
+            key={game.id}
+            selected={selectedGameId === game.id}
+            setSelectedGameId={setSelectedGameId}
+            onOpenStartTournamentDrawer={onOpenStartTournamentDrawer}
+            {...game}
+          />
+        );
+      })}
     </div>
   );
 };

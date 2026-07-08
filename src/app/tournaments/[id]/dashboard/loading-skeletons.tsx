@@ -1,4 +1,3 @@
-import { GamesColorIndication } from '@/app/tournaments/[id]/dashboard/tabs/games/games-color-indication';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -51,13 +50,10 @@ export function MainTabLoadingSkeleton() {
 
 export function GamesGridLoadingSkeleton() {
   return (
-    <div className="@container w-full">
-      <GamesColorIndication />
-      <div className="gap-mk px-mk md:px-mk-2 pt-mk grid grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full rounded-lg shadow-md" />
-        ))}
-      </div>
+    <div className="gap-mk px-mk md:px-mk-2 pt-mk grid grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full rounded-lg shadow-md" />
+      ))}
     </div>
   );
 }
