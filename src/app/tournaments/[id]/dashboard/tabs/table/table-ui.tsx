@@ -93,9 +93,7 @@ export const UnitTableRow: FC<{
           </Place>
         </TableCell>
       )}
-      <TableCellStyled
-        className={`font-small w-full max-w-0 min-w-10 truncate ${canSort ? 'pl-2' : 'pl-0'}`}
-      >
+      <TableCellStyled className="font-small w-full max-w-0 min-w-10 truncate pl-2">
         <Status unit={unit} user={user}>
           {unit.unitNickname}
         </Status>
@@ -161,12 +159,12 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
       <Table>
         <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
           <TableRow>
-            <TableHeadStyled className="text-center">
+            <TableHead className="w-8 min-w-8 text-center">
               {canSort ? '' : '#'}
-            </TableHeadStyled>
-            <TableHeadStyled className="w-full min-w-10 p-0">
+            </TableHead>
+            <TableHead className="w-full min-w-10 p-0 pl-2">
               <FormattedMessage id="Player.name" />
-            </TableHeadStyled>
+            </TableHead>
             <TableStatsHeads stats={stats} />
           </TableRow>
         </TableHeader>
@@ -175,30 +173,21 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
             .fill(0)
             .map((_, i) => (
               <TableRow key={i}>
-                {canSort && (
-                  <TableCellStyled className="w-6">
-                    <Skeleton className="mx-auto size-4 rounded-sm" />
-                  </TableCellStyled>
-                )}
-                {!canSort && (
-                  <TableCellStyled className="font-small w-10 text-center">
-                    <Skeleton className="mx-auto size-4 rounded-sm" />
-                  </TableCellStyled>
-                )}
-                <TableCellStyled
-                  className={`font-small max-w-0 truncate ${canSort ? 'pl-2' : 'pl-0'}`}
-                >
-                  <Skeleton className="h-4 w-full max-w-40" />
-                </TableCellStyled>
+                <TableCell className="w-4">
+                  <Skeleton className="size-4 rounded-sm" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full max-w-60" />
+                </TableCell>
                 {Array(stats.length)
                   .fill(0)
                   .map((_, j) => (
-                    <TableCellStyled
+                    <TableCell
                       key={j}
                       className="min-w-8 text-center font-medium"
                     >
                       <Skeleton className="mx-auto size-4 rounded-sm" />
-                    </TableCellStyled>
+                    </TableCell>
                   ))}
               </TableRow>
             ))}
