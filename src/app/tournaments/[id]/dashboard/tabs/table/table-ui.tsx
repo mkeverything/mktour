@@ -188,7 +188,7 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
                 <TableCellStyled
                   className={`font-small max-w-0 truncate ${canSort ? 'pl-2' : 'pl-0'}`}
                 >
-                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-4 w-full max-w-40" />
                 </TableCellStyled>
                 {Array(stats.length)
                   .fill(0)
