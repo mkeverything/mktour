@@ -5,6 +5,7 @@ import {
 import FormattedMessage, {
   IntlMessageId,
 } from '@/components/formatted-message';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -13,7 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
 import { UnitModel } from '@/server/zod/tournaments';
 import { UserModel } from '@/server/zod/users';
 import { useSortable } from '@dnd-kit/react/sortable';
@@ -161,13 +161,10 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
       <Table>
         <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
           <TableRow>
-            {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
-            {!canSort && (
-              <TableHeadStyled className="text-center">#</TableHeadStyled>
-            )}
-            <TableHeadStyled
-              className={`w-full min-w-10 p-0 ${canSort ? 'pl-2' : ''}`}
-            >
+            <TableHeadStyled className="text-center">
+              {canSort ? '' : '#'}
+            </TableHeadStyled>
+            <TableHeadStyled className="w-full min-w-10 p-0">
               <FormattedMessage id="Player.name" />
             </TableHeadStyled>
             <TableStatsHeads stats={stats} />
