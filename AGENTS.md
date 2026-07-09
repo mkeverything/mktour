@@ -71,6 +71,20 @@ all generated code must follow **ALAP** and **AAAP**.
 - extend/customize ui in `src/components/ui-custom/`
 - oxford english spelling required
 
+### ts/tsx file structure
+
+order top-level declarations:
+
+1. file directive (`'use client'`, `'use server'`, etc.) when required
+2. imports
+3. module constants (`UPPER_SNAKE_CASE`)
+4. main export (component, hook, or primary function)
+5. other declarations (helpers, subcomponents)
+6. local types/interfaces (file-scoped only)
+7. `export default` last when the file has a default export
+
+named-export-only files skip the single main export / trailing default-export steps. prefer `const Name = ...` plus trailing `export default Name` over inline `export default function ...`.
+
 ## commands
 
 - runtime/package manager: bun

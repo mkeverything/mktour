@@ -1,0 +1,23 @@
+---
+description: TypeScript and TSX file member ordering
+alwaysApply: true
+---
+
+# ts/tsx file structure
+
+order top-level declarations in every `.ts` / `.tsx` file as follows:
+
+1. **file directive** — `'use client'`, `'use server'`, etc. when required (before imports)
+2. **imports**
+3. **constants** — module-level `const` in `UPPER_SNAKE_CASE`
+4. **main export** — primary component, hook, or function the file is named for
+5. **other declarations** — helpers, subcomponents, and other secondary functions
+6. **local types** — file-scoped `type` / `interface` declarations (not imported domain types)
+7. **export default** — last line when the file has a default export
+
+## notes
+
+- skip sections that do not apply (e.g. no constants, or no default export)
+- named-export-only files: no single "main export"; group exported declarations before private helpers
+- prefer `const ComponentName = ...` plus a trailing `export default ComponentName` over inline `export default function ...`
+- imported types stay in imports; domain types belong in canonical `src/server/zod/` schemas, not local redeclarations
