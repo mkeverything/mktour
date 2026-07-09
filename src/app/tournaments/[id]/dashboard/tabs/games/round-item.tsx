@@ -53,9 +53,12 @@ const RoundItem: FC<RoundItemProps> = ({
   if (!round) return <Center>no round</Center>;
 
   const isOngoing = !!info.data.startedAt && !info.data.closedAt;
+  const multiCols = sortedRound.length !== 1;
 
   return (
-    <div className="gap-mk px-mk md:px-mk-2 pt-mk grid grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3">
+    <div
+      className={`gap-mk px-mk md:px-mk-2 pt-mk grid ${multiCols ? 'grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3' : 'grid-cols-1'}`}
+    >
       {status === 'organizer' && isOngoing ? (
         <div className="col-span-full">
           <ActionButton roundNumber={roundNumber} />

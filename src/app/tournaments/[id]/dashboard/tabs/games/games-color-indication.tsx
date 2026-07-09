@@ -9,12 +9,20 @@ const ColorHint: FC<{ className?: string }> = ({ className }) => (
   </div>
 );
 
-export function GamesColorIndication() {
+export function GamesColorIndication({ gamesCount }: { gamesCount?: number }) {
+  const multiCols = gamesCount !== 1;
+
   return (
-    <div className="gap-mk px-mk md:px-mk-2 grid grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3">
+    <div
+      className={`gap-mk px-mk md:px-mk-2 grid ${multiCols ? 'grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3' : 'grid-cols-1'}`}
+    >
       <ColorHint />
-      <ColorHint className="hidden @3xl:flex" />
-      <ColorHint className="hidden @6xl:flex" />
+      {multiCols ? (
+        <>
+          <ColorHint className="hidden @3xl:flex" />
+          <ColorHint className="hidden @6xl:flex" />
+        </>
+      ) : null}
     </div>
   );
 }
