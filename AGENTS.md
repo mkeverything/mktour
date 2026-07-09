@@ -2,6 +2,32 @@
 
 tournament management web app. users sign in via lichess, create clubs, manage players, run tournaments (swiss, round robin — implemented, eliminations — projected), and track ratings (glicko-2).
 
+## generated code principles (ALAP / AAAP)
+
+all generated code must follow **ALAP** and **AAAP**.
+
+### ALAP — as little code as possible
+
+- smallest correct change; no drive-by refactors or unrelated edits
+- do not add code for hypothetical future needs
+- prefer deleting or simplifying over adding
+- no boilerplate, wrappers, or indirection that do not reduce complexity
+- no tests, comments, or helpers unless they add clear value
+
+### AAAP — as abstracted as possible
+
+- use existing project abstractions before writing bespoke logic
+- domain types and validation through canonical `src/server/zod/` schemas
+- data access through tRPC; ui through existing hooks, components, and patterns
+- prefer typed, declarative APIs (drizzle query builder, zod, tRPC) over raw or imperative alternatives
+- extract shared logic only when duplication would otherwise remain
+
+### when ALAP and AAAP conflict
+
+- prefer an existing abstraction (AAAP) over reimplementing logic inline, even if it means fewer new lines
+- do not introduce a new abstraction unless it removes duplication or aligns with an established project pattern
+- never add abstraction layers that exist only to wrap one call site
+
 ## critical architecture rules
 
 - all product/domain data operations go through tRPC procedures; do not add alternate domain rpc paths
