@@ -48,7 +48,7 @@ const PortalWrapper: FC<PortalWrapperProps> = ({
         {createPortal(
           <div
             style={{
-              position: 'fixed',
+              position: 'absolute',
               top: coords.top,
               left: coords.left,
               width: coords.width,
