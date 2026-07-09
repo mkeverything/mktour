@@ -5,10 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useHotkeys } from 'react-hotkeys-hook';
 
 import { GamesColorIndication } from '@/app/tournaments/[id]/dashboard/tabs/games/games-color-indication';
-import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Button } from '@/components/ui/button';
-import { useParams } from 'next/navigation';
 
 const RoundControls: FC<RoundControlProps> = ({
   currentRound,
@@ -17,11 +15,6 @@ const RoundControls: FC<RoundControlProps> = ({
   currentTab,
 }) => {
   const t = useTranslations('Tournament.Round');
-  const { id: tournamentId } = useParams<{ id: string }>();
-  const { data: roundGames } = useTournamentRoundGames({
-    tournamentId,
-    roundNumber: roundInView,
-  });
   const { isDesktop } = useContext(MediaQueryContext);
   const shouldHandleArrows = isDesktop || currentTab === 'games';
 
@@ -90,7 +83,7 @@ const RoundControls: FC<RoundControlProps> = ({
           </Button>
         </div>
       </div>
-      <GamesColorIndication gamesCount={roundGames?.length} />
+      <GamesColorIndication />
     </div>
   );
 };
