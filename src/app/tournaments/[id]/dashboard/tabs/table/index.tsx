@@ -176,7 +176,7 @@ const TournamentTable = () => {
   const nameColumnIntl = type !== 'solo' ? 'name column team' : 'name column';
 
   return (
-    <div className="mb-20 w-full">
+    <div className="w-full">
       <DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <Table className="pt-0">
           <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">

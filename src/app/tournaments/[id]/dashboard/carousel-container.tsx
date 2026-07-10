@@ -38,14 +38,9 @@ const CarouselContainer: FC<CarouselProps> = ({
 
   return (
     <Carousel setApi={setApi} opts={{ loop: false }} className="select-none">
-      {/* calculating content height to prevent carousel from overflow-y-scroll (screen - nav + controls) */}
-      <CarouselContent className="h-[calc(100dvh-6rem)]">
+      <CarouselContent className="h-[calc(100dvh_-_var(--spacing-mk-navbar-total-height)_-_2.5rem)]">
         {tabs.map((tab) => (
-          <CarouselIteratee
-            setScrolling={setScrolling}
-            key={tab.title}
-            currentTab={currentTab}
-          >
+          <CarouselIteratee setScrolling={setScrolling} key={tab.title}>
             {tab.component}
           </CarouselIteratee>
         ))}
@@ -56,20 +51,16 @@ const CarouselContainer: FC<CarouselProps> = ({
 
 const CarouselIteratee: FC<{
   children: FC;
-  currentTab: string;
   setScrolling?: Dispatch<SetStateAction<boolean>>;
-}> = ({ children: Component, currentTab, setScrolling }) => {
+}> = ({ children: Component, setScrolling }) => {
   const ref = useScrollableContainer({ setScrolling });
-
-  useEffect(() => {
-    if (currentTab) {
-      ref.current?.scrollTo({ top: 0 });
-    }
-  }, [currentTab, ref]);
 
   return (
     <CarouselItem>
-      <div className="h-full overflow-y-auto">
+      <div
+        ref={ref}
+        className="small-scrollbar h-full overflow-y-scroll overscroll-y-contain pb-[calc(6rem_+_env(safe-area-inset-bottom))]"
+      >
         <Component />
       </div>
     </CarouselItem>
