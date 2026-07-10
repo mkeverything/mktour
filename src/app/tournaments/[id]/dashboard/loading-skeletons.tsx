@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TableCell, TableRow } from '@/components/ui/table';
 
 const INFO_ROW_COUNT = 5;
 
@@ -59,22 +60,21 @@ export function GamesGridLoadingSkeleton() {
 }
 
 export function AddPlayerListLoadingSkeleton() {
-  return (
-    <div className="rounded-2 h-[calc(100dvh-6rem)] w-full rounded-b-md">
-      <div className="flex flex-col">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div
-            key={i}
-            className="border-border flex items-center justify-between border-b px-4 py-3"
-          >
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-4 w-36" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-            <Skeleton className="h-4 w-8" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return Array.from({ length: 20 }).map((_, i) => (
+    <TableRow key={i} className="p-0">
+      <TableCell>
+        <p className="line-clamp-2 break-all">
+          <Skeleton className="h-4 w-36" />
+        </p>
+        {i % 10 === 8 && (
+          <small className="text-2xs text-muted-foreground mt-1 flex items-center">
+            <Skeleton className="h-3 w-24" />
+          </small>
+        )}
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-4 w-8" />
+      </TableCell>
+    </TableRow>
+  ));
 }
