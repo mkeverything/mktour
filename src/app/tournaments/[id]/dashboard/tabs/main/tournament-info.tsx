@@ -6,7 +6,6 @@ import Winners from '@/app/tournaments/[id]/dashboard/tabs/main/winners';
 import { useTournamentSummaryInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import SwissRoundsNumber from '@/components/swiss-rounds-number';
-import { Card } from '@/components/ui/card';
 import {
   formatTournamentDisplayDate,
   parseLocalDateString,
@@ -22,7 +21,7 @@ import {
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FC, memo, ReactNode } from 'react';
+import { FC, memo } from 'react';
 import { toast } from 'sonner';
 
 const TournamentInfoList = () => {
@@ -54,43 +53,38 @@ const TournamentInfoList = () => {
 
   return (
     <>
-      <Card className="mb-mk-2 px-4 pt-0 md:hidden">
-        <div className="divide-border divide-y">
-          <TournamentInfoStat
-            icon={HomeIcon}
-            label={t('club')}
-            value={data.clubName}
-            href={`/clubs/${data.clubId}`}
-          />
-          <TournamentInfoStat
-            icon={CalendarDays}
-            label={t('date')}
-            value={formattedDate}
-          />
-          <TournamentInfoStat
-            icon={Dices}
-            label={t('format')}
-            value={t(String(data.format))}
-          />
-          <TournamentInfoStat
-            icon={UserRound}
-            label={t('type')}
-            value={t(`Types.${data.type}`)}
-          />
-          <TournamentInfoStat
-            icon={ChartNoAxesCombinedIcon}
-            label={t('rating')}
-            value={data.rated ? t('rated') : t('unrated')}
-          />
-          {data.format === 'swiss' && (
-            <TournamentInfoStat
-              icon={Layers}
-              label={t('number of rounds')}
-              value={<SwissRoundsNumber className="text-sm font-medium" />}
-            />
-          )}
+      <div className="p-mk pt-mk-2 pb-mk-2 gap-mk-2 flex flex-col md:hidden">
+        <div className="gap-mk-2 flex flex-col text-sm">
+          <span className="flex items-center gap-2">
+            <HomeIcon className="text-muted-foreground size-4 shrink-0" />
+            <Link
+              href={`/clubs/${data.clubId}`}
+              className="mk-link truncate font-medium"
+            >
+              {data.clubName}
+            </Link>
+          </span>
+          <span className="text-muted-foreground flex items-center gap-2">
+            <CalendarDays className="size-4 shrink-0" />
+            {formattedDate}
+          </span>
         </div>
-      </Card>
+        <div className="gap-mk flex flex-wrap">
+          <MetaChip icon={Dices} label={t(String(data.format))} />
+          <MetaChip icon={UserRound} label={t(`Types.${data.type}`)} />
+          <MetaChip
+            icon={ChartNoAxesCombinedIcon}
+            label={data.rated ? t('rated') : t('unrated')}
+          />
+        </div>
+        {data.format === 'swiss' && (
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <Layers className="size-4 shrink-0" />
+            <span>{t('number of rounds')}</span>
+            <SwissRoundsNumber className="text-foreground text-sm font-medium" />
+          </div>
+        )}
+      </div>
       <Winners tournamentId={data.tournamentId} closedAt={data.closedAt} />
       <div className="md:text-muted-foreground gap-y-mk gap-x-mk-2 p-mk hidden flex-col flex-wrap text-xs md:flex md:flex-row md:items-center">
         <InfoItem
@@ -117,29 +111,14 @@ const TournamentInfoList = () => {
   );
 };
 
-const TournamentInfoStat: FC<{
+const MetaChip: FC<{
   icon: FC<{ className?: string }>;
   label: string;
-  value: ReactNode;
-  href?: string;
-}> = ({ icon: Icon, label, value, href }) => (
-  <div className="flex min-h-14 items-center gap-3 py-3">
-    <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-sm">
-      <Icon className="text-muted-foreground size-5" />
-    </div>
-    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-      <span className="text-muted-foreground text-xs leading-none">
-        {label}
-      </span>
-      {href ? (
-        <Link href={href} className="mk-link truncate text-sm font-medium">
-          {value}
-        </Link>
-      ) : (
-        <div className="truncate text-sm font-medium">{value}</div>
-      )}
-    </div>
-  </div>
+}> = ({ icon: Icon, label }) => (
+  <span className="bg-muted text-muted-foreground flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium">
+    <Icon className="size-3.5" />
+    {label}
+  </span>
 );
 
 export default memo(TournamentInfoList);

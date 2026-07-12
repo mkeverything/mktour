@@ -1,20 +1,7 @@
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TableCell, TableRow } from '@/components/ui/table';
 
 const INFO_ROW_COUNT = 5;
-
-function InfoRowSkeleton() {
-  return (
-    <div className="flex min-h-14 items-center gap-3 py-3">
-      <Skeleton className="size-10 shrink-0 rounded-sm" />
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <Skeleton className="h-3 w-12" />
-        <Skeleton className="h-4 w-32" />
-      </div>
-    </div>
-  );
-}
 
 export function MainTabLoadingSkeleton() {
   return (
@@ -23,13 +10,17 @@ export function MainTabLoadingSkeleton() {
         <div className="py-mk-2 pl-4">
           <Skeleton className="h-9 w-3/4" />
         </div>
-        <Card className="mb-mk-2 px-4 pt-0">
-          <div className="divide-border divide-y">
-            {Array.from({ length: INFO_ROW_COUNT }).map((_, i) => (
-              <InfoRowSkeleton key={i} />
+        <div className="p-mk pt-mk-2 pb-mk-2 gap-mk-2 flex flex-col">
+          <div className="gap-mk flex flex-col">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-5 w-32" />
+          </div>
+          <div className="gap-mk flex flex-wrap">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-7 w-20 rounded-full" />
             ))}
           </div>
-        </Card>
+        </div>
         <Skeleton className="h-10 w-full rounded-md" />
       </div>
       <div className="px-mk md:px-mk-2 hidden md:grid md:grid-cols-2">

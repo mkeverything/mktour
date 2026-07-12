@@ -21,7 +21,7 @@ const Winners: FC<{
   if (!closedAt || Object.keys(winners).length === 0) return null;
 
   return (
-    <div className="gap-mk flex flex-col md:hidden">
+    <div className="gap-mk p-mk flex flex-col md:hidden">
       <h3 className="text-muted-foreground flex items-center gap-2 px-1 text-sm">
         <Trophy className="size-4" />
         {t('winners')}
