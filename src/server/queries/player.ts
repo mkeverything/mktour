@@ -17,6 +17,7 @@ import {
   eq,
   getTableColumns,
   isNotNull,
+  isNull,
   or,
 } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
@@ -73,6 +74,8 @@ function getCompetitionRanks<T extends { playerId: string }>(
 
 function getResultCounts(clubId: string, colour: 'white' | 'black') {
   const unitColumn = colour === 'white' ? games.whiteUnitId : games.blackUnitId;
+  const playerColumn =
+    colour === 'white' ? games.whitePlayerId : games.blackPlayerId;
   const winResult = colour === 'white' ? '1-0' : '0-1';
   const lossResult = colour === 'white' ? '0-1' : '1-0';
 
@@ -92,7 +95,13 @@ function getResultCounts(clubId: string, colour: 'white' | 'black') {
       eq(players_to_units.unitId, tournament_units.id),
     )
     .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
-    .innerJoin(games, eq(tournament_units.id, unitColumn))
+    .innerJoin(
+      games,
+      and(
+        eq(tournament_units.id, unitColumn),
+        or(isNull(playerColumn), eq(playerColumn, players_to_units.playerId)),
+      ),
+    )
     .where(and(eq(players.clubId, clubId), isNotNull(tournaments.closedAt)))
     .groupBy(players_to_units.playerId);
 }
