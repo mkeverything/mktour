@@ -208,8 +208,8 @@ async function getCachedClubPlayerStats(
   'use cache';
   if (process.env.NODE_ENV !== 'test') {
     cacheLife({
-      stale: 1000 * 60 * 60 * 6,
-      revalidate: 1000 * 60 * 60 * 24,
+      stale: 60 * 60 * 6,
+      revalidate: 60 * 60 * 24,
     });
     cacheTag(clubPlayerStatsTag(clubId));
   }
