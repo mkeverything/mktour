@@ -9,8 +9,9 @@ import useOutsideClick from '@/components/hooks/use-outside-click';
 import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useTRPC } from '@/components/trpc/client';
 import { GameResult } from '@/server/zod/enums';
-import { useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
@@ -34,6 +35,20 @@ const GameItem: FC<GameProps> = ({
   const { sendJsonMessage, status, unitId, userId } =
     useContext(DashboardContext);
   const queryClient = useQueryClient();
+  const trpc = useTRPC();
+  const saveRoundPending =
+    useIsMutating({
+      mutationKey: trpc.tournament.saveRound.mutationKey(),
+      predicate: (mutation) => {
+        const variables = mutation.state.variables;
+        return (
+          typeof variables === 'object' &&
+          variables !== null &&
+          'tournamentId' in variables &&
+          variables.tournamentId === tournamentId
+        );
+      },
+    }) > 0;
   const mutation = useTournamentSetGameResult(queryClient, {
     tournamentId,
     sendJsonMessage,
@@ -50,7 +65,7 @@ const GameItem: FC<GameProps> = ({
   const canEdit =
     status === 'organizer' ||
     (status === 'player' && isPlayerUnitInGame && hasStarted);
-  const disabled = !canEdit || isClosed;
+  const disabled = !canEdit || isClosed || saveRoundPending;
   const draw = result === '1/2-1/2';
 
   const handleOpenGame = () => {

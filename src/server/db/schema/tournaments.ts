@@ -9,11 +9,13 @@ import {
 import { relations, sql } from 'drizzle-orm';
 import {
   check,
+  foreignKey,
   index,
   integer,
   real,
   sqliteTable,
   text,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 
 export const tournaments = sqliteTable('tournament', {
@@ -92,6 +94,7 @@ export const tournament_units = sqliteTable(
     nickname: text('nickname').notNull(), // team nickname or solo player nickname
   },
   (table) => [
+    uniqueIndex('tu_id_tournament_unique_idx').on(table.id, table.tournamentId),
     index('tu_tournament_number_idx').on(table.tournamentId, table.number),
     index('tu_tournament_nickname_idx').on(table.tournamentId, table.nickname),
   ],
@@ -120,12 +123,33 @@ export const games = sqliteTable(
       .references(() => tournaments.id)
       .notNull(),
   },
-  (t) => [
-    index('game_tournament_round_idx').on(t.tournamentId, t.roundNumber),
-    index('game_white_unit_idx').on(t.whiteUnitId),
-    index('game_black_unit_idx').on(t.blackUnitId),
-    index('game_white_player_idx').on(t.whitePlayerId),
-    index('game_black_player_idx').on(t.blackPlayerId),
+  (table) => [
+    uniqueIndex('game_tournament_number_unique_idx').on(
+      table.tournamentId,
+      table.gameNumber,
+    ),
+    index('game_tournament_round_idx').on(
+      table.tournamentId,
+      table.roundNumber,
+    ),
+    index('game_white_unit_idx').on(table.whiteUnitId),
+    index('game_black_unit_idx').on(table.blackUnitId),
+    index('game_white_player_idx').on(table.whitePlayerId),
+    index('game_black_player_idx').on(table.blackPlayerId),
+    foreignKey({
+      columns: [table.whiteUnitId, table.tournamentId],
+      foreignColumns: [tournament_units.id, tournament_units.tournamentId],
+      name: 'game_white_unit_tournament_fk',
+    }),
+    foreignKey({
+      columns: [table.blackUnitId, table.tournamentId],
+      foreignColumns: [tournament_units.id, tournament_units.tournamentId],
+      name: 'game_black_unit_tournament_fk',
+    }),
+    check(
+      'game_units_different',
+      sql`${table.whiteUnitId} <> ${table.blackUnitId}`,
+    ),
   ],
 );
 

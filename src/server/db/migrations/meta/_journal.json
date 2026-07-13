@@ -99,6 +99,13 @@
       "when": 1782832915576,
       "tag": "0013_smiling_thanos",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1783946937976,
+      "tag": "0014_blue_synch",
+      "breakpoints": true
     }
   ]
 }

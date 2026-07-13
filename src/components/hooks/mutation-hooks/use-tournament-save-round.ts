@@ -44,11 +44,15 @@ export default function useSaveRound(
           () => newGames,
         );
       },
-      onSuccess: (_data, { roundNumber, newGames }) => {
+      onSuccess: (canonicalGames, { roundNumber, tournamentId }) => {
+        queryClient.setQueryData(
+          trpc.tournament.roundGames.queryKey({ tournamentId, roundNumber }),
+          canonicalGames,
+        );
         sendJsonMessage({
           event: 'new-round',
           roundNumber,
-          newGames,
+          newGames: canonicalGames,
           isTournamentGoing: props.isTournamentGoing,
         });
       },
