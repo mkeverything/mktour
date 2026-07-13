@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0b38e583-16eb-4adc-b443-0621c956a97f",
+  "id": "078c4878-94e9-4c82-94fe-ac236c6cb2f4",
   "prevId": "03b2b0e0-05e7-49a2-a018-407804eb1509",
   "tables": {
     "club": {
@@ -440,6 +440,11 @@
         }
       },
       "indexes": {
+        "game_tournament_number_unique_idx": {
+          "name": "game_tournament_number_unique_idx",
+          "columns": ["tournament_id", "game_number"],
+          "isUnique": true
+        },
         "game_tournament_round_idx": {
           "name": "game_tournament_round_idx",
           "columns": ["tournament_id", "round_number"],
@@ -511,11 +516,34 @@
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "game_white_unit_tournament_fk": {
+          "name": "game_white_unit_tournament_fk",
+          "tableFrom": "game",
+          "tableTo": "tournament_units",
+          "columnsFrom": ["white_unit_id", "tournament_id"],
+          "columnsTo": ["id", "tournament_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "game_black_unit_tournament_fk": {
+          "name": "game_black_unit_tournament_fk",
+          "tableFrom": "game",
+          "tableTo": "tournament_units",
+          "columnsFrom": ["black_unit_id", "tournament_id"],
+          "columnsTo": ["id", "tournament_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "game_units_different": {
+          "name": "game_units_different",
+          "value": "\"game\".\"white_unit_id\" <> \"game\".\"black_unit_id\""
+        }
+      }
     },
     "players_to_units": {
       "name": "players_to_units",
@@ -700,6 +728,11 @@
         }
       },
       "indexes": {
+        "tu_id_tournament_unique_idx": {
+          "name": "tu_id_tournament_unique_idx",
+          "columns": ["id", "tournament_id"],
+          "isUnique": true
+        },
         "tu_tournament_number_idx": {
           "name": "tu_tournament_number_idx",
           "columns": ["tournament_id", "number"],
