@@ -90,7 +90,6 @@ const GameItem: FC<GameProps> = ({
   const resultProps: ResultProps = {
     isPending: mutation.isPending,
     result,
-    selected,
   };
 
   useOutsideClick(() => {
@@ -104,7 +103,7 @@ const GameItem: FC<GameProps> = ({
       <motion.div
         key={id}
         ref={ref}
-        className={`${disabled && 'pointer-events-none'} cursor-pointer ${
+        className={`${disabled && 'pointer-events-none'} w-full min-w-0 cursor-pointer ${
           isActive ? 'z-50' : 'z-0'
         }`}
         initial={{ scale: 1, y: 0 }}
@@ -114,7 +113,7 @@ const GameItem: FC<GameProps> = ({
         onClick={handleOpenGame}
       >
         <Card
-          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 mx-auto h-12 w-full rounded-lg shadow-md lg:max-w-4xl ${isActive ? 'grid-cols-3' : 'grid-cols-5'} gap-mk items-center p-1 transition-all select-none ${!isActive && 'pointer-events-none'} ${isPlayerUnitInGame && 'border-3'}`}
+          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 gap-mk h-12 w-full min-w-0 items-center rounded-lg p-1 shadow-md transition-all select-none ${isActive ? 'grid-cols-3' : 'grid-cols-5'} ${!isActive && 'pointer-events-none'} ${isPlayerUnitInGame && 'border-3'}`}
         >
           <Player
             isWinner={result === '1-0'}

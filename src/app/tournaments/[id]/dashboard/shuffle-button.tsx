@@ -52,6 +52,7 @@ const ShuffleButton = () => {
       disabled={isPending || preStartLocked || !isSufficient}
       icon={!isPending ? Shuffle : Loader2}
       onClick={handleClick}
+      safeArea
     />
   );
 

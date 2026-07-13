@@ -5,6 +5,7 @@ import {
 import FormattedMessage, {
   IntlMessageId,
 } from '@/components/formatted-message';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -85,12 +86,14 @@ export const UnitTableRow: FC<{
           </div>
         </TableCellStyled>
       )}
-      <TableCell className="font-small w-6 text-center">
-        <Place unit={unit} hasEnded={hasEnded}>
-          {index + 1}
-        </Place>
-      </TableCell>
-      <TableCellStyled className="font-small w-full max-w-0 min-w-10 truncate pl-0">
+      {!canSort && (
+        <TableCell className="font-small w-6 text-center">
+          <Place unit={unit} hasEnded={hasEnded}>
+            {index + 1}
+          </Place>
+        </TableCell>
+      )}
+      <TableCellStyled className="font-small w-full max-w-0 min-w-10 truncate pl-2">
         <Status unit={unit} user={user}>
           {unit.unitNickname}
         </Status>
@@ -154,13 +157,14 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
         <FormattedMessage id="Tournament.Table.loading" />
       </span>
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
           <TableRow>
-            {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
-            <TableHeadStyled className="text-center">#</TableHeadStyled>
-            <TableHeadStyled className="w-full min-w-10 p-0">
+            <TableHead className="w-8 min-w-8 text-center">
+              {canSort ? '' : '#'}
+            </TableHead>
+            <TableHead className="w-full min-w-10 p-0 pl-2">
               <FormattedMessage id="Player.name" />
-            </TableHeadStyled>
+            </TableHead>
             <TableStatsHeads stats={stats} />
           </TableRow>
         </TableHeader>
@@ -169,26 +173,21 @@ export const TableLoading: FC<{ canSort: boolean; stats: Stat[] }> = ({
             .fill(0)
             .map((_, i) => (
               <TableRow key={i}>
-                {canSort && (
-                  <TableCellStyled className="w-6">
-                    <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
-                  </TableCellStyled>
-                )}
-                <TableCellStyled className="font-small w-10 text-center">
-                  <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
-                </TableCellStyled>
-                <TableCellStyled className="font-small max-w-0 truncate pl-0">
-                  <div className="bg-muted h-4 w-40 animate-pulse rounded" />
-                </TableCellStyled>
+                <TableCell className="w-4">
+                  <Skeleton className="size-4 rounded-sm" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full max-w-60" />
+                </TableCell>
                 {Array(stats.length)
                   .fill(0)
                   .map((_, j) => (
-                    <TableCellStyled
+                    <TableCell
                       key={j}
                       className="min-w-8 text-center font-medium"
                     >
-                      <div className="bg-muted mx-auto h-4 w-4 animate-pulse rounded" />
-                    </TableCellStyled>
+                      <Skeleton className="mx-auto size-4 rounded-sm" />
+                    </TableCell>
                   ))}
               </TableRow>
             ))}

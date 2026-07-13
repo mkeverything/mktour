@@ -6,6 +6,7 @@ import {
   SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tournament-button';
+import { GamesGridLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
@@ -14,7 +15,6 @@ import { useTournamentRoundProgressInfo } from '@/components/hooks/query-hooks/u
 import { useTournamentRoundGames } from '@/components/hooks/query-hooks/use-tournament-round-games';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { useRoundData } from '@/components/hooks/use-round-data';
-import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
 import { AppError } from '@/lib/errors';
@@ -47,16 +47,7 @@ const RoundItem: FC<RoundItemProps> = ({
   const { status } = useContext(DashboardContext);
   const { selectedGameId, setSelectedGameId } = useContext(SelectedGameContext);
   const { sortedRound } = useRoundData(round, units);
-
-  if (isLoading || !info.data || !units)
-    return (
-      <div className="px-mk md:px-mk-2 pt-2">
-        <SkeletonList
-          length={8}
-          className="mx-auto h-12 w-full rounded-lg lg:max-w-4xl"
-        />
-      </div>
-    );
+  if (isLoading || !info.data || !units) return <GamesGridLoadingSkeleton />;
 
   if (isError) return <Center>error</Center>;
   if (!round) return <Center>no round</Center>;
@@ -64,9 +55,11 @@ const RoundItem: FC<RoundItemProps> = ({
   const isOngoing = !!info.data.startedAt && !info.data.closedAt;
 
   return (
-    <div className="mk-list px-mk md:px-mk-2 pt-2">
+    <div className="gap-mk px-mk md:px-mk-2 pt-mk grid grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3">
       {status === 'organizer' && isOngoing ? (
-        <ActionButton roundNumber={roundNumber} />
+        <div className="col-span-full">
+          <ActionButton roundNumber={roundNumber} />
+        </div>
       ) : null}
       {sortedRound.map((game) => {
         return (

@@ -86,20 +86,22 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
       <DashboardTabContext.Provider value={tabValue}>
         <DashboardRoundContext.Provider value={roundValue}>
           <SelectedGameContext.Provider value={selectedGameValue}>
-            <TabsContainer
-              currentTab={currentTab}
-              setCurrentTab={setCurrentTab}
-            />
-            <CarouselContainer
-              currentTab={currentTab}
-              setCurrentTab={setCurrentTab}
-              setScrolling={setScrolling}
-            />
-            <FabProvider
-              status={status}
-              fabContent={fabContent}
-              scrolling={scrolling}
-            />
+            <div className="fixed top-[var(--spacing-mk-navbar-total-height)] right-0 bottom-0 left-0 overflow-hidden">
+              <TabsContainer
+                currentTab={currentTab}
+                setCurrentTab={setCurrentTab}
+              />
+              <CarouselContainer
+                currentTab={currentTab}
+                setCurrentTab={setCurrentTab}
+                setScrolling={setScrolling}
+              />
+              <FabProvider
+                status={status}
+                fabContent={fabContent}
+                scrolling={scrolling}
+              />
+            </div>
           </SelectedGameContext.Provider>
         </DashboardRoundContext.Provider>
       </DashboardTabContext.Provider>

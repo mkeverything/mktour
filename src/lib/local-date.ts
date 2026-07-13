@@ -56,3 +56,23 @@ export const getLocalDateStringValidationError = (
   if (timestamp > getMaxDateTimestamp()) return 'DATE_TOO_FAR_AHEAD';
   return null;
 };
+
+export const formatTournamentDisplayDate = (
+  date: Date,
+  locale: string,
+  referenceDate: Date = new Date(),
+): string => {
+  const showYear = date.getFullYear() !== referenceDate.getFullYear();
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(
+    date,
+  );
+  const dayMonth = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    ...(showYear ? { year: 'numeric' } : {}),
+  }).format(date);
+  const decapitalizedWeekday =
+    weekday.charAt(0).toLocaleLowerCase(locale) + weekday.slice(1);
+
+  return `${decapitalizedWeekday}, ${dayMonth}`;
+};

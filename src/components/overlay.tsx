@@ -17,7 +17,7 @@ const Overlay: FC<{ open: boolean }> = ({ open }) => {
         />
       )}
     </AnimatePresence>,
-    document.body,
+    document.fullscreenElement ?? document.body,
   );
 };
 export default Overlay;

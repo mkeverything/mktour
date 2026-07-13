@@ -5,13 +5,13 @@ import {
   DashboardTabContext,
   SelectedGameContext,
 } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { GamesGridLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import RoundControls from '@/app/tournaments/[id]/dashboard/tabs/games/round-controls';
 import RoundItem from '@/app/tournaments/[id]/dashboard/tabs/games/round-item';
 import StartTournamentDrawer from '@/app/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
 import { useTournamentGamesOverviewInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import Overlay from '@/components/overlay';
-import SkeletonList from '@/components/skeleton-list';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { FC, useContext, useState } from 'react';
@@ -31,7 +31,8 @@ const Games: FC = () => {
   const [startTournamentOpen, setStartTournamentOpen] = useState(false);
   const now = new Date().getTime();
   const startedAt = data?.startedAt ? data.startedAt.getTime() : 0;
-  const renderDrawer = !startedAt || now - startedAt <= 5000;
+  const isPending = isLoading || isUnitsLoading;
+  const renderDrawer = (!startedAt || now - startedAt <= 5000) && !isPending;
 
   if (isError || isUnitsError) {
     return (
@@ -46,26 +47,7 @@ const Games: FC = () => {
     );
   }
 
-  if (isLoading || isUnitsLoading) {
-    return (
-      <div>
-        <RoundControls
-          roundInView={roundInView}
-          setRoundInView={setRoundInView}
-          currentRound={1}
-          currentTab={currentTab}
-        />
-        <div className="px-mk md:px-mk-2 pt-2">
-          <SkeletonList
-            length={8}
-            className="mx-auto h-12 w-full rounded-lg lg:max-w-4xl"
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (!units || units.length < 2) {
+  if (!isPending && (!units || units.length < 2)) {
     return (
       <p className="text-muted-foreground p-4 text-center text-sm text-balance">
         {t('add two players')}
@@ -73,21 +55,29 @@ const Games: FC = () => {
     );
   }
 
-  if (!data) return 'no data'; // FIXME Intl
+  if (!isPending && !data) return 'no data'; // FIXME Intl
+
+  const currentRound = data?.ongoingRound ?? 1;
 
   return (
     <div>
-      <Overlay open={!!selectedGameId} />
-      <RoundControls
-        roundInView={roundInView}
-        setRoundInView={setRoundInView}
-        currentRound={data.ongoingRound}
-        currentTab={currentTab}
-      />
-      <RoundItem
-        roundNumber={roundInView}
-        onOpenStartTournamentDrawer={() => setStartTournamentOpen(true)}
-      />
+      {!isPending ? <Overlay open={!!selectedGameId} /> : null}
+      <div className="@container w-full">
+        <RoundControls
+          roundInView={roundInView}
+          setRoundInView={setRoundInView}
+          currentRound={currentRound}
+          currentTab={currentTab}
+        />
+        {isPending ? (
+          <GamesGridLoadingSkeleton />
+        ) : (
+          <RoundItem
+            roundNumber={roundInView}
+            onOpenStartTournamentDrawer={() => setStartTournamentOpen(true)}
+          />
+        )}
+      </div>
       {renderDrawer && (
         <StartTournamentDrawer
           startedAt={startedAt}

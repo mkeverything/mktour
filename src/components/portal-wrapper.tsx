@@ -25,15 +25,7 @@ const PortalWrapper: FC<PortalWrapperProps> = ({
 
   const updateCoords = () => {
     if (!placeholderRef.current) return;
-    const rect = placeholderRef.current.getBoundingClientRect();
-    setCoords(
-      new DOMRect(
-        rect.left + window.scrollX,
-        rect.top + window.scrollY,
-        rect.width,
-        rect.height,
-      ),
-    );
+    setCoords(placeholderRef.current.getBoundingClientRect());
   };
 
   useLayoutEffect(() => {
@@ -57,8 +49,8 @@ const PortalWrapper: FC<PortalWrapperProps> = ({
           <div
             style={{
               position: 'absolute',
-              top: coords.y,
-              left: coords.x,
+              top: coords.top,
+              left: coords.left,
               width: coords.width,
               height: coords.height,
               zIndex: 50,
@@ -66,7 +58,7 @@ const PortalWrapper: FC<PortalWrapperProps> = ({
           >
             {children}
           </div>,
-          document.body,
+          document.fullscreenElement ?? document.body,
         )}
       </>
     );

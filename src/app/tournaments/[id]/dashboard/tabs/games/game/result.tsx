@@ -9,20 +9,16 @@ const Result: FC<ResultProps> = ({ isPending, result, selected }) => {
 
   if (isPending) return <LoadingSpinner />;
 
-  if (selected)
-    return (
-      <div className={`select-none`}>
-        <small className="select-none">{t('draw')}</small>
-      </div>
-    );
+  if (selected) return <small className="select-none">{t('draw')}</small>;
 
-  if (!result)
+  if (!result) {
     return (
       <Card className="relative grid h-full w-24 min-w-16 grid-cols-2 rounded-md select-none">
         <div className="flex w-full items-center justify-center" />
         <div className="border-l-muted flex w-full items-center justify-center border-l" />
       </Card>
     );
+  }
 
   const parsedResult = result.split('-');
   const left = parsedResult?.at(0) === '1/2' ? '½' : parsedResult?.at(0);

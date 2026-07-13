@@ -12,9 +12,9 @@ import Center from '@/components/center';
 import useTournamentEditTitle from '@/components/hooks/mutation-hooks/use-tournament-edit-title';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
+import { MainTabLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import { InputGhost } from '@/components/ui-custom/input-ghost';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Maximize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -124,24 +124,7 @@ export const InfoItem: FC<{
   );
 };
 
-export const LoadingElement = () => {
-  return (
-    <div className="flex flex-col gap-4 p-4 md:pb-2">
-      <div className="md:gap-mk md:flex">
-        <Skeleton className="h-11 w-full" />
-        <div className="hidden w-1/3 md:block">
-          <Skeleton className="h-11" />
-        </div>
-      </div>
-      <div className="mk-list md:hidden">
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-full" />
-      </div>
-    </div>
-  );
-};
+export const LoadingElement = MainTabLoadingSkeleton;
 
 const TournamentTitle = memo(function TournamentTitle({
   controlledTitle,

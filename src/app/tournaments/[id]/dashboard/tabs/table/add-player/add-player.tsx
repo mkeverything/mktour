@@ -1,3 +1,4 @@
+import { AddPlayerListLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { DrawerProps } from '@/app/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddExistingPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-existing-player';
@@ -5,7 +6,6 @@ import { useTournamentPossiblePlayers } from '@/components/hooks/query-hooks/use
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { PlayerWithUsernameModel } from '@/server/zod/players';
 import { UserRound } from 'lucide-react';
@@ -88,18 +88,8 @@ const AddPlayer = ({
     { enableOnFormTags: true },
   );
 
-  if (possiblePlayers.status === 'pending')
-    return (
-      <div className="flex flex-col gap-3">
-        <Input
-          id="possible-players-search"
-          value={value}
-          placeholder={t('search')}
-          onChange={(e) => setValue(e.target.value)}
-        />
-        <Skeleton className="h-svh w-full pt-8" />
-      </div>
-    );
+  const isLoading = possiblePlayers.status !== 'success';
+
   if (possiblePlayers.status === 'error') {
     toast.error(
       translateError(possiblePlayers.error, {
@@ -109,17 +99,6 @@ const AddPlayer = ({
         id: 'query-possible-players',
         duration: 3000,
       },
-    );
-    return (
-      <div className="flex flex-col gap-3">
-        <Input
-          id="possible-players-search"
-          value={value}
-          placeholder={t('search')}
-          onChange={(e) => setValue(e.target.value)}
-        />
-        <Skeleton className="h-svh w-full pt-8" />
-      </div>
     );
   }
 
@@ -132,7 +111,7 @@ const AddPlayer = ({
         placeholder={t('search')}
         onChange={(e) => setValue(e.target.value)}
       />
-      {filteredPlayers.length === 0 && (
+      {!isLoading && filteredPlayers.length === 0 && (
         <p className="text-muted-foreground px-8 pt-8 text-center text-sm text-balance">
           {t('no players')}
         </p>
@@ -140,26 +119,30 @@ const AddPlayer = ({
       <ScrollArea className="rounded-2 h-[calc(100dvh-6rem)] w-full rounded-b-md">
         <Table>
           <TableBody>
-            {filteredPlayers?.map((player) => (
-              <TableRow
-                key={player.id}
-                onClick={() => {
-                  handlePlayerSelect(player);
-                }}
-                className="p-0"
-              >
-                <TableCell>
-                  <p className="line-clamp-2 break-all">{player.nickname}</p>{' '}
-                  {player.username && (
-                    <small className="text-2xs text-muted-foreground flex items-center gap-1">
-                      <UserRound size={12} />
-                      <span>{player.username}</span>
-                    </small>
-                  )}
-                </TableCell>
-                <TableCell>{player.rating}</TableCell>
-              </TableRow>
-            ))}
+            {isLoading ? (
+              <AddPlayerListLoadingSkeleton />
+            ) : (
+              filteredPlayers.map((player) => (
+                <TableRow
+                  key={player.id}
+                  onClick={() => {
+                    handlePlayerSelect(player);
+                  }}
+                  className="p-0"
+                >
+                  <TableCell>
+                    <p className="line-clamp-2 break-all">{player.nickname}</p>{' '}
+                    {player.username && (
+                      <small className="text-2xs text-muted-foreground flex items-center gap-1">
+                        <UserRound size={12} />
+                        <span>{player.username}</span>
+                      </small>
+                    )}
+                  </TableCell>
+                  <TableCell>{player.rating}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
         <div className="h-24 w-full grow" />

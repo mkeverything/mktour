@@ -518,7 +518,11 @@
       "unrated": "unrated",
       "save": "save",
       "fullscreen": "fullscreen mode",
-      "minimize": "minimize"
+      "minimize": "minimize",
+      "winners": "winners",
+      "first place": "1st place",
+      "second place": "2nd place",
+      "third place": "3rd place"
     },
     "Results": {
       "1-0": "1 - 0",

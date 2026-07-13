@@ -78,6 +78,7 @@ const AddUnitDrawer = () => {
       disabled={preStartLocked}
       onClick={() => handleChange(!open)}
       icon={open ? X : UserPlus}
+      safeArea
     />
   );
 

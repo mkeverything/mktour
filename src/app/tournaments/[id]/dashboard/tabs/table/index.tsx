@@ -176,14 +176,15 @@ const TournamentTable = () => {
   const nameColumnIntl = type !== 'solo' ? 'name column team' : 'name column';
 
   return (
-    <div className="mb-20 w-full">
+    <div className="w-full">
       <DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <Table className="pt-0">
           <TableHeader className="bg-background/50 sticky top-0 backdrop-blur-md">
             <TableRow>
-              {canSort && <TableHead className="w-6">&nbsp;</TableHead>}
-              <TableHead className="h-11 min-w-6 p-0 text-center">#</TableHead>
-              <TableHead className="h-11 w-full min-w-10 p-0">
+              <TableHead className="w-8 min-w-8 text-center">
+                {canSort ? '' : '#'}
+              </TableHead>
+              <TableHead className="w-full min-w-10 p-0 pl-2">
                 {t.rich(nameColumnIntl, {
                   count: units.data?.length ?? 0,
                   small: (chunks) =>
