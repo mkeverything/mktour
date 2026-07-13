@@ -256,11 +256,6 @@ export async function resetTournament({
         isOut: null,
       })
       .where(eq(tournament_units.tournamentId, tournamentId));
-
-    await tx
-      .update(games)
-      .set({ result: null, finishedAt: null })
-      .where(eq(games.tournamentId, tournamentId));
   });
   if (tournament?.closedAt) revalidateClubPlayerStats(tournament.clubId);
 }
