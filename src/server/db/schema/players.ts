@@ -5,6 +5,7 @@ import { AffiliationStatus } from '@/server/zod/enums';
 import { relations, sql } from 'drizzle-orm';
 import {
   check,
+  index,
   integer,
   real,
   sqliteTable,
@@ -41,6 +42,7 @@ export const players = sqliteTable(
       table.clubId,
     ),
     uniqueIndex('player_user_club_unique_idx').on(table.userId, table.clubId),
+    index('player_club_last_seen_idx').on(table.clubId, table.lastSeenAt),
     check('player_rating_bounds', sql`${table.rating} between 400 and 3400`),
     check(
       'player_rating_peak_bounds',
