@@ -1,3 +1,20 @@
+# [1.11.0](https://github.com/mkeverything/mktour/compare/v1.10.0...v1.11.0) (2026-07-13)
+
+
+### Bug Fixes
+
+* build ([0686b43](https://github.com/mkeverything/mktour/commit/0686b43b9512a05032649b7e0f35a83a91d675ad))
+* dialogs in fullscreen out of the portal ([7df1dd4](https://github.com/mkeverything/mktour/commit/7df1dd4f34a813031b5246c82887b2122195b95d))
+* portal wrapper absolute position ([f1e252c](https://github.com/mkeverything/mktour/commit/f1e252cae1ce92a80804ec3b40fdf6c1ec20b66f))
+
+
+### Features
+
+* compact game items ([cd8b6b1](https://github.com/mkeverything/mktour/commit/cd8b6b19bae3cd4a277d90a7e1470f40264afce7))
+* conditional round grid ([76dcb36](https://github.com/mkeverything/mktour/commit/76dcb36a72a68df243abfd06142ceff6725065f4))
+* hide # column when canSort table ([fe44f5c](https://github.com/mkeverything/mktour/commit/fe44f5c7b34e348cc38247bf2f4c25fb76cd9815))
+* mobile main tab minor restyle ([38dde3a](https://github.com/mkeverything/mktour/commit/38dde3ae953d6b7cdaa974e31798f3dcbd7d2a2c))
+
 # [1.10.0](https://github.com/mkeverything/mktour/compare/v1.9.1...v1.10.0) (2026-06-26)
 
 
