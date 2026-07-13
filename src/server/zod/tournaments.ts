@@ -54,10 +54,15 @@ export const gameSchema = createSelectSchema(games).extend({
   result: gameResultEnum.nullable(),
 });
 
+export const saveRoundGameInputSchema = gameSchema.omit({
+  whiteNickname: true,
+  blackNickname: true,
+});
+
 export const saveRoundInputSchema = tournamentIdInputSchema.extend({
   roundNumber: z.number().int().min(1),
   newGames: z
-    .array(gameSchema)
+    .array(saveRoundGameInputSchema)
     .min(1)
     .superRefine((newGames, ctx) => {
       if (

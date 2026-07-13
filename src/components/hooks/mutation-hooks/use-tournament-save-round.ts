@@ -2,6 +2,7 @@ import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-con
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
+import { gameSchema } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Dispatch, SetStateAction, useContext } from 'react';
@@ -39,10 +40,13 @@ export default function useSaveRound(
             },
           );
         }
-        queryClient.setQueryData(
-          trpc.tournament.roundGames.queryKey({ tournamentId, roundNumber }),
-          () => newGames,
-        );
+        const optimisticGames = gameSchema.array().safeParse(newGames);
+        if (optimisticGames.success) {
+          queryClient.setQueryData(
+            trpc.tournament.roundGames.queryKey({ tournamentId, roundNumber }),
+            optimisticGames.data,
+          );
+        }
       },
       onSuccess: (canonicalGames, { roundNumber, tournamentId }) => {
         queryClient.setQueryData(
