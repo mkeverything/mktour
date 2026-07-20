@@ -15,6 +15,7 @@ import {
   getSwissRecommendedRoundsNumber,
   newid,
 } from '@/lib/utils';
+import { revalidateClubPlayerStats } from '@/server/cache/player-stats';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
@@ -223,6 +224,11 @@ export async function resetTournament({
   if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
+  const tournament = await db
+    .select({ clubId: tournaments.clubId, closedAt: tournaments.closedAt })
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .get();
   await db.transaction(async (tx) => {
     const tournamentUpdate = await tx
       .update(tournaments)
@@ -250,12 +256,8 @@ export async function resetTournament({
         isOut: null,
       })
       .where(eq(tournament_units.tournamentId, tournamentId));
-
-    await tx
-      .update(games)
-      .set({ result: null, finishedAt: null })
-      .where(eq(games.tournamentId, tournamentId));
   });
+  if (tournament?.closedAt) revalidateClubPlayerStats(tournament.clubId);
 }
 
 export async function finishTournament({
@@ -271,7 +273,7 @@ export async function finishTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
 
-  await db.transaction(async (tx) => {
+  const clubId = await db.transaction(async (tx) => {
     const [tournament, allGames, unitsUnsorted] = await Promise.all([
       getTournamentById(tournamentId, tx),
       getTournamentGames(tournamentId, tx),
@@ -338,7 +340,10 @@ export async function finishTournament({
     if (tournament.rated) {
       await calculateAndApplyGlickoRatings(tournamentId, tx);
     }
+
+    return tournament.clubId;
   });
+  revalidateClubPlayerStats(clubId);
 }
 
 export async function deleteTournament({
@@ -350,6 +355,11 @@ export async function deleteTournament({
   if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
+  const tournament = await db
+    .select({ clubId: tournaments.clubId, closedAt: tournaments.closedAt })
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .get();
   await db.transaction(async (tx) => {
     const units = await tx
       .select({ id: tournament_units.id })
@@ -372,6 +382,7 @@ export async function deleteTournament({
 
     await tx.delete(tournaments).where(eq(tournaments.id, tournamentId));
   });
+  if (tournament?.closedAt) revalidateClubPlayerStats(tournament.clubId);
 }
 
 export async function updateSwissRoundsNumber({

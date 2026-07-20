@@ -96,7 +96,7 @@ interface StatItemProps {
   icon: FC<{ className?: string }>;
   label: string;
   value?: string | number;
-  rank?: number;
+  rank?: number | null;
   isLoading?: boolean;
 }
 
@@ -125,7 +125,9 @@ const StatItem: FC<StatItemProps> = ({
       )}
     </div>
     {!isLoading && rank !== undefined && (
-      <span className="text-muted-foreground text-xs">#{rank}</span>
+      <span className="text-muted-foreground text-xs">
+        {rank === null ? '—' : `#${rank}`}
+      </span>
     )}
   </div>
 );
