@@ -1,3 +1,12 @@
+## [1.11.1](https://github.com/mkeverything/mktour/compare/v1.11.0...v1.11.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* cacheLife was set as if expected values are milliseconds ([100bc4b](https://github.com/mkeverything/mktour/commit/100bc4b43fba7721d55f09f06ca7a6c4e527e102))
+* player stats overcounting games ([0ceddee](https://github.com/mkeverything/mktour/commit/0ceddeeefce3985ce4ed260a5610222099859992))
+* secure round saving ([8ba8a27](https://github.com/mkeverything/mktour/commit/8ba8a27d52743aaf29ad6ac7e950df49f6ef514d))
+
 # [1.11.0](https://github.com/mkeverything/mktour/compare/v1.10.0...v1.11.0) (2026-07-13)
 
 
