@@ -1,6 +1,7 @@
 'use server';
 
 import { AppError } from '@/lib/errors';
+import { getUnitResultDeltas } from '@/lib/game-result-deltas';
 import { generateTournamentRound } from '@/lib/pairing-generators/utils';
 import { sortUnitsByResults } from '@/lib/tournament-results';
 import { db, type Database } from '@/server/db';
@@ -20,7 +21,6 @@ import {
   SetGameResultInputModel,
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, ne, sql } from 'drizzle-orm';
-import { getUnitResultDeltas } from './set-game-result-deltas';
 
 export async function replaceRoundGames({
   tournamentId,
