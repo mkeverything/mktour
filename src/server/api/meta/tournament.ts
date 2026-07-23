@@ -112,7 +112,7 @@ export const tournamentMeta = {
   tournamentsSetGameResult: {
     openapi: {
       method: 'POST',
-      path: '/tournaments/{tournamentId}/set-game-result',
+      path: '/games/{gameId}/result',
       summary: 'set game result',
       tags: ['tournaments'],
     },

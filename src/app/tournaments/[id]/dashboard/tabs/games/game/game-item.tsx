@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTRPC } from '@/components/trpc/client';
 import { GameResult } from '@/server/zod/enums';
-import { useIsMutating, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
@@ -34,7 +34,6 @@ const GameItem: FC<GameProps> = ({
   const t = useTranslations('Toasts');
   const { sendJsonMessage, status, unitId, userId } =
     useContext(DashboardContext);
-  const queryClient = useQueryClient();
   const trpc = useTRPC();
   const saveRoundPending =
     useIsMutating({
@@ -49,8 +48,9 @@ const GameItem: FC<GameProps> = ({
         );
       },
     }) > 0;
-  const mutation = useTournamentSetGameResult(queryClient, {
+  const mutation = useTournamentSetGameResult({
     tournamentId,
+    roundNumber,
     sendJsonMessage,
   });
   const { data } = useTournamentGameResultInfo(tournamentId);
@@ -91,13 +91,7 @@ const GameItem: FC<GameProps> = ({
     if (selected && hasStarted && !mutation.isPending) {
       mutation.mutate({
         gameId: id,
-        whiteUnitId,
-        blackUnitId,
-        result: newResult,
-        prevResult: result,
-        tournamentId,
-        roundNumber,
-        userId,
+        result: result === newResult ? null : newResult,
       });
     }
   };

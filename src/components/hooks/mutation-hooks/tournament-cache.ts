@@ -24,6 +24,10 @@ type TournamentQuery =
   | 'roundGames'
   | 'allGames';
 
+type TournamentCacheGraphProcedure =
+  | TournamentScopedProcedure
+  | 'setGameResult';
+
 // single source of truth: which cached queries each mutation can dirty, on the
 // server and/or optimistically. side-effects count too — e.g. removing a unit
 // clamps roundsNumber, so it writes `info`.
@@ -47,7 +51,7 @@ const TOURNAMENT_CACHE_GRAPH = {
   editTitle: ['info'],
   updateSwissRoundsNumber: ['info'],
 } as const satisfies Partial<
-  Record<TournamentScopedProcedure, readonly TournamentQuery[]>
+  Record<TournamentCacheGraphProcedure, readonly TournamentQuery[]>
 >;
 
 type TournamentCacheMutation = keyof typeof TOURNAMENT_CACHE_GRAPH;
@@ -57,8 +61,11 @@ const GRAPH_ENTRIES = Object.entries(TOURNAMENT_CACHE_GRAPH) as [
   readonly TournamentQuery[],
 ][];
 
-const hasTournamentId = (v: unknown): v is { tournamentId: string } =>
-  typeof v === 'object' && v !== null && 'tournamentId' in v;
+const hasTournamentId = (value: unknown): value is { tournamentId: string } =>
+  typeof value === 'object' &&
+  value !== null &&
+  'tournamentId' in value &&
+  typeof value.tournamentId === 'string';
 
 export const useTournamentCache = (tournamentId: string) => {
   const trpc = useTRPC();
@@ -72,9 +79,14 @@ export const useTournamentCache = (tournamentId: string) => {
           count +
           queryClient.isMutating({
             mutationKey: trpc.tournament[mutation].mutationKey(),
-            predicate: ({ state }) =>
-              hasTournamentId(state.variables) &&
-              state.variables.tournamentId === tournamentId,
+            predicate: ({ options, state }) => {
+              const scope = hasTournamentId(state.variables)
+                ? state.variables
+                : options.meta;
+              return (
+                hasTournamentId(scope) && scope.tournamentId === tournamentId
+              );
+            },
           }),
         0,
       ),
