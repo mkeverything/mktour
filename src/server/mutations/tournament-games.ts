@@ -339,12 +339,7 @@ export async function applyGameResult({
     throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
-  let finishedAt: Date | null;
-  if (nextResult === null) {
-    finishedAt = null;
-  } else {
-    finishedAt = new Date();
-  }
+  const finishedAt = nextResult === null ? null : new Date();
 
   const gameUpdate = await database
     .update(games)

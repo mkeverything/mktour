@@ -28,10 +28,6 @@ type TournamentQuery =
   | 'roundGames'
   | 'allGames';
 
-type TournamentCacheGraphProcedure =
-  | TournamentScopedProcedure
-  | 'setGameResult';
-
 // single source of truth: which cached queries each mutation can dirty, on the
 // server and/or optimistically. side-effects count too — e.g. removing a unit
 // clamps roundsNumber, so it writes `info`.
@@ -55,7 +51,10 @@ const TOURNAMENT_CACHE_GRAPH = {
   editTitle: ['info'],
   updateSwissRoundsNumber: ['info'],
 } as const satisfies Partial<
-  Record<TournamentCacheGraphProcedure, readonly TournamentQuery[]>
+  Record<
+    TournamentScopedProcedure | 'setGameResult',
+    readonly TournamentQuery[]
+  >
 >;
 
 type TournamentCacheMutation = keyof typeof TOURNAMENT_CACHE_GRAPH;
