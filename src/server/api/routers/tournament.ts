@@ -54,6 +54,8 @@ import {
   editDoublesUnitSchema,
   gameSchema,
   reorderTournamentUnitsInputSchema,
+  saveRoundInputSchema,
+  saveRoundOutputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
   tournamentInfoSchema,
@@ -236,17 +238,11 @@ export const tournamentRouter = {
       const { input } = opts;
       await setTournamentGameResult(input);
     }),
-  saveRound: protectedProcedure
-    .input(
-      tournamentIdInputSchema.extend({
-        roundNumber: z.number(),
-        newGames: z.array(gameSchema),
-      }),
-    )
-    .output(z.void())
+  saveRound: tournamentAdminProcedure
+    .input(saveRoundInputSchema)
+    .output(saveRoundOutputSchema)
     .mutation(async (opts) => {
-      const { input } = opts;
-      await saveRound(input);
+      return await saveRound(opts.input);
     }),
   start: tournamentAdminProcedure
     .input(

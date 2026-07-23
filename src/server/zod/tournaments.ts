@@ -10,6 +10,7 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { clubsSelectSchema } from '@/server/zod/clubs';
+import { tournamentIdInputSchema } from '@/server/zod/common';
 import {
   gameResultEnum,
   roundNameEnum,
@@ -52,6 +53,29 @@ export const gameSchema = createSelectSchema(games).extend({
   roundName: roundNameEnum.nullable(),
   result: gameResultEnum.nullable(),
 });
+
+export const saveRoundGameInputSchema = gameSchema.omit({
+  whiteNickname: true,
+  blackNickname: true,
+});
+
+export const saveRoundInputSchema = tournamentIdInputSchema.extend({
+  roundNumber: z.number().int().min(1),
+  newGames: z
+    .array(saveRoundGameInputSchema)
+    .min(1)
+    .superRefine((newGames, ctx) => {
+      if (
+        newGames.some(
+          (game) => game.result !== null || game.finishedAt !== null,
+        )
+      ) {
+        ctx.addIssue({ code: 'custom', message: 'ROUND_PROJECTION_MISMATCH' });
+      }
+    }),
+});
+export const saveRoundOutputSchema = z.array(gameSchema);
+
 export const tournamentsInsertSchema = createInsertSchema(tournaments, {
   format: tournamentFormatEnum,
   type: tournamentTypeEnum,
@@ -204,6 +228,7 @@ export type TournamentCreateInputModel = z.infer<
   typeof tournamentCreateInputSchema
 >;
 export type GameModel = z.infer<typeof gameSchema>;
+export type SaveRoundInputModel = z.infer<typeof saveRoundInputSchema>;
 export type GameInsertModel = z.infer<typeof gamesInsertSchema>;
 export type GameUpdateModel = z.infer<typeof gamesUpdateSchema>;
 export type AddDoublesUnitModel = z.infer<typeof addDoublesUnitSchema>;

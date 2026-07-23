@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { AppError } from '@/lib/errors';
 import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
+import { revalidateClubPlayerStats } from '@/server/cache/player-stats';
 import { db } from '@/server/db';
 import { club_notifications } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
@@ -238,6 +239,7 @@ export async function mergePlayers({
     });
   }
 
+  revalidateClubPlayerStats(clubId);
   try {
     revalidatePath(`/player/${basePlayerId}`);
   } catch (error) {

@@ -54,13 +54,13 @@ export function AddPlayerListLoadingSkeleton() {
   return Array.from({ length: 20 }).map((_, i) => (
     <TableRow key={i} className="p-0">
       <TableCell>
-        <p className="line-clamp-2 break-all">
+        <div className="line-clamp-2 break-all">
           <Skeleton className="h-4 w-36" />
-        </p>
+        </div>
         {i % 10 === 8 && (
-          <small className="text-2xs text-muted-foreground mt-1 flex items-center">
+          <div className="text-2xs text-muted-foreground mt-1 flex items-center">
             <Skeleton className="h-3 w-24" />
-          </small>
+          </div>
         )}
       </TableCell>
       <TableCell>

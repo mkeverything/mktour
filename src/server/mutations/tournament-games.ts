@@ -1,7 +1,9 @@
 'use server';
 
-import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
+import { AppError } from '@/lib/errors';
+import { generateTournamentRound } from '@/lib/pairing-generators/utils';
+import { sortUnitsByResults } from '@/lib/tournament-results';
 import { db, type Database } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import {
@@ -10,9 +12,11 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
+import { getPersistedTournamentGames } from '@/server/queries/get-tournament-games';
+import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { GameResult } from '@/server/zod/enums';
-import { GameModel } from '@/server/zod/tournaments';
-import { and, eq, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
+import { GameModel, SaveRoundInputModel } from '@/server/zod/tournaments';
+import { and, eq, isNull, ne, sql } from 'drizzle-orm';
 import { getUnitResultDeltas } from './set-game-result-deltas';
 
 export async function replaceRoundGames({
@@ -58,68 +62,118 @@ export async function replaceRoundGames({
   await db.transaction(async (tx) => run(tx));
 }
 
+const hasSameRoundProjection = (
+  submittedGames: SaveRoundInputModel['newGames'],
+  generatedGames: GameModel[],
+) => {
+  if (submittedGames.length !== generatedGames.length) return false;
+
+  const submittedByNumber = submittedGames.toSorted(
+    (a, b) => a.gameNumber - b.gameNumber,
+  );
+  const generatedByNumber = generatedGames.toSorted(
+    (a, b) => a.gameNumber - b.gameNumber,
+  );
+
+  return submittedByNumber.every((submitted, index) => {
+    const generated = generatedByNumber[index];
+    return (
+      generated !== undefined &&
+      submitted.gameNumber === generated.gameNumber &&
+      submitted.roundNumber === generated.roundNumber &&
+      submitted.roundName === generated.roundName &&
+      submitted.whiteUnitId === generated.whiteUnitId &&
+      submitted.blackUnitId === generated.blackUnitId &&
+      submitted.whitePlayerId === generated.whitePlayerId &&
+      submitted.blackPlayerId === generated.blackPlayerId &&
+      submitted.whitePrevGameId === generated.whitePrevGameId &&
+      submitted.blackPrevGameId === generated.blackPrevGameId &&
+      submitted.result === generated.result &&
+      submitted.finishedAt === generated.finishedAt &&
+      submitted.tournamentId === generated.tournamentId
+    );
+  });
+};
+
 export async function saveRound({
   tournamentId,
   roundNumber,
   newGames,
-}: {
-  tournamentId: string;
-  roundNumber: number;
-  newGames: GameModel[];
-}) {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-  const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status === 'viewer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
-  const tournament = await db
-    .select({
-      format: tournaments.format,
-      type: tournaments.type,
-    })
-    .from(tournaments)
-    .where(eq(tournaments.id, tournamentId))
-    .then((rows) => rows.at(0));
-  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+}: SaveRoundInputModel): Promise<GameModel[]> {
+  return await db.transaction(async (tx) => {
+    const tournament = await tx
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, tournamentId))
+      .then((rows) => rows.at(0));
+    if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+    if (!tournament.startedAt) throw new AppError('TOURNAMENT_NOT_STARTED');
+    if (tournament.closedAt) {
+      throw new AppError('TOURNAMENT_ALREADY_FINISHED');
+    }
 
-  if (tournament.format === 'swiss') {
-    const activeUnits = await db
-      .select({
-        unitId: tournament_units.id,
-      })
-      .from(tournament_units)
+    const allGames = await getPersistedTournamentGames(tournamentId, tx);
+    if (roundNumber === tournament.ongoingRound) {
+      const persistedRound = allGames.filter(
+        (game) => game.roundNumber === roundNumber,
+      );
+      if (persistedRound.length === 0) {
+        throw new AppError('NO_TOURNAMENT_DATA');
+      }
+      return persistedRound;
+    }
+
+    if (roundNumber !== tournament.ongoingRound + 1) {
+      throw new AppError('INVALID_ROUND_PROGRESSION');
+    }
+    if (
+      tournament.roundsNumber === null ||
+      tournament.ongoingRound >= tournament.roundsNumber
+    ) {
+      throw new AppError('INVALID_ROUNDS_NUMBER');
+    }
+
+    const currentRound = allGames.filter(
+      (game) => game.roundNumber === tournament.ongoingRound,
+    );
+    if (
+      currentRound.length === 0 ||
+      currentRound.some((game) => game.result === null)
+    ) {
+      throw new AppError('INCOMPLETE_GAMES');
+    }
+
+    const rawUnits = await getRawTournamentUnits(tournamentId, tx);
+    const units = sortUnitsByResults(rawUnits, tournament, allGames);
+    const generatedGames = generateTournamentRound(tournament.format, {
+      players: units,
+      games: allGames,
+      roundNumber,
+      tournamentId,
+    });
+    if (generatedGames.length === 0) {
+      throw new AppError('NOT_ENOUGH_TOURNAMENT_UNITS');
+    }
+    if (!hasSameRoundProjection(newGames, generatedGames)) {
+      throw new AppError('ROUND_PROJECTION_MISMATCH');
+    }
+
+    const advancement = await tx
+      .update(tournaments)
+      .set({ ongoingRound: roundNumber })
       .where(
         and(
-          eq(tournament_units.tournamentId, tournamentId),
-          or(isNull(tournament_units.isOut), eq(tournament_units.isOut, false)),
+          eq(tournaments.id, tournamentId),
+          eq(tournaments.ongoingRound, roundNumber - 1),
         ),
       );
-
-    const activeUnitIds = new Set(activeUnits.map((unit) => unit.unitId));
-    const hasInvalidUnit = newGames.some(
-      (game) =>
-        !activeUnitIds.has(game.whiteUnitId) ||
-        !activeUnitIds.has(game.blackUnitId),
-    );
-
-    if (hasInvalidUnit) {
-      throw new AppError('INVALID_UNIT_IN_PAIRING');
+    if (!advancement.rowsAffected) {
+      throw new AppError('INVALID_ROUND_PROGRESSION');
     }
-  }
-  const existingDecidedGames = await db
-    .select({ id: games.id })
-    .from(games)
-    .where(
-      and(
-        eq(games.tournamentId, tournamentId),
-        eq(games.roundNumber, roundNumber),
-        isNotNull(games.result),
-      ),
-    )
-    .limit(1);
-  if (existingDecidedGames.length > 0) {
-    throw new AppError('ROUND_ALREADY_HAS_RESULTS');
-  }
-  await replaceRoundGames({ tournamentId, roundNumber, newGames });
+
+    await tx.insert(games).values(generatedGames);
+    return generatedGames;
+  });
 }
 
 export async function setTournamentGameResult({

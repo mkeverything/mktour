@@ -17,11 +17,7 @@ import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournamen
 import { useRoundData } from '@/components/hooks/use-round-data';
 import { useTRPC } from '@/components/trpc/client';
 import { Button } from '@/components/ui/button';
-import { AppError } from '@/lib/errors';
-import { RoundProps } from '@/lib/pairing-generators/common-generator';
-import { generateRoundRobinRound } from '@/lib/pairing-generators/round-robin-generator';
-import { generateWeightedSwissRound } from '@/lib/pairing-generators/swiss-generator';
-import { TournamentFormat } from '@/server/zod/enums';
+import { generateTournamentRound } from '@/lib/pairing-generators/utils';
 import { GameModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';
@@ -87,22 +83,6 @@ const ActionButton: FC<{ roundNumber: number }> = ({ roundNumber }) => {
   );
 };
 
-function generateRound(
-  format: TournamentFormat,
-  props: RoundProps,
-): GameModel[] {
-  switch (format) {
-    case 'swiss':
-      return generateWeightedSwissRound(props);
-    case 'round robin':
-      return generateRoundRobinRound(props);
-    default:
-      throw new AppError('UNSUPPORTED_TOURNAMENT_FORMAT', {
-        cause: `unsupported format: ${format}`,
-      });
-  }
-}
-
 const NewRoundButton: FC<{ roundNumber: number }> = ({ roundNumber }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const t = useTranslations('Tournament.Round');
@@ -138,7 +118,7 @@ const NewRoundButton: FC<{ roundNumber: number }> = ({ roundNumber }) => {
     );
     const games = tournamentGames;
     if (!units || !games) return;
-    const newGames = generateRound(info.format, {
+    const newGames = generateTournamentRound(info.format, {
       players: units,
       games,
       roundNumber: roundNumber + 1,

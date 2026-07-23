@@ -25,7 +25,7 @@ async function getTournamentStartedAt(
     .then((rows) => rows.at(0)?.startedAt);
 }
 
-async function getPersistedTournamentGames(
+export async function getPersistedTournamentGames(
   tournamentId: string,
   database: Pick<typeof db, 'select'>,
 ): Promise<GameModel[]> {
