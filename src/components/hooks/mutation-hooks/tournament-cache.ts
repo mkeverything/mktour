@@ -2,7 +2,11 @@
 
 import { useTRPC } from '@/components/trpc/client';
 import type { AppRouter } from '@/server/api';
-import { type QueryKey, useQueryClient } from '@tanstack/react-query';
+import {
+  type QueryKey,
+  useIsMutating,
+  useQueryClient,
+} from '@tanstack/react-query';
 import type { inferRouterInputs } from '@trpc/server';
 import { useCallback } from 'react';
 
@@ -67,6 +71,25 @@ const hasTournamentId = (value: unknown): value is { tournamentId: string } =>
   'tournamentId' in value &&
   typeof value.tournamentId === 'string';
 
+const getMutationTournamentId = (variables: unknown, meta: unknown) => {
+  const scope = hasTournamentId(variables) ? variables : meta;
+  return hasTournamentId(scope) ? scope.tournamentId : null;
+};
+
+export const useTournamentMutationPending = (
+  tournamentId: string,
+  mutation: TournamentCacheMutation,
+) => {
+  const trpc = useTRPC();
+  return (
+    useIsMutating({
+      mutationKey: trpc.tournament[mutation].mutationKey(),
+      predicate: ({ options, state }) =>
+        getMutationTournamentId(state.variables, options.meta) === tournamentId,
+    }) > 0
+  );
+};
+
 export const useTournamentCache = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -79,14 +102,9 @@ export const useTournamentCache = (tournamentId: string) => {
           count +
           queryClient.isMutating({
             mutationKey: trpc.tournament[mutation].mutationKey(),
-            predicate: ({ options, state }) => {
-              const scope = hasTournamentId(state.variables)
-                ? state.variables
-                : options.meta;
-              return (
-                hasTournamentId(scope) && scope.tournamentId === tournamentId
-              );
-            },
+            predicate: ({ options, state }) =>
+              getMutationTournamentId(state.variables, options.meta) ===
+              tournamentId,
           }),
         0,
       ),
