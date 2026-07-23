@@ -225,8 +225,8 @@ export const tournamentRouter = {
     .meta(meta.tournamentsSetGameResult)
     .input(setGameResultInputSchema)
     .output(z.void())
-    .mutation(async ({ input }) => {
-      await setTournamentGameResult(input);
+    .mutation(async ({ ctx, input }) => {
+      await setTournamentGameResult(input, ctx.user.id);
     }),
   saveRound: tournamentAdminProcedure
     .input(saveRoundInputSchema)

@@ -1,6 +1,5 @@
 'use server';
 
-import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
 import { generateTournamentRound } from '@/lib/pairing-generators/utils';
 import { sortUnitsByResults } from '@/lib/tournament-results';
@@ -180,13 +179,10 @@ export async function saveRound({
   });
 }
 
-export async function setTournamentGameResult({
-  gameId,
-  result,
-}: SetGameResultInputModel) {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-
+export async function setTournamentGameResult(
+  { gameId, result }: SetGameResultInputModel,
+  userId: string,
+) {
   const gameContext = (
     await db
       .select({
@@ -208,7 +204,7 @@ export async function setTournamentGameResult({
   const { tournamentId } = gameContext;
   const { status: authStatus, unitId: authUnitId } =
     await getStatusInTournamentWithClubId(
-      user.id,
+      userId,
       tournamentId,
       gameContext.clubId,
     );
