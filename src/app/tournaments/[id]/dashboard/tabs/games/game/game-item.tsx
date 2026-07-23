@@ -31,8 +31,7 @@ const GameItem: FC<GameProps> = ({
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const t = useTranslations('Toasts');
-  const { sendJsonMessage, status, unitId, userId } =
-    useContext(DashboardContext);
+  const { status, unitId, userId } = useContext(DashboardContext);
   const saveRoundPending = useTournamentMutationPending(
     tournamentId,
     'saveRound',
@@ -40,7 +39,6 @@ const GameItem: FC<GameProps> = ({
   const mutation = useTournamentSetGameResult({
     tournamentId,
     roundNumber,
-    sendJsonMessage,
   });
   const { data } = useTournamentGameResultInfo(tournamentId);
   const ref = useRef<HTMLDivElement>(null);
