@@ -115,6 +115,7 @@ export const tournamentMeta = {
       path: '/games/{gameId}/result',
       summary: 'set game result',
       tags: ['tournaments'],
+      errorResponses: [404, 409],
     },
   },
 
