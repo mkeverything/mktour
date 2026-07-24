@@ -2,7 +2,11 @@
 
 import { useTRPC } from '@/components/trpc/client';
 import type { AppRouter } from '@/server/api';
-import { type QueryKey, useQueryClient } from '@tanstack/react-query';
+import {
+  type QueryKey,
+  useIsMutating,
+  useQueryClient,
+} from '@tanstack/react-query';
 import type { inferRouterInputs } from '@trpc/server';
 import { useCallback } from 'react';
 
@@ -47,7 +51,10 @@ const TOURNAMENT_CACHE_GRAPH = {
   editTitle: ['info'],
   updateSwissRoundsNumber: ['info'],
 } as const satisfies Partial<
-  Record<TournamentScopedProcedure, readonly TournamentQuery[]>
+  Record<
+    TournamentScopedProcedure | 'setGameResult',
+    readonly TournamentQuery[]
+  >
 >;
 
 type TournamentCacheMutation = keyof typeof TOURNAMENT_CACHE_GRAPH;
@@ -57,8 +64,30 @@ const GRAPH_ENTRIES = Object.entries(TOURNAMENT_CACHE_GRAPH) as [
   readonly TournamentQuery[],
 ][];
 
-const hasTournamentId = (v: unknown): v is { tournamentId: string } =>
-  typeof v === 'object' && v !== null && 'tournamentId' in v;
+const hasTournamentId = (value: unknown): value is { tournamentId: string } =>
+  typeof value === 'object' &&
+  value !== null &&
+  'tournamentId' in value &&
+  typeof value.tournamentId === 'string';
+
+const getMutationTournamentId = (variables: unknown, meta: unknown) => {
+  const scope = hasTournamentId(variables) ? variables : meta;
+  return hasTournamentId(scope) ? scope.tournamentId : null;
+};
+
+export const useTournamentMutationPending = (
+  tournamentId: string,
+  mutation: TournamentCacheMutation,
+) => {
+  const trpc = useTRPC();
+  return (
+    useIsMutating({
+      mutationKey: trpc.tournament[mutation].mutationKey(),
+      predicate: ({ options, state }) =>
+        getMutationTournamentId(state.variables, options.meta) === tournamentId,
+    }) > 0
+  );
+};
 
 export const useTournamentCache = (tournamentId: string) => {
   const trpc = useTRPC();
@@ -72,9 +101,9 @@ export const useTournamentCache = (tournamentId: string) => {
           count +
           queryClient.isMutating({
             mutationKey: trpc.tournament[mutation].mutationKey(),
-            predicate: ({ state }) =>
-              hasTournamentId(state.variables) &&
-              state.variables.tournamentId === tournamentId,
+            predicate: ({ options, state }) =>
+              getMutationTournamentId(state.variables, options.meta) ===
+              tournamentId,
           }),
         0,
       ),

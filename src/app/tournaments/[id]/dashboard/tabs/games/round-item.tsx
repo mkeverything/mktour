@@ -9,6 +9,7 @@ import FinishTournamentButton from '@/app/tournaments/[id]/dashboard/finish-tour
 import { GamesGridLoadingSkeleton } from '@/app/tournaments/[id]/dashboard/loading-skeletons';
 import GameItem from '@/app/tournaments/[id]/dashboard/tabs/games/game/game-item';
 import Center from '@/components/center';
+import { useTournamentMutationPending } from '@/components/hooks/mutation-hooks/tournament-cache';
 import useSaveRound from '@/components/hooks/mutation-hooks/use-tournament-save-round';
 import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
 import { useTournamentRoundProgressInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -100,6 +101,10 @@ const NewRoundButton: FC<{ roundNumber: number }> = ({ roundNumber }) => {
     setRoundInView,
   });
   const trpc = useTRPC();
+  const setGameResultPending = useTournamentMutationPending(
+    tournamentId,
+    'setGameResult',
+  );
 
   if (
     !info ||
@@ -128,7 +133,11 @@ const NewRoundButton: FC<{ roundNumber: number }> = ({ roundNumber }) => {
   };
 
   return (
-    <Button className="w-full" onClick={newRound} disabled={mutating}>
+    <Button
+      className="w-full"
+      onClick={newRound}
+      disabled={mutating || setGameResultPending}
+    >
       {!mutating ? <ArrowRightIcon /> : <LoadingSpinner />}
       {t('new round button')}
     </Button>

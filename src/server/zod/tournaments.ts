@@ -76,6 +76,11 @@ export const saveRoundInputSchema = tournamentIdInputSchema.extend({
 });
 export const saveRoundOutputSchema = z.array(gameSchema);
 
+export const setGameResultInputSchema = z.object({
+  gameId: gameSchema.shape.id,
+  result: gameResultEnum.nullable(),
+});
+
 export const tournamentsInsertSchema = createInsertSchema(tournaments, {
   format: tournamentFormatEnum,
   type: tournamentTypeEnum,
@@ -229,6 +234,7 @@ export type TournamentCreateInputModel = z.infer<
 >;
 export type GameModel = z.infer<typeof gameSchema>;
 export type SaveRoundInputModel = z.infer<typeof saveRoundInputSchema>;
+export type SetGameResultInputModel = z.infer<typeof setGameResultInputSchema>;
 export type GameInsertModel = z.infer<typeof gamesInsertSchema>;
 export type GameUpdateModel = z.infer<typeof gamesUpdateSchema>;
 export type AddDoublesUnitModel = z.infer<typeof addDoublesUnitSchema>;

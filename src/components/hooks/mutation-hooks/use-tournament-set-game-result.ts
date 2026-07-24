@@ -1,24 +1,28 @@
 'use client';
 
+import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
-import { UnitModel } from '@/server/zod/tournaments';
-import { DashboardMessage } from '@/types/tournament-ws-events';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { getUnitResultDeltas } from '@/lib/game-result-deltas';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useContext } from 'react';
 import { toast } from 'sonner';
 
-export default function useTournamentSetGameResult(
-  queryClient: QueryClient,
-  { tournamentId, sendJsonMessage }: SetResultProps,
-) {
+export default function useTournamentSetGameResult({
+  tournamentId,
+  roundNumber,
+}: SetResultProps) {
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { settle } = useTournamentCache(tournamentId);
+  const { sendJsonMessage } = useContext(DashboardContext);
   return useMutation(
     trpc.tournament.setGameResult.mutationOptions({
-      onMutate: async ({ roundNumber }) => {
+      meta: { tournamentId },
+      onMutate: async () => {
         await queryClient.cancelQueries({
           queryKey: trpc.tournament.roundGames.queryKey({
             tournamentId,
@@ -29,113 +33,52 @@ export default function useTournamentSetGameResult(
           queryKey: trpc.tournament.units.queryKey({ tournamentId }),
         });
       },
-      onSuccess: (
-        _res,
-        { gameId, result, roundNumber, prevResult, whiteUnitId, blackUnitId },
-      ) => {
-        function updatePlayerStats(
-          player: UnitModel,
-          result: string,
-          isWhite: boolean,
-          isReset: boolean,
-        ) {
-          const modifier = isReset ? -1 : 1;
-
-          const updatedPlayer = { ...player };
-
-          if (result === '1-0') {
-            if (isWhite) {
-              updatedPlayer.wins = (updatedPlayer.wins || 0) + modifier;
-            } else {
-              updatedPlayer.losses = (updatedPlayer.losses || 0) + modifier;
-            }
-          } else if (result === '0-1') {
-            if (isWhite) {
-              updatedPlayer.losses = (updatedPlayer.losses || 0) + modifier;
-            } else {
-              updatedPlayer.wins = (updatedPlayer.wins || 0) + modifier;
-            }
-          } else if (result === '1/2-1/2') {
-            updatedPlayer.draws = (updatedPlayer.draws || 0) + modifier;
-          }
-          return updatedPlayer;
-        }
+      onSuccess: (_res, { gameId, result }) => {
+        const roundGamesKey = trpc.tournament.roundGames.queryKey({
+          tournamentId,
+          roundNumber,
+        });
+        const cachedGame = queryClient
+          .getQueryData(roundGamesKey)
+          ?.find((game) => game.id === gameId);
 
         // as soon as we made games order dependent on player scores,
         // we need to update their scores at the same time as we update games
         // otherwise ui flickers and adds wrong order for a moment
         // while games are updated and players are being refetched
-        queryClient.setQueryData(
-          trpc.tournament.units.queryKey({ tournamentId }),
-          (players) => {
-            if (!players || !result) return players;
-            return players.map((player) => {
-              // Case 1: Toggling the same result (reset)
-              if (prevResult === result) {
-                if (player.id === whiteUnitId) {
-                  return updatePlayerStats(player, result, true, true);
-                }
-                if (player.id === blackUnitId) {
-                  return updatePlayerStats(player, result, false, true);
-                }
-              }
-              // Case 2: Changing from one result to another
-              else if (prevResult && prevResult !== result) {
-                if (player.id === whiteUnitId) {
-                  // First remove old result
-                  const updated = updatePlayerStats(
-                    player,
-                    prevResult,
-                    true,
-                    true,
-                  );
-                  // Then add new result
-                  return updatePlayerStats(updated, result, true, false);
-                }
-                if (player.id === blackUnitId) {
-                  // First remove old result
-                  const updated = updatePlayerStats(
-                    player,
-                    prevResult,
-                    false,
-                    true,
-                  );
-                  // Then add new result
-                  return updatePlayerStats(updated, result, false, false);
-                }
-              }
-              // Case 3: Adding a new result where none existed before
-              else if (!prevResult && result) {
-                if (player.id === whiteUnitId) {
-                  return updatePlayerStats(player, result, true, false);
-                }
-                if (player.id === blackUnitId) {
-                  return updatePlayerStats(player, result, false, false);
-                }
-              }
-              return player;
-            });
-          },
-        );
+        if (cachedGame && cachedGame.result !== result) {
+          const deltas = getUnitResultDeltas(cachedGame.result, result);
+          queryClient.setQueryData(
+            trpc.tournament.units.queryKey({ tournamentId }),
+            (units) => {
+              if (!units) return units;
+              return units.map((unit) => {
+                const delta =
+                  unit.id === cachedGame.whiteUnitId
+                    ? deltas.white
+                    : unit.id === cachedGame.blackUnitId
+                      ? deltas.black
+                      : null;
+                if (!delta) return unit;
 
-        queryClient.setQueryData(
-          trpc.tournament.roundGames.queryKey({
-            tournamentId,
-            roundNumber,
-          }),
-          (cache) => {
-            if (!cache) return cache;
-            return cache.map((game) => {
-              if (game.id === gameId) {
                 return {
-                  ...game,
-                  result: game.result === result ? null : result,
+                  ...unit,
+                  wins: unit.wins + delta.wins,
+                  draws: unit.draws + delta.draws,
+                  losses: unit.losses + delta.losses,
+                  colorIndex: unit.colorIndex + delta.colorIndex,
                 };
-              }
-              return game;
-            });
-          },
-        );
+              });
+            },
+          );
+        }
+
+        queryClient.setQueryData(roundGamesKey, (cache) => {
+          if (!cache) return cache;
+          return cache.map((game) =>
+            game.id === gameId ? { ...game, result } : game,
+          );
+        });
         sendJsonMessage({
           event: 'set-game-result',
           gameId,
@@ -154,5 +97,5 @@ export default function useTournamentSetGameResult(
 
 type SetResultProps = {
   tournamentId: string;
-  sendJsonMessage: (_message: DashboardMessage) => void;
+  roundNumber: number;
 };
