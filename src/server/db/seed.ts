@@ -167,5 +167,44 @@ export const seedComprehensiveTestData = async () => {
         .delete(schema.users)
         .where(notInArray(schema.users.id, usersWithValidSelectedClub)),
     ]);
+
+    const organizer = (
+      await db.select().from(schema.clubs_to_users).limit(1)
+    )[0]!;
+    await db.insert(schema.tournaments).values({
+      id: 'concurrent-result-tournament',
+      title: 'concurrent result test',
+      format: 'swiss',
+      type: 'solo',
+      date: '2026-01-01',
+      createdAt: new Date('2026-01-01'),
+      clubId: organizer.clubId,
+      startedAt: new Date('2026-01-01'),
+      roundsNumber: 2,
+      ongoingRound: 1,
+      rated: false,
+    });
+    await db.insert(schema.tournament_units).values([
+      {
+        id: 'concurrent-result-white-unit',
+        size: 1,
+        tournamentId: 'concurrent-result-tournament',
+        nickname: 'white',
+      },
+      {
+        id: 'concurrent-result-black-unit',
+        size: 1,
+        tournamentId: 'concurrent-result-tournament',
+        nickname: 'black',
+      },
+    ]);
+    await db.insert(schema.games).values({
+      id: 'concurrent-result-game',
+      gameNumber: 1,
+      roundNumber: 1,
+      whiteUnitId: 'concurrent-result-white-unit',
+      blackUnitId: 'concurrent-result-black-unit',
+      tournamentId: 'concurrent-result-tournament',
+    });
   }
 };
