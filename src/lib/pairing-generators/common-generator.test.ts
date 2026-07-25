@@ -158,8 +158,40 @@ export const RANDOM_TOURNAMENTS_COUNT = 5;
  * @param playerId - Player ID to match
  * @returns true if player participated in the game
  */
-function isPlayerInGame(game: GameModel, playerId: string): boolean {
+export function isPlayerInGame(game: GameModel, playerId: string): boolean {
   return game.whiteUnitId === playerId || game.blackUnitId === playerId;
+}
+
+/**
+ * Collects every game a player took part in, with either colour.
+ * @param games - Games to search
+ * @param playerId - Player ID to match
+ * @returns the subset of games involving this player
+ */
+export function getPlayerGames(
+  games: GameModel[],
+  playerId: string,
+): GameModel[] {
+  return games.filter((game) => isPlayerInGame(game, playerId));
+}
+
+/**
+ * Collects every game in which two players faced each other, with either
+ * colour split. In a valid round robin this is exactly one game per pair.
+ * @param games - Games to search
+ * @param playerIdA - First player ID
+ * @param playerIdB - Second player ID
+ * @returns the subset of games between exactly these two players
+ */
+export function getGamesBetweenPlayers(
+  games: GameModel[],
+  playerIdA: string,
+  playerIdB: string,
+): GameModel[] {
+  return games.filter(
+    (game) =>
+      isPlayerInGame(game, playerIdA) && isPlayerInGame(game, playerIdB),
+  );
 }
 
 /**
@@ -204,7 +236,7 @@ function updateSinglePlayerScore(
   games: GameModel[],
 ): UnitModel {
   // Filter games involving this player
-  const playerGames = games.filter((game) => isPlayerInGame(game, player.id));
+  const playerGames = getPlayerGames(games, player.id);
 
   // Count results from player's games
   const results = countPlayerResults(player.id, playerGames);
