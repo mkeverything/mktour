@@ -395,7 +395,9 @@
       "yourPlayer": "ваш игрок в этом клубе",
       "linkedProfile": "привязанный профиль",
       "yourStatsInClub": "ваша статистика",
-      "nickname": "никнейм"
+      "nickname": "никнейм",
+      "liveNow": "прямо сейчас",
+      "roundOf": "тур {round} из {rounds}"
     },
     "New": {
       "new club": "новый клуб",

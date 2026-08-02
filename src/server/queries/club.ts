@@ -21,7 +21,7 @@ export const getClubPlayers = async (
     .select()
     .from(players)
     .where(eq(players.clubId, clubId))
-    .orderBy(desc(players.lastSeenAt))
+    .orderBy(desc(players.rating))
     .offset(cursor ?? 0)
     .limit(limit + 1);
 

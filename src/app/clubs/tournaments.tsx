@@ -48,7 +48,7 @@ export const ClubTournamentsSection: FC<{
   );
 };
 
-const ClubTournaments: FC<{
+export const ClubTournaments: FC<{
   clubId: string;
   statusInClub?: StatusInClub | null;
 }> = ({ clubId, statusInClub }) => {
