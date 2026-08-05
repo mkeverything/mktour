@@ -1,3 +1,12 @@
+## [1.11.2](https://github.com/mkeverything/mktour/compare/v1.11.1...v1.11.2) (2026-08-05)
+
+
+### Bug Fixes
+
+* **api:** preserved bearer auth in setGameResult ([19567ec](https://github.com/mkeverything/mktour/commit/19567eca9cdc0bfa6dce884e91f473ff9f75cb4d))
+* share game result deltas with client cache ([678b6c8](https://github.com/mkeverything/mktour/commit/678b6c887cca2a27991ca71b6519faf25adb769d))
+* websocket handler invalidates all games on set-game-result ([9473d01](https://github.com/mkeverything/mktour/commit/9473d012870e5147a71559b55171cb78091a5d18))
+
 ## [1.11.1](https://github.com/mkeverything/mktour/compare/v1.11.0...v1.11.1) (2026-07-22)
 
 
