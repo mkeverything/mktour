@@ -164,6 +164,9 @@ export const handleSocketMessage = (
       queryClient.invalidateQueries({
         queryKey: trpc.tournament.units.queryKey({ tournamentId }),
       });
+      queryClient.invalidateQueries({
+        queryKey: trpc.tournament.allGames.queryKey({ tournamentId }),
+      });
       break;
     case 'start-tournament':
       queryClient.setQueryData(

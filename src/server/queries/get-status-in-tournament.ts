@@ -12,20 +12,13 @@ import {
 } from '@/server/db/schema/tournaments';
 import { TournamentAuthStatusModel } from '@/server/zod/tournaments';
 
-export const getStatusInTournament = cache(
+export const getStatusInTournamentWithClubId = cache(
   async (
     userId: string | null,
     tournamentId: string,
+    clubId: string,
   ): Promise<TournamentAuthStatusModel> => {
     if (!userId) return { status: 'viewer', unitId: null };
-    const tournament = (
-      await db
-        .select({ clubId: tournaments.clubId })
-        .from(tournaments)
-        .where(eq(tournaments.id, tournamentId))
-    ).at(0);
-    const clubId = tournament?.clubId;
-    if (!clubId) throw new AppError('TOURNAMENT_NOT_FOUND');
 
     const dbStatus = (
       await db
@@ -40,7 +33,6 @@ export const getStatusInTournament = cache(
     ).at(0)?.status;
     if (dbStatus) return { status: 'organizer', unitId: null };
 
-    // find player by userId in this club
     const player = (
       await db
         .select()
@@ -67,11 +59,30 @@ export const getStatusInTournament = cache(
           ),
         )
     ).at(0);
-    if (isHere)
+    if (isHere) {
       return {
         status: 'player',
         unitId: isHere.unitId,
       };
-    else return { status: 'viewer', unitId: null };
+    }
+    return { status: 'viewer', unitId: null };
+  },
+);
+
+export const getStatusInTournament = cache(
+  async (
+    userId: string | null,
+    tournamentId: string,
+  ): Promise<TournamentAuthStatusModel> => {
+    if (!userId) return { status: 'viewer', unitId: null };
+    const clubId = (
+      await db
+        .select({ clubId: tournaments.clubId })
+        .from(tournaments)
+        .where(eq(tournaments.id, tournamentId))
+    ).at(0)?.clubId;
+    if (!clubId) throw new AppError('TOURNAMENT_NOT_FOUND');
+
+    return await getStatusInTournamentWithClubId(userId, tournamentId, clubId);
   },
 );

@@ -1,4 +1,4 @@
-import { getUnitResultDeltas } from '@/server/mutations/set-game-result-deltas';
+import { getUnitResultDeltas } from '@/lib/game-result-deltas';
 import type { GameResult } from '@/server/zod/enums';
 import { describe, expect, it } from 'bun:test';
 

@@ -236,7 +236,6 @@
     "CLUB_NOT_CREATED": "sorry! some error happened. the club wasn't created",
     "CLUB_NOT_DELETED": "sorry! some error happened. the club wasn't deleted",
     "CLUB_NOT_FOUND": "club not found",
-    "CONCURRENT_GAME_RESULT_UPDATE": "sorry! someone else updated this result at the same time",
     "CONFIG_ERROR": "sorry! server error happened",
     "DATABASE_MIGRATION_ERROR": "sorry! database migration failed",
     "DATE_TOO_FAR_AHEAD": "we will not live that long",

@@ -3,15 +3,14 @@ import Player from '@/app/tournaments/[id]/dashboard/tabs/games/game/player';
 import Result, {
   ResultProps,
 } from '@/app/tournaments/[id]/dashboard/tabs/games/game/result';
+import { useTournamentMutationPending } from '@/components/hooks/mutation-hooks/tournament-cache';
 import useTournamentSetGameResult from '@/components/hooks/mutation-hooks/use-tournament-set-game-result';
 import { useTournamentGameResultInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import useOutsideClick from '@/components/hooks/use-outside-click';
 import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useTRPC } from '@/components/trpc/client';
 import { GameResult } from '@/server/zod/enums';
-import { useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
@@ -32,26 +31,14 @@ const GameItem: FC<GameProps> = ({
 }) => {
   const { id: tournamentId } = useParams<{ id: string }>();
   const t = useTranslations('Toasts');
-  const { sendJsonMessage, status, unitId, userId } =
-    useContext(DashboardContext);
-  const queryClient = useQueryClient();
-  const trpc = useTRPC();
-  const saveRoundPending =
-    useIsMutating({
-      mutationKey: trpc.tournament.saveRound.mutationKey(),
-      predicate: (mutation) => {
-        const variables = mutation.state.variables;
-        return (
-          typeof variables === 'object' &&
-          variables !== null &&
-          'tournamentId' in variables &&
-          variables.tournamentId === tournamentId
-        );
-      },
-    }) > 0;
-  const mutation = useTournamentSetGameResult(queryClient, {
+  const { status, unitId, userId } = useContext(DashboardContext);
+  const saveRoundPending = useTournamentMutationPending(
     tournamentId,
-    sendJsonMessage,
+    'saveRound',
+  );
+  const mutation = useTournamentSetGameResult({
+    tournamentId,
+    roundNumber,
   });
   const { data } = useTournamentGameResultInfo(tournamentId);
   const ref = useRef<HTMLDivElement>(null);
@@ -91,13 +78,7 @@ const GameItem: FC<GameProps> = ({
     if (selected && hasStarted && !mutation.isPending) {
       mutation.mutate({
         gameId: id,
-        whiteUnitId,
-        blackUnitId,
-        result: newResult,
-        prevResult: result,
-        tournamentId,
-        roundNumber,
-        userId,
+        result: result === newResult ? null : newResult,
       });
     }
   };
