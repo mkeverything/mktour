@@ -9,7 +9,7 @@
     "dev:local": "OFFLINE=true bunx next dev",
     "build": "next build",
     "start": "bunx --bun next start",
-    "lint": "bunx eslint .",
+    "lint": "bunx eslint src/",
     "opt": "OPT=true bunx --bun next dev",
     "analyze": "ANALYZE=true next build",
     "format": "bunx --bun prettier . --write",
@@ -144,11 +144,6 @@
     "baseUrl": "src",
     "emptyLinesAfterImports": 1
   },
-  "eslintIgnore": [
-    "src/components/ui/**/*.ts",
-    "src/components/ui/**/*.tsx",
-    "src/types/**/*.ts"
-  ],
   "trustedDependencies": [
     "@tailwindcss/oxide",
     "@vercel/speed-insights",
