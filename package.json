@@ -136,7 +136,7 @@
     "tailwindcss": "^4.3.3",
     "ts-graphviz": "^3.0.7",
     "tsx": "4.23.8",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "yargs": "^18.1.0"
   },
   "vsc-organize-imports": {
