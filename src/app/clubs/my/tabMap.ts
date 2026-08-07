@@ -17,11 +17,7 @@ export const tabMap: Record<ClubDashboardTab, FC<ClubTabProps>> = {
 };
 
 export type ClubDashboardTab =
-  | 'main'
-  | 'players'
-  | 'tournaments'
-  | 'notifications'
-  | 'settings';
+  'main' | 'players' | 'tournaments' | 'notifications' | 'settings';
 
 export type ClubTabProps = {
   selectedClub: string;

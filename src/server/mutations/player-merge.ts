@@ -121,8 +121,7 @@ export async function mergePlayers({
     const identityInconsistencies: Array<{
       playerId: string;
       kind:
-        | 'active_affiliation_without_user'
-        | 'user_without_active_affiliation';
+        'active_affiliation_without_user' | 'user_without_active_affiliation';
     }> = [];
     for (const a of orphanedActiveAffiliations) {
       identityInconsistencies.push({

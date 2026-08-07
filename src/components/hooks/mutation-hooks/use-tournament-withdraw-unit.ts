@@ -38,8 +38,7 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
             : null;
 
         let roundGamesRollback:
-          | { roundNumber: number; data: GameModel[] }
-          | undefined;
+          { roundNumber: number; data: GameModel[] } | undefined;
         const previousAllGames = queryClient.getQueryData(
           trpc.tournament.allGames.queryKey({ tournamentId }),
         );
