@@ -9,155 +9,141 @@
 
 ## [1.11.1](https://github.com/mkeverything/mktour/compare/v1.11.0...v1.11.1) (2026-07-22)
 
-
 ### Bug Fixes
 
-* cacheLife was set as if expected values are milliseconds ([100bc4b](https://github.com/mkeverything/mktour/commit/100bc4b43fba7721d55f09f06ca7a6c4e527e102))
-* player stats overcounting games ([0ceddee](https://github.com/mkeverything/mktour/commit/0ceddeeefce3985ce4ed260a5610222099859992))
-* secure round saving ([8ba8a27](https://github.com/mkeverything/mktour/commit/8ba8a27d52743aaf29ad6ac7e950df49f6ef514d))
+- cacheLife was set as if expected values are milliseconds ([100bc4b](https://github.com/mkeverything/mktour/commit/100bc4b43fba7721d55f09f06ca7a6c4e527e102))
+- player stats overcounting games ([0ceddee](https://github.com/mkeverything/mktour/commit/0ceddeeefce3985ce4ed260a5610222099859992))
+- secure round saving ([8ba8a27](https://github.com/mkeverything/mktour/commit/8ba8a27d52743aaf29ad6ac7e950df49f6ef514d))
 
 # [1.11.0](https://github.com/mkeverything/mktour/compare/v1.10.0...v1.11.0) (2026-07-13)
 
-
 ### Bug Fixes
 
-* build ([0686b43](https://github.com/mkeverything/mktour/commit/0686b43b9512a05032649b7e0f35a83a91d675ad))
-* dialogs in fullscreen out of the portal ([7df1dd4](https://github.com/mkeverything/mktour/commit/7df1dd4f34a813031b5246c82887b2122195b95d))
-* portal wrapper absolute position ([f1e252c](https://github.com/mkeverything/mktour/commit/f1e252cae1ce92a80804ec3b40fdf6c1ec20b66f))
-
+- build ([0686b43](https://github.com/mkeverything/mktour/commit/0686b43b9512a05032649b7e0f35a83a91d675ad))
+- dialogs in fullscreen out of the portal ([7df1dd4](https://github.com/mkeverything/mktour/commit/7df1dd4f34a813031b5246c82887b2122195b95d))
+- portal wrapper absolute position ([f1e252c](https://github.com/mkeverything/mktour/commit/f1e252cae1ce92a80804ec3b40fdf6c1ec20b66f))
 
 ### Features
 
-* compact game items ([cd8b6b1](https://github.com/mkeverything/mktour/commit/cd8b6b19bae3cd4a277d90a7e1470f40264afce7))
-* conditional round grid ([76dcb36](https://github.com/mkeverything/mktour/commit/76dcb36a72a68df243abfd06142ceff6725065f4))
-* hide # column when canSort table ([fe44f5c](https://github.com/mkeverything/mktour/commit/fe44f5c7b34e348cc38247bf2f4c25fb76cd9815))
-* mobile main tab minor restyle ([38dde3a](https://github.com/mkeverything/mktour/commit/38dde3ae953d6b7cdaa974e31798f3dcbd7d2a2c))
+- compact game items ([cd8b6b1](https://github.com/mkeverything/mktour/commit/cd8b6b19bae3cd4a277d90a7e1470f40264afce7))
+- conditional round grid ([76dcb36](https://github.com/mkeverything/mktour/commit/76dcb36a72a68df243abfd06142ceff6725065f4))
+- hide # column when canSort table ([fe44f5c](https://github.com/mkeverything/mktour/commit/fe44f5c7b34e348cc38247bf2f4c25fb76cd9815))
+- mobile main tab minor restyle ([38dde3a](https://github.com/mkeverything/mktour/commit/38dde3ae953d6b7cdaa974e31798f3dcbd7d2a2c))
 
 # [1.10.0](https://github.com/mkeverything/mktour/compare/v1.9.1...v1.10.0) (2026-06-26)
 
-
 ### Bug Fixes
 
-* gap in side-drawer ([9fbd040](https://github.com/mkeverything/mktour/commit/9fbd040913bcfb5bef905ec71b1e4bb17c08f2c2))
-
+- gap in side-drawer ([9fbd040](https://github.com/mkeverything/mktour/commit/9fbd040913bcfb5bef905ec71b1e4bb17c08f2c2))
 
 ### Features
 
-* merge players ([f4000f2](https://github.com/mkeverything/mktour/commit/f4000f25410cb4245d7d4190d5a4b19a72773eb6))
+- merge players ([f4000f2](https://github.com/mkeverything/mktour/commit/f4000f25410cb4245d7d4190d5a4b19a72773eb6))
 
 ## [1.9.1](https://github.com/mkeverything/mktour/compare/v1.9.0...v1.9.1) (2026-06-25)
 
-
 ### Bug Fixes
 
-* box sizing ([94fe6a8](https://github.com/mkeverything/mktour/commit/94fe6a81ad6a7f2ac2aff68469528e2eb54ffb5c))
-* mk-navbar shrinking ([547597a](https://github.com/mkeverything/mktour/commit/547597a810a44bdba017909224408ffe0df0e36c))
-* navbar layout and background transparency ([f3101aa](https://github.com/mkeverything/mktour/commit/f3101aa61b0c90df024df399b919100728cbaef8))
+- box sizing ([94fe6a8](https://github.com/mkeverything/mktour/commit/94fe6a81ad6a7f2ac2aff68469528e2eb54ffb5c))
+- mk-navbar shrinking ([547597a](https://github.com/mkeverything/mktour/commit/547597a810a44bdba017909224408ffe0df0e36c))
+- navbar layout and background transparency ([f3101aa](https://github.com/mkeverything/mktour/commit/f3101aa61b0c90df024df399b919100728cbaef8))
 
 # [1.9.0](https://github.com/mkeverything/mktour/compare/v1.8.2...v1.9.0) (2026-06-10)
 
-
 ### Bug Fixes
 
-* added keeping colourPlayerIds in generators ([72fdcd2](https://github.com/mkeverything/mktour/commit/72fdcd26991ba128899c40b15383ebe6f3740c4f))
-* added lichess team server validation to club.create ([545599d](https://github.com/mkeverything/mktour/commit/545599de2627808e780bc514a8672f4d2b06f884))
-* added missing description field to club settings form ([b9adc49](https://github.com/mkeverything/mktour/commit/b9adc492a5f4f724eeeb22873edf5cc9eb9baab1))
-* added scope to tournament pre-start mutations to force consecutive execution ([fd09166](https://github.com/mkeverything/mktour/commit/fd091663eeb053ee81914f6b6a4200b17733a900))
-* added upper and lower boundaries for ratings ([477e9a3](https://github.com/mkeverything/mktour/commit/477e9a32cf6bac8b8229e1d907c09dea7669da17))
-* allow partial input for club edit requests ([2e0bb13](https://github.com/mkeverything/mktour/commit/2e0bb13dafb2d465f2986ebaad66b49b298ad47b))
-* clientside rounds-number min value ([9a6076a](https://github.com/mkeverything/mktour/commit/9a6076a3e4be1a3866a72f21dc06c6b991d722b6))
-* clubEdit now distincts 403 from 404 when linking lichess team ([0f334b1](https://github.com/mkeverything/mktour/commit/0f334b1d361677b60553415c2fd511d09a84e467))
-* correctly find  unit by id in `editDoublesUnit` ([8be53de](https://github.com/mkeverything/mktour/commit/8be53dee8b09b4345ab9a53a98d0dc24ab45bfb2))
-* editDoublesUnit issues with optimistic update ([966f433](https://github.com/mkeverything/mktour/commit/966f433a1ebab9f6b5a8ef5026164c34dc1e7dd4))
-* finally handled this clumsy link-team validation ([63b45c9](https://github.com/mkeverything/mktour/commit/63b45c95e8bdbb185ffa111e06f312cb1812302c))
-* finish-tournament button rendered during prestart on mobile ([327624e](https://github.com/mkeverything/mktour/commit/327624ee6a936cd4b868c8487654ca14042389d3))
-* fixed connecting clubs to lichess groups ([5d3e0d7](https://github.com/mkeverything/mktour/commit/5d3e0d7ced0a0708eb9f6ea8205b5f3823d4a2c3))
-* head-to-head stats compared colourUnitids to players (which always returned 0s) ([3a448a5](https://github.com/mkeverything/mktour/commit/3a448a5a967d96a4b44eeac0c7fc11054e28f28c))
-* player modal window (in tmt dashboard) got closed unexpectedly when background refetch happened ([861a062](https://github.com/mkeverything/mktour/commit/861a062b7e84c5307eebe5fc0077501a6e407dd5))
-* player now can be deleted directly from club dashboard ([4f3cc51](https://github.com/mkeverything/mktour/commit/4f3cc51ec598d7763795ad3fdb9b9eeebaafa801))
-* prevent queued pre-start mutations to drop optimistic rounds number ([e5d763b](https://github.com/mkeverything/mktour/commit/e5d763ba72dc9d55e963f0264e7230557579641c))
-* proper cache read and invalidation for rendering finish-tournament button ([501641c](https://github.com/mkeverything/mktour/commit/501641cbce94e5aa041ce912b0cd53f389ef105c))
-* rm error message from posthog capture ([59af199](https://github.com/mkeverything/mktour/commit/59af199a64d1196eb8b3ff41ed2eef820e690816))
-* send games inside `start-tournament` ws-message ([ede8e01](https://github.com/mkeverything/mktour/commit/ede8e01c73818b0122c2962f80e858fb2d1143c7))
-* server revalidation dropped custom order for doubles ([a7a70c2](https://github.com/mkeverything/mktour/commit/a7a70c2dc2f03bb31153144ad649fc8ee2a82e50))
-* show lichess team link conflict in club settings ([1c57167](https://github.com/mkeverything/mktour/commit/1c57167f7bafe99f840ea844e619c7bb50df52d9))
-* text selection inside club dashboard triggered swipe-handler ([e1342cb](https://github.com/mkeverything/mktour/commit/e1342cbd61309ea3d1f276aeb20fa60906b6478f))
-
+- added keeping colourPlayerIds in generators ([72fdcd2](https://github.com/mkeverything/mktour/commit/72fdcd26991ba128899c40b15383ebe6f3740c4f))
+- added lichess team server validation to club.create ([545599d](https://github.com/mkeverything/mktour/commit/545599de2627808e780bc514a8672f4d2b06f884))
+- added missing description field to club settings form ([b9adc49](https://github.com/mkeverything/mktour/commit/b9adc492a5f4f724eeeb22873edf5cc9eb9baab1))
+- added scope to tournament pre-start mutations to force consecutive execution ([fd09166](https://github.com/mkeverything/mktour/commit/fd091663eeb053ee81914f6b6a4200b17733a900))
+- added upper and lower boundaries for ratings ([477e9a3](https://github.com/mkeverything/mktour/commit/477e9a32cf6bac8b8229e1d907c09dea7669da17))
+- allow partial input for club edit requests ([2e0bb13](https://github.com/mkeverything/mktour/commit/2e0bb13dafb2d465f2986ebaad66b49b298ad47b))
+- clientside rounds-number min value ([9a6076a](https://github.com/mkeverything/mktour/commit/9a6076a3e4be1a3866a72f21dc06c6b991d722b6))
+- clubEdit now distincts 403 from 404 when linking lichess team ([0f334b1](https://github.com/mkeverything/mktour/commit/0f334b1d361677b60553415c2fd511d09a84e467))
+- correctly find unit by id in `editDoublesUnit` ([8be53de](https://github.com/mkeverything/mktour/commit/8be53dee8b09b4345ab9a53a98d0dc24ab45bfb2))
+- editDoublesUnit issues with optimistic update ([966f433](https://github.com/mkeverything/mktour/commit/966f433a1ebab9f6b5a8ef5026164c34dc1e7dd4))
+- finally handled this clumsy link-team validation ([63b45c9](https://github.com/mkeverything/mktour/commit/63b45c95e8bdbb185ffa111e06f312cb1812302c))
+- finish-tournament button rendered during prestart on mobile ([327624e](https://github.com/mkeverything/mktour/commit/327624ee6a936cd4b868c8487654ca14042389d3))
+- fixed connecting clubs to lichess groups ([5d3e0d7](https://github.com/mkeverything/mktour/commit/5d3e0d7ced0a0708eb9f6ea8205b5f3823d4a2c3))
+- head-to-head stats compared colourUnitids to players (which always returned 0s) ([3a448a5](https://github.com/mkeverything/mktour/commit/3a448a5a967d96a4b44eeac0c7fc11054e28f28c))
+- player modal window (in tmt dashboard) got closed unexpectedly when background refetch happened ([861a062](https://github.com/mkeverything/mktour/commit/861a062b7e84c5307eebe5fc0077501a6e407dd5))
+- player now can be deleted directly from club dashboard ([4f3cc51](https://github.com/mkeverything/mktour/commit/4f3cc51ec598d7763795ad3fdb9b9eeebaafa801))
+- prevent queued pre-start mutations to drop optimistic rounds number ([e5d763b](https://github.com/mkeverything/mktour/commit/e5d763ba72dc9d55e963f0264e7230557579641c))
+- proper cache read and invalidation for rendering finish-tournament button ([501641c](https://github.com/mkeverything/mktour/commit/501641cbce94e5aa041ce912b0cd53f389ef105c))
+- rm error message from posthog capture ([59af199](https://github.com/mkeverything/mktour/commit/59af199a64d1196eb8b3ff41ed2eef820e690816))
+- send games inside `start-tournament` ws-message ([ede8e01](https://github.com/mkeverything/mktour/commit/ede8e01c73818b0122c2962f80e858fb2d1143c7))
+- server revalidation dropped custom order for doubles ([a7a70c2](https://github.com/mkeverything/mktour/commit/a7a70c2dc2f03bb31153144ad649fc8ee2a82e50))
+- show lichess team link conflict in club settings ([1c57167](https://github.com/mkeverything/mktour/commit/1c57167f7bafe99f840ea844e619c7bb50df52d9))
+- text selection inside club dashboard triggered swipe-handler ([e1342cb](https://github.com/mkeverything/mktour/commit/e1342cbd61309ea3d1f276aeb20fa60906b6478f))
 
 ### Features
 
-* create tournament api endpoiont with all proper backend validations ([43e829c](https://github.com/mkeverything/mktour/commit/43e829ce22e4ba4628ecabd46001d2c334148d88))
-* desktop view for club dashboard ([556f310](https://github.com/mkeverything/mktour/commit/556f3105c84f9d0062706711f7313413bb9a709a))
+- create tournament api endpoiont with all proper backend validations ([43e829c](https://github.com/mkeverything/mktour/commit/43e829ce22e4ba4628ecabd46001d2c334148d88))
+- desktop view for club dashboard ([556f310](https://github.com/mkeverything/mktour/commit/556f3105c84f9d0062706711f7313413bb9a709a))
 
 ## [1.8.2](https://github.com/mkeverything/mktour/compare/v1.8.1...v1.8.2) (2026-05-05)
 
-
 ### Bug Fixes
 
-* authentication drop on mobile devices ([#95](https://github.com/mkeverything/mktour/issues/95)) ([ad535eb](https://github.com/mkeverything/mktour/commit/ad535ebf67e51aa63e73414643df94f00e42761f))
+- authentication drop on mobile devices ([#95](https://github.com/mkeverything/mktour/issues/95)) ([ad535eb](https://github.com/mkeverything/mktour/commit/ad535ebf67e51aa63e73414643df94f00e42761f))
 
 ## [1.8.1](https://github.com/mkeverything/mktour/compare/v1.8.0...v1.8.1) (2026-05-04)
 
-
 ### Bug Fixes
 
-* round-robin generator correctly handles first consecutive round ([b83f2c3](https://github.com/mkeverything/mktour/commit/b83f2c3b25ec18610a11f68a1614581cce6a7398))
+- round-robin generator correctly handles first consecutive round ([b83f2c3](https://github.com/mkeverything/mktour/commit/b83f2c3b25ec18610a11f68a1614581cce6a7398))
 
 # [1.8.0](https://github.com/mkeverything/mktour/compare/v1.7.3...v1.8.0) (2026-05-04)
 
-
 ### Bug Fixes
 
-* bug allowing to bypass nickname uniqueness constraint ([3c52b6e](https://github.com/mkeverything/mktour/commit/3c52b6e74593acea17d685b55994ba4012abd7b6))
-* dumbest bug ever which confused even with odd when calculating roundsNumber for rr ([26f6f1d](https://github.com/mkeverything/mktour/commit/26f6f1d1e09ac669790118eaa3c7edda173277c9))
-* dumbest bug ever which confused even with odd when calculating roundsNumber for rr ([11132fb](https://github.com/mkeverything/mktour/commit/11132fb1daa64421fd8297f97931b5c197097182))
-* include rounds-number-normalization inside overall withdraw trasaction ([b0674fe](https://github.com/mkeverything/mktour/commit/b0674fe55bb2a31d100e5bd42f36741d27b21a45))
-* init ([f6a1ce0](https://github.com/mkeverything/mktour/commit/f6a1ce0eb923eee85b2591ceff7e881153adea87))
-* init ([9aa3ad6](https://github.com/mkeverything/mktour/commit/9aa3ad65b34a2eecd7381876a80ed59ee61297e1))
-* invalidate tournament info after addig pairteam to aboid roundsnumber mismatch ([8cace64](https://github.com/mkeverything/mktour/commit/8cace64d4ad6ce4ddba5e58b6c426cabc4aa7ae4))
-* list dark splash screen variants before light to enable dark mode matching ([c2fc90f](https://github.com/mkeverything/mktour/commit/c2fc90fd4663d41c3b34fcda240178b26c3119e8))
-* not-spinning loader at desktop shuffle button ([452a67e](https://github.com/mkeverything/mktour/commit/452a67e9076b51a679cada092069c0d43a56dc97))
-* player used to flick when drag ended on the original spot ([bcbb1c2](https://github.com/mkeverything/mktour/commit/bcbb1c273298d7d48da8b927625749ddb6f914c0))
-* proper ooptimistic update implementation ([8b6c32c](https://github.com/mkeverything/mktour/commit/8b6c32c4771a1f6db15b32af25a484721e354371))
-* redundant round generation in the middle of reordering, which caused several false game-updates ([ab432d4](https://github.com/mkeverything/mktour/commit/ab432d41b431e0662919d983d5f14f1f455dcaa3))
-* remove isOnlyPendingMutation from onError to prevent stale optimistic state ([9c89069](https://github.com/mkeverything/mktour/commit/9c8906933d187accfdedfefc6ae82b513cbd25d6))
-* remove throwing error when trying to set tournament.roundsNumber smaller than ongoing round ([9dae972](https://github.com/mkeverything/mktour/commit/9dae9723673ea0ed0a7b8ffe6074290b7c8370a3))
-* return button "cancel affiliation" for club admin ([a652f0e](https://github.com/mkeverything/mktour/commit/a652f0efd01d90607ce4897629f19b89bcb27674))
-* swapped landscape sizes ([8f3b132](https://github.com/mkeverything/mktour/commit/8f3b132a78ae25d066da2291e8061f110a190736))
-* swapped landscape sizes ([e6f1f11](https://github.com/mkeverything/mktour/commit/e6f1f1158d16d2a61a77da9b3b67ecaafd9f722a))
-* **swiss-deltas:** account for black's negative color side in colorIndex balance ([f2bc8b0](https://github.com/mkeverything/mktour/commit/f2bc8b0bf0d7d04605189d248b50b779a79bad1e))
-* **swiss-ui:** align optimistic and websocket withdrawal updates with server forfeit semantics ([c5b8462](https://github.com/mkeverything/mktour/commit/c5b8462afcf583e94577dbf4a2e195627b6d0081))
-* **swiss:** record withdrawal forfeits on the server instead of deleting pending games ([80e22a3](https://github.com/mkeverything/mktour/commit/80e22a390b7ee12b8272339bf90c33ba3552fe75)), closes [#75](https://github.com/mkeverything/mktour/issues/75)
-* use more precise timestamps in ptt added_at to stabilize sorting order ([b0e1241](https://github.com/mkeverything/mktour/commit/b0e124180bb09fb1f09638ec3d5a0a22151ca31e))
-* wrap persistingOrder and replacingGames into one drizzle tx ([9f2c946](https://github.com/mkeverything/mktour/commit/9f2c946b9cba23dc7a5aae75aa1c5ca48df19782))
-
+- bug allowing to bypass nickname uniqueness constraint ([3c52b6e](https://github.com/mkeverything/mktour/commit/3c52b6e74593acea17d685b55994ba4012abd7b6))
+- dumbest bug ever which confused even with odd when calculating roundsNumber for rr ([26f6f1d](https://github.com/mkeverything/mktour/commit/26f6f1d1e09ac669790118eaa3c7edda173277c9))
+- dumbest bug ever which confused even with odd when calculating roundsNumber for rr ([11132fb](https://github.com/mkeverything/mktour/commit/11132fb1daa64421fd8297f97931b5c197097182))
+- include rounds-number-normalization inside overall withdraw trasaction ([b0674fe](https://github.com/mkeverything/mktour/commit/b0674fe55bb2a31d100e5bd42f36741d27b21a45))
+- init ([f6a1ce0](https://github.com/mkeverything/mktour/commit/f6a1ce0eb923eee85b2591ceff7e881153adea87))
+- init ([9aa3ad6](https://github.com/mkeverything/mktour/commit/9aa3ad65b34a2eecd7381876a80ed59ee61297e1))
+- invalidate tournament info after addig pairteam to aboid roundsnumber mismatch ([8cace64](https://github.com/mkeverything/mktour/commit/8cace64d4ad6ce4ddba5e58b6c426cabc4aa7ae4))
+- list dark splash screen variants before light to enable dark mode matching ([c2fc90f](https://github.com/mkeverything/mktour/commit/c2fc90fd4663d41c3b34fcda240178b26c3119e8))
+- not-spinning loader at desktop shuffle button ([452a67e](https://github.com/mkeverything/mktour/commit/452a67e9076b51a679cada092069c0d43a56dc97))
+- player used to flick when drag ended on the original spot ([bcbb1c2](https://github.com/mkeverything/mktour/commit/bcbb1c273298d7d48da8b927625749ddb6f914c0))
+- proper ooptimistic update implementation ([8b6c32c](https://github.com/mkeverything/mktour/commit/8b6c32c4771a1f6db15b32af25a484721e354371))
+- redundant round generation in the middle of reordering, which caused several false game-updates ([ab432d4](https://github.com/mkeverything/mktour/commit/ab432d41b431e0662919d983d5f14f1f455dcaa3))
+- remove isOnlyPendingMutation from onError to prevent stale optimistic state ([9c89069](https://github.com/mkeverything/mktour/commit/9c8906933d187accfdedfefc6ae82b513cbd25d6))
+- remove throwing error when trying to set tournament.roundsNumber smaller than ongoing round ([9dae972](https://github.com/mkeverything/mktour/commit/9dae9723673ea0ed0a7b8ffe6074290b7c8370a3))
+- return button "cancel affiliation" for club admin ([a652f0e](https://github.com/mkeverything/mktour/commit/a652f0efd01d90607ce4897629f19b89bcb27674))
+- swapped landscape sizes ([8f3b132](https://github.com/mkeverything/mktour/commit/8f3b132a78ae25d066da2291e8061f110a190736))
+- swapped landscape sizes ([e6f1f11](https://github.com/mkeverything/mktour/commit/e6f1f1158d16d2a61a77da9b3b67ecaafd9f722a))
+- **swiss-deltas:** account for black's negative color side in colorIndex balance ([f2bc8b0](https://github.com/mkeverything/mktour/commit/f2bc8b0bf0d7d04605189d248b50b779a79bad1e))
+- **swiss-ui:** align optimistic and websocket withdrawal updates with server forfeit semantics ([c5b8462](https://github.com/mkeverything/mktour/commit/c5b8462afcf583e94577dbf4a2e195627b6d0081))
+- **swiss:** record withdrawal forfeits on the server instead of deleting pending games ([80e22a3](https://github.com/mkeverything/mktour/commit/80e22a390b7ee12b8272339bf90c33ba3552fe75)), closes [#75](https://github.com/mkeverything/mktour/issues/75)
+- use more precise timestamps in ptt added_at to stabilize sorting order ([b0e1241](https://github.com/mkeverything/mktour/commit/b0e124180bb09fb1f09638ec3d5a0a22151ca31e))
+- wrap persistingOrder and replacingGames into one drizzle tx ([9f2c946](https://github.com/mkeverything/mktour/commit/9f2c946b9cba23dc7a5aae75aa1c5ca48df19782))
 
 ### Features
 
-* `reorder-players` ws message ([4dd4906](https://github.com/mkeverything/mktour/commit/4dd4906ba2db6bcfe2fa0656e5cd98cdf661a0a1))
-* add tournament player reorder backend flow ([ce80a90](https://github.com/mkeverything/mktour/commit/ce80a90fb5bb7694e15aed759d35e41ea4fb7c97))
-* consecutive pairs generator added ([479123a](https://github.com/mkeverything/mktour/commit/479123a32958268dfd76236c8b1346696275aa8e))
-* reorder-players frontend ([f19de55](https://github.com/mkeverything/mktour/commit/f19de554309118bbc20fdbcc28e18868ddc95a0b))
-* update tournament player reordering logic ([d6ac321](https://github.com/mkeverything/mktour/commit/d6ac321f81bf9706d581162537211da35b78a2f2))
-* withdrawing players from ongoing swiss tournament ([a70fba2](https://github.com/mkeverything/mktour/commit/a70fba27f97c1f8a466450c4480c4641fdb9e3f1))
-
+- `reorder-players` ws message ([4dd4906](https://github.com/mkeverything/mktour/commit/4dd4906ba2db6bcfe2fa0656e5cd98cdf661a0a1))
+- add tournament player reorder backend flow ([ce80a90](https://github.com/mkeverything/mktour/commit/ce80a90fb5bb7694e15aed759d35e41ea4fb7c97))
+- consecutive pairs generator added ([479123a](https://github.com/mkeverything/mktour/commit/479123a32958268dfd76236c8b1346696275aa8e))
+- reorder-players frontend ([f19de55](https://github.com/mkeverything/mktour/commit/f19de554309118bbc20fdbcc28e18868ddc95a0b))
+- update tournament player reordering logic ([d6ac321](https://github.com/mkeverything/mktour/commit/d6ac321f81bf9706d581162537211da35b78a2f2))
+- withdrawing players from ongoing swiss tournament ([a70fba2](https://github.com/mkeverything/mktour/commit/a70fba27f97c1f8a466450c4480c4641fdb9e3f1))
 
 ### Performance Improvements
 
-* memoize games iteratee rendering ([a936bb3](https://github.com/mkeverything/mktour/commit/a936bb31c2f733f7d7a1b41eb5ba55abaec68f7d))
-* memoize tournament title controls ([4f928b1](https://github.com/mkeverything/mktour/commit/4f928b18b621ee70ac7c5d6edd34bb92ddfecfc6))
-* narrow dashboard query subscriptions ([7e50488](https://github.com/mkeverything/mktour/commit/7e50488a11b36b9023dca65d497f4235e2861c0f))
-* narrow games tab tournament subscriptions ([4ff7aed](https://github.com/mkeverything/mktour/commit/4ff7aeda17e9dca79f56c87a376b3c097dd76f6a))
-* remove redundant auth check ([5bbfc74](https://github.com/mkeverything/mktour/commit/5bbfc7479bfabe326c66e0e8a668aafa10ea51d9))
-* remove redundant game generation from preparePreStartPAirings ([0b35d97](https://github.com/mkeverything/mktour/commit/0b35d972155d6e09560d1e4ef11b9ce8ba7aa9f5))
-* rm query invalidation for pre-start round ([94235f0](https://github.com/mkeverything/mktour/commit/94235f0558fc5c53b108ac9701479d8acdffcdd4))
-* skip unreturned db reads ([7816cd6](https://github.com/mkeverything/mktour/commit/7816cd6d071a38c2ceccecf17475246737dee5dc))
-
+- memoize games iteratee rendering ([a936bb3](https://github.com/mkeverything/mktour/commit/a936bb31c2f733f7d7a1b41eb5ba55abaec68f7d))
+- memoize tournament title controls ([4f928b1](https://github.com/mkeverything/mktour/commit/4f928b18b621ee70ac7c5d6edd34bb92ddfecfc6))
+- narrow dashboard query subscriptions ([7e50488](https://github.com/mkeverything/mktour/commit/7e50488a11b36b9023dca65d497f4235e2861c0f))
+- narrow games tab tournament subscriptions ([4ff7aed](https://github.com/mkeverything/mktour/commit/4ff7aeda17e9dca79f56c87a376b3c097dd76f6a))
+- remove redundant auth check ([5bbfc74](https://github.com/mkeverything/mktour/commit/5bbfc7479bfabe326c66e0e8a668aafa10ea51d9))
+- remove redundant game generation from preparePreStartPAirings ([0b35d97](https://github.com/mkeverything/mktour/commit/0b35d972155d6e09560d1e4ef11b9ce8ba7aa9f5))
+- rm query invalidation for pre-start round ([94235f0](https://github.com/mkeverything/mktour/commit/94235f0558fc5c53b108ac9701479d8acdffcdd4))
+- skip unreturned db reads ([7816cd6](https://github.com/mkeverything/mktour/commit/7816cd6d071a38c2ceccecf17475246737dee5dc))
 
 ### Reverts
 
-* Revert "fix: list dark splash screen variants before light to enable dark mode matching" ([8a281ab](https://github.com/mkeverything/mktour/commit/8a281abc9fe830bb56c29c1f64a7452cee8285a6))
-* undo 1.7.1–1.7.3 and pairing hotfixes ([381b3aa](https://github.com/mkeverything/mktour/commit/381b3aa48c7034b1de3c38536039722fafe92015))
+- Revert "fix: list dark splash screen variants before light to enable dark mode matching" ([8a281ab](https://github.com/mkeverything/mktour/commit/8a281abc9fe830bb56c29c1f64a7452cee8285a6))
+- undo 1.7.1–1.7.3 and pairing hotfixes ([381b3aa](https://github.com/mkeverything/mktour/commit/381b3aa48c7034b1de3c38536039722fafe92015))
 
 # [1.7.0](https://github.com/mkeverything/mktour/compare/v1.6.0...v1.7.0) (2026-03-13)
 

@@ -22,11 +22,7 @@ type TournamentScopedProcedure = {
 }[keyof TournamentInputs];
 
 type TournamentQuery =
-  | 'info'
-  | 'units'
-  | 'playersOut'
-  | 'roundGames'
-  | 'allGames';
+  'info' | 'units' | 'playersOut' | 'roundGames' | 'allGames';
 
 // single source of truth: which cached queries each mutation can dirty, on the
 // server and/or optimistically. side-effects count too — e.g. removing a unit

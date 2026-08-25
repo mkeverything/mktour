@@ -118,6 +118,4 @@ type GlobalErrorMessage = {
 
 // all possible global websocket messages
 type GlobalMessage =
-  | AnyUserWebSocketMessage
-  | AnyClubWebSocketMessage
-  | GlobalErrorMessage;
+  AnyUserWebSocketMessage | AnyClubWebSocketMessage | GlobalErrorMessage;
