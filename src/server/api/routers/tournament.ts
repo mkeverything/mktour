@@ -59,6 +59,7 @@ import {
   setGameResultInputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
+  tournamentFinishOutputSchema,
   tournamentInfoSchema,
   tournamentWithClubSchema,
   unitSchema,
@@ -262,15 +263,11 @@ export const tournamentRouter = {
       await resetTournamentUnits(input);
     }),
   finish: tournamentAdminProcedure
-    .input(
-      tournamentIdInputSchema.extend({
-        closedAt: z.date(),
-      }),
-    )
-    .output(z.void())
+    .input(tournamentIdInputSchema)
+    .output(tournamentFinishOutputSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      await finishTournament(input);
+      return await finishTournament(input);
     }),
   delete: tournamentAdminProcedure
     .input(tournamentIdInputSchema)

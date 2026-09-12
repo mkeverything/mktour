@@ -15,13 +15,9 @@ export const DestructiveTournamentButtons: FC<{
 }> = ({ tournament }) => {
   const { closedAt, startedAt } = tournament;
 
+  // finishing is irreversible: a closed tournament can only be deleted
   if (closedAt) {
-    return (
-      <>
-        <ResetTournamentButton />
-        <DeleteTournamentButton />
-      </>
-    );
+    return <DeleteTournamentButton />;
   }
 
   if (startedAt) {

@@ -14,6 +14,7 @@ import {
   getSwissMaxRoundsNumber,
   getSwissRecommendedRoundsNumber,
   newid,
+  nowTimestamp,
 } from '@/lib/utils';
 import { revalidateClubPlayerStats } from '@/server/cache/player-stats';
 import { db } from '@/server/db';
@@ -225,20 +226,24 @@ export async function resetTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   const tournament = await db
-    .select({ clubId: tournaments.clubId, closedAt: tournaments.closedAt })
+    .select({ closedAt: tournaments.closedAt })
     .from(tournaments)
     .where(eq(tournaments.id, tournamentId))
     .get();
+  if (tournament?.closedAt) throw new AppError('FINISHED_TOURNAMENT_IS_FINAL');
   await db.transaction(async (tx) => {
     const tournamentUpdate = await tx
       .update(tournaments)
       .set({
         startedAt: null,
         ongoingRound: 1,
-        closedAt: null,
       })
       .where(
-        and(eq(tournaments.id, tournamentId), isNotNull(tournaments.startedAt)),
+        and(
+          eq(tournaments.id, tournamentId),
+          isNotNull(tournaments.startedAt),
+          isNull(tournaments.closedAt),
+        ),
       );
     if (!tournamentUpdate.rowsAffected)
       throw new AppError('TOURNAMENT_ALREADY_RESET');
@@ -257,21 +262,21 @@ export async function resetTournament({
       })
       .where(eq(tournament_units.tournamentId, tournamentId));
   });
-  if (tournament?.closedAt) revalidateClubPlayerStats(tournament.clubId);
 }
 
 export async function finishTournament({
   tournamentId,
-  closedAt,
 }: {
   tournamentId: string;
-  closedAt: Date;
 }) {
   const { user } = await validateRequest();
   if (!user) throw new AppError('UNAUTHENTICATED');
 
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
+
+  // one server instant for closedAt, rating publication and lastSeenAt
+  const closedAt = nowTimestamp();
 
   const clubId = await db.transaction(async (tx) => {
     const [tournament, allGames, unitsUnsorted] = await Promise.all([
@@ -286,16 +291,13 @@ export async function finishTournament({
       throw new AppError('INCOMPLETE_GAMES');
     }
 
-    if (closedAt) {
-      const result = await tx
-        .update(tournaments)
-        .set({ closedAt })
-        .where(
-          and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)),
-        );
-      if (!result.rowsAffected)
-        throw new AppError('TOURNAMENT_ALREADY_FINISHED');
-    }
+    const result = await tx
+      .update(tournaments)
+      .set({ closedAt })
+      .where(
+        and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)),
+      );
+    if (!result.rowsAffected) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
 
     const sortedUnits = sortUnitsByResults(unitsUnsorted, tournament, allGames);
     const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
@@ -338,12 +340,13 @@ export async function finishTournament({
     );
 
     if (tournament.rated) {
-      await calculateAndApplyGlickoRatings(tournamentId, tx);
+      await calculateAndApplyGlickoRatings(tournamentId, tx, closedAt);
     }
 
     return tournament.clubId;
   });
   revalidateClubPlayerStats(clubId);
+  return { closedAt };
 }
 
 export async function deleteTournament({

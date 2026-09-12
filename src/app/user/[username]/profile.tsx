@@ -30,7 +30,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Separator } from '@/components/ui/separator';
-import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
+import { isEstablishedRating } from '@/lib/glicko2';
 import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
 import type {
@@ -356,9 +356,9 @@ const ClubPlayerCard: FC<
   const tStatus = useTranslations('Status');
   const formattedPlayerRating = !player.rating
     ? '—'
-    : player.ratingDeviation > GLICKO2_CONSTANTS.STABLE_RD_THRESHOLD
-      ? `${player.rating}?`
-      : player.rating;
+    : isEstablishedRating(player.ratingDeviation)
+      ? player.rating
+      : `${player.rating}?`;
 
   return (
     <Card>

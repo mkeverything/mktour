@@ -5,14 +5,18 @@ import { AppError } from '@/lib/errors';
 import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
-import { newid } from '@/lib/utils';
+import { newid, nowTimestamp } from '@/lib/utils';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
   club_notifications,
   user_notifications,
 } from '@/server/db/schema/notifications';
-import { affiliations, players } from '@/server/db/schema/players';
+import {
+  affiliations,
+  players,
+  rating_events,
+} from '@/server/db/schema/players';
 import {
   games,
   players_to_units,
@@ -139,22 +143,40 @@ export const createPlayer = async (
     throw new AppError('PLAYER_EXISTS_ERROR');
   }
 
-  const database = options.database ?? db;
-  const newPlayer = (
-    await database
-      .insert(players)
-      .values({
-        ...player,
-        nickname,
-        lastSeenAt: new Date(),
-        id: options.id ?? newid(),
-        ratingPeak: null,
-      })
-      .returning()
-  ).at(0);
+  const insertPlayerWithStartingEvent = async (
+    database: Pick<typeof db, 'insert'>,
+  ) => {
+    const createdAt = nowTimestamp();
+    const newPlayer = (
+      await database
+        .insert(players)
+        .values({
+          ...player,
+          nickname,
+          id: options.id ?? newid(),
+          ratingPeak: null,
+          ratingLastUpdateAt: createdAt,
+          lastSeenAt: createdAt,
+        })
+        .returning()
+    ).at(0);
+    if (!newPlayer) throw new AppError('PLAYER_NOT_CREATED');
 
-  if (!newPlayer) throw new AppError('PLAYER_NOT_CREATED');
-  return newPlayer;
+    await database.insert(rating_events).values({
+      id: newid(),
+      playerId: newPlayer.id,
+      sourceTournamentId: null,
+      publishedAt: createdAt,
+      rating: newPlayer.rating,
+      ratingDeviation: newPlayer.ratingDeviation,
+      isStarting: true,
+    });
+    return newPlayer;
+  };
+
+  return options.database
+    ? await insertPlayerWithStartingEvent(options.database)
+    : await db.transaction(insertPlayerWithStartingEvent);
 };
 
 export const deletePlayer = async ({ playerId }: { playerId: string }) => {

@@ -1,5 +1,9 @@
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
-import { affiliations, players } from '@/server/db/schema/players';
+import {
+  affiliations,
+  players,
+  rating_events,
+} from '@/server/db/schema/players';
 import { affiliationStatusEnum } from '@/server/zod/enums';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import {
@@ -10,6 +14,7 @@ import {
 import z from 'zod';
 
 export const playersSelectSchema = createSelectSchema(players);
+export const ratingEventSchema = createSelectSchema(rating_events);
 export const playersWithUsernameSchema = createSelectSchema(players).extend({
   username: z.string().nullable(),
 });
@@ -117,6 +122,7 @@ export type AffiliationExtendedModel = z.infer<
 >;
 export type AffiliationMinimalModel = z.infer<typeof affiliationMinimalSchema>;
 export type PlayerModel = z.infer<typeof playersSelectSchema>;
+export type RatingEventModel = z.infer<typeof ratingEventSchema>;
 export type PlayerWithUsernameModel = z.infer<typeof playersWithUsernameSchema>;
 export type PlayerMinimalModel = z.infer<typeof playersMinimalSchema>;
 export type PlayerFormModel = z.infer<typeof playerFormSchema>;
