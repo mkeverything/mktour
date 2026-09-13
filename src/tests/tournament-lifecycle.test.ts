@@ -54,11 +54,16 @@ const tournamentRow = async (tournamentId: string) =>
 
 /** started rated solo tournament, one round, one decided game */
 async function makeRunningTournament() {
-  const [a, b] = await Promise.all(
-    ['a', 'b'].map((side) =>
-      createPlayer({ nickname: `lc ${side} ${newid()}`, rating: 1500, clubId }),
-    ),
-  );
+  const a = await createPlayer({
+    nickname: `lc a ${newid()}`,
+    rating: 1500,
+    clubId,
+  });
+  const b = await createPlayer({
+    nickname: `lc b ${newid()}`,
+    rating: 1500,
+    clubId,
+  });
   const tournamentId = newid();
   await db.insert(tournaments).values({
     id: tournamentId,
@@ -125,8 +130,9 @@ describe('finishing a tournament', () => {
       expect(player.lastSeenAt.getTime()).toBe(closedAt.getTime());
       expect(player.ratingLastUpdateAt.getTime()).toBe(closedAt.getTime());
       expect(events).toHaveLength(2);
-      expect(events[1].publishedAt.getTime()).toBe(closedAt.getTime());
-      expect(events[1].sourceTournamentId).toBe(tournamentId);
+      expect(
+        events.find((e) => e.sourceTournamentId === tournamentId)?.publishedAt,
+      ).toEqual(closedAt);
     }
   });
 

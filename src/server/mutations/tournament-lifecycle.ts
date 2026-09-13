@@ -275,10 +275,10 @@ export async function finishTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
 
-  // one server instant for closedAt, rating publication and lastSeenAt
-  const closedAt = nowTimestamp();
-
-  const clubId = await db.transaction(async (tx) => {
+  const { clubId, closedAt } = await db.transaction(async (tx) => {
+    // one server instant for closedAt, rating publication and lastSeenAt,
+    // taken inside the transaction so it cannot predate a closure we read
+    const closedAt = nowTimestamp();
     const [tournament, allGames, unitsUnsorted] = await Promise.all([
       getTournamentById(tournamentId, tx),
       getTournamentGames(tournamentId, tx),
@@ -343,7 +343,7 @@ export async function finishTournament({
       await calculateAndApplyGlickoRatings(tournamentId, tx, closedAt);
     }
 
-    return tournament.clubId;
+    return { clubId: tournament.clubId, closedAt };
   });
   revalidateClubPlayerStats(clubId);
   return { closedAt };

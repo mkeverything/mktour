@@ -226,6 +226,11 @@ export async function calculateAndApplyGlickoRatings(
     getTournamentGameRows(tournamentId, tx),
     getTournamentPlayerRatings(tournamentId, tx),
   ]);
+  if (storedPlayers.some((p) => p.ratingLastUpdateAt > publishedAt)) {
+    throw new AppError('RATING_CALCULATION_ERROR', {
+      cause: 'rating timeline cannot move backwards',
+    });
+  }
   // bring every participant's uncertainty forward first, so opponents' rd is current too
   const tournamentPlayers = storedPlayers.map((player) => ({
     ...player,

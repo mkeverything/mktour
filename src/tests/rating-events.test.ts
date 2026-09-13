@@ -57,6 +57,13 @@ async function makePlayer(
   return player.id;
 }
 
+// sequential: parallel writers on one sqlite file race for the lock (SQLITE_BUSY)
+async function makePlayers(...opts: Parameters<typeof makePlayer>[0][]) {
+  const ids: string[] = [];
+  for (const o of opts) ids.push(await makePlayer(o));
+  return ids;
+}
+
 /** closed rated solo tournament with one unit per player and the given games */
 async function makeRatedTournament(
   playerIds: string[],
@@ -138,12 +145,7 @@ describe('rating events', () => {
   });
 
   test('closure publishes one outcome per player with completed rated games and nothing else', async () => {
-    const [a, b, c, byeOnly] = await Promise.all([
-      makePlayer(),
-      makePlayer(),
-      makePlayer(),
-      makePlayer(),
-    ]);
+    const [a, b, c, byeOnly] = await makePlayers({}, {}, {}, {});
     const byeBefore = await playerRow(byeOnly);
     const tournamentId = await makeRatedTournament(
       [a, b, c, byeOnly],
@@ -159,8 +161,7 @@ describe('rating events', () => {
       const events = await eventsOf(playerId);
       const player = await playerRow(playerId);
       expect(events).toHaveLength(2);
-      expect(events[1]).toMatchObject({
-        isStarting: false,
+      expect(events.find((e) => !e.isStarting)).toMatchObject({
         sourceTournamentId: tournamentId,
         publishedAt,
         rating: player.rating,
@@ -175,15 +176,13 @@ describe('rating events', () => {
 
   test("brings inactive participants' rd forward before rating, for both sides", async () => {
     // returning: rd 50 stored five years ago (grows to ~175); fresh: rd 150 now
-    const [returning, fresh] = await Promise.all([
-      makePlayer({ ratingDeviation: 50, lastUpdateWeeksAgo: 260 }),
-      makePlayer({ ratingDeviation: 150, lastUpdateWeeksAgo: 0 }),
-    ]);
     // control pair: winner rd 50 stored now, loser identical to `fresh`
-    const [ctrlWinner, ctrlLoser] = await Promise.all([
-      makePlayer({ ratingDeviation: 50, lastUpdateWeeksAgo: 0 }),
-      makePlayer({ ratingDeviation: 150, lastUpdateWeeksAgo: 0 }),
-    ]);
+    const [returning, fresh, ctrlWinner, ctrlLoser] = await makePlayers(
+      { ratingDeviation: 50, lastUpdateWeeksAgo: 260 },
+      { ratingDeviation: 150, lastUpdateWeeksAgo: 0 },
+      { ratingDeviation: 50, lastUpdateWeeksAgo: 0 },
+      { ratingDeviation: 150, lastUpdateWeeksAgo: 0 },
+    );
 
     await publish(
       await makeRatedTournament([returning, fresh], [[0, 1, '1-0']]),
@@ -206,12 +205,7 @@ describe('rating events', () => {
   });
 
   test("merge deletes the duplicate's events and leaves the base timeline unchanged", async () => {
-    const [base, duplicate, opp1, opp2] = await Promise.all([
-      makePlayer(),
-      makePlayer(),
-      makePlayer(),
-      makePlayer(),
-    ]);
+    const [base, duplicate, opp1, opp2] = await makePlayers({}, {}, {}, {});
     await publish(await makeRatedTournament([base, opp1], [[0, 1, '1-0']]));
     await publish(
       await makeRatedTournament([duplicate, opp2], [[0, 1, '0-1']]),
