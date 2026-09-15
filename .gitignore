@@ -19,6 +19,7 @@
 # misc
 .DS_Store
 *.pem
+/tmp/
 
 # debug
 npm-debug.log*
@@ -55,3 +56,5 @@ next-env.d.ts
 /public/sw.js
 /public/workbox-*.js
 /public/splash_screens/
+
+rating-events.md

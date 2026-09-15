@@ -12,7 +12,6 @@ import {
   foreignKey,
   index,
   integer,
-  real,
   sqliteTable,
   text,
   uniqueIndex,
@@ -51,17 +50,10 @@ export const players_to_units = sqliteTable(
       .notNull()
       .references(() => tournament_units.id),
     numberInUnit: integer('number_in_unit').notNull(),
-    newRating: integer('new_rating'),
-    newRatingDeviation: integer('new_rating_deviation'),
-    newVolatility: real('new_volatility'),
   },
   (table) => [
     index('ptu_unit_idx').on(table.unitId),
     index('ptu_player_idx').on(table.playerId),
-    check(
-      'ptu_new_rating_bounds',
-      sql`${table.newRating} is null or ${table.newRating} between 400 and 3400`,
-    ),
   ],
 );
 

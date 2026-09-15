@@ -68,7 +68,6 @@ export async function addSoloUnit(
   options: { database?: SoloUnitDatabase; skipAuth?: boolean } = {},
 ): Promise<UnitModel[]> {
   const now = addedAt ?? new Date();
-  const database = options.database ?? db;
 
   if (!options.skipAuth) {
     if (!userId) throw new AppError('UNAUTHENTICATED');
@@ -77,13 +76,6 @@ export async function addSoloUnit(
     if (user.id !== userId) throw new AppError('USER_MISMATCH');
     const { status } = await getStatusInTournament(user.id, tournamentId);
     if (status === 'viewer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
-  }
-
-  const tournament = await getTournamentById(tournamentId, database);
-  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
-  if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
-  if (tournament.type !== 'solo') {
-    throw new AppError('NOT_SOLO_TOURNAMENT');
   }
 
   const unitId = requestedUnitId ?? newid();
@@ -102,6 +94,11 @@ export async function addSoloUnit(
   });
 
   const run = async (d: SoloUnitDatabase) => {
+    const tournament = await getTournamentById(tournamentId, d);
+    if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+    if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
+    if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
+    if (tournament.type !== 'solo') throw new AppError('NOT_SOLO_TOURNAMENT');
     const existingMembership = await d
       .select({ id: players_to_units.id })
       .from(players_to_units)

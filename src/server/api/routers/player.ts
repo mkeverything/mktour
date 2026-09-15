@@ -28,7 +28,6 @@ import {
   getPlayerStats,
   getPlayersTournamentsInfinite,
 } from '@/server/queries/player';
-import { clubsSelectSchema } from '@/server/zod/clubs';
 import {
   clubIdInputSchema,
   notificationIdInputSchema,
@@ -40,25 +39,18 @@ import {
   playerEditSchema,
   playerFormSchema,
   playerMergeInputSchema,
-  playersSelectSchema,
+  playerOutputSchema,
+  playerInfoOutputSchema,
   playerStatsSchema,
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
-import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { z } from 'zod';
 
 export const playerRouter = {
   info: publicProcedure
     .meta(meta.playerInfo)
     .input(playerIdInputSchema)
-    .output(
-      playersSelectSchema
-        .extend({
-          user: usersSelectMinimalSchema.nullable(),
-          club: clubsSelectSchema,
-        })
-        .nullable(),
-    )
+    .output(playerInfoOutputSchema.nullable())
     .query(async (opts) => {
       const { input } = opts;
       return await getPlayer(input.playerId);
@@ -66,7 +58,7 @@ export const playerRouter = {
   create: clubAdminProcedure
     .meta(meta.playersCreate)
     .input(playerFormSchema)
-    .output(playersSelectSchema)
+    .output(playerOutputSchema)
     .mutation(async (opts) => {
       const { input: player } = opts;
       return await createPlayer(player);
@@ -161,6 +153,7 @@ export const playerRouter = {
     .mutation(async ({ input, ctx }) => {
       const clubs = await getUserClubIds({ userId: ctx.user.id });
       const player = await getPlayer(input.playerId);
+      if (!player) throw new AppError('PLAYER_NOT_FOUND');
       const isAdmin = Object.keys(clubs).find(
         (clubId) => clubId === player.clubId,
       );
@@ -170,7 +163,7 @@ export const playerRouter = {
   edit: protectedProcedure
     .meta(meta.playersEdit)
     .input(playerEditSchema)
-    .output(playersSelectSchema)
+    .output(playerOutputSchema)
     .mutation(async (opts) => {
       const { input } = opts;
       return await editPlayer({ values: input, user: opts.ctx.user });

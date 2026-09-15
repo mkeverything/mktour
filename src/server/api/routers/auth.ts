@@ -36,7 +36,7 @@ import {
   paginatedInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
-import { playersSelectSchema } from '@/server/zod/players';
+import { playerOutputSchema } from '@/server/zod/players';
 import { tournamentWithClubSchema } from '@/server/zod/tournaments';
 import {
   apiToken,
@@ -213,7 +213,7 @@ export const authRouter = {
   },
   affiliationInClub: authProcedure
     .input(clubIdInputSchema)
-    .output(playersSelectSchema.nullish())
+    .output(playerOutputSchema.nullish())
     .query(async ({ ctx, input }) => {
       if (!ctx.user) return null;
       return await ctx.db.query.players.findFirst({

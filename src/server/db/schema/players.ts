@@ -1,5 +1,9 @@
 import { clubs } from '@/server/db/schema/clubs';
-import { games, players_to_units } from '@/server/db/schema/tournaments';
+import {
+  games,
+  players_to_units,
+  tournaments,
+} from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { AffiliationStatus } from '@/server/zod/enums';
 import { relations, sql } from 'drizzle-orm';
@@ -22,7 +26,7 @@ export const players = sqliteTable(
     userId: text('user_id').references(() => users.id),
     rating: integer('rating').notNull().default(1500),
     ratingPeak: integer('rating_peak'),
-    ratingDeviation: integer('rating_deviation').notNull().default(350),
+    ratingDeviation: real('rating_deviation').notNull().default(350),
     ratingVolatility: real('rating_volatility').notNull().default(0.06),
     ratingLastUpdateAt: integer('rating_last_update_at', {
       mode: 'timestamp',
@@ -47,6 +51,49 @@ export const players = sqliteTable(
     check(
       'player_rating_peak_bounds',
       sql`${table.ratingPeak} is null or ${table.ratingPeak} between 400 and 3400`,
+    ),
+  ],
+);
+
+// a player's published rating history: one starting row, then one row per
+// rated tournament closure. rows are never recalculated; deleting the source
+// tournament only detaches the reference.
+export const rating_events = sqliteTable(
+  'rating_event',
+  {
+    id: text('id').primaryKey(),
+    playerId: text('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    sourceTournamentId: text('source_tournament_id').references(
+      () => tournaments.id,
+      { onDelete: 'set null' },
+    ),
+    publishedAt: integer('published_at', { mode: 'timestamp' }).notNull(),
+    rating: integer('rating').notNull(),
+    ratingDeviation: real('rating_deviation').notNull(),
+    isStarting: integer('is_starting', { mode: 'boolean' }).notNull(),
+  },
+  (table) => [
+    index('rating_event_player_timeline_idx').on(
+      table.playerId,
+      table.publishedAt,
+      table.id,
+    ),
+    uniqueIndex('rating_event_player_tournament_unique_idx').on(
+      table.playerId,
+      table.sourceTournamentId,
+    ),
+    uniqueIndex('rating_event_player_starting_unique_idx')
+      .on(table.playerId)
+      .where(sql`${table.isStarting} = 1`),
+    check(
+      'rating_event_rating_bounds',
+      sql`${table.rating} between 400 and 3400`,
+    ),
+    check(
+      'rating_event_starting_has_no_source',
+      sql`${table.isStarting} = 0 or ${table.sourceTournamentId} is null`,
     ),
   ],
 );
@@ -87,6 +134,17 @@ export const players_relations = relations(players, ({ one, many }) => ({
   units: many(players_to_units),
   gamesAsWhite: many(games, { relationName: 'gameWhitePlayer' }),
   gamesAsBlack: many(games, { relationName: 'gameBlackPlayer' }),
+}));
+
+export const rating_events_relations = relations(rating_events, ({ one }) => ({
+  player: one(players, {
+    fields: [rating_events.playerId],
+    references: [players.id],
+  }),
+  sourceTournament: one(tournaments, {
+    fields: [rating_events.sourceTournamentId],
+    references: [tournaments.id],
+  }),
 }));
 
 export const affiliations_relations = relations(affiliations, ({ one }) => ({
