@@ -48,6 +48,7 @@ import { tournamentFormatEnum } from '@/server/zod/enums';
 import {
   playerFormSchema,
   playersWithUsernameSchema,
+  playerWithUsernameOutputSchema,
 } from '@/server/zod/players';
 import {
   addDoublesUnitSchema,
@@ -128,7 +129,7 @@ export const tournamentRouter = {
     }),
   playersOut: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
-    .output(z.array(playersWithUsernameSchema))
+    .output(z.array(playerWithUsernameOutputSchema))
     .query(async (opts) => {
       return await getTournamentPossiblePlayers(opts.input.tournamentId);
     }),

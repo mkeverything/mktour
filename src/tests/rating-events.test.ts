@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, setDefaultTimeout, test } from 'bun:test';
 import { asc, eq } from 'drizzle-orm';
 
+import { AppError } from '@/lib/errors';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
@@ -129,6 +130,43 @@ beforeAll(async () => {
 });
 
 describe('rating events', () => {
+  test('creation keeps custom rating points but ignores caller uncertainty', async () => {
+    const input = {
+      nickname: `defaults ${newid()}`,
+      rating: 1850,
+      clubId,
+      ratingDeviation: -10,
+      ratingVolatility: 1,
+      ratingLastUpdateAt: new Date(0),
+    };
+    const player = await createPlayer(input);
+    expect(player).toMatchObject({
+      rating: 1850,
+      ratingDeviation: 350,
+      ratingVolatility: 0.06,
+    });
+    expect(player.ratingLastUpdateAt.getTime()).toBeGreaterThan(0);
+    expect((await eventsOf(player.id))[0]).toMatchObject({
+      rating: 1850,
+      ratingDeviation: 350,
+    });
+  });
+
+  test('player and starting event roll back together in the caller transaction', async () => {
+    let playerId = '';
+    await expect(
+      db.transaction(async (tx) => {
+        const player = await createPlayer(
+          { nickname: `rollback ${newid()}`, rating: 1500, clubId },
+          { database: tx },
+        );
+        playerId = player.id;
+        throw new AppError('PLAYER_NOT_CREATED');
+      }),
+    ).rejects.toMatchObject({ message: 'PLAYER_NOT_CREATED' });
+    expect(await playerRow(playerId)).toBeUndefined();
+    expect(await eventsOf(playerId)).toHaveLength(0);
+  });
   test("player creation writes a starting event sharing the player's update instant", async () => {
     const playerId = await makePlayer();
     const player = await playerRow(playerId);

@@ -33,7 +33,11 @@ import {
   ClubToUserModel,
 } from '@/server/zod/clubs';
 import { UserNotificationInsertModel } from '@/server/zod/notifications';
-import { PlayerEditModel, PlayerFormModel } from '@/server/zod/players';
+import {
+  PlayerEditModel,
+  PlayerFormModel,
+  playerFormSchema,
+} from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
 import { and, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import { User } from 'lucia';
@@ -151,7 +155,7 @@ export const createPlayer = async (
       await database
         .insert(players)
         .values({
-          ...player,
+          ...playerFormSchema.parse(player),
           nickname,
           id: options.id ?? newid(),
           ratingPeak: null,

@@ -1,4 +1,3 @@
-import { getCurrentRatingDeviation } from '@/lib/glicko2';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
@@ -17,9 +16,5 @@ export default async function getPlayer(playerId: string) {
     .innerJoin(clubs, eq(players.clubId, clubs.id))
     .leftJoin(users, eq(players.userId, users.id));
 
-  if (!result) return null;
-  return {
-    ...result,
-    ratingDeviation: getCurrentRatingDeviation(result, new Date()),
-  };
+  return result ?? null;
 }

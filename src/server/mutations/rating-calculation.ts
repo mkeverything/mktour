@@ -18,16 +18,16 @@ import {
 import { and, eq } from 'drizzle-orm';
 
 import type { GameResult } from '@/server/zod/enums';
-import type { PlayerModel } from '@/server/zod/players';
+import type { PlayerRecordModel } from '@/server/zod/players';
 import type { GameModel } from '@/server/zod/tournaments';
 
 type Tx = Pick<typeof db, 'select' | 'update' | 'insert'>;
 type PlayerRating = Pick<
-  PlayerModel,
+  PlayerRecordModel,
   'id' | 'rating' | 'ratingDeviation' | 'ratingVolatility'
 >;
 type TournamentPlayerRating = PlayerRating &
-  Pick<PlayerModel, 'ratingPeak' | 'ratingLastUpdateAt'>;
+  Pick<PlayerRecordModel, 'ratingPeak' | 'ratingLastUpdateAt'>;
 type RatedGameRow = Pick<
   GameModel,
   'id' | 'whitePlayerId' | 'blackPlayerId' | 'result'
@@ -46,7 +46,7 @@ type RatedGame = CompletedRatedGameRow & {
 type PlayerRatingUpdate = {
   player: TournamentPlayerRating;
   update: RatingUpdate;
-  newPeak: NonNullable<PlayerModel['ratingPeak']> | null;
+  newPeak: NonNullable<PlayerRecordModel['ratingPeak']> | null;
 };
 
 async function getTournamentGameRows(tournamentId: string, tx: Tx) {
@@ -99,7 +99,7 @@ function isCompletedRatedGameRow(
 
 function toRatedGames(
   gameRows: RatedGameRow[],
-  playerRatings: Map<PlayerModel['id'], PlayerRating>,
+  playerRatings: Map<PlayerRecordModel['id'], PlayerRating>,
 ): RatedGame[] {
   const ratedGames: RatedGame[] = [];
 
@@ -173,7 +173,7 @@ function getScoreFromResult(
 }
 
 function calculateNewPeak( // returns null only if old peak was null
-  currentPeak: PlayerModel['ratingPeak'],
+  currentPeak: PlayerRecordModel['ratingPeak'],
   update: RatingUpdate,
 ) {
   if (!isEstablishedRating(update.newRatingDeviation)) return currentPeak;
@@ -261,7 +261,6 @@ export async function calculateAndApplyGlickoRatings(
         .where(
           and(
             eq(players.id, player.id),
-            // optimistic guard against an overlapping closure
             eq(players.ratingLastUpdateAt, player.ratingLastUpdateAt),
           ),
         );

@@ -7,7 +7,6 @@ import PlayerStats from '@/app/player/[id]/player-stats';
 import LastTournaments from '@/components/last-tournaments';
 import { CardTitle } from '@/components/ui/card';
 import { BASE_URL } from '@/lib/config/urls';
-import { isEstablishedRating } from '@/lib/glicko2';
 import { publicCaller } from '@/server/api';
 import { PlayerModel } from '@/server/zod/players';
 import { ChevronRight, Users2 } from 'lucide-react';
@@ -96,9 +95,7 @@ const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
       </div>
       <div className="flex flex-col items-end">
         <span className="text-3xl font-bold">
-          {isEstablishedRating(player.ratingDeviation)
-            ? player.rating
-            : `${player.rating}?`}
+          {player.isEstablished ? player.rating : `${player.rating}?`}
         </span>
       </div>
     </div>

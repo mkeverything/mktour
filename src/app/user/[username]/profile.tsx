@@ -30,7 +30,6 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Separator } from '@/components/ui/separator';
-import { isEstablishedRating } from '@/lib/glicko2';
 import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
 import type {
@@ -356,7 +355,7 @@ const ClubPlayerCard: FC<
   const tStatus = useTranslations('Status');
   const formattedPlayerRating = !player.rating
     ? '—'
-    : isEstablishedRating(player.ratingDeviation)
+    : player.isEstablished
       ? player.rating
       : `${player.rating}?`;
 

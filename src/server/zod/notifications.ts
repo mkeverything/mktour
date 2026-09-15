@@ -9,6 +9,7 @@ import {
 import {
   affiliationMinimalSchema,
   playersMinimalSchema,
+  playerOutputSchema,
 } from '@/server/zod/players';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import {
@@ -47,7 +48,10 @@ export const clubNotificationExtendedSchema =
   clubNotificationsSelectSchema.extend({
     affiliation: affiliationMinimalSchema.nullable(),
     user: usersSelectMinimalSchema.nullable(),
-    player: playersMinimalSchema.nullable(),
+    player: playerOutputSchema
+      .transform((player) => playersMinimalSchema.parse(player))
+      .pipe(playersMinimalSchema)
+      .nullable(),
   });
 
 export type UserNotificationMetadataMap = {
