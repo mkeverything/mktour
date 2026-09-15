@@ -23,7 +23,11 @@ import {
   deleteTournament,
   finishTournament,
   resetTournament,
+  startTournament,
+  updateSwissRoundsNumber,
 } from '@/server/mutations/tournament-lifecycle';
+import { setTournamentGameResult } from '@/server/mutations/tournament-games';
+import { resetTournamentUnits } from '@/server/mutations/tournament-units';
 
 // lifecycle mutations authenticate from request cookies; in tests we stand in
 // as the seeded club organizer. module mocks stay for the rest of the run,
@@ -109,6 +113,142 @@ beforeAll(async () => {
 });
 
 describe('finishing a tournament', () => {
+  test('requires a start and all persisted games to be decided', async () => {
+    const { tournamentId } = await makeRunningTournament();
+    await db
+      .update(tournaments)
+      .set({ startedAt: null })
+      .where(eq(tournaments.id, tournamentId));
+    await expect(finishTournament({ tournamentId })).rejects.toMatchObject({
+      message: 'TOURNAMENT_NOT_STARTED',
+    });
+    await db
+      .update(tournaments)
+      .set({ startedAt: new Date() })
+      .where(eq(tournaments.id, tournamentId));
+    await db
+      .update(games)
+      .set({ result: null })
+      .where(eq(games.tournamentId, tournamentId));
+    await expect(finishTournament({ tournamentId })).rejects.toMatchObject({
+      message: 'INCOMPLETE_GAMES',
+    });
+    expect((await tournamentRow(tournamentId)).closedAt).toBeNull();
+  });
+
+  test('requires the configured final round; shortening a swiss is explicit', async () => {
+    const { tournamentId } = await makeRunningTournament();
+    await db
+      .update(tournaments)
+      .set({ format: 'swiss', roundsNumber: 2 })
+      .where(eq(tournaments.id, tournamentId));
+    await expect(finishTournament({ tournamentId })).rejects.toMatchObject({
+      message: 'TOURNAMENT_NOT_COMPLETED',
+    });
+    await updateSwissRoundsNumber({ tournamentId, roundsNumber: 1 });
+    await finishTournament({ tournamentId });
+    expect((await tournamentRow(tournamentId)).closedAt).not.toBeNull();
+  });
+
+  test('cannot start or reset units on a closed legacy pre-start tournament', async () => {
+    const { tournamentId } = await makeRunningTournament();
+    await db
+      .update(tournaments)
+      .set({ startedAt: null, closedAt: new Date() })
+      .where(eq(tournaments.id, tournamentId));
+    await expect(
+      startTournament({
+        tournamentId,
+        startedAt: new Date(),
+        format: 'round robin',
+        roundsNumber: 1,
+      }),
+    ).rejects.toMatchObject({ message: 'TOURNAMENT_ALREADY_FINISHED' });
+    await expect(resetTournamentUnits({ tournamentId })).rejects.toMatchObject({
+      message: 'TOURNAMENT_ALREADY_FINISHED',
+    });
+  });
+
+  test('rejects a result request paused before its transaction when closure wins', async () => {
+    const { tournamentId, playerIds } = await makeRunningTournament();
+    const game = (
+      await db.select().from(games).where(eq(games.tournamentId, tournamentId))
+    )[0];
+    const reached = Promise.withResolvers<void>();
+    const resume = Promise.withResolvers<void>();
+    const original = db.transaction.bind(db);
+    let pauseNext = true;
+    db.transaction = (async (...args: Parameters<typeof db.transaction>) => {
+      if (pauseNext) {
+        pauseNext = false;
+        reached.resolve();
+        await resume.promise;
+      }
+      return original(...args);
+    }) as typeof db.transaction;
+    const pending = setTournamentGameResult(
+      { gameId: game.id, result: '0-1' },
+      organizerId,
+    );
+    try {
+      await reached.promise;
+      await finishTournament({ tournamentId });
+      const published = await eventsOf(playerIds[0]);
+      resume.resolve();
+      await expect(pending).rejects.toMatchObject({
+        message: 'TOURNAMENT_ALREADY_FINISHED',
+      });
+      expect(
+        (await db.select().from(games).where(eq(games.id, game.id)))[0].result,
+      ).toBe('1-0');
+      expect(await eventsOf(playerIds[0])).toEqual(published);
+    } finally {
+      resume.resolve();
+      db.transaction = original;
+      await pending.catch(() => {});
+    }
+  });
+
+  test('rolls closure and player writes back if publication fails', async () => {
+    const { tournamentId, playerIds } = await makeRunningTournament();
+    const before = await db
+      .select()
+      .from(players)
+      .where(eq(players.id, playerIds[0]));
+    await db.insert(rating_events).values({
+      id: newid(),
+      playerId: playerIds[0],
+      sourceTournamentId: tournamentId,
+      publishedAt: new Date(),
+      rating: 1500,
+      ratingDeviation: 350,
+      isStarting: false,
+    });
+    await expect(finishTournament({ tournamentId })).rejects.toBeDefined();
+    expect((await tournamentRow(tournamentId)).closedAt).toBeNull();
+    expect(
+      await db.select().from(players).where(eq(players.id, playerIds[0])),
+    ).toEqual(before);
+    expect(
+      (
+        await db
+          .select()
+          .from(tournament_units)
+          .where(eq(tournament_units.tournamentId, tournamentId))
+      ).every((unit) => unit.place === null),
+    ).toBe(true);
+  });
+
+  test('unrated closure leaves ratings and the starting-only timeline unchanged', async () => {
+    const { tournamentId, playerIds } = await makeRunningTournament();
+    await db
+      .update(tournaments)
+      .set({ rated: false })
+      .where(eq(tournaments.id, tournamentId));
+    const before = await eventsOf(playerIds[0]);
+    await finishTournament({ tournamentId });
+    expect(await eventsOf(playerIds[0])).toEqual(before);
+  });
   test('uses one server instant for closedAt, rating publication and lastSeenAt', async () => {
     const { tournamentId, playerIds } = await makeRunningTournament();
     const before = Date.now();
@@ -158,11 +298,12 @@ describe('finishing a tournament', () => {
     expect(await tournamentRow(tournamentId)).toBeUndefined();
     const eventsAfter = await eventsOf(playerIds[0]);
     expect(eventsAfter).toHaveLength(2);
-    expect(eventsAfter[1]).toMatchObject({
+    const outcome = eventsBefore.find((event) => !event.isStarting)!;
+    expect(eventsAfter.find((event) => !event.isStarting)).toMatchObject({
       sourceTournamentId: null,
-      rating: eventsBefore[1].rating,
-      ratingDeviation: eventsBefore[1].ratingDeviation,
-      publishedAt: eventsBefore[1].publishedAt,
+      rating: outcome.rating,
+      ratingDeviation: outcome.ratingDeviation,
+      publishedAt: outcome.publishedAt,
     });
   });
 });
