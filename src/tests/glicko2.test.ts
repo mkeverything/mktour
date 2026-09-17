@@ -2,11 +2,18 @@ import {
   getCurrentRatingDeviation,
   GLICKO2_CONSTANTS,
   glicko2Calculator,
+  isEstablishedRating,
   type GlickoGameResult,
 } from '@/lib/glicko2';
 import { describe, expect, it } from 'bun:test';
 
 describe('glicko-2', () => {
+  it('requires rd strictly below 110 for establishment', () => {
+    expect(isEstablishedRating(109.999)).toBe(true);
+    expect(isEstablishedRating(110)).toBe(false);
+    expect(isEstablishedRating(110.001)).toBe(false);
+  });
+
   // test case 1: new player plays 5 games with mixed results
   it('should calculate ratings correctly for a new player', () => {
     const newPlayer = {

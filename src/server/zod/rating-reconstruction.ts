@@ -30,6 +30,9 @@ export const legacyResultSchema = z.object({
   opponentRatingDeviation: playerRecordSchema.shape.ratingDeviation,
   score: z.union([z.literal(0), z.literal(0.5), z.literal(1)]),
 });
+export const ratingEventImportSchema = ratingEventSchema.omit({ id: true });
+export type RatingEventImport = z.infer<typeof ratingEventImportSchema>;
+
 export const startingReconstructionSchema = playerRecordSchema
   .pick({
     id: true,
@@ -39,7 +42,7 @@ export const startingReconstructionSchema = playerRecordSchema
     status: z.enum(['recovered', 'direct-baseline', 'skipped']),
     candidates: z.array(z.number()),
     reasons: z.array(z.string()),
-    event: ratingEventSchema.omit({ id: true }).nullable(),
+    event: ratingEventImportSchema.nullable(),
   });
 
 export type LegacyRatingState = z.infer<typeof legacyRatingStateSchema>;

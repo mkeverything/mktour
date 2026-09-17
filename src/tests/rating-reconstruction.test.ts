@@ -1,11 +1,16 @@
 import { describe, expect, test } from 'bun:test';
+import { Database } from 'bun:sqlite';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createClient } from '@libsql/client';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { drizzle } from 'drizzle-orm/libsql';
 import { calculateLegacyRating } from '../../scripts/temporary/rating-events/legacy-glicko2';
 import {
   reconstructStartingRatings,
-  startingImportSql,
+  legacyOutcomeEvents,
+  ratingImportSql,
 } from '../../scripts/temporary/rating-events/reconstruct-starting-ratings';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
@@ -193,6 +198,32 @@ describe('legacy starting reconstruction', () => {
     ).toBe(true);
   });
 
+  test('exports outcomes even when starts are skipped or the tournament is now unrated', () => {
+    const snapshot = fixture();
+    snapshot.players[0].rating++;
+    snapshot.tournaments[0].rated = false;
+    expect(
+      reconstructStartingRatings(snapshot, -Infinity).every(
+        (entry) => entry.event === null,
+      ),
+    ).toBe(true);
+    expect(legacyOutcomeEvents(snapshot)).toHaveLength(2);
+    snapshot.tournaments[0].closedAt = null;
+    expect(legacyOutcomeEvents(snapshot)).toHaveLength(0);
+  });
+
+  test('stops export on incomplete or duplicate outcome data before migration', () => {
+    const incomplete = fixture();
+    incomplete.participations[0].newRatingDeviation = null;
+    expect(() => legacyOutcomeEvents(incomplete)).toThrow();
+    const duplicate = fixture();
+    duplicate.participations.push({
+      ...duplicate.participations[0],
+      id: 'duplicate',
+    });
+    expect(() => legacyOutcomeEvents(duplicate)).toThrow();
+  });
+
   test('does not infer chronological order from ids when closures tie', () => {
     const snapshot = fixture();
     snapshot.tournaments.push({ ...snapshot.tournaments[0], id: 'tied' });
@@ -213,14 +244,20 @@ describe('legacy starting reconstruction', () => {
     ).toBe(true);
   });
 
-  test('manual imports are idempotent; generated cleanup preserves players and memberships', async () => {
+  test('exports before migration and imports idempotently after all legacy columns are dropped', async () => {
     const client = createClient({ url: 'file::memory:' });
     try {
       const migrations = readMigrationFiles({
         migrationsFolder: 'src/server/db/migrations',
       });
+      const boundary = migrations.findIndex((migration) =>
+        migration.sql.some((statement) =>
+          statement.includes('CREATE TABLE `rating_event`'),
+        ),
+      );
+      expect(boundary).toBeGreaterThan(0);
       await client.migrate(
-        migrations.slice(0, -1).flatMap((migration) => migration.sql),
+        migrations.slice(0, boundary).flatMap((migration) => migration.sql),
       );
       const database = drizzle(client);
       const snapshot = fixture();
@@ -239,16 +276,59 @@ describe('legacy starting reconstruction', () => {
         });
       const before = await database.select().from(players);
       const members = await database.select().from(players_to_units);
-      const backfill = await Bun.file(
-        'scripts/temporary/rating-events/backfill-rating-events.sql',
-      ).text();
-      await client.executeMultiple(backfill);
-      await client.executeMultiple(backfill);
-      const starts = startingImportSql(
-        reconstructStartingRatings(snapshot, -Infinity),
+      const directory = mkdtempSync(join(tmpdir(), 'mktour-export-test-'));
+      try {
+        const input = join(directory, 'wal snapshot #1.db');
+        const prefix = join(directory, 'report');
+        await client.execute({ sql: 'VACUUM INTO ?', args: [input] });
+        const walDatabase = new Database(input);
+        walDatabase.exec('PRAGMA journal_mode=WAL');
+        walDatabase.close();
+        const fingerprint = Bun.hash(await Bun.file(input).bytes());
+        const process = Bun.spawn(
+          [
+            Bun.which('bun')!,
+            'scripts/temporary/rating-events/reconstruct-starting-ratings.ts',
+            input,
+            prefix,
+            'always',
+          ],
+          { stdout: 'pipe', stderr: 'pipe' },
+        );
+        const stderr = await new Response(process.stderr).text();
+        expect({ code: await process.exited, stderr }).toEqual({
+          code: 0,
+          stderr: '',
+        });
+        const report = await Bun.file(`${prefix}.json`).json();
+        expect(report.counts).toMatchObject({
+          outcomes: 2,
+          recovered: 2,
+          skipped: 0,
+        });
+        expect(Bun.hash(await Bun.file(input).bytes())).toBe(fingerprint);
+        expect(await Bun.file(`${input}-wal`).exists()).toBe(false);
+      } finally {
+        rmSync(directory, { recursive: true });
+      }
+      const outcomes = legacyOutcomeEvents(snapshot);
+      const cases = reconstructStartingRatings(snapshot, -Infinity);
+      const exported = ratingImportSql([
+        ...outcomes,
+        ...cases.flatMap((entry) => (entry.event ? [entry.event] : [])),
+      ]);
+      expect(exported).not.toContain('players_to_units');
+      await client.migrate(
+        migrations.slice(boundary).flatMap((migration) => migration.sql),
       );
-      await client.executeMultiple(starts);
-      await client.executeMultiple(starts);
+      expect(
+        (await client.execute('PRAGMA table_info(players_to_units)')).rows.map(
+          (column) => column.name,
+        ),
+      ).toEqual(['id', 'player_id', 'unit_id', 'number_in_unit']);
+      await client.executeMultiple(exported);
+      const firstImport = await client.execute('SELECT * FROM rating_event');
+      await client.executeMultiple(exported);
       const events = await client.execute('SELECT * FROM rating_event');
       expect(events.rows).toHaveLength(4);
       expect(
@@ -257,7 +337,20 @@ describe('legacy starting reconstruction', () => {
           .map((e) => e.rating)
           .sort(),
       ).toEqual([1400, 1500]);
-      await client.migrate(migrations.at(-1)!.sql);
+      expect(events.rows).toEqual(firstImport.rows);
+      for (const outcome of outcomes) {
+        expect(
+          events.rows.find(
+            (event) =>
+              event.player_id === outcome.playerId && event.is_starting === 0,
+          ),
+        ).toMatchObject({
+          source_tournament_id: outcome.sourceTournamentId,
+          rating: outcome.rating,
+          rating_deviation: outcome.ratingDeviation,
+          published_at: outcome.publishedAt.getTime() / 1000,
+        });
+      }
       expect(await database.select().from(players)).toEqual(before);
       expect(await database.select().from(players_to_units)).toEqual(members);
       expect(

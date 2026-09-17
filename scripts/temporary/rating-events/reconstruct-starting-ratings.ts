@@ -1,6 +1,7 @@
 /*
-read-only, local-only reconstruction. never pass a live database or production url.
-follow backfill-rating-events.sql first; keep all writes paused through cleanup.
+read-only, local-only history export. never pass a live database or production url.
+follow README.md: freeze/export first, review, migrate, then import and verify.
+keep all writes paused throughout; do not invoke the migration endpoint before review.
 
 run from the repository root, with bun:
   bun scripts/temporary/rating-events/reconstruct-starting-ratings.ts \
@@ -18,20 +19,24 @@ connects to turso or imports application database credentials. output files must
 
 first run the synthetic tests:
   bun test:noseed src/tests/rating-reconstruction.test.ts
-then rehearse export -> report -> reviewed sql -> verification -> 0015 on a db copy.
-review .json and .sql together, including assumptions, every skipped player, candidate
-lists and reasons. exit 2 means some players were skipped, NOT full success. search
-limits and tied/contradictory histories are deliberately unresolved, never guessed.
+then rehearse export -> review -> all pending migrations -> import -> verification
+on a db copy. the .json report and .sql contain both legacy tournament outcomes and
+validated starting events; a skipped starting event never removes a legacy outcome.
+review assumptions, every outcome, skipped player, candidate list and reason.
+exit 2 means some starts were skipped, NOT full success. search limits and
+contradictory histories are deliberately unresolved, never guessed.
 
-manually apply approved .sql in one turso shell connection with stop-on-error. on any
-error ROLLBACK and investigate. verify exact approved starting
-rows, outcome counts/values, unchanged players and foreign keys before migration 0015.
-keep the export/report/sql; rollback instructions are in backfill-rating-events.sql.
+only after review, invoke the existing secure migration endpoint once, then manually
+apply the approved .sql in one turso shell connection with stop-on-error. the inserts
+need only rating_event, not the retired ptu columns. on error ROLLBACK and investigate.
+verify exact imported values against the saved report, unchanged players/memberships
+against the export, and foreign keys before reopening writes. see README.md for rollback.
 */
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { getTableColumns, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { AppError } from '@/lib/errors';
@@ -44,6 +49,8 @@ import {
 } from '@/server/db/schema/tournaments';
 import {
   legacySnapshotSchema,
+  ratingEventImportSchema,
+  type RatingEventImport,
   type LegacyRatingState,
   type LegacyResult,
   type LegacySnapshot,
@@ -426,24 +433,65 @@ export function reconstructStartingRatings(
   return [...cases.values()];
 }
 
-const quote = (value: string) => `'${value.replaceAll("'", "''")}'`;
-export function startingImportSql(cases: StartingReconstruction[]) {
-  const inserts = cases.flatMap((entry) => {
-    const event = entry.event;
-    if (!event) return [];
+export function legacyOutcomeEvents(
+  snapshot: LegacySnapshot,
+): RatingEventImport[] {
+  const units = new Map(snapshot.units.map((unit) => [unit.id, unit]));
+  const tournaments = new Map(
+    snapshot.tournaments.map((tournament) => [tournament.id, tournament]),
+  );
+  const seen = new Set<string>();
+  return snapshot.participations.flatMap((participation) => {
+    if (participation.newRating === null) return [];
+    const unit = units.get(participation.unitId);
+    const tournament = unit && tournaments.get(unit.tournamentId);
+    if (!tournament)
+      throw new AppError('CONFIG_ERROR', {
+        cause: `missing tournament for legacy snapshot ${participation.id}`,
+      });
+    if (!tournament.closedAt) return [];
+    const key = JSON.stringify([participation.playerId, tournament.id]);
+    if (seen.has(key))
+      throw new AppError('CONFIG_ERROR', {
+        cause: `duplicate legacy outcome ${key}; stop before migration`,
+      });
+    seen.add(key);
     return [
-      `INSERT INTO rating_event (id, player_id, source_tournament_id, published_at, rating, rating_deviation, is_starting)
-SELECT lower(hex(randomblob(8))), ${quote(event.playerId)}, NULL, ${Math.floor(event.publishedAt.getTime() / 1000)}, ${event.rating}, ${event.ratingDeviation}, 1
-WHERE NOT EXISTS (SELECT 1 FROM rating_event WHERE player_id = ${quote(event.playerId)} AND is_starting = 1);`,
+      ratingEventImportSchema.parse({
+        playerId: participation.playerId,
+        sourceTournamentId: tournament.id,
+        publishedAt: tournament.closedAt,
+        rating: participation.newRating,
+        ratingDeviation: participation.newRatingDeviation,
+        isStarting: false,
+      }),
     ];
   });
-  return `-- review the companion report, including skipped cases, before applying.
--- apply before 0015 while writes remain paused. stop on error and ROLLBACK.
--- reruns skip existing starts; compare their values with the report, never assume a match.
+}
+
+const quote = (value: string) => `'${value.replaceAll("'", "''")}'`;
+export function ratingImportSql(events: RatingEventImport[]) {
+  const inserts = events.map((event) => {
+    const source =
+      event.sourceTournamentId === null
+        ? 'NULL'
+        : quote(event.sourceTournamentId);
+    const match = event.isStarting
+      ? 'is_starting = 1'
+      : `source_tournament_id = ${source}`;
+    return `INSERT INTO rating_event (id, player_id, source_tournament_id, published_at, rating, rating_deviation, is_starting)
+SELECT lower(hex(randomblob(8))), ${quote(event.playerId)}, ${source}, ${Math.floor(event.publishedAt.getTime() / 1000)}, ${event.rating}, ${event.ratingDeviation}, ${Number(event.isStarting)}
+WHERE NOT EXISTS (SELECT 1 FROM rating_event WHERE player_id = ${quote(event.playerId)} AND ${match});`;
+  });
+  return `-- generated from the frozen legacy export; review the companion report before migration.
+-- apply after all pending migrations, with writes still paused. stop on error and ROLLBACK.
+-- reruns skip existing events; compare their values with the report, never assume a match.
 BEGIN IMMEDIATE;
 ${inserts.join('\n')}
 COMMIT;
-SELECT player_id, rating, rating_deviation, published_at FROM rating_event WHERE is_starting = 1 ORDER BY player_id;
+SELECT player_id, source_tournament_id, published_at, rating, rating_deviation, is_starting
+FROM rating_event ORDER BY player_id, published_at, id;
+SELECT is_starting, count(*) AS events FROM rating_event GROUP BY is_starting;
 PRAGMA foreign_key_check;
 `;
 }
@@ -473,7 +521,13 @@ if (import.meta.main) {
   const fingerprint = () =>
     createHash('sha256').update(readFileSync(input)).digest('hex');
   const sha256 = fingerprint();
-  const sqlite = new Database(resolve(input), { readonly: true });
+  // standalone exports can retain WAL mode without needing writable sidecar files.
+  const sqlite = new Database(
+    `${pathToFileURL(resolve(input)).href}?immutable=1`,
+    {
+      readonly: true,
+    },
+  );
   let snapshot: LegacySnapshot;
   try {
     const database = drizzle(sqlite);
@@ -504,8 +558,14 @@ if (import.meta.main) {
       cause:
         'snapshot changed while reading; stop and take a consistent export',
     });
+  const outcomes = legacyOutcomeEvents(snapshot);
   const cases = reconstructStartingRatings(snapshot, boundsSince);
+  const events = [
+    ...outcomes,
+    ...cases.flatMap((entry) => (entry.event ? [entry.event] : [])),
+  ];
   const counts = {
+    outcomes: outcomes.length,
     recovered: cases.filter((c) => c.status === 'recovered').length,
     directBaseline: cases.filter((c) => c.status === 'direct-baseline').length,
     skipped: cases.filter((c) => c.status === 'skipped').length,
@@ -534,13 +594,14 @@ if (import.meta.main) {
           volatilityTolerance: 1e-9,
           maxJointSearchNodes: 500_000,
         },
+        outcomes,
         cases,
       },
       null,
       2,
     ) + '\n',
   );
-  await Bun.write(`${prefix}.sql`, startingImportSql(cases));
+  await Bun.write(`${prefix}.sql`, ratingImportSql(events));
   console.log({ ...counts, report: `${prefix}.json`, sql: `${prefix}.sql` });
   if (counts.skipped) process.exitCode = 2;
 }
