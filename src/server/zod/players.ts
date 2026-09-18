@@ -49,7 +49,12 @@ function toPublicPlayer<T extends PlayerRecordModel>(player: T) {
 export const playerOutputSchema = playerRecordSchema
   .transform(toPublicPlayer)
   .pipe(playersSelectSchema);
-export const ratingEventSchema = createSelectSchema(rating_events);
+export const ratingEventSchema = createSelectSchema(rating_events, {
+  rating: (s) =>
+    s
+      .min(GLICKO2_CONSTANTS.MIN_RATING, { error: 'MIN_RATING' })
+      .max(GLICKO2_CONSTANTS.MAX_RATING, { error: 'MAX_RATING' }),
+});
 export const playersWithUsernameSchema = playersSelectSchema.extend({
   username: z.string().nullable(),
 });

@@ -22,6 +22,8 @@ import {
 } from '@/server/db/schema/tournaments';
 import {
   legacySnapshotSchema,
+  legacyOutcomeEventSchema,
+  ratingEventImportSchema,
   type LegacySnapshot,
 } from '@/server/zod/rating-reconstruction';
 
@@ -212,6 +214,47 @@ describe('legacy starting reconstruction', () => {
     expect(legacyOutcomeEvents(snapshot)).toHaveLength(0);
   });
 
+  test.each([
+    [0, 400],
+    [399, 400],
+    [400, 400],
+    [1500, 1500],
+    [3400, 3400],
+    [3401, 3400],
+  ])(
+    'exports historical rating %i as %i without changing its source',
+    (originalRating, rating) => {
+      const snapshot = fixture();
+      snapshot.participations[0].newRating = originalRating;
+      const before = structuredClone(snapshot);
+      expect(legacyOutcomeEvents(snapshot)[0]).toMatchObject({
+        playerId: 'p0',
+        sourceTournamentId: 'tournament',
+        originalRating,
+        rating,
+      });
+      expect(snapshot).toEqual(before);
+    },
+  );
+
+  test.each([399, 3401, 400.5, NaN, Infinity])(
+    'rejects invalid rating %s at the import boundary',
+    (rating) => {
+      const event = { ...legacyOutcomeEvents(fixture())[0], rating };
+      expect(ratingEventImportSchema.safeParse(event).success).toBe(false);
+      expect(() => ratingImportSql([event])).toThrow();
+    },
+  );
+
+  test.each([400.5, NaN, Infinity, -Infinity])(
+    'rejects malformed historical rating %s rather than clamping it',
+    (rating) => {
+      const snapshot = fixture();
+      snapshot.participations[0].newRating = rating;
+      expect(() => legacyOutcomeEvents(snapshot)).toThrow();
+    },
+  );
+
   test('stops export on incomplete or duplicate outcome data before migration', () => {
     const incomplete = fixture();
     incomplete.participations[0].newRatingDeviation = null;
@@ -244,128 +287,151 @@ describe('legacy starting reconstruction', () => {
     ).toBe(true);
   });
 
-  test('exports before migration and imports idempotently after all legacy columns are dropped', async () => {
-    const client = createClient({ url: 'file::memory:' });
-    try {
-      const migrations = readMigrationFiles({
-        migrationsFolder: 'src/server/db/migrations',
-      });
-      const boundary = migrations.findIndex((migration) =>
-        migration.sql.some((statement) =>
-          statement.includes('CREATE TABLE `rating_event`'),
-        ),
-      );
-      expect(boundary).toBeGreaterThan(0);
-      await client.migrate(
-        migrations.slice(0, boundary).flatMap((migration) => migration.sql),
-      );
-      const database = drizzle(client);
-      const snapshot = fixture();
-      await database
-        .insert(clubs)
-        .values({ id: 'club', name: 'club', createdAt: new Date() });
-      await database.insert(players).values(snapshot.players);
-      await database.insert(tournaments).values(snapshot.tournaments);
-      await database.insert(tournament_units).values(snapshot.units);
-      await database.insert(players_to_units).values(snapshot.participations);
-      await database.insert(games).values(snapshot.games);
-      for (const p of snapshot.participations)
-        await client.execute({
-          sql: 'UPDATE players_to_units SET new_rating = ?, new_rating_deviation = ?, new_volatility = ? WHERE id = ?',
-          args: [p.newRating, p.newRatingDeviation, p.newVolatility, p.id],
-        });
-      const before = await database.select().from(players);
-      const members = await database.select().from(players_to_units);
-      const directory = mkdtempSync(join(tmpdir(), 'mktour-export-test-'));
+  test.each([false, true])(
+    'exports before migration and imports idempotently after all legacy columns are dropped (out-of-range: %s)',
+    async (outOfRange) => {
+      const client = createClient({ url: 'file::memory:' });
       try {
-        const input = join(directory, 'wal snapshot #1.db');
-        const prefix = join(directory, 'report');
-        await client.execute({ sql: 'VACUUM INTO ?', args: [input] });
-        const walDatabase = new Database(input);
-        walDatabase.exec('PRAGMA journal_mode=WAL');
-        walDatabase.close();
-        const fingerprint = Bun.hash(await Bun.file(input).bytes());
-        const process = Bun.spawn(
-          [
-            Bun.which('bun')!,
-            'scripts/temporary/rating-events/reconstruct-starting-ratings.ts',
-            input,
-            prefix,
-            'always',
-          ],
-          { stdout: 'pipe', stderr: 'pipe' },
-        );
-        const stderr = await new Response(process.stderr).text();
-        expect({ code: await process.exited, stderr }).toEqual({
-          code: 0,
-          stderr: '',
+        const migrations = readMigrationFiles({
+          migrationsFolder: 'src/server/db/migrations',
         });
-        const report = await Bun.file(`${prefix}.json`).json();
-        expect(report.counts).toMatchObject({
-          outcomes: 2,
-          recovered: 2,
-          skipped: 0,
-        });
-        expect(Bun.hash(await Bun.file(input).bytes())).toBe(fingerprint);
-        expect(await Bun.file(`${input}-wal`).exists()).toBe(false);
-      } finally {
-        rmSync(directory, { recursive: true });
-      }
-      const outcomes = legacyOutcomeEvents(snapshot);
-      const cases = reconstructStartingRatings(snapshot, -Infinity);
-      const exported = ratingImportSql([
-        ...outcomes,
-        ...cases.flatMap((entry) => (entry.event ? [entry.event] : [])),
-      ]);
-      expect(exported).not.toContain('players_to_units');
-      await client.migrate(
-        migrations.slice(boundary).flatMap((migration) => migration.sql),
-      );
-      expect(
-        (await client.execute('PRAGMA table_info(players_to_units)')).rows.map(
-          (column) => column.name,
-        ),
-      ).toEqual(['id', 'player_id', 'unit_id', 'number_in_unit']);
-      await client.executeMultiple(exported);
-      const firstImport = await client.execute('SELECT * FROM rating_event');
-      await client.executeMultiple(exported);
-      const events = await client.execute('SELECT * FROM rating_event');
-      expect(events.rows).toHaveLength(4);
-      expect(
-        events.rows
-          .filter((e) => e.is_starting === 1)
-          .map((e) => e.rating)
-          .sort(),
-      ).toEqual([1400, 1500]);
-      expect(events.rows).toEqual(firstImport.rows);
-      for (const outcome of outcomes) {
-        expect(
-          events.rows.find(
-            (event) =>
-              event.player_id === outcome.playerId && event.is_starting === 0,
+        const boundary = migrations.findIndex((migration) =>
+          migration.sql.some((statement) =>
+            statement.includes('CREATE TABLE `rating_event`'),
           ),
-        ).toMatchObject({
-          source_tournament_id: outcome.sourceTournamentId,
-          rating: outcome.rating,
-          rating_deviation: outcome.ratingDeviation,
-          published_at: outcome.publishedAt.getTime() / 1000,
-        });
+        );
+        expect(boundary).toBeGreaterThan(0);
+        await client.migrate(
+          migrations.slice(0, boundary).flatMap((migration) => migration.sql),
+        );
+        const database = drizzle(client);
+        const snapshot = fixture();
+        if (outOfRange) {
+          snapshot.participations[0].newRating = 399;
+          snapshot.participations[1].newRating = 3401;
+        }
+        const expectedStarts = outOfRange ? 0 : 2;
+        await database
+          .insert(clubs)
+          .values({ id: 'club', name: 'club', createdAt: new Date() });
+        await database.insert(players).values(snapshot.players);
+        await database.insert(tournaments).values(snapshot.tournaments);
+        await database.insert(tournament_units).values(snapshot.units);
+        await database.insert(players_to_units).values(snapshot.participations);
+        await database.insert(games).values(snapshot.games);
+        // emulate historical rows that predate enforcement of the legacy bounds.
+        if (outOfRange)
+          await client.execute('PRAGMA ignore_check_constraints = ON');
+        for (const p of snapshot.participations)
+          await client.execute({
+            sql: 'UPDATE players_to_units SET new_rating = ?, new_rating_deviation = ?, new_volatility = ? WHERE id = ?',
+            args: [p.newRating, p.newRatingDeviation, p.newVolatility, p.id],
+          });
+        if (outOfRange)
+          await client.execute('PRAGMA ignore_check_constraints = OFF');
+        const before = await database.select().from(players);
+        const members = await database.select().from(players_to_units);
+        const directory = mkdtempSync(join(tmpdir(), 'mktour-export-test-'));
+        let exported: string;
+        try {
+          const input = join(directory, 'wal snapshot #1.db');
+          const prefix = join(directory, 'report');
+          await client.execute({ sql: 'VACUUM INTO ?', args: [input] });
+          const walDatabase = new Database(input);
+          walDatabase.exec('PRAGMA journal_mode=WAL');
+          walDatabase.close();
+          const fingerprint = Bun.hash(await Bun.file(input).bytes());
+          const process = Bun.spawn(
+            [
+              Bun.which('bun')!,
+              'scripts/temporary/rating-events/reconstruct-starting-ratings.ts',
+              input,
+              prefix,
+              'always',
+            ],
+            { stdout: 'pipe', stderr: 'pipe' },
+          );
+          const stderr = await new Response(process.stderr).text();
+          expect({ code: await process.exited, stderr }).toEqual({
+            code: outOfRange ? 2 : 0,
+            stderr: '',
+          });
+          const report = await Bun.file(`${prefix}.json`).json();
+          expect(report.counts).toMatchObject({
+            outcomes: 2,
+            clampedOutcomes: outOfRange ? 2 : 0,
+            recovered: expectedStarts,
+            skipped: 2 - expectedStarts,
+          });
+          const reportOutcomes = legacyOutcomeEventSchema
+            .omit({ publishedAt: true })
+            .array()
+            .parse(report.outcomes);
+          expect(reportOutcomes.map((event) => event.originalRating)).toEqual(
+            snapshot.participations.map((p) => p.newRating!),
+          );
+          expect(reportOutcomes.map((event) => event.rating)).toEqual(
+            outOfRange
+              ? [400, 3400]
+              : snapshot.participations.map((p) => p.newRating!),
+          );
+          exported = await Bun.file(`${prefix}.sql`).text();
+          expect(Bun.hash(await Bun.file(input).bytes())).toBe(fingerprint);
+          expect(await Bun.file(`${input}-wal`).exists()).toBe(false);
+        } finally {
+          rmSync(directory, { recursive: true });
+        }
+        const outcomes = legacyOutcomeEvents(snapshot);
+        expect(exported).not.toContain('players_to_units');
+        await client.migrate(
+          migrations.slice(boundary).flatMap((migration) => migration.sql),
+        );
+        expect(
+          (
+            await client.execute('PRAGMA table_info(players_to_units)')
+          ).rows.map((column) => column.name),
+        ).toEqual(['id', 'player_id', 'unit_id', 'number_in_unit']);
+        await client.executeMultiple(exported);
+        const firstImport = await client.execute('SELECT * FROM rating_event');
+        await client.executeMultiple(exported);
+        const events = await client.execute('SELECT * FROM rating_event');
+        expect(events.rows).toHaveLength(2 + expectedStarts);
+        expect(
+          events.rows
+            .filter((e) => e.is_starting === 1)
+            .map((e) => e.rating)
+            .sort(),
+        ).toEqual(outOfRange ? [] : [1400, 1500]);
+        expect(events.rows).toEqual(firstImport.rows);
+        for (const outcome of outcomes) {
+          expect(
+            events.rows.find(
+              (event) =>
+                event.player_id === outcome.playerId && event.is_starting === 0,
+            ),
+          ).toMatchObject({
+            source_tournament_id: outcome.sourceTournamentId,
+            rating: outcome.rating,
+            rating_deviation: outcome.ratingDeviation,
+            published_at: outcome.publishedAt.getTime() / 1000,
+          });
+        }
+        expect(await database.select().from(players)).toEqual(before);
+        expect(await database.select().from(players_to_units)).toEqual(members);
+        expect(
+          (await client.execute('PRAGMA foreign_key_check')).rows,
+        ).toHaveLength(0);
+        expect(
+          (
+            await client.execute('PRAGMA table_info(players_to_units)')
+          ).rows.map((column) => column.name),
+        ).toEqual(['id', 'player_id', 'unit_id', 'number_in_unit']);
+        expect(
+          (await client.execute('SELECT * FROM rating_event')).rows,
+        ).toEqual(events.rows);
+      } finally {
+        client.close();
       }
-      expect(await database.select().from(players)).toEqual(before);
-      expect(await database.select().from(players_to_units)).toEqual(members);
-      expect(
-        (await client.execute('PRAGMA foreign_key_check')).rows,
-      ).toHaveLength(0);
-      expect(
-        (await client.execute('PRAGMA table_info(players_to_units)')).rows.map(
-          (column) => column.name,
-        ),
-      ).toEqual(['id', 'player_id', 'unit_id', 'number_in_unit']);
-      expect((await client.execute('SELECT * FROM rating_event')).rows).toEqual(
-        events.rows,
-      );
-    } finally {
-      client.close();
-    }
-  });
+    },
+  );
 });

@@ -37,20 +37,38 @@ predate it. a git author date is not a deployment date. stop if uncertain.
 
 outputs (the paths must not already exist):
 
-- `.json`: snapshot fingerprint, assumptions, outcome rows, reconstructed/direct
-  starts, skipped players with reasons, and counts.
+- `.json`: snapshot fingerprint, assumptions, outcome rows (including each
+  `originalRating` and import `rating`), reconstructed/direct starts, skipped players
+  with reasons, and counts including `clampedOutcomes`.
 - `.sql`: standalone, idempotent inserts for **both outcomes and approved starts**.
   these do not read legacy columns from production and can run after cleanup.
 
 review both files before migration. every closed legacy snapshot with non-null
 `new_rating` must have an outcome, even if its starting event cannot be recovered
 or it would not qualify under today's rating rules. open/reset snapshots stay out.
-exit code 2 means some starts were skipped: review each exception; it is not full
-reconstruction success. invalid/missing outcome data or duplicate outcomes stop
-export rather than silently discarding history.
+exit code 2 means starts were skipped or outcomes were clamped: review each
+exception; it is not full reconstruction success. invalid/missing outcome data or
+duplicate outcomes stop export rather than silently discarding history.
 
-preserve the export and reviewed files. confirm outcome counts/values against the
-export and approve reconstructed/direct starts and every skipped case.
+### out-of-range historical outcomes
+
+the migration policy is to clamp each historical outcome's import `rating` to the
+inclusive range 400–3400. this deliberately changes out-of-range published history;
+it does not discard the outcome. the report retains the exact integer
+`originalRating`, player and source tournament for audit, and counts changed rows
+in `clampedOutcomes`. values already within bounds, including 400 and 3400, remain
+unchanged. malformed ratings are rejected, not repaired by clamping.
+
+only exported outcomes are clamped. the frozen snapshot and stored player ratings
+are not modified; starting-rating reconstruction uses the original historical
+values, not clamped ones. out-of-range reconstructed starts remain skipped.
+every import event is validated against the rating bounds before either output
+file is written. no database constraint is disabled or changed by the exporter.
+
+preserve the export and reviewed files. confirm outcome counts and `originalRating`
+values against the export, verify each clamped import value, and approve every
+clamped outcome, reconstructed/direct start and skipped case before migration.
+never migrate on an export error or without completing this review.
 
 ## 3. migrate once
 
@@ -73,8 +91,9 @@ rows must be investigated, not treated as success merely because counts match.
 before reopening writes:
 
 - compare every imported outcome/start with the saved report, including player,
-  source tournament, rating, rd, timestamp and starting flag. sql timestamps are
-  unix seconds; report dates are iso. random event ids are not comparison keys.
+  source tournament, import `rating` (not `originalRating`), rd, timestamp and starting
+  flag. sql timestamps are unix seconds; report dates are iso. random event ids are
+  not comparison keys.
 - compare event counts with report `outcomes`, `recovered` and `directBaseline`.
 - compare all player fields and surviving ptu membership fields with the export.
 - confirm legacy ptu columns are gone and `PRAGMA foreign_key_check` returns no rows.

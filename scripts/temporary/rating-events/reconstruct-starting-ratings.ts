@@ -23,8 +23,9 @@ then rehearse export -> review -> all pending migrations -> import -> verificati
 on a db copy. the .json report and .sql contain both legacy tournament outcomes and
 validated starting events; a skipped starting event never removes a legacy outcome.
 review assumptions, every outcome, skipped player, candidate list and reason.
-exit 2 means some starts were skipped, NOT full success. search limits and
-contradictory histories are deliberately unresolved, never guessed.
+historical outcomes are clamped to 400–3400; the report retains each originalRating.
+exit 2 means starts were skipped or outcomes clamped: review before migration.
+search limits and contradictory histories are deliberately unresolved, never guessed.
 
 only after review, invoke the existing secure migration endpoint once, then manually
 apply the approved .sql in one turso shell connection with stop-on-error. the inserts
@@ -40,6 +41,7 @@ import { pathToFileURL } from 'node:url';
 import { getTableColumns, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { AppError } from '@/lib/errors';
+import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { players } from '@/server/db/schema/players';
 import {
   games,
@@ -49,8 +51,10 @@ import {
 } from '@/server/db/schema/tournaments';
 import {
   legacySnapshotSchema,
+  legacyOutcomeEventSchema,
   ratingEventImportSchema,
   type RatingEventImport,
+  type LegacyOutcomeEvent,
   type LegacyRatingState,
   type LegacyResult,
   type LegacySnapshot,
@@ -435,7 +439,7 @@ export function reconstructStartingRatings(
 
 export function legacyOutcomeEvents(
   snapshot: LegacySnapshot,
-): RatingEventImport[] {
+): LegacyOutcomeEvent[] {
   const units = new Map(snapshot.units.map((unit) => [unit.id, unit]));
   const tournaments = new Map(
     snapshot.tournaments.map((tournament) => [tournament.id, tournament]),
@@ -456,22 +460,32 @@ export function legacyOutcomeEvents(
         cause: `duplicate legacy outcome ${key}; stop before migration`,
       });
     seen.add(key);
-    return [
-      ratingEventImportSchema.parse({
-        playerId: participation.playerId,
-        sourceTournamentId: tournament.id,
-        publishedAt: tournament.closedAt,
-        rating: participation.newRating,
-        ratingDeviation: participation.newRatingDeviation,
-        isStarting: false,
-      }),
-    ];
+    const outcome = legacyOutcomeEventSchema.safeParse({
+      playerId: participation.playerId,
+      sourceTournamentId: tournament.id,
+      publishedAt: tournament.closedAt,
+      originalRating: participation.newRating,
+      rating: Math.min(
+        GLICKO2_CONSTANTS.MAX_RATING,
+        Math.max(GLICKO2_CONSTANTS.MIN_RATING, participation.newRating),
+      ),
+      ratingDeviation: participation.newRatingDeviation,
+      isStarting: false,
+    });
+    if (!outcome.success)
+      throw new AppError('CONFIG_ERROR', {
+        cause: `invalid legacy outcome ${key}: ${outcome.error.message}; stop before migration`,
+      });
+    return [outcome.data];
   });
 }
 
 const quote = (value: string) => `'${value.replaceAll("'", "''")}'`;
 export function ratingImportSql(events: RatingEventImport[]) {
-  const inserts = events.map((event) => {
+  const validated = ratingEventImportSchema.array().safeParse(events);
+  if (!validated.success)
+    throw new AppError('CONFIG_ERROR', { cause: validated.error });
+  const inserts = validated.data.map((event) => {
     const source =
       event.sourceTournamentId === null
         ? 'NULL'
@@ -484,6 +498,7 @@ SELECT lower(hex(randomblob(8))), ${quote(event.playerId)}, ${source}, ${Math.fl
 WHERE NOT EXISTS (SELECT 1 FROM rating_event WHERE player_id = ${quote(event.playerId)} AND ${match});`;
   });
   return `-- generated from the frozen legacy export; review the companion report before migration.
+-- historical outcomes are clamped to 400–3400; review originalRating in the report.
 -- apply after all pending migrations, with writes still paused. stop on error and ROLLBACK.
 -- reruns skip existing events; compare their values with the report, never assume a match.
 BEGIN IMMEDIATE;
@@ -562,8 +577,12 @@ if (import.meta.main) {
     ...outcomes,
     ...cases.flatMap((entry) => (entry.event ? [entry.event] : [])),
   ];
+  const importSql = ratingImportSql(events);
   const counts = {
     outcomes: outcomes.length,
+    clampedOutcomes: outcomes.filter(
+      (event) => event.rating !== event.originalRating,
+    ).length,
     recovered: cases.filter((c) => c.status === 'recovered').length,
     directBaseline: cases.filter((c) => c.status === 'direct-baseline').length,
     skipped: cases.filter((c) => c.status === 'skipped').length,
@@ -585,6 +604,8 @@ if (import.meta.main) {
           calculator:
             '6ef9e965 fixed drift/integer rd; rating clamping introduced by 477e9a32',
           ratingBoundsSince: bounds,
+          outcomeRatingPolicy:
+            'clamp to 400–3400; retain originalRating in each outcome; reconstruct starts from unchanged legacy values',
           ordering:
             'legacy closedAt, validated against forward snapshots and final baselines; ties skipped; client timestamps do not prove real execution order',
           timestamps:
@@ -599,7 +620,7 @@ if (import.meta.main) {
       2,
     ) + '\n',
   );
-  await Bun.write(`${prefix}.sql`, ratingImportSql(events));
+  await Bun.write(`${prefix}.sql`, importSql);
   console.log({ ...counts, report: `${prefix}.json`, sql: `${prefix}.sql` });
-  if (counts.skipped) process.exitCode = 2;
+  if (counts.skipped || counts.clampedOutcomes) process.exitCode = 2;
 }

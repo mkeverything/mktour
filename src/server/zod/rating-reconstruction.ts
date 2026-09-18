@@ -32,6 +32,11 @@ export const legacyResultSchema = z.object({
 });
 export const ratingEventImportSchema = ratingEventSchema.omit({ id: true });
 export type RatingEventImport = z.infer<typeof ratingEventImportSchema>;
+export const legacyOutcomeEventSchema = ratingEventImportSchema.extend({
+  originalRating:
+    legacySnapshotSchema.shape.participations.element.shape.newRating.unwrap(),
+});
+export type LegacyOutcomeEvent = z.infer<typeof legacyOutcomeEventSchema>;
 
 export const startingReconstructionSchema = playerRecordSchema
   .pick({
