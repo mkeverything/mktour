@@ -32,7 +32,7 @@ need only rating_event, not the retired ptu columns. on error ROLLBACK and inves
 verify exact imported values against the saved report, unchanged players/memberships
 against the export, and foreign keys before reopening writes. see README.md for rollback.
 */
-import { Database } from 'bun:sqlite';
+import { Database, constants } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -524,9 +524,7 @@ if (import.meta.main) {
   // standalone exports can retain WAL mode without needing writable sidecar files.
   const sqlite = new Database(
     `${pathToFileURL(resolve(input)).href}?immutable=1`,
-    {
-      readonly: true,
-    },
+    constants.SQLITE_OPEN_READONLY | constants.SQLITE_OPEN_URI,
   );
   let snapshot: LegacySnapshot;
   try {
