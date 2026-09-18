@@ -1,6 +1,16 @@
-import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
-import { affiliations, players } from '@/server/db/schema/players';
+import {
+  getCurrentRatingDeviation,
+  GLICKO2_CONSTANTS,
+  isEstablishedRating,
+} from '@/lib/glicko2';
+import {
+  affiliations,
+  players,
+  rating_events,
+} from '@/server/db/schema/players';
+import { clubsSelectSchema } from '@/server/zod/clubs';
 import { affiliationStatusEnum } from '@/server/zod/enums';
+import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import {
   createInsertSchema,
@@ -9,10 +19,57 @@ import {
 } from 'drizzle-zod';
 import z from 'zod';
 
-export const playersSelectSchema = createSelectSchema(players);
-export const playersWithUsernameSchema = createSelectSchema(players).extend({
+export const playerRecordSchema = createSelectSchema(players);
+export const playersSelectSchema = playerRecordSchema
+  .omit({
+    ratingDeviation: true,
+    ratingVolatility: true,
+    ratingLastUpdateAt: true,
+  })
+  .extend({ isEstablished: z.boolean() });
+
+function toPublicPlayer<T extends PlayerRecordModel>(player: T) {
+  const {
+    ratingDeviation,
+    ratingVolatility,
+    ratingLastUpdateAt,
+    ...publicPlayer
+  } = player;
+  return {
+    ...publicPlayer,
+    isEstablished: isEstablishedRating(
+      getCurrentRatingDeviation(
+        { ratingDeviation, ratingVolatility, ratingLastUpdateAt },
+        new Date(),
+      ),
+    ),
+  };
+}
+
+export const playerOutputSchema = playerRecordSchema
+  .transform(toPublicPlayer)
+  .pipe(playersSelectSchema);
+export const ratingEventSchema = createSelectSchema(rating_events, {
+  rating: (s) =>
+    s
+      .min(GLICKO2_CONSTANTS.MIN_RATING, { error: 'MIN_RATING' })
+      .max(GLICKO2_CONSTANTS.MAX_RATING, { error: 'MAX_RATING' }),
+});
+export const playersWithUsernameSchema = playersSelectSchema.extend({
   username: z.string().nullable(),
 });
+export const playerWithUsernameOutputSchema = playerRecordSchema
+  .extend({ username: z.string().nullable() })
+  .transform(toPublicPlayer)
+  .pipe(playersWithUsernameSchema);
+const playerInfoFields = {
+  user: usersSelectMinimalSchema.nullable(),
+  club: clubsSelectSchema,
+};
+export const playerInfoOutputSchema = playerRecordSchema
+  .extend(playerInfoFields)
+  .transform(toPublicPlayer)
+  .pipe(playersSelectSchema.extend(playerInfoFields));
 export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
@@ -51,7 +108,7 @@ export const affiliationsUpdateSchema = createUpdateSchema(affiliations);
 
 export const affiliationExtendedSchema = affiliationsSelectSchema
   .extend({
-    player: playersSelectSchema,
+    player: playerOutputSchema,
   })
   .omit({ playerId: true, clubId: true });
 
@@ -65,11 +122,11 @@ export const playersMinimalSchema = playersSelectSchema.omit({
   clubId: true,
 });
 
-export const playerFormSchema = playersInsertSchema.omit({
-  id: true,
-  lastSeenAt: true,
-  userId: true,
-  ratingPeak: true,
+export const playerFormSchema = playersInsertSchema.pick({
+  nickname: true,
+  realname: true,
+  rating: true,
+  clubId: true,
 });
 
 export const playerEditSchema = playersUpdateSchema
@@ -116,7 +173,9 @@ export type AffiliationExtendedModel = z.infer<
   typeof affiliationExtendedSchema
 >;
 export type AffiliationMinimalModel = z.infer<typeof affiliationMinimalSchema>;
+export type PlayerRecordModel = z.infer<typeof playerRecordSchema>;
 export type PlayerModel = z.infer<typeof playersSelectSchema>;
+export type RatingEventModel = z.infer<typeof ratingEventSchema>;
 export type PlayerWithUsernameModel = z.infer<typeof playersWithUsernameSchema>;
 export type PlayerMinimalModel = z.infer<typeof playersMinimalSchema>;
 export type PlayerFormModel = z.infer<typeof playerFormSchema>;
@@ -127,14 +186,27 @@ export type PlayerMergeInputModel = z.infer<typeof playerMergeInputSchema>;
 
 export const userPlayerClubSchema = z.object({
   club: z.object({ id: z.string(), name: z.string() }),
-  player: playersSelectSchema.pick({
-    id: true,
-    nickname: true,
-    rating: true,
-    ratingDeviation: true,
-    ratingPeak: true,
-    lastSeenAt: true,
-  }),
+  player: playerOutputSchema
+    .transform(
+      ({ id, nickname, rating, isEstablished, ratingPeak, lastSeenAt }) => ({
+        id,
+        nickname,
+        rating,
+        isEstablished,
+        ratingPeak,
+        lastSeenAt,
+      }),
+    )
+    .pipe(
+      playersSelectSchema.pick({
+        id: true,
+        nickname: true,
+        rating: true,
+        isEstablished: true,
+        ratingPeak: true,
+        lastSeenAt: true,
+      }),
+    ),
 });
 
 export type PlayerStatsModel = z.infer<typeof playerStatsSchema>;

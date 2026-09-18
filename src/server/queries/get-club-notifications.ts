@@ -2,7 +2,6 @@ import { db } from '@/server/db';
 import { club_notifications } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
 import { users } from '@/server/db/schema/users';
-import { AnyClubNotificationExtended } from '@/types/notifications';
 import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
 
 export default async function getClubNotifications({
@@ -15,7 +14,7 @@ export default async function getClubNotifications({
   limit: number;
 }) {
   // always read userId and playerId from metadata for consistency
-  const result = (await db
+  const result = await db
     .select({
       ...getTableColumns(club_notifications),
       affiliation: affiliations,
@@ -44,7 +43,7 @@ export default async function getClubNotifications({
     )
     .orderBy(desc(club_notifications.createdAt))
     .limit(limit + 1)
-    .offset(cursor)) as unknown as AnyClubNotificationExtended[];
+    .offset(cursor);
 
   let nextCursor: number | null = null;
   if (result.length > limit) {
