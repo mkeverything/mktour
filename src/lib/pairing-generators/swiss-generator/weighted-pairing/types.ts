@@ -30,4 +30,12 @@ export interface WeightContext {
 
   /** Map from score to count of players with that score (for RANKING criterion) */
   readonly scoregroupSizes: ReadonlyMap<number, number>;
+
+  /**
+   * Map from an occupied score to its bracket level index, 0 being the highest
+   * score. Only occupied scores are levels (FIDE C.04.3 1.3), so the difference
+   * of two indices counts the brackets a player exits when floating between
+   * them. Iterates top to bottom; its size is the level count.
+   */
+  readonly levelIndexByScore: ReadonlyMap<number, number>;
 }

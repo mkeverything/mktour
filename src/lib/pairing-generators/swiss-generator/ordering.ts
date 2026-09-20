@@ -45,6 +45,24 @@ export function compareByPairingNumber(
 }
 
 /**
+ * Compares two scores (descending order - higher score first)
+ *
+ * WHY: Bracket levels run from the highest score downwards (FIDE C.04.3 1.3),
+ * so bare score values need the same ordering entities get in compareByScore.
+ *
+ * @param firstScore - First score
+ * @param secondScore - Second score
+ * @returns Comparison result for sorting
+ */
+export function compareScoresDescending(
+  firstScore: number,
+  secondScore: number,
+): number {
+  // Note: Reversed order (secondScore - firstScore) for descending sort
+  return compareNumeric(secondScore, firstScore);
+}
+
+/**
  * Compares two entities by their score (descending order - higher score first)
  *
  * WHY: Descending order needed for FIDE Swiss pairing where higher scores pair first.
@@ -57,8 +75,10 @@ export function compareByScore(
   firstEntity: ChessTournamentEntity,
   secondEntity: ChessTournamentEntity,
 ): number {
-  // Note: Reversed order (secondEntity - firstEntity) for descending sort
-  return compareNumeric(secondEntity.entityScore, firstEntity.entityScore);
+  return compareScoresDescending(
+    firstEntity.entityScore,
+    secondEntity.entityScore,
+  );
 }
 /**
  * This function gets a list of entities as an input, and then prepares the ordering by FIDE dutch system rules
