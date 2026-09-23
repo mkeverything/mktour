@@ -86,7 +86,7 @@ export async function acceptAffiliationByClub({
   if (!user) throw new AppError('UNAUTHENTICATED');
 
   const affiliation = await db.query.affiliations.findFirst({
-    where: eq(affiliations.id, affiliationId),
+    where: { id: affiliationId },
   });
 
   if (!affiliation) throw new AppError('AFFILIATION_NOT_FOUND');
@@ -135,7 +135,7 @@ export async function rejectAffiliation({
   if (!user) throw new AppError('UNAUTHENTICATED');
 
   const affiliation = await db.query.affiliations.findFirst({
-    where: eq(affiliations.id, affiliationId),
+    where: { id: affiliationId },
   });
   if (!affiliation) throw new AppError('AFFILIATION_NOT_FOUND');
   if (affiliation.clubId !== user.selectedClub)
@@ -178,7 +178,7 @@ export async function abortAffiliationRequest({
   if (user.id !== userId) throw new AppError('USER_MISMATCH');
 
   const affiliation = await db.query.affiliations.findFirst({
-    where: eq(affiliations.id, affiliationId),
+    where: { id: affiliationId },
   });
   if (!affiliation) throw new AppError('AFFILIATION_NOT_FOUND');
   if (affiliation.status !== 'requested_by_user')
@@ -207,15 +207,12 @@ export async function affiliateUser({
   clubId: string;
 }) {
   const player = await db.query.players.findFirst({
-    where: eq(players.id, playerId),
+    where: { id: playerId },
   });
   if (!player) throw new AppError('PLAYER_NOT_FOUND');
 
   const existingAffiliation = await db.query.affiliations.findFirst({
-    where: and(
-      eq(affiliations.userId, user.id),
-      eq(affiliations.clubId, clubId),
-    ),
+    where: { userId: user.id, clubId },
   });
 
   if (existingAffiliation?.status === 'active')
@@ -257,7 +254,7 @@ export async function cancelAffiliationByUser({
   userId: string;
 }) {
   const player = await db.query.players.findFirst({
-    where: eq(players.id, playerId),
+    where: { id: playerId },
   });
   if (!player) throw new AppError('PLAYER_NOT_FOUND');
   if (player.userId !== userId) throw new AppError('USER_MISMATCH');
@@ -295,7 +292,7 @@ export async function cancelAffiliationByClub({
   skipNotification?: boolean;
 }) {
   const player = await db.query.players.findFirst({
-    where: eq(players.id, playerId),
+    where: { id: playerId },
   });
   if (!player) throw new AppError('PLAYER_NOT_FOUND');
   if (player.clubId !== clubId) throw new AppError('CLUB_MISMATCH');

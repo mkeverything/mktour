@@ -33,10 +33,10 @@ describe('player merge', () => {
     expect(result).toBeUndefined();
 
     const surviving = await db.query.players.findFirst({
-      where: eq(players.id, base.id),
+      where: { id: base.id },
     });
     const deleted = await db.query.players.findFirst({
-      where: eq(players.id, merged.id),
+      where: { id: merged.id },
     });
 
     expect(surviving).toBeDefined();
