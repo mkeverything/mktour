@@ -10,7 +10,7 @@ import {
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { and, desc, eq, getTableColumns, notInArray } from 'drizzle-orm';
+import { and, desc, eq, getColumns, notInArray } from 'drizzle-orm';
 
 export async function getTournamentPossiblePlayers(tournamentId: string) {
   const tournament = await db
@@ -31,7 +31,7 @@ export async function getTournamentPossiblePlayers(tournamentId: string) {
     .where(eq(tournament_units.tournamentId, tournamentId));
 
   return await db
-    .select({ ...getTableColumns(players), username: users.username })
+    .select({ ...getColumns(players), username: users.username })
     .from(players)
     .leftJoin(users, eq(users.id, players.userId))
     .where(

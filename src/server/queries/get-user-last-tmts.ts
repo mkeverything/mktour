@@ -5,12 +5,12 @@ import {
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { desc, eq, getTableColumns } from 'drizzle-orm';
+import { desc, eq, getColumns } from 'drizzle-orm';
 
 export async function getUserLastTournaments(userId: string, limit = 5) {
   return await db
     .select({
-      ...getTableColumns(tournaments),
+      ...getColumns(tournaments),
     })
     .from(players_to_units)
     .innerJoin(players, eq(players_to_units.playerId, players.id))

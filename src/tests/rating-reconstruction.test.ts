@@ -304,7 +304,7 @@ describe('legacy starting reconstruction', () => {
         await client.migrate(
           migrations.slice(0, boundary).flatMap((migration) => migration.sql),
         );
-        const database = drizzle(client);
+        const database = drizzle({ client });
         const snapshot = fixture();
         if (outOfRange) {
           snapshot.participations[0].newRating = 399;

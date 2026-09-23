@@ -3,7 +3,7 @@ import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { TournamentInfoModel } from '@/server/zod/tournaments';
-import { eq, getTableColumns } from 'drizzle-orm';
+import { eq, getColumns } from 'drizzle-orm';
 
 export async function getTournamentInfo(
   id: string,
@@ -11,8 +11,8 @@ export async function getTournamentInfo(
   const tournamentInfo = (
     await db
       .select({
-        tournament: getTableColumns(tournaments),
-        club: getTableColumns(clubs),
+        tournament: getColumns(tournaments),
+        club: getColumns(clubs),
       })
       .from(tournaments)
       .where(eq(tournaments.id, id))

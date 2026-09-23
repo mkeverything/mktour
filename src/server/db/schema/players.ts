@@ -1,16 +1,13 @@
 import { clubs } from '@/server/db/schema/clubs';
-import {
-  games,
-  players_to_units,
-  tournaments,
-} from '@/server/db/schema/tournaments';
+import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { AffiliationStatus } from '@/server/zod/enums';
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import {
   check,
   index,
   integer,
+  primaryKey,
   real,
   sqliteTable,
   text,
@@ -20,7 +17,7 @@ import {
 export const players = sqliteTable(
   'player',
   {
-    id: text('id').primaryKey(),
+    id: text('id').notNull(),
     nickname: text('nickname').notNull(),
     realname: text('realname'),
     userId: text('user_id').references(() => users.id),
@@ -41,6 +38,7 @@ export const players = sqliteTable(
       .notNull(), // equals closed_at() last tournament they participated
   },
   (table) => [
+    primaryKey({ columns: [table.id] }),
     uniqueIndex('player_nickname_club_unique_idx').on(
       table.nickname,
       table.clubId,
@@ -61,7 +59,7 @@ export const players = sqliteTable(
 export const rating_events = sqliteTable(
   'rating_event',
   {
-    id: text('id').primaryKey(),
+    id: text('id').notNull(),
     playerId: text('player_id')
       .notNull()
       .references(() => players.id, { onDelete: 'cascade' }),
@@ -75,6 +73,7 @@ export const rating_events = sqliteTable(
     isStarting: integer('is_starting', { mode: 'boolean' }).notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.id] }),
     index('rating_event_player_timeline_idx').on(
       table.playerId,
       table.publishedAt,
@@ -103,7 +102,7 @@ export const rating_events = sqliteTable(
 export const affiliations = sqliteTable(
   'affiliation',
   {
-    id: text('id').primaryKey(),
+    id: text('id').notNull(),
     userId: text('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
@@ -122,42 +121,10 @@ export const affiliations = sqliteTable(
       .notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.id] }),
     uniqueIndex('affiliation_user_club_unique_idx').on(
       table.userId,
       table.clubId,
     ),
   ],
 );
-
-export const players_relations = relations(players, ({ one, many }) => ({
-  club: one(clubs, { fields: [players.clubId], references: [clubs.id] }),
-  units: many(players_to_units),
-  gamesAsWhite: many(games, { relationName: 'gameWhitePlayer' }),
-  gamesAsBlack: many(games, { relationName: 'gameBlackPlayer' }),
-}));
-
-export const rating_events_relations = relations(rating_events, ({ one }) => ({
-  player: one(players, {
-    fields: [rating_events.playerId],
-    references: [players.id],
-  }),
-  sourceTournament: one(tournaments, {
-    fields: [rating_events.sourceTournamentId],
-    references: [tournaments.id],
-  }),
-}));
-
-export const affiliations_relations = relations(affiliations, ({ one }) => ({
-  user: one(users, {
-    fields: [affiliations.userId],
-    references: [users.id],
-  }),
-  club: one(clubs, {
-    fields: [affiliations.clubId],
-    references: [clubs.id],
-  }),
-  player: one(players, {
-    fields: [affiliations.playerId],
-    references: [players.id],
-  }),
-}));

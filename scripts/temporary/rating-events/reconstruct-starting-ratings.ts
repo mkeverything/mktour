@@ -38,7 +38,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { getTableColumns, sql } from 'drizzle-orm';
+import { getColumns, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { AppError } from '@/lib/errors';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
@@ -543,7 +543,7 @@ if (import.meta.main) {
   );
   let snapshot: LegacySnapshot;
   try {
-    const database = drizzle(sqlite);
+    const database = drizzle({ client: sqlite });
     snapshot = sqlite
       .transaction(() =>
         legacySnapshotSchema.parse({
@@ -552,7 +552,7 @@ if (import.meta.main) {
           units: database.select().from(tournament_units).all(),
           participations: database
             .select({
-              ...getTableColumns(players_to_units),
+              ...getColumns(players_to_units),
               newRating: sql<number | null>`new_rating`,
               newRatingDeviation: sql<number | null>`new_rating_deviation`,
               newVolatility: sql<number | null>`new_volatility`,

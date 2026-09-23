@@ -39,7 +39,7 @@ import {
   playerFormSchema,
 } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { and, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
@@ -395,7 +395,7 @@ export const addClubManager = async ({
     if (status !== 'admin') return;
 
     const targetUser = await tx.query.users.findFirst({
-      where: eq(users.id, userId),
+      where: { id: userId },
       columns: {
         selectedClub: true,
       },
@@ -404,10 +404,10 @@ export const addClubManager = async ({
 
     const hasFinishedTournamentsInSelectedClub =
       await tx.query.tournaments.findFirst({
-        where: and(
-          eq(tournaments.clubId, targetUser.selectedClub),
-          isNotNull(tournaments.closedAt),
-        ),
+        where: {
+          clubId: targetUser.selectedClub,
+          closedAt: { isNotNull: true },
+        },
         columns: { id: true },
       });
 
