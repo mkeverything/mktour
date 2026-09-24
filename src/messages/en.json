@@ -241,6 +241,8 @@
     "DATE_TOO_FAR_AHEAD": "we will not live that long",
     "DOUBLES_TOURNAMENT_CANNOT_BE_RATED": "doubles tournaments cannot be rated",
     "EMPTY_CLUB_EXISTS": "you already have a club with no finished tournaments. you can edit it instead of creating a new one",
+    "TOURNAMENT_NOT_COMPLETED": "complete the configured final round before finishing the tournament",
+    "FINISHED_TOURNAMENT_IS_FINAL": "a finished tournament cannot be reset. its results and ratings are final; only deletion is possible",
     "FORBIDDEN": "sorry! you are not allowed to do that",
     "GAME_NOT_FOUND": "game not found",
     "INCOMPLETE_GAMES": "enter results for every game before continuing",

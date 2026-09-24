@@ -16,6 +16,7 @@ export const relations = defineRelations(schema, (r) => ({
     units: r.many.players_to_units(),
     gamesAsWhite: r.many.games({ alias: 'gameWhitePlayer' }),
     gamesAsBlack: r.many.games({ alias: 'gameBlackPlayer' }),
+    ratingEvents: r.many.rating_events(),
   },
   affiliations: {
     user: r.one.users({
@@ -38,6 +39,7 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     units: r.many.tournament_units(),
     games: r.many.games(),
+    ratingEvents: r.many.rating_events(),
   },
   tournament_units: {
     tournament: r.one.tournaments({
@@ -94,6 +96,16 @@ export const relations = defineRelations(schema, (r) => ({
     club: r.one.clubs({
       from: r.club_notifications.clubId,
       to: r.clubs.id,
+    }),
+  },
+  rating_events: {
+    player: r.one.players({
+      from: r.rating_events.playerId,
+      to: r.players.id,
+    }),
+    sourceTournament: r.one.tournaments({
+      from: r.rating_events.sourceTournamentId,
+      to: r.tournaments.id,
     }),
   },
 }));

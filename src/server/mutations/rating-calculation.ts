@@ -1,32 +1,33 @@
 import { AppError } from '@/lib/errors';
 import {
+  getCurrentRatingDeviation,
   glicko2Calculator,
   GlickoGameResult,
+  isEstablishedRating,
   RatingUpdate,
 } from '@/lib/glicko2';
+import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
-import { players } from '@/server/db/schema/players';
+import { players, rating_events } from '@/server/db/schema/players';
 import {
   games,
   players_to_units,
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { and, asc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import type { GameResult } from '@/server/zod/enums';
-import type { PlayerModel } from '@/server/zod/players';
-import type { GameModel, PlayerUnitModel } from '@/server/zod/tournaments';
+import type { PlayerRecordModel } from '@/server/zod/players';
+import type { GameModel } from '@/server/zod/tournaments';
 
-type Tx = Pick<typeof db, 'select' | 'update'>;
+type Tx = Pick<typeof db, 'select' | 'update' | 'insert'>;
 type PlayerRating = Pick<
-  PlayerModel,
+  PlayerRecordModel,
   'id' | 'rating' | 'ratingDeviation' | 'ratingVolatility'
 >;
-type TournamentPlayerRating = PlayerRating & {
-  unitId: PlayerUnitModel['unitId'];
-  ratingPeak: PlayerModel['ratingPeak'];
-};
+type TournamentPlayerRating = PlayerRating &
+  Pick<PlayerRecordModel, 'ratingPeak' | 'ratingLastUpdateAt'>;
 type RatedGameRow = Pick<
   GameModel,
   'id' | 'whitePlayerId' | 'blackPlayerId' | 'result'
@@ -43,10 +44,9 @@ type RatedGame = CompletedRatedGameRow & {
   blackRD: number;
 };
 type PlayerRatingUpdate = {
-  unitId: PlayerUnitModel['unitId'];
-  playerId: PlayerModel['id'];
+  player: TournamentPlayerRating;
   update: RatingUpdate;
-  newPeak: NonNullable<PlayerModel['ratingPeak']> | null;
+  newPeak: NonNullable<PlayerRecordModel['ratingPeak']> | null;
 };
 
 async function getTournamentGameRows(tournamentId: string, tx: Tx) {
@@ -67,12 +67,12 @@ async function getTournamentPlayerRatings(
 ): Promise<TournamentPlayerRating[]> {
   return tx
     .select({
-      unitId: players_to_units.unitId,
       id: players.id,
       rating: players.rating,
       ratingPeak: players.ratingPeak,
       ratingDeviation: players.ratingDeviation,
       ratingVolatility: players.ratingVolatility,
+      ratingLastUpdateAt: players.ratingLastUpdateAt,
     })
     .from(players)
     .innerJoin(players_to_units, eq(players.id, players_to_units.playerId))
@@ -99,7 +99,7 @@ function isCompletedRatedGameRow(
 
 function toRatedGames(
   gameRows: RatedGameRow[],
-  playerRatings: Map<PlayerModel['id'], PlayerRating>,
+  playerRatings: Map<PlayerRecordModel['id'], PlayerRating>,
 ): RatedGame[] {
   const ratedGames: RatedGame[] = [];
 
@@ -173,14 +173,10 @@ function getScoreFromResult(
 }
 
 function calculateNewPeak( // returns null only if old peak was null
-  currentPeak: PlayerModel['ratingPeak'],
+  currentPeak: PlayerRecordModel['ratingPeak'],
   update: RatingUpdate,
 ) {
-  const isStable =
-    update.newRatingDeviation <
-    glicko2Calculator.getConstants().STABLE_RD_THRESHOLD;
-
-  if (!isStable) return currentPeak;
+  if (!isEstablishedRating(update.newRatingDeviation)) return currentPeak;
   if (currentPeak !== null && update.newRating <= currentPeak) {
     return currentPeak;
   }
@@ -191,27 +187,30 @@ function calculateNewPeak( // returns null only if old peak was null
 function calculatePlayerRatingUpdate(
   player: TournamentPlayerRating,
   tournamentGames: RatedGame[],
-): PlayerRatingUpdate {
+): PlayerRatingUpdate | null {
+  const results = collectPlayerResults(player.id, tournamentGames);
+  if (results.length === 0) return null;
+
   const currentPlayer = glicko2Calculator.fromDbFormat(
     player.rating,
     player.ratingDeviation,
     player.ratingVolatility,
   );
-  const results = collectPlayerResults(player.id, tournamentGames);
   const update = glicko2Calculator.calculateNewRatings(currentPlayer, results);
 
   return {
-    unitId: player.unitId,
-    playerId: player.id,
+    player,
     update,
     newPeak: calculateNewPeak(player.ratingPeak, update),
   };
 }
 
+/** publishes rating outcomes for players with at least one completed rated game */
 export async function calculateAndApplyGlickoRatings(
   tournamentId: string,
   tx: Tx,
-) {
+  publishedAt: Date,
+): Promise<void> {
   const tournament = await tx
     .select({ rated: tournaments.rated })
     .from(tournaments)
@@ -221,84 +220,57 @@ export async function calculateAndApplyGlickoRatings(
   if (!tournament) {
     throw new AppError('TOURNAMENT_NOT_FOUND');
   }
+  if (!tournament.rated) return;
 
-  if (!tournament.rated) {
-    console.log(
-      `tournament ${tournamentId} is not rated, skipping rating calculations`,
-    );
-    return;
-  }
-
-  const [gameRows, tournamentPlayers] = await Promise.all([
+  const [gameRows, storedPlayers] = await Promise.all([
     getTournamentGameRows(tournamentId, tx),
     getTournamentPlayerRatings(tournamentId, tx),
   ]);
+  if (storedPlayers.some((p) => p.ratingLastUpdateAt > publishedAt)) {
+    throw new AppError('RATING_CALCULATION_ERROR', {
+      cause: 'rating timeline cannot move backwards',
+    });
+  }
+  // bring every participant's uncertainty forward first, so opponents' rd is current too
+  const tournamentPlayers = storedPlayers.map((player) => ({
+    ...player,
+    ratingDeviation: getCurrentRatingDeviation(player, publishedAt),
+  }));
   const tournamentGames = toRatedGames(
     gameRows,
     mapPlayerRatings(tournamentPlayers),
   );
 
-  if (tournamentGames.length === 0) {
-    console.log(`no completed games found for tournament ${tournamentId}`);
-    return;
-  }
-
-  const ratingUpdates = tournamentPlayers.map((player) =>
-    calculatePlayerRatingUpdate(player, tournamentGames),
-  );
+  const ratingUpdates = tournamentPlayers.flatMap((player) => {
+    const update = calculatePlayerRatingUpdate(player, tournamentGames);
+    return update ? [update] : [];
+  });
+  if (ratingUpdates.length === 0) return;
 
   await Promise.all(
-    ratingUpdates.flatMap(({ unitId, playerId, update, newPeak }) => [
-      tx
+    ratingUpdates.map(async ({ player, update, newPeak }) => {
+      await tx
         .update(players)
         .set({
           rating: update.newRating,
           ratingPeak: newPeak,
           ratingDeviation: update.newRatingDeviation,
           ratingVolatility: update.newVolatility,
-          ratingLastUpdateAt: new Date(),
+          ratingLastUpdateAt: publishedAt,
         })
-        .where(eq(players.id, playerId)),
-      tx
-        .update(players_to_units)
-        .set({
-          newRating: update.newRating,
-          newRatingDeviation: update.newRatingDeviation,
-          newVolatility: update.newVolatility,
-        })
-        .where(
-          and(
-            eq(players_to_units.playerId, playerId),
-            eq(players_to_units.unitId, unitId),
-          ),
-        ),
-    ]),
+        .where(eq(players.id, player.id));
+    }),
   );
 
-  console.log(
-    `updated ratings for ${ratingUpdates.length}   players in tournament ${tournamentId}`,
+  await tx.insert(rating_events).values(
+    ratingUpdates.map(({ player, update }) => ({
+      id: newid(),
+      playerId: player.id,
+      sourceTournamentId: tournamentId,
+      publishedAt,
+      rating: update.newRating,
+      ratingDeviation: update.newRatingDeviation,
+      isStarting: false,
+    })),
   );
-
-  return ratingUpdates;
-}
-
-export async function _getPlayerRatingHistory(playerId: string) {
-  const history = await db
-    .select({
-      tournamentId: tournament_units.tournamentId,
-      tournamentDate: tournaments.date,
-      newRating: players_to_units.newRating,
-      newRatingDeviation: players_to_units.newRatingDeviation,
-      newVolatility: players_to_units.newVolatility,
-    })
-    .from(players_to_units)
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
-    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
-    .where(eq(players_to_units.playerId, playerId))
-    .orderBy(asc(tournaments.date));
-
-  return history;
 }

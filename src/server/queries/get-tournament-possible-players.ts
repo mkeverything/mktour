@@ -10,12 +10,9 @@ import {
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import type { PlayerWithUsernameModel } from '@/server/zod/players';
 import { and, desc, eq, getColumns, notInArray } from 'drizzle-orm';
 
-export async function getTournamentPossiblePlayers(
-  tournamentId: string,
-): Promise<PlayerWithUsernameModel[]> {
+export async function getTournamentPossiblePlayers(tournamentId: string) {
   const tournament = await db
     .select({ clubId: tournaments.clubId })
     .from(tournaments)
