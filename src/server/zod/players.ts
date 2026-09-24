@@ -19,8 +19,8 @@ import {
 } from 'drizzle-orm/zod';
 import z from 'zod';
 
-export const playerRecordSchema = createSelectSchema(players);
-export const playersSelectSchema = playerRecordSchema
+export const playersSelectSchema = createSelectSchema(players);
+export const playerPublicSchema = playersSelectSchema
   .omit({
     ratingDeviation: true,
     ratingVolatility: true,
@@ -46,19 +46,19 @@ function toPublicPlayer<T extends PlayerRecordModel>(player: T) {
   };
 }
 
-export const playerOutputSchema = playerRecordSchema
+export const playerOutputSchema = playersSelectSchema
   .transform(toPublicPlayer)
-  .pipe(playersSelectSchema);
+  .pipe(playerPublicSchema);
 export const ratingEventSchema = createSelectSchema(rating_events, {
   rating: (s) =>
     s
       .min(GLICKO2_CONSTANTS.MIN_RATING, { error: 'MIN_RATING' })
       .max(GLICKO2_CONSTANTS.MAX_RATING, { error: 'MAX_RATING' }),
 });
-export const playersWithUsernameSchema = playersSelectSchema.extend({
+export const playersWithUsernameSchema = playerPublicSchema.extend({
   username: z.string().nullable(),
 });
-export const playerWithUsernameOutputSchema = playerRecordSchema
+export const playerWithUsernameOutputSchema = playersSelectSchema
   .extend({ username: z.string().nullable() })
   .transform(toPublicPlayer)
   .pipe(playersWithUsernameSchema);
@@ -66,10 +66,10 @@ const playerInfoFields = {
   user: usersSelectMinimalSchema.nullable(),
   club: clubsSelectSchema,
 };
-export const playerInfoOutputSchema = playerRecordSchema
+export const playerInfoOutputSchema = playersSelectSchema
   .extend(playerInfoFields)
   .transform(toPublicPlayer)
-  .pipe(playersSelectSchema.extend(playerInfoFields));
+  .pipe(playerPublicSchema.extend(playerInfoFields));
 export const playersInsertSchema = createInsertSchema(players, {
   rating: (s) =>
     s
@@ -118,7 +118,7 @@ export const affiliationMinimalSchema = affiliationsSelectSchema.omit({
   userId: true,
 });
 
-export const playersMinimalSchema = playersSelectSchema.omit({
+export const playersMinimalSchema = playerPublicSchema.omit({
   clubId: true,
 });
 
@@ -173,9 +173,8 @@ export type AffiliationExtendedModel = z.infer<
   typeof affiliationExtendedSchema
 >;
 export type AffiliationMinimalModel = z.infer<typeof affiliationMinimalSchema>;
-export type PlayerRecordModel = z.infer<typeof playerRecordSchema>;
-export type PlayerModel = z.infer<typeof playersSelectSchema>;
-export type RatingEventModel = z.infer<typeof ratingEventSchema>;
+export type PlayerRecordModel = z.infer<typeof playersSelectSchema>;
+export type PlayerModel = z.infer<typeof playerPublicSchema>;
 export type PlayerWithUsernameModel = z.infer<typeof playersWithUsernameSchema>;
 export type PlayerMinimalModel = z.infer<typeof playersMinimalSchema>;
 export type PlayerFormModel = z.infer<typeof playerFormSchema>;
@@ -198,7 +197,7 @@ export const userPlayerClubSchema = z.object({
       }),
     )
     .pipe(
-      playersSelectSchema.pick({
+      playerPublicSchema.pick({
         id: true,
         nickname: true,
         rating: true,

@@ -15,7 +15,7 @@ import {
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import type { GameResult } from '@/server/zod/enums';
 import type { PlayerRecordModel } from '@/server/zod/players';
@@ -210,7 +210,7 @@ export async function calculateAndApplyGlickoRatings(
   tournamentId: string,
   tx: Tx,
   publishedAt: Date,
-) {
+): Promise<void> {
   const tournament = await tx
     .select({ rated: tournaments.rated })
     .from(tournaments)
@@ -220,7 +220,7 @@ export async function calculateAndApplyGlickoRatings(
   if (!tournament) {
     throw new AppError('TOURNAMENT_NOT_FOUND');
   }
-  if (!tournament.rated) return [];
+  if (!tournament.rated) return;
 
   const [gameRows, storedPlayers] = await Promise.all([
     getTournamentGameRows(tournamentId, tx),
@@ -245,11 +245,11 @@ export async function calculateAndApplyGlickoRatings(
     const update = calculatePlayerRatingUpdate(player, tournamentGames);
     return update ? [update] : [];
   });
-  if (ratingUpdates.length === 0) return [];
+  if (ratingUpdates.length === 0) return;
 
   await Promise.all(
     ratingUpdates.map(async ({ player, update, newPeak }) => {
-      const result = await tx
+      await tx
         .update(players)
         .set({
           rating: update.newRating,
@@ -258,17 +258,7 @@ export async function calculateAndApplyGlickoRatings(
           ratingVolatility: update.newVolatility,
           ratingLastUpdateAt: publishedAt,
         })
-        .where(
-          and(
-            eq(players.id, player.id),
-            eq(players.ratingLastUpdateAt, player.ratingLastUpdateAt),
-          ),
-        );
-      if (result.rowsAffected !== 1) {
-        throw new AppError('RATING_CALCULATION_ERROR', {
-          cause: `concurrent rating update for player ${player.id}`,
-        });
-      }
+        .where(eq(players.id, player.id));
     }),
   );
 
@@ -283,6 +273,4 @@ export async function calculateAndApplyGlickoRatings(
       isStarting: false,
     })),
   );
-
-  return ratingUpdates;
 }

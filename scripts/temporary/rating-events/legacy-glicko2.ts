@@ -1,7 +1,4 @@
-import type {
-  LegacyRatingState,
-  LegacyResult,
-} from '@/server/zod/rating-reconstruction';
+import type { LegacyRatingState, LegacyResult } from './rating-reconstruction';
 
 // frozen arithmetic from 6ef9e965:src/lib/glicko2.ts, not the elapsed-time calculator.
 // 477e9a32 added only rating clamping; earlier versions used the same drift/rd rounding.

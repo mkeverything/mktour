@@ -1,4 +1,4 @@
-import { playerRecordSchema, ratingEventSchema } from '@/server/zod/players';
+import { playersSelectSchema, ratingEventSchema } from '@/server/zod/players';
 import {
   playerUnitSelectSchema,
   saveRoundGameInputSchema,
@@ -7,13 +7,13 @@ import {
 } from '@/server/zod/tournaments';
 import z from 'zod';
 
-export const legacyRatingStateSchema = playerRecordSchema.pick({
+export const legacyRatingStateSchema = playersSelectSchema.pick({
   rating: true,
   ratingDeviation: true,
   ratingVolatility: true,
 });
 export const legacySnapshotSchema = z.object({
-  players: z.array(playerRecordSchema),
+  players: z.array(playersSelectSchema),
   tournaments: z.array(tournamentSchema),
   units: z.array(unitSelectSchema),
   participations: z.array(
@@ -26,8 +26,8 @@ export const legacySnapshotSchema = z.object({
   games: z.array(saveRoundGameInputSchema),
 });
 export const legacyResultSchema = z.object({
-  opponentRating: playerRecordSchema.shape.rating,
-  opponentRatingDeviation: playerRecordSchema.shape.ratingDeviation,
+  opponentRating: playersSelectSchema.shape.rating,
+  opponentRatingDeviation: playersSelectSchema.shape.ratingDeviation,
   score: z.union([z.literal(0), z.literal(0.5), z.literal(1)]),
 });
 export const ratingEventImportSchema = ratingEventSchema.omit({ id: true });
@@ -38,7 +38,7 @@ export const legacyOutcomeEventSchema = ratingEventImportSchema.extend({
 });
 export type LegacyOutcomeEvent = z.infer<typeof legacyOutcomeEventSchema>;
 
-export const startingReconstructionSchema = playerRecordSchema
+export const startingReconstructionSchema = playersSelectSchema
   .pick({
     id: true,
     clubId: true,

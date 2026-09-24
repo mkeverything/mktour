@@ -7,8 +7,9 @@ never edit numbered migrations or their metadata by hand.
 
 ## rehearse first
 
-run `bun test:noseed src/tests/rating-reconstruction.test.ts`, then rehearse the
-complete sequence below on a disposable copy. the test uses local databases only.
+run `bun test:noseed scripts/temporary/rating-events/rating-reconstruction.test.ts`,
+then rehearse the complete sequence below on a disposable copy. the test uses local
+databases only.
 
 ## 1. freeze and export
 
@@ -108,3 +109,9 @@ before reopening writes, rollback means restoring the complete pre-migration
 export (including its migration journal) and the old application. after reopening,
 stop and assess new writes before any restore. do not rerun legacy backfill after
 merges or use this process as retrospective rating repair.
+
+## cleanup after cutover
+
+once cutover is verified and the rollback window has closed, delete
+`scripts/temporary/rating-events/`, including its schemas and tests. preserve the
+private export and reviewed report/sql separately for audit and recovery.

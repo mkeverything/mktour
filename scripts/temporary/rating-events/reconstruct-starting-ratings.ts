@@ -18,7 +18,7 @@ the tool opens it readonly, reads only domain tables in one transaction, and nev
 connects to turso or imports application database credentials. output files must not exist.
 
 first run the synthetic tests:
-  bun test:noseed src/tests/rating-reconstruction.test.ts
+  bun test:noseed scripts/temporary/rating-events/rating-reconstruction.test.ts
 then rehearse export -> review -> all pending migrations -> import -> verification
 on a db copy. the .json report and .sql contain both legacy tournament outcomes and
 validated starting events; a skipped starting event never removes a legacy outcome.
@@ -59,7 +59,7 @@ import {
   type LegacyResult,
   type LegacySnapshot,
   type StartingReconstruction,
-} from '@/server/zod/rating-reconstruction';
+} from './rating-reconstruction';
 import { calculateLegacyRating } from './legacy-glicko2';
 
 const STARTING_GRID = Array.from({ length: 61 }, (_, i) => i * 50);

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
 import {
   playerFormSchema,
   playerOutputSchema,
@@ -52,6 +53,31 @@ describe('public player projection', () => {
       userPlayerClubSchema.parse({ club: { id: 'club', name: 'club' }, player })
         .player,
     );
+  });
+
+  test('club profile projection strips fields outside its public selection', () => {
+    expect(userPlayerClubSchema.shape.player.parse(player)).toEqual({
+      id: player.id,
+      nickname: player.nickname,
+      rating: player.rating,
+      isEstablished: true,
+      ratingPeak: player.ratingPeak,
+      lastSeenAt: player.lastSeenAt,
+    });
+  });
+
+  test('notification projection strips club and uncertainty fields', () => {
+    const schema = clubNotificationExtendedSchema.shape.player;
+    const output = schema.parse(player)!;
+    expectPublic(output);
+    expect(output).not.toHaveProperty('clubId');
+    expect(Object.keys(output).sort()).toEqual(
+      Object.keys(playerOutputSchema.parse(player))
+        .filter((key) => key !== 'clubId')
+        .sort(),
+    );
+    expect(output).toMatchObject({ id: player.id, nickname: player.nickname });
+    expect(schema.parse(null)).toBeNull();
   });
 
   test('creation input accepts rating points, not internal baseline fields', () => {

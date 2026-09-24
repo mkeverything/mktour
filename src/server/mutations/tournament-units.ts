@@ -40,9 +40,6 @@ export async function removeUnit({
   const { user } = await validateRequest();
   if (!user) throw new AppError('UNAUTHENTICATED');
   if (user.id !== userId) throw new AppError('USER_MISMATCH');
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
-  if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
   const unit = await db
     .select({ id: tournament_units.id })
     .from(tournament_units)
@@ -83,9 +80,6 @@ export async function reorderTournamentUnits({
   tournamentId,
   unitIds,
 }: ReorderTournamentUnitsInputModel): Promise<UnitModel[]> {
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
-  if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
   return await db.transaction(async (tx) => {
     const current = await getTournamentById(tournamentId, tx);
     if (!current) throw new AppError('TOURNAMENT_NOT_FOUND');
@@ -231,7 +225,6 @@ export async function editDoublesUnit({
   }
   const tournament = await getTournamentById(tournamentId);
   if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
-  if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
   if (tournament.type !== 'doubles')
     throw new AppError('NOT_DOUBLES_TOURNAMENT');
   const unit = await db

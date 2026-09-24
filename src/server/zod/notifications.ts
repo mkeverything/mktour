@@ -60,7 +60,7 @@ export const clubNotificationExtendedSchema =
     affiliation: affiliationMinimalSchema.nullable(),
     user: usersSelectMinimalSchema.nullable(),
     player: playerOutputSchema
-      .transform((player) => playersMinimalSchema.parse(player))
+      .transform(({ clubId, ...player }) => player)
       .pipe(playersMinimalSchema)
       .nullable(),
   });

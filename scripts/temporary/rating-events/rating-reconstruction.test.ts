@@ -6,12 +6,12 @@ import { join } from 'node:path';
 import { createClient } from '@libsql/client';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { drizzle } from 'drizzle-orm/libsql';
-import { calculateLegacyRating } from '../../scripts/temporary/rating-events/legacy-glicko2';
+import { calculateLegacyRating } from './legacy-glicko2';
 import {
   reconstructStartingRatings,
   legacyOutcomeEvents,
   ratingImportSql,
-} from '../../scripts/temporary/rating-events/reconstruct-starting-ratings';
+} from './reconstruct-starting-ratings';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import {
@@ -25,7 +25,7 @@ import {
   legacyOutcomeEventSchema,
   ratingEventImportSchema,
   type LegacySnapshot,
-} from '@/server/zod/rating-reconstruction';
+} from './rating-reconstruction';
 
 function fixture(): LegacySnapshot {
   const at = new Date('2026-06-01T12:00:00Z');

@@ -27,7 +27,11 @@ import {
   updateSwissRoundsNumber,
 } from '@/server/mutations/tournament-lifecycle';
 import { setTournamentGameResult } from '@/server/mutations/tournament-games';
-import { resetTournamentUnits } from '@/server/mutations/tournament-units';
+import {
+  removeUnit,
+  reorderTournamentUnits,
+  resetTournamentUnits,
+} from '@/server/mutations/tournament-units';
 
 // lifecycle mutations authenticate from request cookies; in tests we stand in
 // as the seeded club organizer. module mocks stay for the rest of the run,
@@ -167,6 +171,37 @@ describe('finishing a tournament', () => {
     await expect(resetTournamentUnits({ tournamentId })).rejects.toMatchObject({
       message: 'TOURNAMENT_ALREADY_FINISHED',
     });
+  });
+
+  test('transactional checks block removing and reordering started or finished units', async () => {
+    const { tournamentId } = await makeRunningTournament();
+    const units = await db
+      .select()
+      .from(tournament_units)
+      .where(eq(tournament_units.tournamentId, tournamentId));
+    const unitIds = units.map((unit) => unit.id);
+
+    for (const closedAt of [null, new Date()]) {
+      await db
+        .update(tournaments)
+        .set({ closedAt })
+        .where(eq(tournaments.id, tournamentId));
+      const message = closedAt
+        ? 'TOURNAMENT_ALREADY_FINISHED'
+        : 'TOURNAMENT_ALREADY_STARTED';
+      await expect(
+        removeUnit({ tournamentId, unitId: unitIds[0], userId: organizerId }),
+      ).rejects.toMatchObject({ message });
+      await expect(
+        reorderTournamentUnits({ tournamentId, unitIds }),
+      ).rejects.toMatchObject({ message });
+      expect(
+        await db
+          .select()
+          .from(tournament_units)
+          .where(eq(tournament_units.tournamentId, tournamentId)),
+      ).toEqual(units);
+    }
   });
 
   test('rejects a result request paused before its transaction when closure wins', async () => {
