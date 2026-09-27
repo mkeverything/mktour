@@ -5,10 +5,14 @@ import { usePlayerStats } from '@/components/hooks/query-hooks/use-player-stats'
 import HalfCard from '@/components/ui-custom/half-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { PlayerAuthStatsModel, PlayerModel } from '@/server/zod/players';
-import { Percent, Swords, TrendingUp, Trophy } from 'lucide-react';
+import type {
+  PlayerAuthStatsModel,
+  PlayerModel,
+  PlayerStatsModel,
+} from '@/server/zod/players';
+import { Crown, Swords, TrendingUp, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 
 interface PlayerStatsProps {
   player: Pick<PlayerModel, 'id' | 'nickname' | 'ratingPeak'>;
@@ -38,29 +42,29 @@ export default function PlayerStats({
         <StatItem
           icon={Trophy}
           label={t('tournaments')}
-          value={stats?.tournamentsPlayed.value}
-          rank={stats?.tournamentsPlayed.rank}
+          value={stats?.tournamentsPlayed}
+          rank={stats?.tournamentsPlayedRank}
+          isLoading={isPending}
+        />
+        <StatItem
+          icon={Crown}
+          label={t('tournamentsWon')}
+          value={stats?.tournamentsWon}
+          rank={stats?.tournamentsWonRank}
           isLoading={isPending}
         />
         <StatItem
           icon={Swords}
           label={t('gamesPlayed')}
-          value={stats?.gamesPlayed.value}
-          rank={stats?.gamesPlayed.rank}
-          isLoading={isPending}
-        />
-        <StatItem
-          icon={Percent}
-          label={t('winRate')}
-          value={stats ? `${stats.winRate.value}%` : undefined}
-          rank={stats?.winRate.rank}
+          value={stats?.gamesPlayed}
+          detail={stats && <GamesRecord {...stats} />}
+          rank={stats?.gamesPlayedRank}
           isLoading={isPending}
         />
         <StatItem
           icon={TrendingUp}
           label={t('ratingPeak')}
           value={player.ratingPeak ?? '—'}
-          rank={stats?.ratingPeakRank}
           isLoading={isPending}
         />
       </div>
@@ -92,10 +96,26 @@ export default function PlayerStats({
   );
 }
 
+export const PlayerRatingRank: FC<{ playerId: string }> = ({ playerId }) => {
+  const { data: stats } = usePlayerStats(playerId);
+  if (!stats || stats.ratingRank === null) return null;
+  return (
+    <span className="text-muted-foreground text-xs">#{stats.ratingRank}</span>
+  );
+};
+
+export const GamesRecord: FC<
+  Pick<PlayerStatsModel, 'gamesWon' | 'gamesDrawn' | 'gamesLost'>
+> = ({ gamesWon, gamesDrawn, gamesLost }) => {
+  const t = useTranslations('Player.Stats');
+  return `${gamesWon}${t('wins')} ${gamesDrawn}${t('draws')} ${gamesLost}${t('losses')}`;
+};
+
 interface StatItemProps {
   icon: FC<{ className?: string }>;
   label: string;
   value?: string | number;
+  detail?: ReactNode;
   rank?: number | null;
   isLoading?: boolean;
 }
@@ -104,6 +124,7 @@ const StatItem: FC<StatItemProps> = ({
   icon: Icon,
   label,
   value,
+  detail,
   rank,
   isLoading,
 }) => (
@@ -117,7 +138,14 @@ const StatItem: FC<StatItemProps> = ({
         </>
       ) : (
         <>
-          <span className="text-primary text-lg font-semibold">{value}</span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-primary text-lg font-semibold">{value}</span>
+            {detail && (
+              <span className="text-muted-foreground text-3xs truncate sm:text-xs">
+                {detail}
+              </span>
+            )}
+          </span>
           <span className="text-muted-foreground text-3xs truncate text-left sm:text-xs">
             {label}
           </span>

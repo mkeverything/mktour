@@ -203,7 +203,7 @@
     },
     "Stats": {
       "gamesPlayed": "сыграно партий",
-      "winRate": "победы",
+      "tournamentsWon": "турнирные победы",
       "ratingPeak": "макс. рейтинг",
       "tournaments": "турниры",
       "bestPlace": "лучшее место",

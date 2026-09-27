@@ -33,6 +33,7 @@ debug_*.ts
 # claude code
 .claude/
 CONTEXT.md
+/player-stats.md
 
 # local env files
 .env*.local

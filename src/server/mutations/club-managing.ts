@@ -14,6 +14,7 @@ import {
 } from '@/server/db/schema/notifications';
 import {
   affiliations,
+  player_stats,
   players,
   rating_events,
 } from '@/server/db/schema/players';
@@ -24,6 +25,7 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { getEmptyClub } from '@/server/queries/get-empty-club';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
@@ -175,6 +177,9 @@ export const createPlayer = async (
       ratingDeviation: newPlayer.ratingDeviation,
       isStarting: true,
     });
+    await database
+      .insert(player_stats)
+      .values({ playerId: newPlayer.id, clubId: newPlayer.clubId });
     return newPlayer;
   };
 
@@ -199,7 +204,22 @@ export const deletePlayer = async ({ playerId }: { playerId: string }) => {
   }
 
   await db.transaction(async (tx) => {
+    const stats = await tx
+      .select({
+        clubId: player_stats.clubId,
+        ratingRank: player_stats.ratingRank,
+      })
+      .from(player_stats)
+      .where(eq(player_stats.playerId, playerId))
+      .get();
     await tx.delete(players).where(eq(players.id, playerId));
+    if (stats && stats.ratingRank !== null) {
+      await refreshPlayerStats(tx, {
+        clubId: stats.clubId,
+        playerIds: [],
+        now: new Date(),
+      });
+    }
   });
 };
 
