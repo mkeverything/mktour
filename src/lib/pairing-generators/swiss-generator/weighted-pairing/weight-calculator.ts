@@ -558,6 +558,39 @@ export const PAB_CRITERIA: readonly CriterionDefinition[] =
 // ============================================================================
 
 /**
+ * Penalty units per criterion unit: one penalty unit is half a point.
+ *
+ * Scores carry half-points (a draw is worth 0.5). Encoded in whole points,
+ * per-edge digits would be fractional, and truncating them collapses
+ * distinct score gaps (max - 1.5 and max - 2.0 become the same digit) and
+ * makes the sum of per-edge digits diverge from the true penalty sum.
+ * Criteria that are already integral simply land on even digits.
+ */
+const PENALTY_UNIT_SCALE = 2;
+
+/**
+ * Converts a penalty quantity into integral penalty units for the BigInt
+ * weight encoding.
+ *
+ * Every number-to-BigInt conversion in the encoding — per-edge maxima that
+ * become bases, and inverted penalties that become digits — goes through
+ * here, so a digit and the base that bounds it always share one unit.
+ *
+ * @param penalty - Penalty quantity in criterion units (points or counts)
+ * @returns The same quantity in penalty units
+ * @throws AppError if the quantity is finer than one penalty unit
+ */
+function toPenaltyUnits(penalty: number): bigint {
+  const penaltyUnits = PENALTY_UNIT_SCALE * penalty;
+  if (!Number.isInteger(penaltyUnits)) {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: `Penalty ${penalty} is finer than 1/${PENALTY_UNIT_SCALE} and cannot be encoded`,
+    });
+  }
+  return BigInt(penaltyUnits);
+}
+
+/**
  * Computed multipliers for a specific set of criteria.
  * All values are bigint for consistent arithmetic.
  */
@@ -592,7 +625,7 @@ export function computeMultipliers(
   // Compute bases: K × perEdgeMax + 1
   const bases = new Map<CriterionDefinition, bigint>();
   for (const criterion of criteria) {
-    const perEdgeMax = BigInt(criterion.getPerEdgeMax(context));
+    const perEdgeMax = toPenaltyUnits(criterion.getPerEdgeMax(context));
     const base = edgeCount * perEdgeMax + 1n;
     bases.set(criterion, base);
   }
@@ -1084,7 +1117,7 @@ export function computeRankingPenalty(penaltyInput: PenaltyInput): number {
 /**
  * Converts a penalty value to a weight contribution.
  *
- * Weight = (maxPenalty - actualPenalty) × multiplier
+ * Weight = toPenaltyUnits(maxPenalty - actualPenalty) × multiplier
  * This inverts the penalty so lower penalty = higher weight.
  *
  * @param penalty - The actual penalty value
@@ -1098,9 +1131,7 @@ export function penaltyToWeight(
   multiplier: bigint,
 ): bigint {
   const invertedPenalty = maxPenalty - penalty;
-  // Floor to handle half-point scores (draws give 0.5 points)
-  const flooredPenalty = Math.floor(invertedPenalty);
-  return BigInt(flooredPenalty) * multiplier;
+  return toPenaltyUnits(invertedPenalty) * multiplier;
 }
 
 /**
