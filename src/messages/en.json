@@ -701,5 +701,11 @@
       "affiliation requested": "request sent"
     }
   },
-  "NewClubForm": {}
+  "NewClubForm": {},
+  "Maintenance": {
+    "title": "maintenance",
+    "description": "mktour is temporarily unavailable while we carry out maintenance",
+    "expectedBack": "expected back by {time}",
+    "reload": "reload page"
+  }
 }

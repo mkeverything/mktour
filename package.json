@@ -59,6 +59,7 @@
     "@trpc/tanstack-react-query": "^11.18.0",
     "@upstash/redis": "^1.38.2",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/global-config": "^1.5.1",
     "@vercel/speed-insights": "^2.0.0",
     "arctic": "^3.7.0",
     "autoprefixer": "^10.5.4",

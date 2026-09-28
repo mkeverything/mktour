@@ -701,5 +701,11 @@
       "affiliation requested": "заявка отправлена"
     }
   },
-  "NewClubForm": {}
+  "NewClubForm": {},
+  "Maintenance": {
+    "title": "технические работы",
+    "description": "мктур временно недоступен из-за технических работ",
+    "expectedBack": "ожидаемое время завершения: {time}",
+    "reload": "обновить страницу"
+  }
 }
