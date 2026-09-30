@@ -27,6 +27,9 @@ type LevelIndexMap = Map<number, number>;
 /** Default count when a scoregroup has not been seen yet. */
 const DEFAULT_SCOREGROUP_COUNT = 0;
 
+/** Level index of the highest occupied score. */
+const TOP_LEVEL_INDEX = 0;
+
 /** Graph type for pairing graphs - always undirected. */
 const GRAPH_TYPE = 'undirected' as const;
 
@@ -69,7 +72,11 @@ function computeLevelIndexByScore(
 
   const levelIndexByScore: LevelIndexMap = new Map();
 
-  for (let levelIndex = 0; levelIndex < occupiedScores.length; levelIndex++) {
+  for (
+    let levelIndex = TOP_LEVEL_INDEX;
+    levelIndex < occupiedScores.length;
+    levelIndex++
+  ) {
     const score = occupiedScores[levelIndex];
     levelIndexByScore.set(score, levelIndex);
   }
