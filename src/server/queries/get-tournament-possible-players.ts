@@ -11,7 +11,7 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import type { PlayerWithUsernameModel } from '@/server/zod/players';
-import { and, desc, eq, getTableColumns, notInArray } from 'drizzle-orm';
+import { and, desc, eq, getColumns, notInArray } from 'drizzle-orm';
 
 export async function getTournamentPossiblePlayers(
   tournamentId: string,
@@ -34,7 +34,7 @@ export async function getTournamentPossiblePlayers(
     .where(eq(tournament_units.tournamentId, tournamentId));
 
   return await db
-    .select({ ...getTableColumns(players), username: users.username })
+    .select({ ...getColumns(players), username: users.username })
     .from(players)
     .leftJoin(users, eq(users.id, players.userId))
     .where(

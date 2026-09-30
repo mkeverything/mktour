@@ -15,7 +15,7 @@ import {
   countDistinct,
   desc,
   eq,
-  getTableColumns,
+  getColumns,
   isNotNull,
   isNull,
   or,
@@ -30,7 +30,7 @@ export async function getPlayersTournamentsInfinite(
 ) {
   return await db
     .select({
-      ...getTableColumns(tournaments),
+      ...getColumns(tournaments),
     })
     .from(players_to_units)
     .innerJoin(
