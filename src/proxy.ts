@@ -7,8 +7,7 @@ type Maintenance = {
   endsAt?: unknown;
 };
 
-const BYPASS_PATHS = new Set([
-  '/maintenance',
+const OPERATIONAL_PATHS = new Set([
   '/api/db/migrate',
   '/api/auth/delete-expired-sessions',
 ]);
@@ -17,8 +16,11 @@ const CONFIG_TIMEOUT_MS = 500;
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isServerAction = request.headers.has('next-action');
-  if (!isServerAction && BYPASS_PATHS.has(pathname)) {
+  const isRead = request.method === 'GET' || request.method === 'HEAD';
+  if (
+    OPERATIONAL_PATHS.has(pathname) ||
+    (isRead && pathname === '/maintenance')
+  ) {
     return NextResponse.next();
   }
 
@@ -32,7 +34,7 @@ export async function proxy(request: NextRequest) {
     headers.set('Retry-After', String(Math.ceil(seconds)));
   }
 
-  if (isServerAction || pathname === '/api' || pathname.startsWith('/api/')) {
+  if (!isRead || pathname === '/api' || pathname.startsWith('/api/')) {
     return Response.json({ error: 'MAINTENANCE' }, { status: 503, headers });
   }
 
@@ -90,6 +92,7 @@ export const config: ProxyConfig = {
     '/api/:path*',
     // server actions can target any url, including file-like dynamic paths
     { source: '/:path*', has: [{ type: 'header', key: 'next-action' }] },
+    { source: '/:path*', has: [{ type: 'header', key: 'content-type' }] },
     '/((?!api/|_next/static|_next/image|.*\\.\\w+$).*)',
   ],
 };

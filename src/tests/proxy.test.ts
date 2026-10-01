@@ -17,8 +17,10 @@ const { config, proxy } = await import('@/proxy');
 
 const NOW = new Date('2026-08-10T21:10:00Z');
 
-const request = (path: string, headers?: HeadersInit) =>
-  proxy(new NextRequest(`https://mktour.org${path}`, { headers }));
+const request = (
+  path: string,
+  init?: ConstructorParameters<typeof NextRequest>[1],
+) => proxy(new NextRequest(`https://mktour.org${path}`, init));
 
 const isPassedThrough = (response: Response) =>
   response.headers.get('x-middleware-next') === '1';
@@ -54,15 +56,24 @@ describe('maintenance proxy', () => {
     expect(response.headers.get('Retry-After')).toBeNull();
   });
 
-  test('returns 503 json for api and server action requests', async () => {
+  test('returns 503 json without rewriting api and post requests', async () => {
     getMock.mockResolvedValue({ enabled: true });
 
     for (const response of [
       await request('/api/trpc/auth.info'),
       await request('/api'),
-      await request('/tournaments/my', { 'next-action': 'abc' }),
+      await request('/tournaments/my', {
+        method: 'POST',
+        headers: { 'next-action': 'abc' },
+      }),
+      await request('/clubs/all', {
+        method: 'POST',
+        headers: { 'content-type': 'multipart/form-data; boundary=x' },
+      }),
+      await request('/maintenance', { method: 'POST' }),
     ]) {
       expect(response.status).toBe(503);
+      expect(response.headers.get('x-middleware-rewrite')).toBeNull();
       expect(await response.json()).toEqual({ error: 'MAINTENANCE' });
     }
   });
@@ -89,24 +100,17 @@ describe('maintenance proxy', () => {
     expect(isPassedThrough(await request('/'))).toBe(true);
   });
 
-  test('never blocks operational routes or the maintenance page', async () => {
+  test('never blocks operational routes or reading the maintenance page', async () => {
     getMock.mockResolvedValue({ enabled: true });
 
-    for (const path of [
-      '/maintenance',
-      '/api/db/migrate',
-      '/api/auth/delete-expired-sessions',
+    for (const response of [
+      await request('/maintenance'),
+      await request('/maintenance', { method: 'HEAD' }),
+      await request('/api/db/migrate', { method: 'POST' }),
+      await request('/api/auth/delete-expired-sessions'),
     ]) {
-      expect(isPassedThrough(await request(path))).toBe(true);
+      expect(isPassedThrough(response)).toBe(true);
     }
-  });
-
-  test('blocks server actions posted to the maintenance page', async () => {
-    getMock.mockResolvedValue({ enabled: true });
-    const response = await request('/maintenance', { 'next-action': 'abc' });
-
-    expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: 'MAINTENANCE' });
   });
 
   test('fails open when global config is unavailable or invalid', async () => {
@@ -145,6 +149,16 @@ describe('maintenance proxy matcher', () => {
     expect(matches('/tournaments/review.json', { 'next-action': 'abc' })).toBe(
       true,
     );
+    expect(
+      matches('/tournaments/review.json', {
+        'content-type': 'multipart/form-data; boundary=x',
+      }),
+    ).toBe(true);
+    expect(
+      matches('/tournaments/review.json', {
+        'content-type': 'application/x-www-form-urlencoded',
+      }),
+    ).toBe(true);
   });
 
   test('skips static assets', () => {
