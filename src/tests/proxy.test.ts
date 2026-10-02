@@ -100,16 +100,48 @@ describe('maintenance proxy', () => {
     expect(isPassedThrough(await request('/'))).toBe(true);
   });
 
-  test('never blocks operational routes or reading the maintenance page', async () => {
+  test('never blocks operational routes', async () => {
     getMock.mockResolvedValue({ enabled: true });
 
     for (const response of [
-      await request('/maintenance'),
-      await request('/maintenance', { method: 'HEAD' }),
       await request('/api/db/migrate', { method: 'POST' }),
       await request('/api/auth/delete-expired-sessions'),
     ]) {
       expect(isPassedThrough(response)).toBe(true);
+    }
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
+  test('redirects direct maintenance reads home when maintenance is inactive', async () => {
+    for (const maintenance of [
+      { enabled: false },
+      { enabled: true, startsAt: '2026-08-10T21:30:00Z' },
+      { enabled: true, endsAt: NOW.toISOString() },
+    ]) {
+      getMock.mockResolvedValue(maintenance);
+      for (const method of ['GET', 'HEAD']) {
+        const response = await request('/maintenance?endsAt=stale', {
+          method,
+        });
+        expect(response.status).toBe(307);
+        expect(response.headers.get('Location')).toBe('https://mktour.org/');
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+      }
+    }
+  });
+
+  test('returns 503 for direct maintenance reads with the configured end time', async () => {
+    const endsAt = '2026-08-10T21:30:00Z';
+    getMock.mockResolvedValue({ enabled: true, endsAt });
+
+    for (const method of ['GET', 'HEAD']) {
+      const response = await request('/maintenance?endsAt=stale', { method });
+      expect(response.status).toBe(503);
+      expect(response.headers.get('x-middleware-rewrite')).toBe(
+        `https://mktour.org/maintenance?endsAt=${encodeURIComponent('2026-08-10T21:30:00.000Z')}`,
+      );
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
+      expect(response.headers.get('Retry-After')).toBe('1200');
     }
   });
 

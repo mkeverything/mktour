@@ -17,16 +17,18 @@ const CONFIG_TIMEOUT_MS = 500;
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isRead = request.method === 'GET' || request.method === 'HEAD';
-  if (
-    OPERATIONAL_PATHS.has(pathname) ||
-    (isRead && pathname === '/maintenance')
-  ) {
-    return NextResponse.next();
-  }
+  if (OPERATIONAL_PATHS.has(pathname)) return NextResponse.next();
 
   const now = Date.now();
   const active = getActiveMaintenance(await getMaintenance(), now);
-  if (!active) return NextResponse.next();
+  if (!active) {
+    if (isRead && pathname === '/maintenance') {
+      return NextResponse.redirect(new URL('/', request.url), {
+        headers: { 'Cache-Control': 'no-store' },
+      });
+    }
+    return NextResponse.next();
+  }
 
   const headers = new Headers({ 'Cache-Control': 'no-store' });
   if (active.endsAt !== null) {
