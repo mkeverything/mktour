@@ -2,9 +2,7 @@
   "version": "7",
   "dialect": "sqlite",
   "id": "d37a6ab2-c8b4-4418-b156-064f271f190b",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "ddl": [
     {
       "name": "club",
@@ -1093,13 +1091,9 @@
       "table": "user_notification"
     },
     {
-      "columns": [
-        "club_id"
-      ],
+      "columns": ["club_id"],
       "tableTo": "club",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1108,13 +1102,9 @@
       "table": "clubs_to_users"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1123,13 +1113,9 @@
       "table": "clubs_to_users"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1138,13 +1124,9 @@
       "table": "api_token"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1153,13 +1135,9 @@
       "table": "user_session"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1168,13 +1146,9 @@
       "table": "user_preferences"
     },
     {
-      "columns": [
-        "selected_club"
-      ],
+      "columns": ["selected_club"],
       "tableTo": "club",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1183,13 +1157,9 @@
       "table": "user"
     },
     {
-      "columns": [
-        "white_unit_id"
-      ],
+      "columns": ["white_unit_id"],
       "tableTo": "tournament_units",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1198,13 +1168,9 @@
       "table": "game"
     },
     {
-      "columns": [
-        "black_unit_id"
-      ],
+      "columns": ["black_unit_id"],
       "tableTo": "tournament_units",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1213,13 +1179,9 @@
       "table": "game"
     },
     {
-      "columns": [
-        "white_player_id"
-      ],
+      "columns": ["white_player_id"],
       "tableTo": "player",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1228,13 +1190,9 @@
       "table": "game"
     },
     {
-      "columns": [
-        "black_player_id"
-      ],
+      "columns": ["black_player_id"],
       "tableTo": "player",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1243,13 +1201,9 @@
       "table": "game"
     },
     {
-      "columns": [
-        "tournament_id"
-      ],
+      "columns": ["tournament_id"],
       "tableTo": "tournament",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1258,15 +1212,9 @@
       "table": "game"
     },
     {
-      "columns": [
-        "white_unit_id",
-        "tournament_id"
-      ],
+      "columns": ["white_unit_id", "tournament_id"],
       "tableTo": "tournament_units",
-      "columnsTo": [
-        "id",
-        "tournament_id"
-      ],
+      "columnsTo": ["id", "tournament_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -1275,15 +1223,9 @@
       "table": "game"
     },
     {
-      "columns": [
-        "black_unit_id",
-        "tournament_id"
-      ],
+      "columns": ["black_unit_id", "tournament_id"],
       "tableTo": "tournament_units",
-      "columnsTo": [
-        "id",
-        "tournament_id"
-      ],
+      "columnsTo": ["id", "tournament_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -1292,13 +1234,9 @@
       "table": "game"
     },
     {
-      "columns": [
-        "player_id"
-      ],
+      "columns": ["player_id"],
       "tableTo": "player",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1307,13 +1245,9 @@
       "table": "players_to_units"
     },
     {
-      "columns": [
-        "unit_id"
-      ],
+      "columns": ["unit_id"],
       "tableTo": "tournament_units",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1322,13 +1256,9 @@
       "table": "players_to_units"
     },
     {
-      "columns": [
-        "tournament_id"
-      ],
+      "columns": ["tournament_id"],
       "tableTo": "tournament",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1337,13 +1267,9 @@
       "table": "tournament_units"
     },
     {
-      "columns": [
-        "club_id"
-      ],
+      "columns": ["club_id"],
       "tableTo": "club",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1352,13 +1278,9 @@
       "table": "tournament"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1367,13 +1289,9 @@
       "table": "affiliation"
     },
     {
-      "columns": [
-        "club_id"
-      ],
+      "columns": ["club_id"],
       "tableTo": "club",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1382,13 +1300,9 @@
       "table": "affiliation"
     },
     {
-      "columns": [
-        "player_id"
-      ],
+      "columns": ["player_id"],
       "tableTo": "player",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1397,13 +1311,9 @@
       "table": "affiliation"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1412,13 +1322,9 @@
       "table": "player"
     },
     {
-      "columns": [
-        "club_id"
-      ],
+      "columns": ["club_id"],
       "tableTo": "club",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1427,13 +1333,9 @@
       "table": "player"
     },
     {
-      "columns": [
-        "club_id"
-      ],
+      "columns": ["club_id"],
       "tableTo": "club",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1442,13 +1344,9 @@
       "table": "club_notification"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1457,126 +1355,98 @@
       "table": "user_notification"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "club_pk",
       "entityType": "pks",
       "table": "club"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "clubs_to_users_pk",
       "entityType": "pks",
       "table": "clubs_to_users"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "api_token_pk",
       "entityType": "pks",
       "table": "api_token"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_session_pk",
       "entityType": "pks",
       "table": "user_session"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nameExplicit": false,
       "name": "user_preferences_pk",
       "entityType": "pks",
       "table": "user_preferences"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pk",
       "entityType": "pks",
       "table": "user"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "game_pk",
       "entityType": "pks",
       "table": "game"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "players_to_units_pk",
       "entityType": "pks",
       "table": "players_to_units"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "tournament_units_pk",
       "entityType": "pks",
       "table": "tournament_units"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "tournament_pk",
       "entityType": "pks",
       "table": "tournament"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "affiliation_pk",
       "entityType": "pks",
       "table": "affiliation"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "player_pk",
       "entityType": "pks",
       "table": "player"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "club_notification_pk",
       "entityType": "pks",
       "table": "club_notification"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_notification_pk",
       "entityType": "pks",
@@ -1829,27 +1699,21 @@
       "table": "player"
     },
     {
-      "columns": [
-        "lichess_team"
-      ],
+      "columns": ["lichess_team"],
       "nameExplicit": false,
       "name": "club_lichess_team_unique",
       "entityType": "uniques",
       "table": "club"
     },
     {
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nameExplicit": false,
       "name": "user_email_unique",
       "entityType": "uniques",
       "table": "user"
     },
     {
-      "columns": [
-        "username"
-      ],
+      "columns": ["username"],
       "nameExplicit": false,
       "name": "user_username_unique",
       "entityType": "uniques",

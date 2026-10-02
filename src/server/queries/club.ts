@@ -3,7 +3,7 @@ import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { ClubModel } from '@/server/zod/clubs';
-import { PlayerModel } from '@/server/zod/players';
+import { PlayerRecordModel } from '@/server/zod/players';
 import { and, countDistinct, desc, eq } from 'drizzle-orm';
 
 export const getClubInfo = async (id: ClubModel['id']) => {
@@ -13,10 +13,10 @@ export const getClubInfo = async (id: ClubModel['id']) => {
 };
 
 export const getClubPlayers = async (
-  clubId: PlayerModel['clubId'],
+  clubId: PlayerRecordModel['clubId'],
   limit: number,
   cursor?: number | null,
-): Promise<{ players: PlayerModel[]; nextCursor: number | null }> => {
+): Promise<{ players: PlayerRecordModel[]; nextCursor: number | null }> => {
   const result = await db
     .select()
     .from(players)
@@ -43,7 +43,7 @@ export const getUserClubPlayer = async ({
 }: {
   clubId: string;
   userId: string;
-}): Promise<PlayerModel | null> => {
+}): Promise<PlayerRecordModel | null> => {
   const player = await db
     .select()
     .from(players)

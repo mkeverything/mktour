@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { DashboardContext } from '@/app/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';

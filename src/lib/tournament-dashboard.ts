@@ -58,8 +58,5 @@ export function createUnitMember({
     playerId,
     unitId,
     numberInUnit,
-    newRating: null,
-    newRatingDeviation: null,
-    newVolatility: null,
   };
 }
