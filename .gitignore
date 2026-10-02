@@ -37,6 +37,9 @@ CONTEXT.md
 .env*.local
 .env
 
+# local maintenance config
+/maintenance.local.json
+
 # vercel
 .vercel
 

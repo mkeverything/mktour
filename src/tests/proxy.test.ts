@@ -9,11 +9,16 @@ import {
 } from 'bun:test';
 import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server';
 import { NextRequest } from 'next/server';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const getMock = mock<(key: string) => Promise<unknown>>();
 mock.module('@vercel/global-config', () => ({ get: getMock }));
 
+const { getMaintenance } = await import('@/lib/maintenance');
 const { config, proxy } = await import('@/proxy');
+const { publicCaller } = await import('@/server/api');
 
 const NOW = new Date('2026-08-10T21:10:00Z');
 
@@ -43,6 +48,7 @@ describe('maintenance proxy', () => {
   test('passes through when maintenance is disabled', async () => {
     getMock.mockResolvedValue({ enabled: false });
     expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(await publicCaller.maintenanceStartsAt()).toBeNull();
   });
 
   test('rewrites pages to the maintenance route with 503', async () => {
@@ -54,6 +60,7 @@ describe('maintenance proxy', () => {
       'https://mktour.org/maintenance',
     );
     expect(response.headers.get('Retry-After')).toBeNull();
+    expect(await publicCaller.maintenanceStartsAt()).toBeNull();
   });
 
   test('returns 503 json without rewriting api and post requests', async () => {
@@ -95,9 +102,16 @@ describe('maintenance proxy', () => {
 
     setSystemTime(new Date('2026-08-10T20:59:59Z'));
     expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(await publicCaller.maintenanceStartsAt()).toEqual(
+      new Date('2026-08-10T21:00:00Z'),
+    );
+
+    setSystemTime(new Date('2026-08-10T21:00:00Z'));
+    expect(await publicCaller.maintenanceStartsAt()).toBeNull();
 
     setSystemTime(new Date(endsAt));
     expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(await publicCaller.maintenanceStartsAt()).toBeNull();
   });
 
   test('never blocks operational routes', async () => {
@@ -153,9 +167,15 @@ describe('maintenance proxy', () => {
       { enabled: 'false' },
       { enabled: true, endsAt: 'not a date' },
       { enabled: true, startsAt: 0 },
+      {
+        enabled: true,
+        startsAt: '2026-08-10T21:30:00Z',
+        endsAt: '2026-08-10T21:00:00Z',
+      },
     ]) {
       getMock.mockResolvedValue(value);
       expect(isPassedThrough(await request('/'))).toBe(true);
+      expect(await publicCaller.maintenanceStartsAt()).toBeNull();
     }
 
     delete process.env.GLOBAL_CONFIG;
@@ -166,6 +186,48 @@ describe('maintenance proxy', () => {
   test('fails open when global config read stalls', async () => {
     getMock.mockReturnValue(new Promise(() => {}));
     expect(isPassedThrough(await request('/'))).toBe(true);
+  });
+
+  test('uses fresh local config only in development, with remote fallback', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'mktour-maintenance-'));
+    const cwd = process.cwd();
+    const nodeEnv = process.env.NODE_ENV;
+    const connection = process.env.GLOBAL_CONFIG;
+    try {
+      process.chdir(directory);
+      Object.assign(process.env, { NODE_ENV: 'development' });
+      getMock.mockResolvedValue({ enabled: true });
+      expect(await getMaintenance()).toEqual({ startsAt: null, endsAt: null });
+      expect(getMock).toHaveBeenCalledWith('maintenance');
+      getMock.mockClear();
+      delete process.env.GLOBAL_CONFIG;
+
+      const startsAt = '2026-08-10T21:30:00Z';
+      await writeFile(
+        'maintenance.local.json',
+        JSON.stringify({ enabled: true, startsAt }),
+      );
+      expect(await publicCaller.maintenanceStartsAt()).toEqual(
+        new Date(startsAt),
+      );
+      expect(isPassedThrough(await request('/'))).toBe(true);
+
+      for (const value of ['{"enabled":false}', '{']) {
+        await writeFile('maintenance.local.json', value);
+        expect(await getMaintenance()).toBeUndefined();
+      }
+      expect(getMock).not.toHaveBeenCalled();
+
+      process.env.GLOBAL_CONFIG = connection;
+      Object.assign(process.env, { NODE_ENV: 'production' });
+      expect(await getMaintenance()).toEqual({ startsAt: null, endsAt: null });
+      expect(getMock).toHaveBeenCalledWith('maintenance');
+    } finally {
+      process.chdir(cwd);
+      Object.assign(process.env, { NODE_ENV: nodeEnv });
+      process.env.GLOBAL_CONFIG = connection;
+      await rm(directory, { recursive: true });
+    }
   });
 });
 

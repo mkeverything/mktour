@@ -1,18 +1,10 @@
-import { get } from '@vercel/global-config';
+import { getMaintenance } from '@/lib/maintenance';
 import { NextRequest, NextResponse, type ProxyConfig } from 'next/server';
-
-type Maintenance = {
-  enabled?: unknown;
-  startsAt?: unknown;
-  endsAt?: unknown;
-};
 
 const OPERATIONAL_PATHS = new Set([
   '/api/db/migrate',
   '/api/auth/delete-expired-sessions',
 ]);
-
-const CONFIG_TIMEOUT_MS = 500;
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -20,8 +12,12 @@ export async function proxy(request: NextRequest) {
   if (OPERATIONAL_PATHS.has(pathname)) return NextResponse.next();
 
   const now = Date.now();
-  const active = getActiveMaintenance(await getMaintenance(), now);
-  if (!active) {
+  const active = await getMaintenance();
+  if (
+    !active ||
+    (active.startsAt !== null && now < active.startsAt) ||
+    (active.endsAt !== null && now >= active.endsAt)
+  ) {
     if (isRead && pathname === '/maintenance') {
       return NextResponse.redirect(new URL('/', request.url), {
         headers: { 'Cache-Control': 'no-store' },
@@ -45,47 +41,6 @@ export async function proxy(request: NextRequest) {
     url.searchParams.set('endsAt', new Date(active.endsAt).toISOString());
   }
   return NextResponse.rewrite(url, { status: 503, headers });
-}
-
-async function getMaintenance() {
-  if (!(process.env.GLOBAL_CONFIG ?? process.env.EDGE_CONFIG)) return;
-
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      get<Maintenance>('maintenance'),
-      new Promise<undefined>((resolve) => {
-        timeout = setTimeout(() => {
-          console.error('maintenance config read timed out');
-          resolve(undefined);
-        }, CONFIG_TIMEOUT_MS);
-      }),
-    ]);
-  } catch (error) {
-    console.error('failed to read maintenance config:', error);
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-function getActiveMaintenance(
-  maintenance: Maintenance | undefined,
-  now: number,
-) {
-  if (maintenance?.enabled !== true) return;
-
-  const startsAt = parseTime(maintenance.startsAt);
-  const endsAt = parseTime(maintenance.endsAt);
-  if (Number.isNaN(startsAt) || Number.isNaN(endsAt)) return;
-  if (startsAt !== null && now < startsAt) return;
-  if (endsAt !== null && now >= endsAt) return;
-
-  return { endsAt };
-}
-
-function parseTime(value: unknown) {
-  if (value === null || value === undefined) return null;
-  return typeof value === 'string' ? Date.parse(value) : NaN;
 }
 
 export const config: ProxyConfig = {
