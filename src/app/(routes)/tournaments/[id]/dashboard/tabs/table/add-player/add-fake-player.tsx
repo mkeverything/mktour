@@ -35,9 +35,6 @@ const AddFakerPlayer: FC<{ setOpen: (_arg: boolean) => void }> = ({
       min: GLICKO2_CONSTANTS.MIN_STARTING_RATING,
       max: GLICKO2_CONSTANTS.MAX_STARTING_RATING,
     }),
-    ratingDeviation: 350,
-    ratingVolatility: faker.number.float({ min: 0.5, max: 1.2 }),
-    ratingLastUpdateAt: new Date(),
   };
 
   const onClick = () => {

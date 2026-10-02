@@ -130,6 +130,10 @@ export const withdrawTournamentUnitResultSchema = z.object({
   roundsNumberAutoDecreased: z.boolean(),
 });
 
+export const tournamentFinishOutputSchema = z.object({
+  closedAt: z.date(),
+});
+
 export const tournamentInfoSchema = z.object({
   tournament: tournamentSchema,
   club: clubsSelectSchema.pick({

@@ -22,6 +22,11 @@ export const newid = customAlphabet(
   8,
 );
 
+/** current instant truncated to whole seconds, matching sqlite timestamp column precision */
+export function nowTimestamp() {
+  return new Date(Math.floor(Date.now() / 1000) * 1000);
+}
+
 /** public profile url: mktour user page when linked, else club player page */
 export function playerPublicProfileHref(player: {
   id: string;

@@ -45,7 +45,7 @@ export default function FinishTournamentButton({
     <Button
       onClick={() => {
         mutate(
-          { tournamentId, closedAt: new Date() },
+          { tournamentId },
           {
             onSuccess: () => {
               posthog.capture('tournament_finished', {

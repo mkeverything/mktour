@@ -1,8 +1,8 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "d37a6ab2-c8b4-4418-b156-064f271f190b",
-  "prevIds": ["00000000-0000-0000-0000-000000000000"],
+  "id": "e390160f-1016-4337-83d8-bbef4b81a2c6",
+  "prevIds": ["d37a6ab2-c8b4-4418-b156-064f271f190b"],
   "ddl": [
     {
       "name": "club",
@@ -50,6 +50,10 @@
     },
     {
       "name": "player",
+      "entityType": "tables"
+    },
+    {
+      "name": "rating_event",
       "entityType": "tables"
     },
     {
@@ -521,36 +525,6 @@
       "table": "players_to_units"
     },
     {
-      "type": "integer",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "new_rating",
-      "entityType": "columns",
-      "table": "players_to_units"
-    },
-    {
-      "type": "integer",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "new_rating_deviation",
-      "entityType": "columns",
-      "table": "players_to_units"
-    },
-    {
-      "type": "real",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "new_volatility",
-      "entityType": "columns",
-      "table": "players_to_units"
-    },
-    {
       "type": "text",
       "notNull": true,
       "autoincrement": false,
@@ -921,7 +895,7 @@
       "table": "player"
     },
     {
-      "type": "integer",
+      "type": "real",
       "notNull": true,
       "autoincrement": false,
       "default": "350",
@@ -969,6 +943,76 @@
       "name": "last_seen_at",
       "entityType": "columns",
       "table": "player"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "rating_event"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "player_id",
+      "entityType": "columns",
+      "table": "rating_event"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "source_tournament_id",
+      "entityType": "columns",
+      "table": "rating_event"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "published_at",
+      "entityType": "columns",
+      "table": "rating_event"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "rating",
+      "entityType": "columns",
+      "table": "rating_event"
+    },
+    {
+      "type": "real",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "rating_deviation",
+      "entityType": "columns",
+      "table": "rating_event"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "is_starting",
+      "entityType": "columns",
+      "table": "rating_event"
     },
     {
       "type": "text",
@@ -1333,6 +1377,28 @@
       "table": "player"
     },
     {
+      "columns": ["player_id"],
+      "tableTo": "player",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_rating_event_player_id_player_id_fk",
+      "entityType": "fks",
+      "table": "rating_event"
+    },
+    {
+      "columns": ["source_tournament_id"],
+      "tableTo": "tournament",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "nameExplicit": false,
+      "name": "fk_rating_event_source_tournament_id_tournament_id_fk",
+      "entityType": "fks",
+      "table": "rating_event"
+    },
+    {
       "columns": ["club_id"],
       "tableTo": "club",
       "columnsTo": ["id"],
@@ -1437,6 +1503,13 @@
       "name": "player_pk",
       "entityType": "pks",
       "table": "player"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "rating_event_pk",
+      "entityType": "pks",
+      "table": "rating_event"
     },
     {
       "columns": ["id"],
@@ -1699,6 +1772,60 @@
       "table": "player"
     },
     {
+      "columns": [
+        {
+          "value": "player_id",
+          "isExpression": false
+        },
+        {
+          "value": "published_at",
+          "isExpression": false
+        },
+        {
+          "value": "id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "rating_event_player_timeline_idx",
+      "entityType": "indexes",
+      "table": "rating_event"
+    },
+    {
+      "columns": [
+        {
+          "value": "player_id",
+          "isExpression": false
+        },
+        {
+          "value": "source_tournament_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "rating_event_player_tournament_unique_idx",
+      "entityType": "indexes",
+      "table": "rating_event"
+    },
+    {
+      "columns": [
+        {
+          "value": "player_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": "\"rating_event\".\"is_starting\" = 1",
+      "origin": "manual",
+      "name": "rating_event_player_starting_unique_idx",
+      "entityType": "indexes",
+      "table": "rating_event"
+    },
+    {
       "columns": ["lichess_team"],
       "nameExplicit": false,
       "name": "club_lichess_team_unique",
@@ -1726,12 +1853,6 @@
       "table": "game"
     },
     {
-      "value": "\"new_rating\" is null or \"new_rating\" between 400 and 3400",
-      "name": "ptu_new_rating_bounds",
-      "entityType": "checks",
-      "table": "players_to_units"
-    },
-    {
       "value": "\"rating\" between 400 and 3400",
       "name": "player_rating_bounds",
       "entityType": "checks",
@@ -1742,6 +1863,18 @@
       "name": "player_rating_peak_bounds",
       "entityType": "checks",
       "table": "player"
+    },
+    {
+      "value": "\"rating\" between 400 and 3400",
+      "name": "rating_event_rating_bounds",
+      "entityType": "checks",
+      "table": "rating_event"
+    },
+    {
+      "value": "\"is_starting\" = 0 or \"source_tournament_id\" is null",
+      "name": "rating_event_starting_has_no_source",
+      "entityType": "checks",
+      "table": "rating_event"
     }
   ],
   "renames": []

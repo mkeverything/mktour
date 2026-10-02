@@ -192,12 +192,7 @@ export async function mergePlayers({
 
     await tx
       .update(players_to_units)
-      .set({
-        playerId: basePlayerId,
-        newRating: null,
-        newRatingDeviation: null,
-        newVolatility: null,
-      })
+      .set({ playerId: basePlayerId })
       .where(eq(players_to_units.playerId, mergedPlayerId));
 
     await tx
