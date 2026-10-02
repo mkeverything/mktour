@@ -703,9 +703,11 @@
   },
   "NewClubForm": {},
   "Maintenance": {
+    "error": "error 503",
     "title": "maintenance",
+    "status": "under maintenance",
     "description": "mktour is temporarily unavailable while we carry out maintenance",
-    "expectedBack": "expected back by {time}",
+    "eta": "eta {time}",
     "reload": "reload page"
   }
 }

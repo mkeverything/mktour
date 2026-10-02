@@ -1,6 +1,6 @@
-import MaintenanceCard, {
-  ExpectedBack,
-} from '@/app/maintenance/maintenance-card';
+import MaintenanceScreen, {
+  Countdown,
+} from '@/app/maintenance/maintenance-screen';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
@@ -18,13 +18,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function MaintenancePage(props: { searchParams: SearchParams }) {
   return (
-    <main className="flex min-h-dvh items-center justify-center p-4">
-      <MaintenanceCard>
-        <Suspense>
-          <EndsAt searchParams={props.searchParams} />
-        </Suspense>
-      </MaintenanceCard>
-    </main>
+    <MaintenanceScreen>
+      <Suspense>
+        <EndsAt searchParams={props.searchParams} />
+      </Suspense>
+    </MaintenanceScreen>
   );
 }
 
@@ -33,5 +31,5 @@ async function EndsAt(props: { searchParams: SearchParams }) {
   if (typeof endsAt !== 'string') return null;
 
   const date = new Date(endsAt);
-  return isNaN(date.getTime()) ? null : <ExpectedBack endsAt={date} />;
+  return isNaN(date.getTime()) ? null : <Countdown endsAt={date} />;
 }
