@@ -1,6 +1,7 @@
 import { validateRequest } from '@/lib/auth/lucia';
 import { authRouter } from '@/server/api/routers/auth';
 import { clubRouter } from '@/server/api/routers/club';
+import { maintenanceStartsAt } from '@/server/api/routers/maintenance';
 import { playerRouter } from '@/server/api/routers/player';
 import { search, searchOpenApi } from '@/server/api/routers/search';
 import { tournamentRouter } from '@/server/api/routers/tournament';
@@ -17,6 +18,7 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   search,
   searchOpenApi,
+  maintenanceStartsAt,
 });
 
 export const publicCaller = appRouter.createCaller({

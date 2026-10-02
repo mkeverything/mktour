@@ -701,5 +701,14 @@
       "affiliation requested": "request sent"
     }
   },
-  "NewClubForm": {}
+  "NewClubForm": {},
+  "Maintenance": {
+    "error": "error 503",
+    "title": "maintenance",
+    "status": "under maintenance",
+    "description": "mktour is temporarily unavailable while we carry out maintenance",
+    "eta": "eta {time}",
+    "scheduled": "maintenance starts in {minutes, plural, one {# minute} other {# minutes}}",
+    "reload": "reload page"
+  }
 }
