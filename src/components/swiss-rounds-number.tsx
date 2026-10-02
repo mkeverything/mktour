@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { DashboardContext } from '@/app/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import useSaveRoundsNumberMutation from '@/components/hooks/mutation-hooks/use-tournament-update-swiss-rounds-number';
 import { useTournamentSwissRoundsInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentActiveUnitsCount } from '@/components/hooks/query-hooks/use-tournament-units';
