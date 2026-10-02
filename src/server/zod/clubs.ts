@@ -2,7 +2,7 @@ import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { clubIdInputSchema } from '@/server/zod/common';
 import { statusInClubEnum } from '@/server/zod/enums';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod';
 import z from 'zod';
 
 export const clubsSelectSchema = createSelectSchema(clubs);

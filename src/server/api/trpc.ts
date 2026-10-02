@@ -11,7 +11,7 @@ import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
 import { clubs as clubsTable } from '@/server/db/schema/clubs';
-import { apiTokens, users } from '@/server/db/schema/users';
+import { apiTokens } from '@/server/db/schema/users';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { getUserClubIds } from '@/server/queries/get-user-clubs';
 import {
@@ -62,12 +62,12 @@ export const createTRPCContext = async (opts: {
           .digest('hex');
 
         const apiToken = await db.query.apiTokens.findFirst({
-          where: eq(apiTokens.id, id),
+          where: { id },
         });
 
         if (apiToken && apiToken.tokenHash === tokenHash) {
           const dbUser = await db.query.users.findFirst({
-            where: eq(users.id, apiToken.userId),
+            where: { id: apiToken.userId },
           });
 
           if (dbUser) {

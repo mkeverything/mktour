@@ -9,7 +9,7 @@ import { verifyTestDatabase } from '@/lib/config/urls';
 
 export const seedComprehensiveTestData = async () => {
   if (verifyTestDatabase()) {
-    const db = drizzle(sqlite);
+    const db = drizzle({ client: sqlite });
 
     await reset(db, schema);
 
@@ -93,7 +93,7 @@ export const seedComprehensiveTestData = async () => {
     const [clubUserRelations, users, players] = await Promise.all([
       db.select().from(schema.clubs_to_users),
       db.select().from(schema.users).limit(5),
-      db.select().from(schema.players).limit(10),
+      db.select().from(schema.players),
     ]);
 
     // batch update selectedClub for all users
@@ -107,37 +107,41 @@ export const seedComprehensiveTestData = async () => {
     );
 
     // batch link players to users
+    const linkablePlayers = players.filter(
+      (player, index) =>
+        players.findIndex(({ clubId }) => clubId === player.clubId) === index,
+    );
     const playerUpdates = [];
-    if (users[0] && players[0]) {
+    if (users[0] && linkablePlayers[0]) {
       playerUpdates.push(
         db
           .update(schema.players)
           .set({ userId: users[0].id })
-          .where(eq(schema.players.id, players[0].id)),
+          .where(eq(schema.players.id, linkablePlayers[0].id)),
       );
     }
-    if (users[0] && players[1]) {
+    if (users[0] && linkablePlayers[1]) {
       playerUpdates.push(
         db
           .update(schema.players)
           .set({ userId: users[0].id })
-          .where(eq(schema.players.id, players[1].id)),
+          .where(eq(schema.players.id, linkablePlayers[1].id)),
       );
     }
-    if (users[0] && players[2]) {
+    if (users[0] && linkablePlayers[2]) {
       playerUpdates.push(
         db
           .update(schema.players)
           .set({ userId: users[0].id })
-          .where(eq(schema.players.id, players[2].id)),
+          .where(eq(schema.players.id, linkablePlayers[2].id)),
       );
     }
-    if (users[1] && players[3]) {
+    if (users[1] && linkablePlayers[3]) {
       playerUpdates.push(
         db
           .update(schema.players)
           .set({ userId: users[1].id })
-          .where(eq(schema.players.id, players[3].id)),
+          .where(eq(schema.players.id, linkablePlayers[3].id)),
       );
     }
 
