@@ -21,11 +21,13 @@ first run the synthetic tests:
   bun test:noseed scripts/temporary/rating-events/rating-reconstruction.test.ts
 then rehearse export -> review -> all pending migrations -> import -> verification
 on a db copy. the .json report and .sql contain both legacy tournament outcomes and
-validated starting events; a skipped starting event never removes a legacy outcome.
-review assumptions, every outcome, skipped player, candidate list and reason.
+starting events. uniquely recovered/direct starts are distinguished from the
+operator-approved estimated fallback; every estimate retains its method, residuals
+and original reconstruction failure reasons. no estimate changes a legacy outcome.
+review assumptions, every outcome, estimate, candidate list and reason.
 historical outcomes are clamped to 400–3400; the report retains each originalRating.
-exit 2 means starts were skipped or outcomes clamped: review before migration.
-search limits and contradictory histories are deliberately unresolved, never guessed.
+exit 2 means starts were estimated/skipped or outcomes clamped: review before migration.
+search limits and contradictory histories never silently become exact reconstruction.
 
 only after review, invoke the existing secure migration endpoint once, then manually
 apply the approved .sql in one turso shell connection with stop-on-error. the inserts
@@ -61,6 +63,8 @@ import {
   type StartingReconstruction,
 } from './rating-reconstruction';
 import { calculateLegacyRating } from './legacy-glicko2';
+import { legacyOutcomeMayMatch } from './legacy-rating-bounds';
+import { addEstimatedStarts } from './starting-estimates';
 
 const STARTING_GRID = Array.from({ length: 61 }, (_, i) => i * 50);
 const sameVolatility = (a: number, b: number) => Math.abs(a - b) <= 1e-9;
@@ -87,6 +91,7 @@ export function reconstructStartingRatings(
         candidates: [],
         reasons: [],
         event: null,
+        estimate: null,
       },
     ]),
   );
@@ -120,15 +125,8 @@ export function reconstructStartingRatings(
   for (const player of snapshot.players) {
     const history = histories.get(player.id)!;
     const latest = history.at(-1);
-    if (
-      latest &&
-      (!sameState(player, latest.state) ||
-        player.ratingLastUpdateAt.getTime() < latest.at)
-    ) {
-      reject(
-        player.id,
-        'latest snapshot disagrees with the stored baseline or its update timestamp',
-      );
+    if (latest && !sameState(player, latest.state)) {
+      reject(player.id, 'latest snapshot disagrees with the stored baseline');
     }
     for (let i = 0; i < history.length; i++) {
       const outcome = history[i];
@@ -228,7 +226,7 @@ export function reconstructStartingRatings(
 
   type Constraint = {
     dependencies: string[];
-    check: (ratings: Map<string, number>) => boolean;
+    canMatch: (domains: Map<string, number[]>) => boolean;
   };
   const constraints: Constraint[] = [];
   for (const outcome of outcomes) {
@@ -289,36 +287,76 @@ export function reconstructStartingRatings(
         );
       continue;
     }
+    const gameScores = ownGames.map((game) => {
+      const white = game.whitePlayerId === outcome.playerId;
+      return {
+        opponentId: (white ? game.blackPlayerId : game.whitePlayerId)!,
+        score:
+          game.result === '1/2-1/2'
+            ? (0.5 as const)
+            : (game.result === '1-0') === white
+              ? (1 as const)
+              : (0 as const),
+      };
+    });
+    const state = (
+      id: string,
+      ratings: Map<string, number>,
+    ): LegacyRatingState =>
+      prior.get(id) ?? {
+        rating: ratings.get(id) ?? records.get(id)!.rating,
+        ratingDeviation: 350,
+        ratingVolatility: 0.06,
+      };
     const check = (ratings: Map<string, number>) => {
-      const state = (id: string): LegacyRatingState =>
-        prior.get(id) ?? {
-          rating: ratings.get(id) ?? records.get(id)!.rating,
-          ratingDeviation: 350,
-          ratingVolatility: 0.06,
-        };
-      const results: LegacyResult[] = ownGames.map((game) => {
-        const white = game.whitePlayerId === outcome.playerId;
-        const opponent = state(
-          (white ? game.blackPlayerId : game.whitePlayerId)!,
-        );
+      const results: LegacyResult[] = gameScores.map((game) => {
+        const opponent = state(game.opponentId, ratings);
         return {
           opponentRating: opponent.rating,
           opponentRatingDeviation: opponent.ratingDeviation,
-          score:
-            game.result === '1/2-1/2'
-              ? 0.5
-              : (game.result === '1-0') === white
-                ? 1
-                : 0,
+          score: game.score,
         };
       });
       return sameState(
         calculateLegacyRating(
-          state(outcome.playerId),
+          state(outcome.playerId, ratings),
           results,
           outcome.at >= boundsSince,
         ),
         outcome.state,
+      );
+    };
+    const canMatch = (domains: Map<string, number[]>) => {
+      if (dependencies.every((id) => domains.get(id)?.length === 1)) {
+        return check(
+          new Map(dependencies.map((id) => [id, domains.get(id)![0]])),
+        );
+      }
+      const ownPrior = prior.get(outcome.playerId);
+      const ownRatings = ownPrior
+        ? [ownPrior.rating]
+        : (domains.get(outcome.playerId) ?? [
+            records.get(outcome.playerId)!.rating,
+          ]);
+      const results = gameScores.map((game) => {
+        const opponent = prior.get(game.opponentId);
+        return {
+          ratings: opponent
+            ? [opponent.rating]
+            : (domains.get(game.opponentId) ?? [
+                records.get(game.opponentId)!.rating,
+              ]),
+          opponentRatingDeviation: opponent?.ratingDeviation ?? 350,
+          score: game.score,
+        };
+      });
+      return ownRatings.some((rating) =>
+        legacyOutcomeMayMatch(
+          ownPrior ?? { rating, ratingDeviation: 350, ratingVolatility: 0.06 },
+          results,
+          outcome.state,
+          outcome.at >= boundsSince,
+        ),
       );
     };
     if (!dependencies.length) {
@@ -327,7 +365,7 @@ export function reconstructStartingRatings(
           outcome.playerId,
           `historical forward calculation/closure order disagrees: ${outcome.tournament.id}`,
         );
-    } else constraints.push({ dependencies, check });
+    } else constraints.push({ dependencies, canMatch });
   }
 
   const remaining = new Set(
@@ -358,10 +396,30 @@ export function reconstructStartingRatings(
         );
       continue;
     }
+    const domains = new Map(
+      [...component].map((id) => [id, [...STARTING_GRID]]),
+    );
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const constraint of relevant) {
+        for (const id of constraint.dependencies) {
+          const values = domains.get(id)!;
+          if (values.length <= 1) continue;
+          const allowed = values.filter((rating) => {
+            domains.set(id, [rating]);
+            return constraint.canMatch(domains);
+          });
+          domains.set(id, allowed);
+          changed ||= allowed.length !== values.length;
+        }
+      }
+    }
     const ids = [...component].sort(
       (a, b) =>
+        domains.get(a)!.length - domains.get(b)!.length ||
         relevant.filter((c) => c.dependencies.includes(b)).length -
-        relevant.filter((c) => c.dependencies.includes(a)).length,
+          relevant.filter((c) => c.dependencies.includes(a)).length,
     );
     const assignment = new Map<string, number>();
     const candidates = new Map(ids.map((id) => [id, new Set<number>()]));
@@ -374,25 +432,22 @@ export function reconstructStartingRatings(
         exhausted = true;
         return;
       }
-      if (
-        relevant.some(
-          (c) =>
-            c.dependencies.every((id) => assignment.has(id)) &&
-            !c.check(assignment),
-        )
-      )
-        return;
+      if (relevant.some((constraint) => !constraint.canMatch(domains))) return;
       if (depth === ids.length) {
         for (const id of ids) candidates.get(id)!.add(assignment.get(id)!);
         ambiguous = ids.every((id) => candidates.get(id)!.size > 1);
         return;
       }
-      for (const rating of STARTING_GRID) {
-        assignment.set(ids[depth], rating);
+      const id = ids[depth];
+      const values = domains.get(id)!;
+      for (const rating of values) {
+        assignment.set(id, rating);
+        domains.set(id, [rating]);
         search(depth + 1);
         if (exhausted || ambiguous) break;
       }
-      assignment.delete(ids[depth]);
+      domains.set(id, values);
+      assignment.delete(id);
     };
     search(0);
     for (const id of ids) {
@@ -434,7 +489,7 @@ export function reconstructStartingRatings(
       }
     }
   }
-  return [...cases.values()];
+  return addEstimatedStarts(snapshot, [...cases.values()], boundsSince);
 }
 
 export function legacyOutcomeEvents(
@@ -481,7 +536,10 @@ export function legacyOutcomeEvents(
 }
 
 const quote = (value: string) => `'${value.replaceAll("'", "''")}'`;
-export function ratingImportSql(events: RatingEventImport[]) {
+export function ratingImportSql(
+  events: RatingEventImport[],
+  estimatedPlayerIds: ReadonlySet<string> = new Set(),
+) {
   const validated = ratingEventImportSchema.array().safeParse(events);
   if (!validated.success)
     throw new AppError('CONFIG_ERROR', { cause: validated.error });
@@ -493,12 +551,17 @@ export function ratingImportSql(events: RatingEventImport[]) {
     const match = event.isStarting
       ? 'is_starting = 1'
       : `source_tournament_id = ${source}`;
-    return `INSERT INTO rating_event (id, player_id, source_tournament_id, published_at, rating, rating_deviation, is_starting)
+    const estimateNotice =
+      event.isStarting && estimatedPlayerIds.has(event.playerId)
+        ? '-- estimated starting rating; review its method and residuals in the report.\n'
+        : '';
+    return `${estimateNotice}INSERT INTO rating_event (id, player_id, source_tournament_id, published_at, rating, rating_deviation, is_starting)
 SELECT lower(hex(randomblob(8))), ${quote(event.playerId)}, ${source}, ${Math.floor(event.publishedAt.getTime() / 1000)}, ${event.rating}, ${event.ratingDeviation}, ${Number(event.isStarting)}
 WHERE NOT EXISTS (SELECT 1 FROM rating_event WHERE player_id = ${quote(event.playerId)} AND ${match});`;
   });
   return `-- generated from the frozen legacy export; review the companion report before migration.
 -- historical outcomes are clamped to 400–3400; review originalRating in the report.
+-- estimated starting ratings are explicitly marked and are not verified originals.
 -- apply after all pending migrations, with writes still paused. stop on error and ROLLBACK.
 -- reruns skip existing events; compare their values with the report, never assume a match.
 BEGIN IMMEDIATE;
@@ -577,7 +640,14 @@ if (import.meta.main) {
     ...outcomes,
     ...cases.flatMap((entry) => (entry.event ? [entry.event] : [])),
   ];
-  const importSql = ratingImportSql(events);
+  const importSql = ratingImportSql(
+    events,
+    new Set(
+      cases
+        .filter((entry) => entry.status === 'estimated')
+        .map((entry) => entry.id),
+    ),
+  );
   const counts = {
     outcomes: outcomes.length,
     clampedOutcomes: outcomes.filter(
@@ -585,6 +655,7 @@ if (import.meta.main) {
     ).length,
     recovered: cases.filter((c) => c.status === 'recovered').length,
     directBaseline: cases.filter((c) => c.status === 'direct-baseline').length,
+    estimated: cases.filter((c) => c.status === 'estimated').length,
     skipped: cases.filter((c) => c.status === 'skipped').length,
   };
   await Bun.write(
@@ -607,11 +678,21 @@ if (import.meta.main) {
           outcomeRatingPolicy:
             'clamp to 400–3400; retain originalRating in each outcome; reconstruct starts from unchanged legacy values',
           ordering:
-            'legacy closedAt, validated against forward snapshots and final baselines; ties skipped; client timestamps do not prove real execution order',
+            'legacy closedAt, validated against forward snapshots and final baseline values; ties cannot prove ordering; client closure times are not compared with server update times',
           timestamps:
             'earliest surviving closed snapshot minus one second; otherwise stored ratingLastUpdateAt',
           volatilityTolerance: 1e-9,
           maxJointSearchNodes: 500_000,
+          estimates: {
+            policy:
+              'operator-approved fallback; estimated starts are not uniquely recovered originals',
+            grid: '400–3000, step 50; event bounds remain enforced',
+            fit: 'up to 32 joint passes minimizing first-outcome rating/rd squared error; volatility and distance from 1500 break ties; keep the best complete pass',
+            opponents:
+              'last earlier surviving snapshot, otherwise recovered or estimated start; erased identities are not restored',
+            noUsableGames:
+              'default 1500; never substitute the current rating for an original start',
+          },
         },
         outcomes,
         cases,
@@ -622,5 +703,6 @@ if (import.meta.main) {
   );
   await Bun.write(`${prefix}.sql`, importSql);
   console.log({ ...counts, report: `${prefix}.json`, sql: `${prefix}.sql` });
-  if (counts.skipped || counts.clampedOutcomes) process.exitCode = 2;
+  if (counts.skipped || counts.estimated || counts.clampedOutcomes)
+    process.exitCode = 2;
 }

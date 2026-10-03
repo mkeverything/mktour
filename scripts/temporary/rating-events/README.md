@@ -39,17 +39,50 @@ predate it. a git author date is not a deployment date. stop if uncertain.
 outputs (the paths must not already exist):
 
 - `.json`: snapshot fingerprint, assumptions, outcome rows (including each
-  `originalRating` and import `rating`), reconstructed/direct starts, skipped players
-  with reasons, and counts including `clampedOutcomes`.
-- `.sql`: standalone, idempotent inserts for **both outcomes and approved starts**.
-  these do not read legacy columns from production and can run after cleanup.
+  `originalRating` and import `rating`), recovered/direct starts, explicitly estimated
+  starts with methods/residuals and original failure reasons, and coverage counts.
+- `.sql`: standalone, idempotent inserts for **both outcomes and starting events**.
+  estimated starting inserts are marked with comments. these do not read legacy
+  columns from production and can run after cleanup, but require review first.
 
 review both files before migration. every closed legacy snapshot with non-null
 `new_rating` must have an outcome, even if its starting event cannot be recovered
 or it would not qualify under today's rating rules. open/reset snapshots stay out.
-exit code 2 means starts were skipped or outcomes were clamped: review each
-exception; it is not full reconstruction success. invalid/missing outcome data or
-duplicate outcomes stop export rather than silently discarding history.
+exit code 2 means starts were estimated/skipped or outcomes were clamped: review each
+exception. full starting-event coverage does not mean every original rating was
+recovered. invalid/missing outcome data or duplicate outcomes stop export rather
+than silently discarding history.
+
+### recovered versus estimated starting ratings
+
+`recovered` means the historical-grid rating is unique after complete search and
+matches the surviving calculations under the report's historical assumptions.
+`direct-baseline` retains a normal, unchanged baseline without recorded history.
+interval propagation and partial-assignment bounds prune impossible ratings before
+exact search; they do not replace the final frozen-calculator equality checks.
+legacy client closure times are not compared against server baseline times to reject
+otherwise matching values. tied closures still cannot prove ordering.
+
+when original reconstruction fails, the operator-approved fallback emits an
+`estimated` starting event, preserving the original reasons and candidate list:
+
+- `inverse-first-outcome` fits the earliest surviving closed outcome using its games,
+  normal starting rd 350/volatility 0.06, and the 400–3000 grid in steps of 50.
+  opponents use their last earlier surviving snapshot, otherwise their recovered or
+  estimated start. up to 32 joint passes minimize squared rating/rd errors; volatility
+  error and proximity to 1500 break ties. the best complete pass is retained.
+- `default` uses 1500 when no usable first-outcome games survive. it does not relabel a
+  current post-tournament rating as an original start.
+
+all estimated starting events have rd 350. the report records the source tournament
+and signed rating/rd/volatility residuals when a fit is possible. zero residuals do
+**not** prove uniqueness or restore erased merge/reset history. estimated publication
+instants use the same approximate legacy timestamp policy as recovered starts.
+
+review and approve every estimate, especially defaults and large residuals. the
+existing database schema has no estimate-provenance column: preserve the reviewed
+report/sql permanently as the audit record. no current player baseline or legacy
+outcome is changed to make an estimate fit.
 
 ### out-of-range historical outcomes
 
@@ -62,13 +95,14 @@ unchanged. malformed ratings are rejected, not repaired by clamping.
 
 only exported outcomes are clamped. the frozen snapshot and stored player ratings
 are not modified; starting-rating reconstruction uses the original historical
-values, not clamped ones. out-of-range reconstructed starts remain skipped.
+values, not clamped ones. out-of-range exact starts are not silently clamped or
+labelled recovered; their fallback is explicitly estimated within event bounds.
 every import event is validated against the rating bounds before either output
 file is written. no database constraint is disabled or changed by the exporter.
 
 preserve the export and reviewed files. confirm outcome counts and `originalRating`
 values against the export, verify each clamped import value, and approve every
-clamped outcome, reconstructed/direct start and skipped case before migration.
+clamped outcome, recovered/direct start, estimated start and any skipped case before migration.
 never migrate on an export error or without completing this review.
 
 ## 3. migrate once
@@ -95,7 +129,8 @@ before reopening writes:
   source tournament, import `rating` (not `originalRating`), rd, timestamp and starting
   flag. sql timestamps are unix seconds; report dates are iso. random event ids are
   not comparison keys.
-- compare event counts with report `outcomes`, `recovered` and `directBaseline`.
+- compare event counts with report `outcomes`, `recovered`, `directBaseline` and
+  `estimated`; require one starting event per exported player and no skipped starts.
 - compare all player fields and surviving ptu membership fields with the export.
 - confirm legacy ptu columns are gone and `PRAGMA foreign_key_check` returns no rows.
 - verify the new application works, then reopen writes.

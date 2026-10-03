@@ -44,10 +44,19 @@ export const startingReconstructionSchema = playersSelectSchema
     clubId: true,
   })
   .extend({
-    status: z.enum(['recovered', 'direct-baseline', 'skipped']),
+    status: z.enum(['recovered', 'direct-baseline', 'estimated', 'skipped']),
     candidates: z.array(z.number()),
     reasons: z.array(z.string()),
     event: ratingEventImportSchema.nullable(),
+    estimate: z
+      .object({
+        method: z.enum(['inverse-first-outcome', 'default']),
+        sourceTournamentId: z.string().nullable(),
+        ratingError: z.number().nullable(),
+        ratingDeviationError: z.number().nullable(),
+        volatilityError: z.number().nullable(),
+      })
+      .nullable(),
   });
 
 export type LegacyRatingState = z.infer<typeof legacyRatingStateSchema>;

@@ -7,6 +7,7 @@ import { createClient } from '@libsql/client';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { drizzle } from 'drizzle-orm/libsql';
 import { calculateLegacyRating } from './legacy-glicko2';
+import { legacyOutcomeMayMatch } from './legacy-rating-bounds';
 import {
   reconstructStartingRatings,
   legacyOutcomeEvents,
@@ -24,6 +25,7 @@ import {
   legacySnapshotSchema,
   legacyOutcomeEventSchema,
   ratingEventImportSchema,
+  startingReconstructionSchema,
   type LegacySnapshot,
 } from './rating-reconstruction';
 
@@ -118,7 +120,232 @@ function fixture(): LegacySnapshot {
   });
 }
 
+function jointFixture(ratings: number[]): LegacySnapshot {
+  const base = fixture();
+  const initial = ratings.map((rating) => ({
+    rating,
+    ratingDeviation: 350,
+    ratingVolatility: 0.06,
+  }));
+  const games = ratings.flatMap((_, white) =>
+    ratings.flatMap((_, black) =>
+      black <= white
+        ? []
+        : [
+            {
+              ...base.games[0],
+              id: `g${white}-${black}`,
+              gameNumber: white * ratings.length + black,
+              whitePlayerId: `p${white}`,
+              blackPlayerId: `p${black}`,
+              whiteUnitId: `u${white}`,
+              blackUnitId: `u${black}`,
+              result: (['1-0', '0-1', '1/2-1/2'] as const)[(white + black) % 3],
+            },
+          ],
+    ),
+  );
+  const states = initial.map((player, i) =>
+    calculateLegacyRating(
+      player,
+      games.flatMap((game) => {
+        const white = game.whitePlayerId === `p${i}`;
+        if (!white && game.blackPlayerId !== `p${i}`) return [];
+        const opponent =
+          initial[
+            Number((white ? game.blackPlayerId : game.whitePlayerId).slice(1))
+          ];
+        return [
+          {
+            opponentRating: opponent.rating,
+            opponentRatingDeviation: opponent.ratingDeviation,
+            score:
+              game.result === '1/2-1/2'
+                ? (0.5 as const)
+                : (game.result === '1-0') === white
+                  ? (1 as const)
+                  : (0 as const),
+          },
+        ];
+      }),
+      true,
+    ),
+  );
+  return legacySnapshotSchema.parse({
+    ...base,
+    players: states.map((state, i) => ({
+      ...base.players[0],
+      ...state,
+      id: `p${i}`,
+      nickname: `player ${i}`,
+    })),
+    units: states.map((_, i) => ({
+      ...base.units[0],
+      id: `u${i}`,
+      nickname: `player ${i}`,
+      number: i + 1,
+    })),
+    participations: states.map((state, i) => ({
+      ...base.participations[0],
+      id: `ptu${i}`,
+      playerId: `p${i}`,
+      unitId: `u${i}`,
+      newRating: state.rating,
+      newRatingDeviation: state.ratingDeviation,
+      newVolatility: state.ratingVolatility,
+    })),
+    games,
+  });
+}
+
 describe('legacy starting reconstruction', () => {
+  test('interval pruning never excludes a real legacy calculation', () => {
+    for (let seed = 0; seed < 120; seed++) {
+      const player = {
+        rating: 400 + ((seed * 137) % 2601),
+        ratingDeviation: [30, 60, 200, 350][(seed + Math.floor(seed / 4)) % 4],
+        ratingVolatility: [0.001, 0.06, 0.5][seed % 3],
+      };
+      const results = Array.from({ length: seed % 4 }, (_, i) => ({
+        opponentRating: (seed * 173 + i * 397) % 3001,
+        opponentRatingDeviation: [30, 200, 350][(seed + i) % 3],
+        score: ([0, 0.5, 1] as const)[(seed + i) % 3],
+      }));
+      const bounded = seed % 2 === 0;
+      const outcome = calculateLegacyRating(player, results, bounded);
+      expect(
+        legacyOutcomeMayMatch(
+          player,
+          results.map((result) => ({
+            ...result,
+            ratings: [
+              Math.max(0, result.opponentRating - 300),
+              result.opponentRating,
+              Math.min(3000, result.opponentRating + 300),
+            ],
+          })),
+          outcome,
+          bounded,
+        ),
+      ).toBe(true);
+    }
+  });
+
+  test('rejects impossible rd bounds without enumerating opponents', () => {
+    expect(
+      legacyOutcomeMayMatch(
+        { rating: 1500, ratingDeviation: 350, ratingVolatility: 0.06 },
+        [{ ratings: [0, 1500, 3000], opponentRatingDeviation: 350, score: 1 }],
+        { rating: 1500, ratingDeviation: 50, ratingVolatility: 0.06 },
+        true,
+      ),
+    ).toBe(false);
+  });
+
+  test('uniquely recovers a coupled first-tournament group within the standard search budget', () => {
+    const ratings = Array.from({ length: 6 }, (_, i) => 1200 + i * 50);
+    const snapshot = jointFixture(ratings);
+    const before = structuredClone(snapshot);
+    const result = reconstructStartingRatings(snapshot, -Infinity);
+    expect(result.every((entry) => entry.status === 'recovered')).toBe(true);
+    expect(result.map((entry) => entry.event?.rating)).toEqual(ratings);
+    expect(snapshot).toEqual(before);
+  });
+
+  test('covers a large group even when uniqueness cannot be proved within the budget', () => {
+    const snapshot = jointFixture(
+      Array.from({ length: 14 }, (_, i) => 1200 + i * 50),
+    );
+    const result = reconstructStartingRatings(snapshot, -Infinity, 5000);
+    expect(result).toHaveLength(snapshot.players.length);
+    expect(
+      result.every(
+        (entry) =>
+          entry.status === 'estimated' &&
+          entry.estimate?.method === 'inverse-first-outcome' &&
+          entry.event !== null,
+      ),
+    ).toBe(true);
+    expect(
+      result.every((entry) =>
+        entry.reasons.some((reason) => reason.includes('uniqueness unproven')),
+      ),
+    ).toBe(true);
+  });
+
+  test('does not reject matching values because the old client clock was ahead', () => {
+    const snapshot = fixture();
+    snapshot.players.forEach((player) => {
+      player.ratingLastUpdateAt = new Date(
+        player.ratingLastUpdateAt.getTime() - 89_000,
+      );
+    });
+    expect(
+      reconstructStartingRatings(snapshot, -Infinity).map(
+        (entry) => entry.status,
+      ),
+    ).toEqual(['recovered', 'recovered']);
+  });
+
+  test('covers erased reset histories with explicit defaults, not current ratings', () => {
+    const snapshot = fixture();
+    snapshot.tournaments[0].closedAt = null;
+    snapshot.tournaments[0].startedAt = null;
+    snapshot.games = [];
+    const before = structuredClone(snapshot);
+    const result = reconstructStartingRatings(snapshot, -Infinity);
+    expect(
+      result.every(
+        (entry) =>
+          entry.status === 'estimated' &&
+          entry.event?.rating === 1500 &&
+          entry.event.ratingDeviation === 350 &&
+          entry.estimate?.method === 'default',
+      ),
+    ).toBe(true);
+    expect(
+      result.every((entry) =>
+        entry.reasons.some((reason) => reason.includes('open/reset')),
+      ),
+    ).toBe(true);
+    expect(snapshot).toEqual(before);
+    expect(startingReconstructionSchema.array().safeParse(result).success).toBe(
+      true,
+    );
+    const sql = ratingImportSql(
+      result.map((entry) => entry.event!),
+      new Set(result.map((entry) => entry.id)),
+    );
+    expect([...sql.matchAll(/-- estimated starting rating;/g)]).toHaveLength(2);
+  });
+
+  test('covers merged histories without recreating intentionally discarded outcomes', () => {
+    const snapshot = fixture();
+    Object.assign(snapshot.participations[0], {
+      newRating: null,
+      newRatingDeviation: null,
+      newVolatility: null,
+    });
+    const before = structuredClone(snapshot);
+    const result = reconstructStartingRatings(snapshot, -Infinity);
+    expect(
+      result.every(
+        (entry) => entry.event !== null && entry.status === 'estimated',
+      ),
+    ).toBe(true);
+    expect(result[0].estimate?.method).toBe('default');
+    expect(
+      result[1].reasons.some((reason) =>
+        reason.includes('missing participant/opponent snapshots'),
+      ),
+    ).toBe(true);
+    expect(legacyOutcomeEvents(snapshot)).toHaveLength(1);
+    expect(startingReconstructionSchema.array().safeParse(result).success).toBe(
+      true,
+    );
+    expect(snapshot).toEqual(before);
+  });
+
   test('preserves the published glicko-2 reference result and integer rd rounding', () => {
     const result = calculateLegacyRating(
       { rating: 1500, ratingDeviation: 200, ratingVolatility: 0.06 },
@@ -175,38 +402,51 @@ describe('legacy starting reconstruction', () => {
     });
   });
 
-  test('reports contradictions, missing snapshots and search limits rather than guessing', () => {
+  test('labels fallbacks for contradictions, missing snapshots and search limits as estimates', () => {
     const contradictory = fixture();
     contradictory.players[0].rating++;
+    const estimates = reconstructStartingRatings(contradictory, -Infinity);
     expect(
-      reconstructStartingRatings(contradictory, -Infinity).every(
-        (p) => p.status === 'skipped',
+      estimates.every(
+        (entry) => entry.status === 'estimated' && entry.estimate !== null,
       ),
     ).toBe(true);
+    expect(estimates.map((entry) => entry.event?.rating)).toEqual([1400, 1500]);
+    expect(estimates[0].estimate).toMatchObject({
+      method: 'inverse-first-outcome',
+      ratingError: 0,
+      ratingDeviationError: 0,
+    });
+    expect(estimates[0].reasons).toContain(
+      'latest snapshot disagrees with the stored baseline',
+    );
     const missing = fixture();
     missing.participations[0].newVolatility = null;
     expect(
       reconstructStartingRatings(missing, -Infinity).every(
-        (p) => p.status === 'skipped',
+        (entry) => entry.status === 'estimated' && entry.estimate !== null,
       ),
     ).toBe(true);
     const limited = reconstructStartingRatings(fixture(), -Infinity, 1);
     expect(
       limited.every(
-        (p) =>
-          p.event === null &&
-          p.reasons.some((reason) => reason.includes('uniqueness unproven')),
+        (entry) =>
+          entry.status === 'estimated' &&
+          entry.event !== null &&
+          entry.reasons.some((reason) =>
+            reason.includes('uniqueness unproven'),
+          ),
       ),
     ).toBe(true);
   });
 
-  test('exports outcomes even when starts are skipped or the tournament is now unrated', () => {
+  test('exports outcomes unchanged even when starts are estimated or the tournament is now unrated', () => {
     const snapshot = fixture();
     snapshot.players[0].rating++;
     snapshot.tournaments[0].rated = false;
     expect(
       reconstructStartingRatings(snapshot, -Infinity).every(
-        (entry) => entry.event === null,
+        (entry) => entry.status === 'estimated',
       ),
     ).toBe(true);
     expect(legacyOutcomeEvents(snapshot)).toHaveLength(2);
@@ -267,7 +507,7 @@ describe('legacy starting reconstruction', () => {
     expect(() => legacyOutcomeEvents(duplicate)).toThrow();
   });
 
-  test('does not infer chronological order from ids when closures tie', () => {
+  test('does not label tied closures as exact by ordering ids', () => {
     const snapshot = fixture();
     snapshot.tournaments.push({ ...snapshot.tournaments[0], id: 'tied' });
     snapshot.units.push({
@@ -281,7 +521,7 @@ describe('legacy starting reconstruction', () => {
       unitId: 'tied-unit',
     });
     const result = reconstructStartingRatings(snapshot, -Infinity);
-    expect(result[0].status).toBe('skipped');
+    expect(result[0].status).toBe('estimated');
     expect(
       result[0].reasons.some((reason) => reason.includes('tied closures')),
     ).toBe(true);
@@ -310,7 +550,7 @@ describe('legacy starting reconstruction', () => {
           snapshot.participations[0].newRating = 399;
           snapshot.participations[1].newRating = 3401;
         }
-        const expectedStarts = outOfRange ? 0 : 2;
+        const expectedRecovered = outOfRange ? 0 : 2;
         await database
           .insert(clubs)
           .values({ id: 'club', name: 'club', createdAt: new Date() });
@@ -360,8 +600,9 @@ describe('legacy starting reconstruction', () => {
           expect(report.counts).toMatchObject({
             outcomes: 2,
             clampedOutcomes: outOfRange ? 2 : 0,
-            recovered: expectedStarts,
-            skipped: 2 - expectedStarts,
+            recovered: expectedRecovered,
+            estimated: 2 - expectedRecovered,
+            skipped: 0,
           });
           const reportOutcomes = legacyOutcomeEventSchema
             .omit({ publishedAt: true })
@@ -395,13 +636,22 @@ describe('legacy starting reconstruction', () => {
         const firstImport = await client.execute('SELECT * FROM rating_event');
         await client.executeMultiple(exported);
         const events = await client.execute('SELECT * FROM rating_event');
-        expect(events.rows).toHaveLength(2 + expectedStarts);
-        expect(
-          events.rows
-            .filter((e) => e.is_starting === 1)
-            .map((e) => e.rating)
-            .sort(),
-        ).toEqual(outOfRange ? [] : [1400, 1500]);
+        expect(events.rows).toHaveLength(4);
+        const starts = events.rows.filter((event) => event.is_starting === 1);
+        expect(starts).toHaveLength(snapshot.players.length);
+        if (outOfRange) {
+          expect(
+            starts.every(
+              (event) =>
+                Number(event.rating) >= 400 && Number(event.rating) <= 3000,
+            ),
+          ).toBe(true);
+          expect(exported).toContain('-- estimated starting rating;');
+        } else {
+          expect(starts.map((event) => event.rating).sort()).toEqual([
+            1400, 1500,
+          ]);
+        }
         expect(events.rows).toEqual(firstImport.rows);
         for (const outcome of outcomes) {
           expect(
