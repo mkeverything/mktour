@@ -1,3 +1,23 @@
+# [1.12.0](https://github.com/mkeverything/mktour/compare/v1.11.2...v1.12.0) (2026-10-03)
+
+
+### Bug Fixes
+
+* backfill starting events for all players ([8aea7c5](https://github.com/mkeverything/mktour/commit/8aea7c5f79986c1b76d170245bc01ab3e8ad61aa))
+* block form posts during maintenance ([c2a56d1](https://github.com/mkeverything/mktour/commit/c2a56d15b5d86ef4629a82a6a6c80cc45c45ed3e))
+* keep rating publication monotonic and show current player rd ([a3dfb68](https://github.com/mkeverything/mktour/commit/a3dfb68f4a9fd5f8ca671e08f98a20ba66a099be))
+* **pairing:** count penalties in half-points ([19a8d2c](https://github.com/mkeverything/mktour/commit/19a8d2cc7913de4ba051dba8fecded68785b06fc)), closes [#124](https://github.com/mkeverything/mktour/issues/124)
+* refuse writes against closed or unfinished tournaments ([0fcee65](https://github.com/mkeverything/mktour/commit/0fcee65394acea300a784d062d1fb55aa686cf50))
+* set finite staletime for maintenance status query ([6faf419](https://github.com/mkeverything/mktour/commit/6faf4198cc540a8725a6b8a7f7b57d7b78bd91ce))
+* stale maintenance page fixed, inactive visits redirect home ([b6075c5](https://github.com/mkeverything/mktour/commit/b6075c507f83b34f9241f24342f9151cc3ef07af))
+
+
+### Features
+
+* implement maintenance page ([d04226c](https://github.com/mkeverything/mktour/commit/d04226c231feb73538f0380af8a9e2e3dd664b22))
+* maintenance notice ([3b95187](https://github.com/mkeverything/mktour/commit/3b95187d8a227d8ad0f28c62dc440af398e7e9e8))
+* persist rating events and grow rd with elapsed time ([fd695bd](https://github.com/mkeverything/mktour/commit/fd695bd00b682e859e1be60fda0c491d4af91895))
+
 ## [1.11.2](https://github.com/mkeverything/mktour/compare/v1.11.1...v1.11.2) (2026-08-05)
 
 
