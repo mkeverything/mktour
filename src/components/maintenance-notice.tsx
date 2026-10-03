@@ -15,7 +15,7 @@ export default function MaintenanceNotice() {
   const trpc = useTRPC();
   const { data } = useQuery({
     ...trpc.maintenanceStartsAt.queryOptions(),
-    staleTime: Infinity,
+    refetchInterval: 60 * 1000,
   });
 
   return data ? <ScheduledMaintenance startsAt={data} /> : null;
