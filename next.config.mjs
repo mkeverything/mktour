@@ -2,6 +2,7 @@ import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPlugins from 'next-compose-plugins';
 import createNextIntlPlugin from 'next-intl/plugin';
 import nextPWA from 'next-pwa';
+import { HTML_LIMITED_BOT_UA_RE } from 'next/dist/shared/lib/router/utils/is-bot.js';
 
 /** @type {import('next').NextConfig} */
 const bundleAnalyzer = withBundleAnalyzer({
@@ -10,6 +11,10 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 const nextConfig = {
   cacheComponents: true,
+  htmlLimitedBots: new RegExp(
+    `${HTML_LIMITED_BOT_UA_RE.source}|TelegramBot`,
+    'i',
+  ),
   experimental: {
     turbopackFileSystemCacheForDev: true,
   },
