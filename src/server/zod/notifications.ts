@@ -9,45 +9,60 @@ import {
 import {
   affiliationMinimalSchema,
   playersMinimalSchema,
+  playerOutputSchema,
 } from '@/server/zod/players';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
-} from 'drizzle-zod';
+} from 'drizzle-orm/zod';
 import z from 'zod';
 
-export const userNotificationsSelectSchema =
-  createSelectSchema(user_notifications);
+const notificationMetadataSchema = z.record(z.string(), z.unknown());
+
+export const userNotificationsSelectSchema = createSelectSchema(
+  user_notifications,
+  { metadata: notificationMetadataSchema },
+);
 export const clubNotificationsSelectSchema = createSelectSchema(
   club_notifications,
   {
     event: clubNotificationEventEnum,
+    metadata: notificationMetadataSchema,
   },
 );
 export const userNotificationsInsertSchema = createInsertSchema(
   user_notifications,
   {
     event: userNotificationEventEnum,
+    metadata: notificationMetadataSchema,
   },
 );
 export const clubNotificationsInsertSchema = createInsertSchema(
   club_notifications,
   {
     event: clubNotificationEventEnum,
+    metadata: notificationMetadataSchema,
   },
 );
-export const userNotificationsUpdateSchema =
-  createUpdateSchema(user_notifications);
-export const clubNotificationsUpdateSchema =
-  createUpdateSchema(club_notifications);
+export const userNotificationsUpdateSchema = createUpdateSchema(
+  user_notifications,
+  { metadata: notificationMetadataSchema },
+);
+export const clubNotificationsUpdateSchema = createUpdateSchema(
+  club_notifications,
+  { metadata: notificationMetadataSchema },
+);
 
 export const clubNotificationExtendedSchema =
   clubNotificationsSelectSchema.extend({
     affiliation: affiliationMinimalSchema.nullable(),
     user: usersSelectMinimalSchema.nullable(),
-    player: playersMinimalSchema.nullable(),
+    player: playerOutputSchema
+      .transform(({ clubId, ...player }) => player)
+      .pipe(playersMinimalSchema)
+      .nullable(),
   });
 
 export type UserNotificationMetadataMap = {

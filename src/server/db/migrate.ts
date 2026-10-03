@@ -36,13 +36,13 @@ const runMigrate = async () => {
     url: DATABASE_URL,
     authToken: DATABASE_AUTH_TOKEN,
   });
-  const db = drizzle(client);
+  const db = drizzle({ client });
 
   const clientTest = createClient({
     url: TEST_DATABASE_URL,
     authToken: TEST_DATABASE_AUTH_TOKEN,
   });
-  const dbTest = drizzle(clientTest);
+  const dbTest = drizzle({ client: clientTest });
 
   console.log('running migrations for development db...');
   const start = Date.now();

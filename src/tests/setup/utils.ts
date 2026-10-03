@@ -23,6 +23,7 @@ export const cleanupTestDb = async () => {
   await db.delete(schema.players_to_units);
   await db.delete(schema.tournament_units);
   await db.delete(schema.affiliations);
+  await db.delete(schema.rating_events);
   await db.delete(schema.players);
   await db.delete(schema.tournaments);
   await db.delete(schema.clubs_to_users);

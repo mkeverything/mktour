@@ -48,6 +48,7 @@ import { tournamentFormatEnum } from '@/server/zod/enums';
 import {
   playerFormSchema,
   playersWithUsernameSchema,
+  playerWithUsernameOutputSchema,
 } from '@/server/zod/players';
 import {
   addDoublesUnitSchema,
@@ -59,6 +60,7 @@ import {
   setGameResultInputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
+  tournamentFinishOutputSchema,
   tournamentInfoSchema,
   tournamentWithClubSchema,
   unitSchema,
@@ -127,7 +129,7 @@ export const tournamentRouter = {
     }),
   playersOut: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
-    .output(z.array(playersWithUsernameSchema))
+    .output(z.array(playerWithUsernameOutputSchema))
     .query(async (opts) => {
       return await getTournamentPossiblePlayers(opts.input.tournamentId);
     }),
@@ -262,15 +264,11 @@ export const tournamentRouter = {
       await resetTournamentUnits(input);
     }),
   finish: tournamentAdminProcedure
-    .input(
-      tournamentIdInputSchema.extend({
-        closedAt: z.date(),
-      }),
-    )
-    .output(z.void())
+    .input(tournamentIdInputSchema)
+    .output(tournamentFinishOutputSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      await finishTournament(input);
+      return await finishTournament(input);
     }),
   delete: tournamentAdminProcedure
     .input(tournamentIdInputSchema)

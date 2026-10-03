@@ -1,0 +1,156 @@
+import { turboPascal } from '@/app/fonts';
+import Loading from '@/app/loading';
+import { AffiliateButton } from '@/app/(routes)/player/[id]/affiliate-button';
+import ClaimPlayer from '@/app/(routes)/player/[id]/claim-button';
+import EditButton from '@/app/(routes)/player/[id]/edit-button';
+import PlayerStats from '@/app/(routes)/player/[id]/player-stats';
+import LastTournaments from '@/components/last-tournaments';
+import { CardTitle } from '@/components/ui/card';
+import { BASE_URL } from '@/lib/config/urls';
+import { publicCaller } from '@/server/api';
+import { PlayerModel } from '@/server/zod/players';
+import { ChevronRight, Users2 } from 'lucide-react';
+import type { Metadata, ResolvingMetadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
+import Link from 'next/link';
+import { notFound, permanentRedirect } from 'next/navigation';
+import { FC, Suspense } from 'react';
+import 'server-only';
+
+export default async function PlayerPage(props: PlayerPageProps) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <PlayerPageContent {...props} />
+    </Suspense>
+  );
+}
+
+async function PlayerPageContent(props: PlayerPageProps) {
+  const { id } = await props.params;
+  const [user, playerData] = await Promise.all([
+    publicCaller.auth.info(),
+    publicCaller.player.info({ playerId: id }),
+  ]);
+  if (!playerData) notFound();
+  if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
+
+  const { club, ...player } = playerData;
+  const [status, affiliation] = await Promise.all([
+    publicCaller.club.authStatus({
+      clubId: club.id,
+    }),
+    publicCaller.auth.affiliationInClub({ clubId: club.id }),
+  ]);
+  const playerLastTournaments = await publicCaller.player.lastTournaments({
+    playerId: player.id,
+  });
+
+  const canEdit = status !== null;
+  const canClaim = !status && user && !player.userId;
+  const canAffiliate = status !== null && !player.userId && !affiliation;
+
+  return (
+    <div className="mk-container flex w-full flex-col gap-4">
+      {/* Club Context Bar */}
+      <Link
+        href={`/clubs/${club.id}`}
+        className="bg-secondary/50 hover:bg-secondary/70 flex items-center justify-between rounded-lg px-4 py-3 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Users2 className="text-muted-foreground size-4" />
+          <span className="text-sm font-medium">{club.name}</span>
+        </div>
+        <ChevronRight className="text-muted-foreground size-4" />
+      </Link>
+      <PlayerHeader player={player} />
+      {/* Action Toolbar */}
+      <div className="flex justify-end gap-2">
+        {canAffiliate && <AffiliateButton player={player} />}
+        {user && canEdit && (
+          <EditButton
+            player={{ playerId: player.id, ...player }}
+            status={status}
+          />
+        )}
+        {canClaim && <ClaimPlayer userId={user.id} clubId={club.id} />}
+      </div>
+      <PlayerStats clubName={club.name} player={player} />
+      <LastTournaments tournaments={playerLastTournaments} />
+    </div>
+  );
+}
+
+const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
+  <div className="p-mk">
+    <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-1">
+        <CardTitle className={`text-4xl font-light ${turboPascal.className}`}>
+          {player.nickname}
+        </CardTitle>
+        {player.realname && (
+          <span className="text-muted-foreground text-sm">
+            {player.realname}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col items-end">
+        <span className="text-3xl font-bold">
+          {player.isEstablished ? player.rating : `${player.rating}?`}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+export async function generateMetadata(
+  props: {
+    params: Promise<{ id: string }>;
+  },
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const params = await props.params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'Seo' });
+  const baseUrl = BASE_URL || 'https://mktour.org';
+  const url = `${baseUrl}/player/${params.id}`;
+  const previous = await parent;
+
+  let playerData;
+  try {
+    playerData = await publicCaller.player.info({ playerId: params.id });
+  } catch {
+    notFound();
+  }
+
+  if (!playerData) notFound();
+  if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
+
+  const { club, ...player } = playerData;
+
+  return {
+    title: t('player.page.title', { nickname: player.nickname }),
+    description: t('player.page.description', {
+      nickname: player.nickname,
+      rating: player.rating,
+      club: club.name,
+    }),
+    alternates: {
+      canonical: url,
+      languages: { en: url, ru: url, 'x-default': url },
+    },
+    openGraph: {
+      ...previous.openGraph,
+      title: t('player.page.title', { nickname: player.nickname }),
+      description: t('player.page.description', {
+        nickname: player.nickname,
+        rating: player.rating,
+        club: club.name,
+      }),
+      url,
+    },
+  };
+}
+
+export interface PlayerPageProps {
+  params: Promise<{ id: string }>;
+}

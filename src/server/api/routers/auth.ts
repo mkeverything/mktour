@@ -10,7 +10,6 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
-import { players } from '@/server/db/schema/players';
 import { apiTokens } from '@/server/db/schema/users';
 import selectClub from '@/server/mutations/club-select';
 import { logout } from '@/server/mutations/logout';
@@ -36,7 +35,7 @@ import {
   paginatedInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
-import { playersSelectSchema } from '@/server/zod/players';
+import { playerOutputSchema } from '@/server/zod/players';
 import { tournamentWithClubSchema } from '@/server/zod/tournaments';
 import {
   apiToken,
@@ -45,7 +44,7 @@ import {
   usersSelectSchema,
 } from '@/server/zod/users';
 import crypto from 'crypto';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import z from 'zod';
 
@@ -165,8 +164,8 @@ export const authRouter = {
       .output(z.array(apiToken))
       .query(async ({ ctx }) => {
         const tokens = await ctx.db.query.apiTokens.findMany({
-          where: eq(apiTokens.userId, ctx.user.id),
-          orderBy: (tokens, { desc }) => [desc(tokens.createdAt)],
+          where: { userId: ctx.user.id },
+          orderBy: { createdAt: 'desc' },
         });
         return tokens;
       }),
@@ -197,7 +196,7 @@ export const authRouter = {
       .input(apiTokenIdInputSchema)
       .mutation(async ({ ctx, input }) => {
         const token = await ctx.db.query.apiTokens.findFirst({
-          where: eq(apiTokens.id, input.id),
+          where: { id: input.id },
         });
 
         if (!token) {
@@ -213,14 +212,11 @@ export const authRouter = {
   },
   affiliationInClub: authProcedure
     .input(clubIdInputSchema)
-    .output(playersSelectSchema.nullish())
+    .output(playerOutputSchema.nullish())
     .query(async ({ ctx, input }) => {
       if (!ctx.user) return null;
       return await ctx.db.query.players.findFirst({
-        where: and(
-          eq(players.userId, ctx.user.id),
-          eq(players.clubId, input.clubId),
-        ),
+        where: { userId: ctx.user.id, clubId: input.clubId },
       });
     }),
 };
