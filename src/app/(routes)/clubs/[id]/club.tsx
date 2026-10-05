@@ -1,0 +1,286 @@
+'use client';
+
+import AffiliatedPlayerCard from '@/app/(routes)/clubs/[id]/affiliated-player-card';
+import { turboPascal } from '@/app/fonts';
+import FormattedMessage from '@/components/formatted-message';
+import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
+import { ClubPlayersSection } from '@/app/(routes)/clubs/players';
+import { ClubTournamentsSection } from '@/app/(routes)/clubs/tournaments';
+import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
+import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { useTRPC } from '@/components/trpc/client';
+import HalfCard from '@/components/ui-custom/half-card';
+import LichessLogo from '@/components/ui-custom/lichess-logo';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ClubModel } from '@/server/zod/clubs';
+import { StatusInClub } from '@/server/zod/enums';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { CalendarDays, Home, Trophy, Users2 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { FC, ReactNode } from 'react';
+
+const ClubPage: FC<{
+  club: ClubModel;
+  statusInClub: StatusInClub | null;
+  userId: string;
+}> = ({ club, statusInClub, userId }) => {
+  return (
+    <div className="mk-container gap-mk-2 flex flex-col">
+      <ClubHeader club={club} statusInClub={statusInClub} />
+      <ClubStats clubId={club.id} />
+      <AffiliatedPlayerCard clubId={club.id} userId={userId} />
+      <MostActivePlayers clubId={club.id} />
+
+      <div className="gap-mk hidden md:grid md:grid-cols-2">
+        <ClubTournamentsSection clubId={club.id} statusInClub={statusInClub} />
+        <ClubPlayersSection clubId={club.id} statusInClub={statusInClub} />
+      </div>
+
+      <div className="md:hidden">
+        <Tabs defaultValue="tournaments" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="tournaments">
+              <FormattedMessage id="Menu.tournaments" />
+            </TabsTrigger>
+            <TabsTrigger value="players">
+              <FormattedMessage id="Club.Page.players" />
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="tournaments">
+            <ClubTournamentsSection
+              clubId={club.id}
+              statusInClub={statusInClub}
+            />
+          </TabsContent>
+          <TabsContent value="players">
+            <ClubPlayersSection clubId={club.id} statusInClub={statusInClub} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+const ClubHeader: FC<{
+  club: ClubModel;
+  statusInClub: StatusInClub | null;
+}> = ({ club, statusInClub }) => {
+  const t = useTranslations('Club');
+  const tStatus = useTranslations('Status');
+  const locale = useLocale();
+  const queryClient = useQueryClient();
+  const { data: user } = useAuth();
+  const { mutate } = useAuthSelectClub(queryClient);
+  const trpc = useTRPC();
+  const { data: managers } = useQuery(
+    trpc.club.managers.all.queryOptions({ clubId: club.id }),
+  );
+
+  return (
+    <HalfCard>
+      <CardHeader className="max-sm:p-4 max-sm:pt-0">
+        <div className="gap-mk-2 flex items-start justify-between">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <CardTitle className={`text-2xl ${turboPascal.className}`}>
+                {club.name}
+              </CardTitle>
+              {club.lichessTeam && (
+                <Link
+                  href={`https://lichess.org/team/${club.lichessTeam}`}
+                  target="_blank"
+                  className="transition-opacity hover:opacity-70"
+                >
+                  <LichessLogo className="size-5" />
+                </Link>
+              )}
+            </div>
+            {club.description && (
+              <span className="text-muted-foreground text-sm">
+                {club.description}
+              </span>
+            )}
+            {managers && managers.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground text-xs">
+                  {t('managers list')}:
+                </span>
+                {managers.map((manager) => (
+                  <Link
+                    key={manager.user.id}
+                    href={`/user/${manager.user.username}`}
+                    className="text-muted-foreground hover:text-foreground text-xs transition-colors"
+                  >
+                    {manager.user.username}
+                    <span className="text-muted-foreground/60 ml-1">
+                      ({tStatus(manager.clubs_to_users.status)})
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+          {user && statusInClub && (
+            <Button variant="outline" className="shrink-0 gap-2" asChild>
+              <Link
+                prefetch={false}
+                onNavigate={() => {
+                  mutate({ clubId: club.id });
+                }}
+                href="/clubs/my"
+              >
+                <Home className="size-4" />
+                <span className="hidden sm:inline">{t('dashboard')}</span>
+              </Link>
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 max-sm:px-4 max-sm:pb-0">
+        <Separator className="mb-4" />
+        <div className="text-muted-foreground flex items-center gap-3 text-xs">
+          <CalendarDays className="size-4" />
+          {club.createdAt &&
+            t('Page.createdAt', {
+              date: club.createdAt.toLocaleDateString(locale, {
+                dateStyle: 'long',
+              }),
+            })}
+        </div>
+      </CardContent>
+    </HalfCard>
+  );
+};
+
+const ClubStats: FC<{ clubId: string }> = ({ clubId }) => {
+  const { data: stats, isPending } = useClubStats(clubId);
+  const t = useTranslations('Club.Stats');
+
+  return (
+    <div className="gap-mk grid grid-cols-2">
+      <StatCard
+        icon={Trophy}
+        label={t('tournaments', { count: stats?.tournamentsCount ?? 0 })}
+        value={stats?.tournamentsCount}
+        isLoading={isPending}
+      />
+      <StatCard
+        icon={Users2}
+        label={t('players', { count: stats?.playersCount ?? 0 })}
+        value={stats?.playersCount}
+        isLoading={isPending}
+      />
+    </div>
+  );
+};
+
+const StatCard: FC<{
+  icon: FC<{ className?: string }>;
+  label: string;
+  value?: ReactNode;
+  isLoading?: boolean;
+}> = ({ icon: Icon, label, value, isLoading }) => (
+  <div className="bg-primary/5 border-primary/10 flex items-center gap-4 rounded-xl border p-4">
+    <div className="bg-primary/10 flex size-10 items-center justify-center rounded-lg">
+      <Icon className="text-primary size-5" />
+    </div>
+    <div className="flex flex-col">
+      {isLoading ? (
+        <>
+          <Skeleton className="mb-1 h-6 w-12" />
+          <Skeleton className="h-3 w-16" />
+        </>
+      ) : (
+        <>
+          <span className="text-2xl leading-none font-bold">{value ?? 0}</span>
+          <span className="text-muted-foreground text-xs leading-none">
+            {label}
+          </span>
+        </>
+      )}
+    </div>
+  </div>
+);
+
+const MostActivePlayers: FC<{ clubId: string }> = ({ clubId }) => {
+  const { data: stats, isPending } = useClubStats(clubId);
+  const t = useTranslations('Club.Page');
+
+  if (isPending) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <Skeleton className="h-5 w-40" />
+        </CardHeader>
+        <CardContent className="pt-0">
+          <Skeleton className="h-32 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!stats?.mostActivePlayers?.length) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Trophy className="size-4" />
+          {t('most active')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10">#</TableHead>
+              <TableHead>
+                <FormattedMessage id="Player.nickname" />
+              </TableHead>
+              <TableHead className="text-right">
+                <FormattedMessage id="Player.rating" />
+              </TableHead>
+              <TableHead className="text-right">{t('tournaments')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {stats.mostActivePlayers.map((player, index) => (
+              <TableRow key={player.id} className="cursor-pointer">
+                <TableCell className="text-muted-foreground">
+                  {index + 1}
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={`/player/${player.id}`}
+                    className="hover:underline"
+                  >
+                    {player.nickname}
+                  </Link>
+                </TableCell>
+                <TableCell className="text-right">{player.rating}</TableCell>
+                <TableCell className="text-right">
+                  {player.tournamentsPlayed}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ClubPage;

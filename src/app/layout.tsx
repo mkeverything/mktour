@@ -1,11 +1,9 @@
 import Loading from '@/app/loading';
 import JsonLd from '@/components/json-ld';
-import Navigation from '@/components/navigation';
 import ErrorFallback from '@/components/providers/error-boundary';
 import IntlProvider from '@/components/providers/intl-provider';
 import MediaQueryProvider from '@/components/providers/media-query-provider';
 import ThemeProvider from '@/components/providers/theme-provider';
-import { GlobalWebSocketProvider } from '@/components/providers/websocket-provider';
 import { TRPCReactProvider } from '@/components/trpc/client';
 import { Toaster } from '@/components/ui/sonner';
 import { BASE_URL } from '@/lib/config/urls';
@@ -25,14 +23,11 @@ async function LayoutContent({ children }: PropsWithChildren) {
 
   return (
     <IntlProvider messages={messages} locale={locale}>
-      <GlobalWebSocketProvider>
-        <JsonLd />
-        <Navigation />
-        <div className="pt-mk-navbar-total-height">{children}</div>
-        <Analytics />
-        <SpeedInsights />
-        <Toaster richColors />
-      </GlobalWebSocketProvider>
+      <JsonLd />
+      {children}
+      <Analytics />
+      <SpeedInsights />
+      <Toaster richColors />
     </IntlProvider>
   );
 }
@@ -145,8 +140,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: t('homepage.title'),
-      description: t('homepage.description'),
       images: [`${baseUrl}/opengraph-image.png`],
     },
     formatDetection: { telephone: false },

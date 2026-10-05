@@ -1,6 +1,6 @@
 'use client';
 
-import AuthStatsCard from '@/app/player/[id]/auth-stats-card';
+import AuthStatsCard from '@/app/(routes)/player/[id]/auth-stats-card';
 import { usePlayerStats } from '@/components/hooks/query-hooks/use-player-stats';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Card, CardContent } from '@/components/ui/card';

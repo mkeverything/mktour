@@ -1,5 +1,10 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 (process.env as Record<string, string>).NODE_ENV = 'test';
 (process.env as Record<string, string>).MKTOURTEST = 'true';
+
+// next internals patch console and expect the global that the next runtime normally sets
+Object.assign(globalThis, { AsyncLocalStorage });
 
 // Verification of test database URL to prevent accidental operations on wrong database
 try {
