@@ -72,6 +72,7 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^13.1.1",
     "graphology": "^0.26.0",
+    "isbot": "^5.2.2",
     "loglayer": "^9.4.0",
     "lucia": "^3.2.2",
     "lucide-react": "^1.34.0",

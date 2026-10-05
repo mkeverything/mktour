@@ -140,8 +140,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: t('homepage.title'),
-      description: t('homepage.description'),
       images: [`${baseUrl}/opengraph-image.png`],
     },
     formatDetection: { telephone: false },
