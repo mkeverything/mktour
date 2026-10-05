@@ -25,9 +25,7 @@ import type {
 
 /** Possible value types for quality criteria */
 export type CriterionValue =
-  | number
-  | readonly number[]
-  | FutureCriteriaCompliance;
+  number | readonly number[] | FutureCriteriaCompliance;
 
 /** Cached ideal values for a bracket - maps criterion ID to computed ideal */
 export type CachedBracketIdeals = Map<

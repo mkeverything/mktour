@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { publicCaller } from '@/server/api/index';
 import { clubsSelectSchema } from '@/server/zod/clubs';
-import { playersSelectSchema } from '@/server/zod/players';
+import { playerPublicSchema } from '@/server/zod/players';
 import { usersSelectPublicSchema, usersSelectSchema } from '@/server/zod/users';
 import { beforeAll, describe, expect, it } from 'bun:test';
 
@@ -153,7 +153,7 @@ describe('user router', () => {
 
       if (result.length > 0) {
         const clubSchema = clubsSelectSchema.pick({ id: true, name: true });
-        const playerSchema = playersSelectSchema.pick({
+        const playerSchema = playerPublicSchema.pick({
           id: true,
           nickname: true,
           rating: true,

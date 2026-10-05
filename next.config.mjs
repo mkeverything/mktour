@@ -1,4 +1,5 @@
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import { getPattern } from 'isbot';
 import withPlugins from 'next-compose-plugins';
 import createNextIntlPlugin from 'next-intl/plugin';
 import nextPWA from 'next-pwa';
@@ -10,8 +11,8 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 const nextConfig = {
   cacheComponents: true,
+  htmlLimitedBots: getPattern(),
   experimental: {
-    useCache: true,
     turbopackFileSystemCacheForDev: true,
   },
   logging: {

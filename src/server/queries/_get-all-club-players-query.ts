@@ -1,11 +1,11 @@
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
-import { PlayerModel } from '@/server/zod/players';
+import { PlayerRecordModel } from '@/server/zod/players';
 import { desc, eq } from 'drizzle-orm';
 
 export default async function getAllClubPlayersQuery(
   clubId: string,
-): Promise<Array<PlayerModel>> {
+): Promise<Array<PlayerRecordModel>> {
   return await db
     .select()
     .from(players)

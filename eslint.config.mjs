@@ -23,6 +23,12 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    files: ['src/components/ui/carousel.tsx'],
+    rules: {
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

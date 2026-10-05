@@ -49,7 +49,7 @@ import {
 import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
 import {
   affiliationExtendedSchema,
-  playersSelectSchema,
+  playerOutputSchema,
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
@@ -116,7 +116,7 @@ export const clubRouter = createTRPCRouter({
     .input(clubPaginatedInputSchema)
     .output(
       z.object({
-        players: z.array(playersSelectSchema),
+        players: z.array(playerOutputSchema),
         nextCursor: z.number().nullable(),
       }),
     )
@@ -160,7 +160,7 @@ export const clubRouter = createTRPCRouter({
   authPlayer: protectedProcedure
     .meta(meta.clubAuthPlayer)
     .input(clubIdInputSchema)
-    .output(playersSelectSchema.nullable())
+    .output(playerOutputSchema.nullable())
     .query(async (opts) => {
       return await getUserClubPlayer({
         clubId: opts.input.clubId,

@@ -8,7 +8,7 @@ import {
 } from '@/server/db/schema/tournaments';
 import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import type { GameModel } from '@/server/zod/tournaments';
-import { aliasedTable, and, eq, getTableColumns } from 'drizzle-orm';
+import { aliasedTable, and, eq, getColumns } from 'drizzle-orm';
 
 function normalizeGames(rows: GameModel[]): GameModel[] {
   return rows.sort((a, b) => a.gameNumber - b.gameNumber);
@@ -33,7 +33,7 @@ export async function getPersistedTournamentGames(
   const blackUnit = aliasedTable(tournament_units, 'black_unit');
   return await database
     .select({
-      ...getTableColumns(games),
+      ...getColumns(games),
       whiteNickname: whiteUnit.nickname,
       blackNickname: blackUnit.nickname,
     })
@@ -77,7 +77,7 @@ export async function getTournamentRoundGames({
   const blackUnit = aliasedTable(tournament_units, 'black_unit');
   const gamesDb = await database
     .select({
-      ...getTableColumns(games),
+      ...getColumns(games),
       whiteNickname: whiteUnit.nickname,
       blackNickname: blackUnit.nickname,
     })

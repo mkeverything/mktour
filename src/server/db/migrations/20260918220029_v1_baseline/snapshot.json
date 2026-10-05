@@ -1,0 +1,1748 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "d37a6ab2-c8b4-4418-b156-064f271f190b",
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
+  "ddl": [
+    {
+      "name": "club",
+      "entityType": "tables"
+    },
+    {
+      "name": "clubs_to_users",
+      "entityType": "tables"
+    },
+    {
+      "name": "api_token",
+      "entityType": "tables"
+    },
+    {
+      "name": "user_session",
+      "entityType": "tables"
+    },
+    {
+      "name": "user_preferences",
+      "entityType": "tables"
+    },
+    {
+      "name": "user",
+      "entityType": "tables"
+    },
+    {
+      "name": "game",
+      "entityType": "tables"
+    },
+    {
+      "name": "players_to_units",
+      "entityType": "tables"
+    },
+    {
+      "name": "tournament_units",
+      "entityType": "tables"
+    },
+    {
+      "name": "tournament",
+      "entityType": "tables"
+    },
+    {
+      "name": "affiliation",
+      "entityType": "tables"
+    },
+    {
+      "name": "player",
+      "entityType": "tables"
+    },
+    {
+      "name": "club_notification",
+      "entityType": "tables"
+    },
+    {
+      "name": "user_notification",
+      "entityType": "tables"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "club"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "club"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "description",
+      "entityType": "columns",
+      "table": "club"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "club"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "lichess_team",
+      "entityType": "columns",
+      "table": "club"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "name": "allow_players_set_results",
+      "entityType": "columns",
+      "table": "club"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "clubs_to_users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "club_id",
+      "entityType": "columns",
+      "table": "clubs_to_users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "clubs_to_users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "status",
+      "entityType": "columns",
+      "table": "clubs_to_users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "promoted_at",
+      "entityType": "columns",
+      "table": "clubs_to_users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "api_token"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "token_hash",
+      "entityType": "columns",
+      "table": "api_token"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "api_token"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "api_token"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "api_token"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "last_used_at",
+      "entityType": "columns",
+      "table": "api_token"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "user_session"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "user_session"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expires_at",
+      "entityType": "columns",
+      "table": "user_session"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "user_preferences"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "language",
+      "entityType": "columns",
+      "table": "user_preferences"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "email",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "username",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "rating",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "selected_club",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "game_number",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "round_number",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "round_name",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "white_unit_id",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "black_unit_id",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "white_player_id",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "black_player_id",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "white_prev_game_id",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "black_prev_game_id",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "result",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "finished_at",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "tournament_id",
+      "entityType": "columns",
+      "table": "game"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "players_to_units"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "player_id",
+      "entityType": "columns",
+      "table": "players_to_units"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "unit_id",
+      "entityType": "columns",
+      "table": "players_to_units"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "number_in_unit",
+      "entityType": "columns",
+      "table": "players_to_units"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "new_rating",
+      "entityType": "columns",
+      "table": "players_to_units"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "new_rating_deviation",
+      "entityType": "columns",
+      "table": "players_to_units"
+    },
+    {
+      "type": "real",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "new_volatility",
+      "entityType": "columns",
+      "table": "players_to_units"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "size",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "tournament_id",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "wins",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "losses",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "draws",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "color_index",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "place",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "is_out",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "number",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "added_at",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "nickname",
+      "entityType": "columns",
+      "table": "tournament_units"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "format",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "type",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "date",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "club_id",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "started_at",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "closed_at",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "rounds_number",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "ongoing_round",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "rated",
+      "entityType": "columns",
+      "table": "tournament"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "affiliation"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "affiliation"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "club_id",
+      "entityType": "columns",
+      "table": "affiliation"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "player_id",
+      "entityType": "columns",
+      "table": "affiliation"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "status",
+      "entityType": "columns",
+      "table": "affiliation"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "affiliation"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "affiliation"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "nickname",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "realname",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "1500",
+      "generated": null,
+      "name": "rating",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "rating_peak",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "350",
+      "generated": null,
+      "name": "rating_deviation",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "real",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0.06",
+      "generated": null,
+      "name": "rating_volatility",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "rating_last_update_at",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "club_id",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "last_seen_at",
+      "entityType": "columns",
+      "table": "player"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "club_notification"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "club_notification"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "club_id",
+      "entityType": "columns",
+      "table": "club_notification"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "event",
+      "entityType": "columns",
+      "table": "club_notification"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "is_seen",
+      "entityType": "columns",
+      "table": "club_notification"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "table": "club_notification"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "user_notification"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "user_notification"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "user_notification"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "event",
+      "entityType": "columns",
+      "table": "user_notification"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "is_seen",
+      "entityType": "columns",
+      "table": "user_notification"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "table": "user_notification"
+    },
+    {
+      "columns": ["club_id"],
+      "tableTo": "club",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_clubs_to_users_club_id_club_id_fk",
+      "entityType": "fks",
+      "table": "clubs_to_users"
+    },
+    {
+      "columns": ["user_id"],
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_clubs_to_users_user_id_user_id_fk",
+      "entityType": "fks",
+      "table": "clubs_to_users"
+    },
+    {
+      "columns": ["user_id"],
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_api_token_user_id_user_id_fk",
+      "entityType": "fks",
+      "table": "api_token"
+    },
+    {
+      "columns": ["user_id"],
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_user_session_user_id_user_id_fk",
+      "entityType": "fks",
+      "table": "user_session"
+    },
+    {
+      "columns": ["user_id"],
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_user_preferences_user_id_user_id_fk",
+      "entityType": "fks",
+      "table": "user_preferences"
+    },
+    {
+      "columns": ["selected_club"],
+      "tableTo": "club",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_user_selected_club_club_id_fk",
+      "entityType": "fks",
+      "table": "user"
+    },
+    {
+      "columns": ["white_unit_id"],
+      "tableTo": "tournament_units",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_game_white_unit_id_tournament_units_id_fk",
+      "entityType": "fks",
+      "table": "game"
+    },
+    {
+      "columns": ["black_unit_id"],
+      "tableTo": "tournament_units",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_game_black_unit_id_tournament_units_id_fk",
+      "entityType": "fks",
+      "table": "game"
+    },
+    {
+      "columns": ["white_player_id"],
+      "tableTo": "player",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_game_white_player_id_player_id_fk",
+      "entityType": "fks",
+      "table": "game"
+    },
+    {
+      "columns": ["black_player_id"],
+      "tableTo": "player",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_game_black_player_id_player_id_fk",
+      "entityType": "fks",
+      "table": "game"
+    },
+    {
+      "columns": ["tournament_id"],
+      "tableTo": "tournament",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_game_tournament_id_tournament_id_fk",
+      "entityType": "fks",
+      "table": "game"
+    },
+    {
+      "columns": ["white_unit_id", "tournament_id"],
+      "tableTo": "tournament_units",
+      "columnsTo": ["id", "tournament_id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": true,
+      "name": "game_white_unit_tournament_fk",
+      "entityType": "fks",
+      "table": "game"
+    },
+    {
+      "columns": ["black_unit_id", "tournament_id"],
+      "tableTo": "tournament_units",
+      "columnsTo": ["id", "tournament_id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": true,
+      "name": "game_black_unit_tournament_fk",
+      "entityType": "fks",
+      "table": "game"
+    },
+    {
+      "columns": ["player_id"],
+      "tableTo": "player",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_players_to_units_player_id_player_id_fk",
+      "entityType": "fks",
+      "table": "players_to_units"
+    },
+    {
+      "columns": ["unit_id"],
+      "tableTo": "tournament_units",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_players_to_units_unit_id_tournament_units_id_fk",
+      "entityType": "fks",
+      "table": "players_to_units"
+    },
+    {
+      "columns": ["tournament_id"],
+      "tableTo": "tournament",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_tournament_units_tournament_id_tournament_id_fk",
+      "entityType": "fks",
+      "table": "tournament_units"
+    },
+    {
+      "columns": ["club_id"],
+      "tableTo": "club",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_tournament_club_id_club_id_fk",
+      "entityType": "fks",
+      "table": "tournament"
+    },
+    {
+      "columns": ["user_id"],
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_affiliation_user_id_user_id_fk",
+      "entityType": "fks",
+      "table": "affiliation"
+    },
+    {
+      "columns": ["club_id"],
+      "tableTo": "club",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_affiliation_club_id_club_id_fk",
+      "entityType": "fks",
+      "table": "affiliation"
+    },
+    {
+      "columns": ["player_id"],
+      "tableTo": "player",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_affiliation_player_id_player_id_fk",
+      "entityType": "fks",
+      "table": "affiliation"
+    },
+    {
+      "columns": ["user_id"],
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_player_user_id_user_id_fk",
+      "entityType": "fks",
+      "table": "player"
+    },
+    {
+      "columns": ["club_id"],
+      "tableTo": "club",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_player_club_id_club_id_fk",
+      "entityType": "fks",
+      "table": "player"
+    },
+    {
+      "columns": ["club_id"],
+      "tableTo": "club",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_club_notification_club_id_club_id_fk",
+      "entityType": "fks",
+      "table": "club_notification"
+    },
+    {
+      "columns": ["user_id"],
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_user_notification_user_id_user_id_fk",
+      "entityType": "fks",
+      "table": "user_notification"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "club_pk",
+      "entityType": "pks",
+      "table": "club"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "clubs_to_users_pk",
+      "entityType": "pks",
+      "table": "clubs_to_users"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "api_token_pk",
+      "entityType": "pks",
+      "table": "api_token"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "user_session_pk",
+      "entityType": "pks",
+      "table": "user_session"
+    },
+    {
+      "columns": ["user_id"],
+      "nameExplicit": false,
+      "name": "user_preferences_pk",
+      "entityType": "pks",
+      "table": "user_preferences"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "user_pk",
+      "entityType": "pks",
+      "table": "user"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "game_pk",
+      "entityType": "pks",
+      "table": "game"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "players_to_units_pk",
+      "entityType": "pks",
+      "table": "players_to_units"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "tournament_units_pk",
+      "entityType": "pks",
+      "table": "tournament_units"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "tournament_pk",
+      "entityType": "pks",
+      "table": "tournament"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "affiliation_pk",
+      "entityType": "pks",
+      "table": "affiliation"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "player_pk",
+      "entityType": "pks",
+      "table": "player"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "club_notification_pk",
+      "entityType": "pks",
+      "table": "club_notification"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "user_notification_pk",
+      "entityType": "pks",
+      "table": "user_notification"
+    },
+    {
+      "columns": [
+        {
+          "value": "tournament_id",
+          "isExpression": false
+        },
+        {
+          "value": "game_number",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "game_tournament_number_unique_idx",
+      "entityType": "indexes",
+      "table": "game"
+    },
+    {
+      "columns": [
+        {
+          "value": "tournament_id",
+          "isExpression": false
+        },
+        {
+          "value": "round_number",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "game_tournament_round_idx",
+      "entityType": "indexes",
+      "table": "game"
+    },
+    {
+      "columns": [
+        {
+          "value": "white_unit_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "game_white_unit_idx",
+      "entityType": "indexes",
+      "table": "game"
+    },
+    {
+      "columns": [
+        {
+          "value": "black_unit_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "game_black_unit_idx",
+      "entityType": "indexes",
+      "table": "game"
+    },
+    {
+      "columns": [
+        {
+          "value": "white_player_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "game_white_player_idx",
+      "entityType": "indexes",
+      "table": "game"
+    },
+    {
+      "columns": [
+        {
+          "value": "black_player_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "game_black_player_idx",
+      "entityType": "indexes",
+      "table": "game"
+    },
+    {
+      "columns": [
+        {
+          "value": "unit_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "ptu_unit_idx",
+      "entityType": "indexes",
+      "table": "players_to_units"
+    },
+    {
+      "columns": [
+        {
+          "value": "player_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "ptu_player_idx",
+      "entityType": "indexes",
+      "table": "players_to_units"
+    },
+    {
+      "columns": [
+        {
+          "value": "id",
+          "isExpression": false
+        },
+        {
+          "value": "tournament_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "tu_id_tournament_unique_idx",
+      "entityType": "indexes",
+      "table": "tournament_units"
+    },
+    {
+      "columns": [
+        {
+          "value": "tournament_id",
+          "isExpression": false
+        },
+        {
+          "value": "number",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "tu_tournament_number_idx",
+      "entityType": "indexes",
+      "table": "tournament_units"
+    },
+    {
+      "columns": [
+        {
+          "value": "tournament_id",
+          "isExpression": false
+        },
+        {
+          "value": "nickname",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "tu_tournament_nickname_idx",
+      "entityType": "indexes",
+      "table": "tournament_units"
+    },
+    {
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false
+        },
+        {
+          "value": "club_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "affiliation_user_club_unique_idx",
+      "entityType": "indexes",
+      "table": "affiliation"
+    },
+    {
+      "columns": [
+        {
+          "value": "nickname",
+          "isExpression": false
+        },
+        {
+          "value": "club_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "player_nickname_club_unique_idx",
+      "entityType": "indexes",
+      "table": "player"
+    },
+    {
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false
+        },
+        {
+          "value": "club_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "player_user_club_unique_idx",
+      "entityType": "indexes",
+      "table": "player"
+    },
+    {
+      "columns": [
+        {
+          "value": "club_id",
+          "isExpression": false
+        },
+        {
+          "value": "last_seen_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "player_club_last_seen_idx",
+      "entityType": "indexes",
+      "table": "player"
+    },
+    {
+      "columns": ["lichess_team"],
+      "nameExplicit": false,
+      "name": "club_lichess_team_unique",
+      "entityType": "uniques",
+      "table": "club"
+    },
+    {
+      "columns": ["email"],
+      "nameExplicit": false,
+      "name": "user_email_unique",
+      "entityType": "uniques",
+      "table": "user"
+    },
+    {
+      "columns": ["username"],
+      "nameExplicit": false,
+      "name": "user_username_unique",
+      "entityType": "uniques",
+      "table": "user"
+    },
+    {
+      "value": "\"white_unit_id\" <> \"black_unit_id\"",
+      "name": "game_units_different",
+      "entityType": "checks",
+      "table": "game"
+    },
+    {
+      "value": "\"new_rating\" is null or \"new_rating\" between 400 and 3400",
+      "name": "ptu_new_rating_bounds",
+      "entityType": "checks",
+      "table": "players_to_units"
+    },
+    {
+      "value": "\"rating\" between 400 and 3400",
+      "name": "player_rating_bounds",
+      "entityType": "checks",
+      "table": "player"
+    },
+    {
+      "value": "\"rating_peak\" is null or \"rating_peak\" between 400 and 3400",
+      "name": "player_rating_peak_bounds",
+      "entityType": "checks",
+      "table": "player"
+    }
+  ],
+  "renames": []
+}

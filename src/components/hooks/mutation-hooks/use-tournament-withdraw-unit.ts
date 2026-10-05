@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardContext } from '@/app/tournaments/[id]/dashboard/dashboard-context';
+import { DashboardContext } from '@/app/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
@@ -38,8 +38,7 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
             : null;
 
         let roundGamesRollback:
-          | { roundNumber: number; data: GameModel[] }
-          | undefined;
+          { roundNumber: number; data: GameModel[] } | undefined;
         const previousAllGames = queryClient.getQueryData(
           trpc.tournament.allGames.queryKey({ tournamentId }),
         );

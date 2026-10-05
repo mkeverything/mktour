@@ -121,8 +121,7 @@ export async function mergePlayers({
     const identityInconsistencies: Array<{
       playerId: string;
       kind:
-        | 'active_affiliation_without_user'
-        | 'user_without_active_affiliation';
+        'active_affiliation_without_user' | 'user_without_active_affiliation';
     }> = [];
     for (const a of orphanedActiveAffiliations) {
       identityInconsistencies.push({
@@ -193,12 +192,7 @@ export async function mergePlayers({
 
     await tx
       .update(players_to_units)
-      .set({
-        playerId: basePlayerId,
-        newRating: null,
-        newRatingDeviation: null,
-        newVolatility: null,
-      })
+      .set({ playerId: basePlayerId })
       .where(eq(players_to_units.playerId, mergedPlayerId));
 
     await tx

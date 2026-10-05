@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/knip@5.88.1/schema.json",
+  "$schema": "https://unpkg.com/knip@6.32.0/schema.json",
   "ignore": [
     "./archive/**",
     "src/components/i18n.ts",
