@@ -1,3 +1,13 @@
+## [1.12.1](https://github.com/mkeverything/mktour/compare/v1.12.0...v1.12.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* add Telegram tournament link previews ([af97266](https://github.com/mkeverything/mktour/commit/af972669277271968932ba0c38d6637273fde2ca))
+* preserve browser streaming for link previews ([068468a](https://github.com/mkeverything/mktour/commit/068468a3450ecae10518a8a2b0be5cd1fc78b158))
+* render metadata for all bots ([46e6bfc](https://github.com/mkeverything/mktour/commit/46e6bfc76431209685972a6fb47afd977460bd3e))
+* use default metadata for tournament link previews ([e4e280d](https://github.com/mkeverything/mktour/commit/e4e280d4eb996a380c7067c0b94ad9d4e48f987d))
+
 # [1.12.0](https://github.com/mkeverything/mktour/compare/v1.11.2...v1.12.0) (2026-10-03)
 
 
