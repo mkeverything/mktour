@@ -6,7 +6,6 @@ import {
 import { BASE_URL } from '@/lib/config/urls';
 import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
 import { publicCaller } from '@/server/api';
-import { ClubModel } from '@/server/zod/clubs';
 import { TournamentInfoModel } from '@/server/zod/tournaments';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { Metadata, ResolvingMetadata } from 'next';
@@ -65,14 +64,10 @@ export async function generateMetadata(
   const previous = await parent;
 
   let tournament: TournamentInfoModel;
-  let club: ClubModel | null;
 
   try {
     tournament = await publicCaller.tournament.info({
       tournamentId: params.id,
-    });
-    club = await publicCaller.club.info({
-      clubId: tournament.tournament.clubId,
     });
   } catch {
     notFound();
@@ -82,29 +77,31 @@ export async function generateMetadata(
     tournament.tournament.format as keyof typeof tTournaments,
   );
   const date = new Date(tournament.tournament.date).toLocaleDateString(locale);
+  const title = t('tournaments.tournamentPage.title', {
+    name: tournament.tournament.title || `${format} ${date}`,
+  });
+  const description = t('tournaments.tournamentPage.description', {
+    format,
+    clubName: tournament.club.name,
+  });
 
   return {
-    title: t('tournaments.tournamentPage.title', {
-      name: tournament.tournament.title || `${format} ${date}`,
-    }),
-    description: t('tournaments.tournamentPage.description', {
-      format,
-      clubName: club?.name || '',
-    }),
+    title,
+    description,
     alternates: {
       canonical: url,
       languages: { en: url, ru: url, 'x-default': url },
     },
     openGraph: {
       ...previous.openGraph,
-      title: t('tournaments.tournamentPage.title', {
-        name: tournament.tournament.title || `${format} ${date}`,
-      }),
-      description: t('tournaments.tournamentPage.description', {
-        format,
-        clubName: club?.name || '',
-      }),
+      title,
+      description,
       url,
+    },
+    twitter: {
+      ...previous.twitter,
+      title,
+      description,
     },
   };
 }
