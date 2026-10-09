@@ -1,13 +1,14 @@
 'use client';
 
 import { useTRPC } from '@/components/trpc/client';
+import { GamesRecord } from '@/components/ui-custom/player-stats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
-import { Percent, Star, Trophy } from 'lucide-react';
+import { Star, Swords, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 
 const AffiliatedPlayerCard: FC<{ clubId: string; userId: string }> = ({
   clubId,
@@ -79,18 +80,19 @@ const AffiliatedPlayerCard: FC<{ clubId: string; userId: string }> = ({
               icon={Star}
               label={tProfile('clubRating')}
               value={player.rating}
+              rank={stats?.ratingRank}
             />
             <CompactStat
               icon={Trophy}
               label={tPlayerStats('tournaments')}
-              value={
-                isStatsPending ? '...' : (stats?.tournamentsPlayed.value ?? 0)
-              }
+              value={isStatsPending ? '...' : (stats?.tournamentsPlayed ?? 0)}
             />
             <CompactStat
-              icon={Percent}
-              label={tPlayerStats('winRate')}
-              value={isStatsPending ? '...' : `${stats?.winRate.value ?? 0}%`}
+              icon={Swords}
+              label={tPlayerStats('gamesPlayed')}
+              value={
+                isStatsPending || !stats ? '...' : <GamesRecord {...stats} />
+              }
             />
           </div>
         </div>
@@ -102,11 +104,15 @@ const AffiliatedPlayerCard: FC<{ clubId: string; userId: string }> = ({
 const CompactStat: FC<{
   icon: FC<{ className?: string }>;
   label: string;
-  value: string | number;
-}> = ({ icon: Icon, label, value }) => (
+  value: ReactNode;
+  rank?: number | null;
+}> = ({ icon: Icon, label, value, rank }) => (
   <div className="bg-muted/60 flex items-center gap-1.5 rounded-lg px-2 py-1">
     <Icon className="text-muted-foreground size-3.5" />
     <span className="text-foreground text-xs font-semibold">{value}</span>
+    {rank != null && (
+      <span className="text-muted-foreground text-xs">#{rank}</span>
+    )}
     <span className="sr-only">{label}</span>
   </div>
 );

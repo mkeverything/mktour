@@ -12,7 +12,9 @@ import LastTournaments from '@/components/last-tournaments';
 import { useTRPC } from '@/components/trpc/client';
 import CarouselDots from '@/components/ui-custom/carousel-dots';
 import HalfCard from '@/components/ui-custom/half-card';
-import PlayerStats from '@/components/ui-custom/player-stats';
+import PlayerStats, {
+  PlayerRatingRank,
+} from '@/components/ui-custom/player-stats';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -40,7 +42,14 @@ import { useQueries } from '@tanstack/react-query';
 import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  FC,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 const Profile: FC<{
   user: UserWithPlayers;
@@ -176,7 +185,7 @@ const UserLink: FC<{ user: UserWithPlayers }> = ({ user }) => (
 const StatItem: FC<{
   icon: FC<{ className?: string }>;
   label: string;
-  value: string | number;
+  value: ReactNode;
 }> = ({ icon: Icon, label, value }) => (
   <div className="flex items-center gap-3">
     <div className="bg-muted flex aspect-square size-10 items-center justify-center rounded-lg">
@@ -404,7 +413,12 @@ const ClubPlayerCard: FC<
           <StatItem
             icon={Star}
             label={t('clubRating')}
-            value={formattedPlayerRating}
+            value={
+              <span className="flex items-baseline gap-1.5">
+                {formattedPlayerRating}
+                <PlayerRatingRank playerId={player.id} />
+              </span>
+            }
           />
           <StatItem
             icon={CalendarDays}

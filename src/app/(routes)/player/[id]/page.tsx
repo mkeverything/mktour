@@ -5,6 +5,7 @@ import ClaimPlayer from '@/app/(routes)/player/[id]/claim-button';
 import EditButton from '@/app/(routes)/player/[id]/edit-button';
 import PlayerStats from '@/app/(routes)/player/[id]/player-stats';
 import LastTournaments from '@/components/last-tournaments';
+import { PlayerRatingRank } from '@/components/ui-custom/player-stats';
 import { CardTitle } from '@/components/ui/card';
 import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
@@ -97,6 +98,7 @@ const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
         <span className="text-3xl font-bold">
           {player.isEstablished ? player.rating : `${player.rating}?`}
         </span>
+        <PlayerRatingRank playerId={player.id} />
       </div>
     </div>
   </div>
