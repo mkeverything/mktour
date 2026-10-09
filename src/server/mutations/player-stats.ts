@@ -8,7 +8,10 @@ import {
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import type { PlayerRecordModel } from '@/server/zod/players';
+import type {
+  PlayerRecordModel,
+  PlayerStatsRowModel,
+} from '@/server/zod/players';
 import {
   and,
   count,
@@ -27,7 +30,9 @@ type Database = Pick<typeof db, 'select'>;
 type Tx = Pick<typeof db, 'select' | 'insert'>;
 
 const { gamesPlayed: _, ...STORED_COLUMNS } = getColumns(player_stats);
-const STORED_KEYS = Object.keys(STORED_COLUMNS) as (keyof PlayerStatsRow)[];
+const STORED_KEYS = Object.keys(
+  STORED_COLUMNS,
+) as (keyof PlayerStatsRowModel)[];
 
 const RATING_COLUMNS = {
   rating: players.rating,
@@ -45,12 +50,8 @@ const UPSERT_SET = Object.fromEntries(
 // 11 bound parameters per row keeps every statement far below sqlite's variable limit
 const UPSERT_CHUNK_SIZE = 500;
 
-export type PlayerStatsRow = Omit<
-  typeof player_stats.$inferSelect,
-  'gamesPlayed'
->;
 type PlayerStatsCounts = Pick<
-  PlayerStatsRow,
+  PlayerStatsRowModel,
   | 'tournamentsPlayed'
   | 'tournamentsWon'
   | 'gamesWon'
@@ -68,10 +69,10 @@ const ZERO_COUNTS: PlayerStatsCounts = {
   gamesLost: 0,
 };
 
-const toPlayerStatsRow = (row: PlayerStatsRow) =>
+const toPlayerStatsRow = (row: PlayerStatsRowModel) =>
   Object.fromEntries(
     STORED_KEYS.map((key) => [key, row[key]]),
-  ) as PlayerStatsRow;
+  ) as PlayerStatsRowModel;
 
 const compareByRating = (a: RankingPlayer, b: RankingPlayer) =>
   b.rating - a.rating ||
@@ -197,7 +198,7 @@ export async function buildClubPlayerStats(
   database: Database,
   clubId: string,
   now: Date,
-): Promise<PlayerStatsRow[]> {
+): Promise<PlayerStatsRowModel[]> {
   const [clubPlayers, counts] = await Promise.all([
     database
       .select({

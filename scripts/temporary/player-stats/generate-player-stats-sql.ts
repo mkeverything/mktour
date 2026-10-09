@@ -18,16 +18,14 @@ import { getColumns } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/libsql';
 import { AppError } from '@/lib/errors';
 import { player_stats, players } from '@/server/db/schema/players';
-import {
-  buildClubPlayerStats,
-  type PlayerStatsRow,
-} from '@/server/mutations/player-stats';
+import { buildClubPlayerStats } from '@/server/mutations/player-stats';
+import type { PlayerStatsRowModel } from '@/server/zod/players';
 
 type Database = Parameters<typeof buildClubPlayerStats>[0];
 
 const { gamesPlayed: _, ...insertableColumns } = getColumns(player_stats);
 const COLUMNS = Object.entries(insertableColumns) as [
-  keyof PlayerStatsRow,
+  keyof PlayerStatsRowModel,
   (typeof insertableColumns)[keyof typeof insertableColumns],
 ][];
 
@@ -36,7 +34,7 @@ async function buildPlayerStats(database: Database, now: Date) {
     .select({ clubId: players.clubId })
     .from(players)
     .groupBy(players.clubId);
-  const rows: PlayerStatsRow[] = [];
+  const rows: PlayerStatsRowModel[] = [];
   for (const { clubId } of clubs) {
     rows.push(...(await buildClubPlayerStats(database, clubId, now)));
   }
@@ -50,7 +48,7 @@ const sqlValue = (value: string | number | null) =>
       ? String(value)
       : `'${value.replaceAll("'", "''")}'`;
 
-function playerStatsSql(rows: PlayerStatsRow[]) {
+function playerStatsSql(rows: PlayerStatsRowModel[]) {
   const names = COLUMNS.map(([, column]) => column.name);
   const updates = names
     .filter((name) => name !== player_stats.playerId.name)

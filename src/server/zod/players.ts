@@ -153,6 +153,10 @@ export const playerStatsSchema = createSelectSchema(player_stats).omit({
   clubId: true,
 });
 
+export const playerStatsRowSchema = createSelectSchema(player_stats).omit({
+  gamesPlayed: true,
+});
+
 export const playerAuthStatsSchema = z.object({
   playerWins: z.number(),
   draws: z.number(),
@@ -203,5 +207,6 @@ export const userPlayerClubSchema = z.object({
 });
 
 export type PlayerStatsModel = z.infer<typeof playerStatsSchema>;
+export type PlayerStatsRowModel = z.infer<typeof playerStatsRowSchema>;
 export type PlayerAuthStatsModel = z.infer<typeof playerAuthStatsSchema>;
 export type UserPlayerClubModel = z.infer<typeof userPlayerClubSchema>;
