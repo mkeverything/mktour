@@ -40,7 +40,7 @@ import {
   UnitModel,
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
-import { refreshPlayerStats } from './player-stats';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
 import { replaceRoundGames } from './tournament-games';
 import { applyPreStartUnitOrder } from './tournament-unit-order';

@@ -14,6 +14,7 @@ import {
   count,
   countDistinct,
   eq,
+  getColumns,
   inArray,
   isNotNull,
   isNull,
@@ -24,6 +25,25 @@ import {
 
 type Database = Pick<typeof db, 'select'>;
 type Tx = Pick<typeof db, 'select' | 'insert'>;
+
+const { gamesPlayed: _, ...STORED_COLUMNS } = getColumns(player_stats);
+const STORED_KEYS = Object.keys(STORED_COLUMNS) as (keyof PlayerStatsRow)[];
+
+const RATING_COLUMNS = {
+  rating: players.rating,
+  ratingDeviation: players.ratingDeviation,
+  ratingVolatility: players.ratingVolatility,
+  ratingLastUpdateAt: players.ratingLastUpdateAt,
+};
+
+const UPSERT_SET = Object.fromEntries(
+  Object.entries(STORED_COLUMNS)
+    .filter(([key]) => key !== 'playerId' && key !== 'clubId')
+    .map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)]),
+);
+
+// 11 bound parameters per row keeps every statement far below sqlite's variable limit
+const UPSERT_CHUNK_SIZE = 500;
 
 export type PlayerStatsRow = Omit<
   typeof player_stats.$inferSelect,
@@ -37,19 +57,8 @@ type PlayerStatsCounts = Pick<
   | 'gamesDrawn'
   | 'gamesLost'
 >;
-type PlayerStatsRanks = Pick<
-  PlayerStatsRow,
-  | 'ratingRank'
-  | 'tournamentsPlayedRank'
-  | 'tournamentsWonRank'
-  | 'gamesPlayedRank'
->;
-type RankingPlayer = PlayerStatsCounts & {
-  playerId: PlayerRecordModel['id'];
-} & Pick<
-    PlayerRecordModel,
-    'rating' | 'ratingDeviation' | 'ratingVolatility' | 'ratingLastUpdateAt'
-  >;
+type RankingPlayer = PlayerStatsCounts &
+  Pick<PlayerRecordModel, keyof typeof RATING_COLUMNS> & { playerId: string };
 
 const ZERO_COUNTS: PlayerStatsCounts = {
   tournamentsPlayed: 0,
@@ -59,60 +68,40 @@ const ZERO_COUNTS: PlayerStatsCounts = {
   gamesLost: 0,
 };
 
-const PROJECTED_KEYS = [
-  'tournamentsPlayed',
-  'tournamentsWon',
-  'gamesWon',
-  'gamesDrawn',
-  'gamesLost',
-  'ratingRank',
-  'tournamentsPlayedRank',
-  'tournamentsWonRank',
-  'gamesPlayedRank',
-] as const satisfies (keyof PlayerStatsRow)[];
-
-// 11 bound parameters per row keeps every statement far below sqlite's variable limit
-const UPSERT_CHUNK_SIZE = 500;
-
-const gamesPlayedOf = (player: PlayerStatsCounts) =>
-  player.gamesWon + player.gamesDrawn + player.gamesLost;
+const toPlayerStatsRow = (row: PlayerStatsRow) =>
+  Object.fromEntries(
+    STORED_KEYS.map((key) => [key, row[key]]),
+  ) as PlayerStatsRow;
 
 const compareByRating = (a: RankingPlayer, b: RankingPlayer) =>
   b.rating - a.rating ||
   a.ratingDeviation - b.ratingDeviation ||
   (a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0);
 
-function getPositions(
-  eligible: RankingPlayer[],
-  metric?: (player: RankingPlayer) => number,
-) {
-  const sorted = eligible.toSorted(
-    (a, b) => (metric ? metric(b) - metric(a) : 0) || compareByRating(a, b),
-  );
-  return new Map(sorted.map((player, i) => [player.playerId, i + 1]));
-}
-
 /** assigns unique club positions; ties fall back to rating, stored rd, then id */
 export function rankClubPlayers<T extends RankingPlayer>(
   clubPlayers: T[],
   now: Date,
-): (T & PlayerStatsRanks)[] {
-  const rating = getPositions(
-    clubPlayers.filter((player) =>
-      isEstablishedRating(getCurrentRatingDeviation(player, now)),
-    ),
+) {
+  const positions = (
+    isEligible: (player: T) => boolean,
+    metric: (player: T) => number = () => 0,
+  ) => {
+    const sorted = clubPlayers
+      .filter(isEligible)
+      .toSorted((a, b) => metric(b) - metric(a) || compareByRating(a, b));
+    return new Map(sorted.map((player, i) => [player.playerId, i + 1]));
+  };
+  const byMetric = (metric: (player: T) => number) =>
+    positions((player) => metric(player) > 0, metric);
+
+  const rating = positions((player) =>
+    isEstablishedRating(getCurrentRatingDeviation(player, now)),
   );
-  const tournamentsPlayed = getPositions(
-    clubPlayers.filter((player) => player.tournamentsPlayed > 0),
-    (player) => player.tournamentsPlayed,
-  );
-  const tournamentsWon = getPositions(
-    clubPlayers.filter((player) => player.tournamentsWon > 0),
-    (player) => player.tournamentsWon,
-  );
-  const gamesPlayed = getPositions(
-    clubPlayers.filter((player) => gamesPlayedOf(player) > 0),
-    gamesPlayedOf,
+  const tournamentsPlayed = byMetric((player) => player.tournamentsPlayed);
+  const tournamentsWon = byMetric((player) => player.tournamentsWon);
+  const gamesPlayed = byMetric(
+    (player) => player.gamesWon + player.gamesDrawn + player.gamesLost,
   );
 
   return clubPlayers.map((player) => ({
@@ -214,10 +203,7 @@ export async function buildClubPlayerStats(
       .select({
         playerId: players.id,
         clubId: players.clubId,
-        rating: players.rating,
-        ratingDeviation: players.ratingDeviation,
-        ratingVolatility: players.ratingVolatility,
-        ratingLastUpdateAt: players.ratingLastUpdateAt,
+        ...RATING_COLUMNS,
       })
       .from(players)
       .where(eq(players.clubId, clubId)),
@@ -248,23 +234,7 @@ export async function refreshPlayerStats(
 ) {
   const [storedRows, counts] = await Promise.all([
     tx
-      .select({
-        playerId: player_stats.playerId,
-        clubId: player_stats.clubId,
-        tournamentsPlayed: player_stats.tournamentsPlayed,
-        tournamentsWon: player_stats.tournamentsWon,
-        gamesWon: player_stats.gamesWon,
-        gamesDrawn: player_stats.gamesDrawn,
-        gamesLost: player_stats.gamesLost,
-        ratingRank: player_stats.ratingRank,
-        tournamentsPlayedRank: player_stats.tournamentsPlayedRank,
-        tournamentsWonRank: player_stats.tournamentsWonRank,
-        gamesPlayedRank: player_stats.gamesPlayedRank,
-        rating: players.rating,
-        ratingDeviation: players.ratingDeviation,
-        ratingVolatility: players.ratingVolatility,
-        ratingLastUpdateAt: players.ratingLastUpdateAt,
-      })
+      .select({ ...STORED_COLUMNS, ...RATING_COLUMNS })
       .from(player_stats)
       .innerJoin(players, eq(players.id, player_stats.playerId))
       .where(eq(player_stats.clubId, clubId)),
@@ -274,17 +244,16 @@ export async function refreshPlayerStats(
   ]);
 
   const affected = new Set(playerIds);
-  const rankedRows = rankClubPlayers(
+  const changedRows = rankClubPlayers(
     storedRows.map((row) =>
       affected.has(row.playerId)
         ? { ...row, ...(counts.get(row.playerId) ?? ZERO_COUNTS) }
         : row,
     ),
     now,
-  );
-  const changedRows = rankedRows
+  )
     .filter((row, i) =>
-      PROJECTED_KEYS.some((key) => row[key] !== storedRows[i][key]),
+      STORED_KEYS.some((key) => row[key] !== storedRows[i][key]),
     )
     .map(toPlayerStatsRow);
 
@@ -292,35 +261,6 @@ export async function refreshPlayerStats(
     await tx
       .insert(player_stats)
       .values(changedRows.slice(i, i + UPSERT_CHUNK_SIZE))
-      .onConflictDoUpdate({
-        target: player_stats.playerId,
-        set: {
-          tournamentsPlayed: sql`excluded.tournaments_played`,
-          tournamentsWon: sql`excluded.tournaments_won`,
-          gamesWon: sql`excluded.games_won`,
-          gamesDrawn: sql`excluded.games_drawn`,
-          gamesLost: sql`excluded.games_lost`,
-          ratingRank: sql`excluded.rating_rank`,
-          tournamentsPlayedRank: sql`excluded.tournaments_played_rank`,
-          tournamentsWonRank: sql`excluded.tournaments_won_rank`,
-          gamesPlayedRank: sql`excluded.games_played_rank`,
-        },
-      });
+      .onConflictDoUpdate({ target: player_stats.playerId, set: UPSERT_SET });
   }
-}
-
-function toPlayerStatsRow(row: PlayerStatsRow): PlayerStatsRow {
-  return {
-    playerId: row.playerId,
-    clubId: row.clubId,
-    tournamentsPlayed: row.tournamentsPlayed,
-    tournamentsWon: row.tournamentsWon,
-    gamesWon: row.gamesWon,
-    gamesDrawn: row.gamesDrawn,
-    gamesLost: row.gamesLost,
-    ratingRank: row.ratingRank,
-    tournamentsPlayedRank: row.tournamentsPlayedRank,
-    tournamentsWonRank: row.tournamentsWonRank,
-    gamesPlayedRank: row.gamesPlayedRank,
-  };
 }

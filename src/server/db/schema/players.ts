@@ -5,7 +5,6 @@ import { AffiliationStatus } from '@/server/zod/enums';
 import { sql } from 'drizzle-orm';
 import {
   check,
-  foreignKey,
   index,
   integer,
   primaryKey,
@@ -45,7 +44,6 @@ export const players = sqliteTable(
       table.clubId,
     ),
     uniqueIndex('player_user_club_unique_idx').on(table.userId, table.clubId),
-    uniqueIndex('player_id_club_unique_idx').on(table.id, table.clubId),
     index('player_club_last_seen_idx').on(table.clubId, table.lastSeenAt),
     index('player_club_rating_idx').on(
       table.clubId,
@@ -111,7 +109,9 @@ export const rating_events = sqliteTable(
 export const player_stats = sqliteTable(
   'player_stats',
   {
-    playerId: text('player_id').notNull(),
+    playerId: text('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
     clubId: text('club_id').notNull(),
     tournamentsPlayed: integer('tournaments_played').notNull().default(0),
     tournamentsWon: integer('tournaments_won').notNull().default(0),
@@ -134,19 +134,6 @@ export const player_stats = sqliteTable(
       'player_stats_counts_non_negative',
       sql`${table.tournamentsPlayed} >= 0 and ${table.tournamentsWon} >= 0 and ${table.gamesWon} >= 0 and ${table.gamesDrawn} >= 0 and ${table.gamesLost} >= 0`,
     ),
-    check(
-      'player_stats_tournament_wins_lte_played',
-      sql`${table.tournamentsWon} <= ${table.tournamentsPlayed}`,
-    ),
-    check(
-      'player_stats_ranks_positive',
-      sql`(${table.ratingRank} is null or ${table.ratingRank} >= 1) and (${table.tournamentsPlayedRank} is null or ${table.tournamentsPlayedRank} >= 1) and (${table.tournamentsWonRank} is null or ${table.tournamentsWonRank} >= 1) and (${table.gamesPlayedRank} is null or ${table.gamesPlayedRank} >= 1)`,
-    ),
-    foreignKey({
-      columns: [table.playerId, table.clubId],
-      foreignColumns: [players.id, players.clubId],
-      name: 'player_stats_player_club_fk',
-    }).onDelete('cascade'),
     index('player_stats_club_rating_rank_idx').on(
       table.clubId,
       table.ratingRank,
