@@ -27,7 +27,9 @@ export default function AboutContent({ changelog }: AboutContentProps) {
       <div className="w-full max-w-4xl space-y-6 sm:space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl sm:text-3xl">{t('title')}</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl">
+              <h1>{t('title')}</h1>
+            </CardTitle>
             <CardDescription className="text-lg">
               {t('description')}
             </CardDescription>

@@ -34,7 +34,7 @@ async function LayoutContent({ children }: PropsWithChildren) {
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -96,7 +96,6 @@ export async function generateMetadata(): Promise<Metadata> {
       'tournament',
       'swiss',
       'round robin',
-      'elimination',
       'chess tournament',
       'tournament management',
     ],
@@ -111,14 +110,6 @@ export async function generateMetadata(): Promise<Metadata> {
         'max-video-preview': -1,
         'max-image-preview': 'large',
         'max-snippet': -1,
-      },
-    },
-    alternates: {
-      canonical: baseUrl,
-      languages: {
-        en: baseUrl,
-        ru: baseUrl,
-        'x-default': baseUrl,
       },
     },
     openGraph: {

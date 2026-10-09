@@ -91,10 +91,7 @@ export async function generateMetadata(
   return {
     title: t('tournaments.my.title'),
     description: t('tournaments.my.description'),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
     openGraph: {
       ...previous.openGraph,
       title: t('tournaments.my.title'),

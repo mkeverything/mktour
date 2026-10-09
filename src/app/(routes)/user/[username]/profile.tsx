@@ -103,7 +103,7 @@ const Profile: FC<{
                 <CardTitle
                   className={`text-3xl font-light ${turboPascal.className}`}
                 >
-                  {user.name ?? <UserLink user={user} />}
+                  <h1>{user.name ?? <UserLink user={user} />}</h1>
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
                   {user.name && <UserLink user={user} />}

@@ -4,7 +4,7 @@
     "siteName": "mktour",
     "homepage": {
       "title": "mktour - chess tournament management",
-      "description": "create and manage chess tournaments with swiss, round robin, single elimination and double elimination formats. free and open-source."
+      "description": "create and manage chess tournaments with swiss and round robin pairings. free and open-source."
     },
     "signIn": {
       "title": "sign in",

@@ -3,20 +3,28 @@ import { BASE_URL } from '@/lib/config/urls';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 
-import ClubsIteratee from '@/app/(routes)/clubs/all/clubs-list';
 import Center from '@/components/center';
-import { publicCaller } from '@/server/api';
-import { Suspense } from 'react';
+import { getQueryClient, trpc } from '@/components/trpc/server';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { connection } from 'next/server';
 
-export default async function ClubSettings() {
-  const { clubs } = await publicCaller.club.all({});
+export default async function ClubsAllPage() {
+  await connection();
+  const queryClient = getQueryClient();
+
+  await queryClient.prefetchInfiniteQuery(
+    trpc.club.all.infiniteQueryOptions(
+      { cursor: undefined },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+    ),
+  );
 
   return (
-    <Center className="mk-list">
-      <Suspense fallback={<ClubsIteratee clubs={clubs.slice(0, 5)} />}>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Center className="mk-list">
         <ClubsAllList />
-      </Suspense>
-    </Center>
+      </Center>
+    </HydrationBoundary>
   );
 }
 
@@ -33,10 +41,7 @@ export async function generateMetadata(
   return {
     title: t('clubs.all.title'),
     description: t('clubs.all.description'),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
     openGraph: {
       ...previous.openGraph,
       title: t('clubs.all.title'),

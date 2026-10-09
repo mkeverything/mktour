@@ -7,7 +7,8 @@ export default function HomeText() {
   const cursor = 'custom-cursor';
   const t = useTranslations('Home');
   return (
-    <div className="m-auto flex h-full w-full max-w-[min(28rem,99.9%)] flex-auto grow items-center text-[clamp(3rem,min(8svh,14svw),6rem)] leading-none font-extrabold text-wrap select-none md:max-w-[min(70rem,90%)] md:text-left md:text-[clamp(4rem,min(12vh,19vw),7rem)]">
+    <h1 className="m-auto flex h-full w-full max-w-[min(28rem,99.9%)] flex-auto grow items-center text-[clamp(3rem,min(8svh,14svw),6rem)] leading-none font-extrabold text-wrap select-none md:max-w-[min(70rem,90%)] md:text-left md:text-[clamp(4rem,min(12vh,19vw),7rem)]">
+      <span className="sr-only">{t('big text 2')}</span>
       <TypeAnimation
         sequence={[
           `${t('big text 1')}`,
@@ -22,7 +23,8 @@ export default function HomeText() {
         cursor={false}
         className={cursor}
         repeat={0}
+        aria-hidden
       />
-    </div>
+    </h1>
   );
 }
