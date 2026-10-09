@@ -214,9 +214,6 @@
       "h2hEmptyForPlayer": "похоже, у вас ещё не было партий против {player}",
       "h2hEmptyForClub": "похоже, у вас ещё не было партий против {player} в клубе {club}",
       "total": "всего",
-      "wins": "в",
-      "draws": "н",
-      "losses": "п",
       "you": "вы"
     }
   },
