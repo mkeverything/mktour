@@ -62,6 +62,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 
 - feature/project prs target `beta`; only `beta` prs into `main`
 - if asked to open a feature pr against `main`, confirm first
+- if a request can be read more than one way, ask before acting
 - do not push to remote without user approval
 - do not amend commits unless explicitly requested
 - syncing beta to main: `git checkout beta && git reset --hard origin/main && git push --force origin beta`
