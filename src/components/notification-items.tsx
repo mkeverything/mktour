@@ -1,6 +1,6 @@
 'use client';
 
-import { LoadingSpinner } from '@/app/loading';
+import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
 import FormattedMessage from '@/components/formatted-message';
 import useAffiliationAcceptMutation from '@/components/hooks/mutation-hooks/use-affiliation-accept';
 import useAffiliationRejectMutation from '@/components/hooks/mutation-hooks/use-affiliation-reject';

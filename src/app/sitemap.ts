@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
-import { BASE_URL } from '@/lib/config/urls';
+import { LOCALES, localizePath } from '@/lib/locales';
+import { getLanguageAlternates, toAbsoluteUrl } from '@/lib/page-urls';
 import { publicCaller } from '@/server/api';
 
 const PAGE_SIZE = 100;
@@ -17,19 +18,29 @@ async function collectPages<T>(
   return items;
 }
 
+type SitemapPage = { path: string; lastModified?: Date };
+
+const localize = (pages: SitemapPage[]): MetadataRoute.Sitemap =>
+  pages.flatMap(({ path, lastModified }) => {
+    const languages = getLanguageAlternates(path);
+    return LOCALES.map((locale) => ({
+      url: toAbsoluteUrl(localizePath(path, locale)),
+      lastModified,
+      alternates: { languages },
+    }));
+  });
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = BASE_URL || 'https://mktour.org';
+  const staticPages: SitemapPage[] = [
+    '/',
+    '/info/about',
+    '/info/faq',
+    '/info/contact',
+    '/clubs/all',
+    '/tournaments/all',
+  ].map((path) => ({ path }));
 
-  const staticPages: MetadataRoute.Sitemap = [
-    baseUrl,
-    `${baseUrl}/info/about`,
-    `${baseUrl}/info/faq`,
-    `${baseUrl}/info/contact`,
-    `${baseUrl}/clubs/all`,
-    `${baseUrl}/tournaments/all`,
-  ].map((url) => ({ url }));
-
-  let dynamicPages: MetadataRoute.Sitemap = [];
+  let dynamicPages: SitemapPage[] = [];
 
   try {
     const [clubs, tournaments, users] = await Promise.all([
@@ -56,18 +67,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         clubLastModified.set(tournament.clubId, lastModified);
       }
       return {
-        url: `${baseUrl}/tournaments/${tournament.id}`,
+        path: `/tournaments/${tournament.id}`,
         lastModified,
       };
     });
 
     const clubPages = clubs.map((club) => ({
-      url: `${baseUrl}/clubs/${club.id}`,
+      path: `/clubs/${club.id}`,
       lastModified: clubLastModified.get(club.id) ?? club.createdAt,
     }));
 
     const userPages = users.map((user) => ({
-      url: `${baseUrl}/user/${user.username}`,
+      path: `/user/${user.username}`,
     }));
 
     // guest player pages are noindex: organizer-entered people, thin and not opted in
@@ -76,5 +87,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate sitemap dynamic pages:', error);
   }
 
-  return [...staticPages, ...dynamicPages];
+  return localize([...staticPages, ...dynamicPages]);
 }

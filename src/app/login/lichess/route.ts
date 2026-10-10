@@ -1,6 +1,7 @@
 'use server';
 
 import { lichess } from '@/lib/auth/lucia';
+import { LOCALE_COOKIE } from '@/lib/locales';
 import { generateCodeVerifier, generateState } from 'arctic';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   const cooks = await cookies();
 
   cooks.getAll().forEach((cookie) => {
-    if (cookie.name !== 'NEXT_LOCALE') cooks.delete(cookie.name);
+    if (cookie.name !== LOCALE_COOKIE) cooks.delete(cookie.name);
   });
 
   if (from) {
