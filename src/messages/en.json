@@ -626,6 +626,7 @@
     "error": "tournament making failed"
   },
   "Home": {
+    "title": "home",
     "make tournament": "make tournament",
     "sign in with lichess": "sign in with lichess",
     "big text 1": "organize any chess tournament",

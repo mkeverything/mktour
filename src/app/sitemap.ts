@@ -3,6 +3,8 @@ import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
 
 const PAGE_SIZE = 100;
+// clubs whose players are fetched in parallel, so the sitemap doesn't flood the db
+const CLUB_BATCH_SIZE = 5;
 
 async function collectPages<T>(
   fetchPage: (cursor?: number) => Promise<[T[], number | null]>,
@@ -47,9 +49,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       publicCaller.user.all(),
     ]);
 
-    const players = (
-      await Promise.all(
-        clubs.map((club) =>
+    const players = [];
+    for (let i = 0; i < clubs.length; i += CLUB_BATCH_SIZE) {
+      const batch = await Promise.all(
+        clubs.slice(i, i + CLUB_BATCH_SIZE).map((club) =>
           collectPages(async (cursor) => {
             const page = await publicCaller.club.players({
               clubId: club.id,
@@ -59,8 +62,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             return [page.players, page.nextCursor];
           }),
         ),
-      )
-    ).flat();
+      );
+      players.push(...batch.flat());
+    }
 
     const clubLastModified = new Map<string, Date>();
     const tournamentPages = tournaments.map(({ tournament }) => {
