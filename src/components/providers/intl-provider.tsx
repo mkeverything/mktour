@@ -1,7 +1,7 @@
 'use client';
 
 import { AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 
 const IntlProvider = ({
   children,
@@ -11,15 +11,10 @@ const IntlProvider = ({
   messages: AbstractIntlMessages;
   locale: string;
 }) => {
-  useEffect(() => {
-    document.documentElement.lang = props.locale;
-  }, [props.locale]);
-
   return (
     <NextIntlClientProvider
       locale={props.locale}
       messages={props.messages}
-      now={new Date()}
       timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
     >
       {children}

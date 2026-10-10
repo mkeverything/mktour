@@ -1,8 +1,0 @@
-import ClubCard from '@/app/(routes)/clubs/club-card';
-import { ClubModel } from '@/server/zod/clubs';
-import { FC } from 'react';
-
-const ClubsIteratee: FC<{ clubs: ClubModel[] }> = ({ clubs }) =>
-  clubs.map((club) => <ClubCard key={club.id} club={club} />);
-
-export default ClubsIteratee;

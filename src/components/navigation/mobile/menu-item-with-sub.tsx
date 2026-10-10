@@ -1,6 +1,7 @@
 import { selected } from '@/components/navigation/mobile/menu';
 import MenuItem from '@/components/navigation/mobile/menu-item';
 import { NavbarItem } from '@/components/navigation/nav-menu-items';
+import { splitLocalePrefix } from '@/lib/locales';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -10,7 +11,7 @@ const MenuItemWithSubMenu: React.FC<MenuItemWithSubMenuProps> = ({
   item,
   toggleOpen,
 }) => {
-  const pathname = usePathname();
+  const { pathname } = splitLocalePrefix(usePathname());
   const t = useTranslations('Menu');
 
   return (
