@@ -3,8 +3,6 @@ import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
 
 const PAGE_SIZE = 100;
-// clubs whose players are fetched in parallel, so the sitemap doesn't flood the db
-const CLUB_BATCH_SIZE = 5;
 
 async function collectPages<T>(
   fetchPage: (cursor?: number) => Promise<[T[], number | null]>,
@@ -49,23 +47,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       publicCaller.user.all(),
     ]);
 
-    const players = [];
-    for (let i = 0; i < clubs.length; i += CLUB_BATCH_SIZE) {
-      const batch = await Promise.all(
-        clubs.slice(i, i + CLUB_BATCH_SIZE).map((club) =>
-          collectPages(async (cursor) => {
-            const page = await publicCaller.club.players({
-              clubId: club.id,
-              limit: PAGE_SIZE,
-              cursor,
-            });
-            return [page.players, page.nextCursor];
-          }),
-        ),
-      );
-      players.push(...batch.flat());
-    }
-
     const clubLastModified = new Map<string, Date>();
     const tournamentPages = tournaments.map(({ tournament }) => {
       const lastModified =
@@ -85,23 +66,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: clubLastModified.get(club.id) ?? club.createdAt,
     }));
 
-    const playerPages = players
-      .filter((player) => !player.userId)
-      .map((player) => ({
-        url: `${baseUrl}/player/${player.id}`,
-        lastModified: player.lastSeenAt,
-      }));
-
     const userPages = users.map((user) => ({
       url: `${baseUrl}/user/${user.username}`,
     }));
 
-    dynamicPages = [
-      ...clubPages,
-      ...tournamentPages,
-      ...playerPages,
-      ...userPages,
-    ];
+    // guest player pages are noindex: organizer-entered people, thin and not opted in
+    dynamicPages = [...clubPages, ...tournamentPages, ...userPages];
   } catch (error) {
     console.error('Failed to generate sitemap dynamic pages:', error);
   }

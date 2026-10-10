@@ -137,6 +137,8 @@ export async function generateMetadata(
       club: club.name,
     }),
     alternates: { canonical: url },
+    // guest players are added by organizers without consent, often with real names
+    robots: { index: false, follow: true },
     openGraph: {
       ...previous.openGraph,
       title: t('player.page.title', { nickname: player.nickname }),

@@ -3,16 +3,16 @@
   "Seo": {
     "siteName": "mktour",
     "homepage": {
-      "title": "mktour - chess tournament management",
-      "description": "create and manage chess tournaments with swiss and round robin pairings. free and open-source."
+      "title": "free chess tournament manager: swiss & round robin | mktour",
+      "description": "run chess tournaments for free: swiss and round robin pairings, live standings, club ratings and lichess sign-in. open-source and works on any device."
     },
     "signIn": {
       "title": "sign in",
       "description": "sign in to mktour with your lichess account"
     },
     "about": {
-      "title": "about mktour",
-      "description": "open-source chess tournament management platform built by chess enthusiasts"
+      "title": "about",
+      "description": "mktour is a free, open-source app for chess clubs, made by chess players. see what we are building and how to join in"
     },
     "faq": {
       "title": "faq",
@@ -24,8 +24,8 @@
     },
     "clubs": {
       "all": {
-        "title": "all clubs",
-        "description": "browse and join chess clubs on mktour"
+        "title": "chess clubs",
+        "description": "chess clubs that run their tournaments on mktour: players, club ratings and past events. join a club or start your own for free."
       },
       "my": {
         "title": "my clubs",
@@ -37,13 +37,14 @@
       },
       "clubPage": {
         "title": "{name}",
-        "description": "chess club {name} on mktour"
+        "description": "{name} — a chess club on mktour: {players, plural, one {# player} other {# players}}, {tournaments, plural, one {# tournament} other {# tournaments}}, latest on {date}. ratings, standings and results.",
+        "descriptionEmpty": "{name} on mktour"
       }
     },
     "tournaments": {
       "all": {
-        "title": "chess tournaments",
-        "description": "find and follow chess tournaments on mktour"
+        "title": "chess tournaments: live standings and results",
+        "description": "follow chess tournaments run on mktour: live pairings, standings and results of swiss and round robin events from chess clubs."
       },
       "my": {
         "title": "my tournaments",
@@ -55,7 +56,7 @@
       },
       "tournamentPage": {
         "title": "{name}",
-        "description": "{clubName} – {format} tournament on mktour"
+        "description": "{format} chess tournament by {clubName}, {date}: {players, plural, =0 {no players yet} one {# player} other {# players}}. pairings, standings and results on mktour."
       },
       "format": {
         "swiss": "swiss",

@@ -24,7 +24,7 @@ export async function getOrganizationSchema() {
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'mkevrthng@gmail.com',
+      email: 'hello@mktour.org',
       contactType: 'customer service',
     },
   };

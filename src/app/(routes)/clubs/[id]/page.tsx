@@ -79,14 +79,30 @@ export async function generateMetadata(
 
   if (!club) notFound();
 
+  const [stats, latest] = await Promise.all([
+    publicCaller.club.stats({ clubId: club.id }),
+    publicCaller.club.tournaments({ clubId: club.id, limit: 1 }),
+  ]);
+  const latestTournament = latest.tournaments[0];
+  const description = latestTournament
+    ? t('clubs.clubPage.description', {
+        name: club.name,
+        players: stats.playersCount,
+        tournaments: stats.tournamentsCount,
+        date: new Date(latestTournament.date).toLocaleDateString(locale),
+      })
+    : t('clubs.clubPage.descriptionEmpty', { name: club.name });
+
   return {
     title: t('clubs.clubPage.title', { name: club.name }),
-    description: t('clubs.clubPage.description', { name: club.name }),
+    description,
     alternates: { canonical: url },
+    // clubs without tournaments are thin until they have content
+    ...(latestTournament ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       ...previous.openGraph,
       title: t('clubs.clubPage.title', { name: club.name }),
-      description: t('clubs.clubPage.description', { name: club.name }),
+      description,
       url,
     },
   };
