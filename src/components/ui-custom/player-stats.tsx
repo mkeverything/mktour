@@ -106,10 +106,11 @@ export const PlayerRatingRank: FC<{ playerId: string }> = ({ playerId }) => {
 
 export const GamesRecord: FC<
   Pick<PlayerStatsModel, 'gamesWon' | 'gamesDrawn' | 'gamesLost'>
-> = ({ gamesWon, gamesDrawn, gamesLost }) => {
-  const t = useTranslations('Player.Stats');
-  return `${gamesWon}${t('wins')} ${gamesDrawn}${t('draws')} ${gamesLost}${t('losses')}`;
-};
+> = ({ gamesWon, gamesDrawn, gamesLost }) => (
+  <span className="ml-2">
+    {gamesWon}-{gamesDrawn}-{gamesLost}
+  </span>
+);
 
 interface StatItemProps {
   icon: FC<{ className?: string }>;

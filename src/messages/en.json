@@ -214,9 +214,6 @@
       "h2hEmptyForPlayer": "seems like you never played against {player} yet",
       "h2hEmptyForClub": "seems like you never played against {player} in {club} yet",
       "total": "total",
-      "wins": "w",
-      "draws": "d",
-      "losses": "l",
       "you": "you"
     }
   },
