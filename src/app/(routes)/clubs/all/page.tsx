@@ -10,6 +10,7 @@ import { connection } from 'next/server';
 
 export default async function ClubsAllPage() {
   await connection();
+  const t = await getTranslations('Seo');
   const queryClient = getQueryClient();
 
   await queryClient.prefetchInfiniteQuery(
@@ -22,6 +23,7 @@ export default async function ClubsAllPage() {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Center className="mk-list">
+        <h1 className="sr-only">{t('clubs.all.title')}</h1>
         <ClubsAllList />
       </Center>
     </HydrationBoundary>

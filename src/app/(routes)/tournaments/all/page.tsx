@@ -9,6 +9,7 @@ import { connection } from 'next/server';
 
 export default async function Tournaments() {
   await connection();
+  const t = await getTranslations('Seo');
   const queryClient = getQueryClient();
 
   await queryClient.prefetchInfiniteQuery(
@@ -21,6 +22,7 @@ export default async function Tournaments() {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <main className="mk-container mk-list">
+        <h1 className="sr-only">{t('tournaments.all.title')}</h1>
         <TournamentsAllList />
       </main>
     </HydrationBoundary>
