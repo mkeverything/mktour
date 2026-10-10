@@ -75,10 +75,7 @@ export async function generateMetadata(
       clubs: userPlayers.length,
       tournaments: lastTournaments.length,
     }),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
     openGraph: {
       ...previous.openGraph,
       title: t('user.profile.title', { username: data.username }),

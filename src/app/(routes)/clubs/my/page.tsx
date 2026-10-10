@@ -36,10 +36,7 @@ export async function generateMetadata(
   return {
     title: t('clubs.my.title'),
     description: t('clubs.my.description'),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
     openGraph: {
       ...previous.openGraph,
       title: t('clubs.my.title'),

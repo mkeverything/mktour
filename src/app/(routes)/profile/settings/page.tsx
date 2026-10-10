@@ -47,10 +47,7 @@ export async function generateMetadata(
   return {
     title: t('profile.settings.title'),
     description: t('profile.settings.description'),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
     openGraph: {
       ...previous.openGraph,
       title: t('profile.settings.title'),

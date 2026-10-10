@@ -64,11 +64,13 @@ export async function generateMetadata(
   const previous = await parent;
 
   let tournament: TournamentInfoModel;
+  let units;
 
   try {
-    tournament = await publicCaller.tournament.info({
-      tournamentId: params.id,
-    });
+    [tournament, units] = await Promise.all([
+      publicCaller.tournament.info({ tournamentId: params.id }),
+      publicCaller.tournament.units({ tournamentId: params.id }),
+    ]);
   } catch {
     notFound();
   }
@@ -83,15 +85,14 @@ export async function generateMetadata(
   const description = t('tournaments.tournamentPage.description', {
     format,
     clubName: tournament.club.name,
+    date,
+    players: units.reduce((sum, unit) => sum + unit.players.length, 0),
   });
 
   return {
     title,
     description,
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
     openGraph: {
       ...previous.openGraph,
       title,

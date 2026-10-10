@@ -1,8 +1,10 @@
 import ClubPage from '@/app/(routes)/clubs/[id]/club';
 import Loading from '@/app/loading';
+import { getQueryClient, trpc } from '@/components/trpc/server';
 import { validateRequest } from '@/lib/auth/lucia';
 import { BASE_URL } from '@/lib/config/urls';
 import { publicCaller } from '@/server/api';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -17,14 +19,41 @@ export default async function Page(props: ClubPageProps) {
   });
 
   if (!club) notFound();
+
+  const queryClient = getQueryClient();
+  const getNextPageParam = (lastPage: { nextCursor: number | null }) =>
+    lastPage.nextCursor;
+  await Promise.all([
+    queryClient.prefetchQuery(
+      trpc.club.stats.queryOptions({ clubId: club.id }),
+    ),
+    queryClient.prefetchQuery(
+      trpc.club.managers.all.queryOptions({ clubId: club.id }),
+    ),
+    queryClient.prefetchInfiniteQuery(
+      trpc.club.tournaments.infiniteQueryOptions(
+        { clubId: club.id, cursor: undefined },
+        { getNextPageParam },
+      ),
+    ),
+    queryClient.prefetchInfiniteQuery(
+      trpc.club.players.infiniteQueryOptions(
+        { clubId: club.id, cursor: undefined },
+        { getNextPageParam },
+      ),
+    ),
+  ]);
+
   return (
-    <Suspense fallback={<Loading />}>
-      <ClubPage
-        club={club}
-        statusInClub={statusInClub}
-        userId={user?.id || ''}
-      />
-    </Suspense>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Suspense fallback={<Loading />}>
+        <ClubPage
+          club={club}
+          statusInClub={statusInClub}
+          userId={user?.id || ''}
+        />
+      </Suspense>
+    </HydrationBoundary>
   );
 }
 
@@ -50,17 +79,30 @@ export async function generateMetadata(
 
   if (!club) notFound();
 
+  const [stats, latest] = await Promise.all([
+    publicCaller.club.stats({ clubId: club.id }),
+    publicCaller.club.tournaments({ clubId: club.id, limit: 1 }),
+  ]);
+  const latestTournament = latest.tournaments[0];
+  const description = latestTournament
+    ? t('clubs.clubPage.description', {
+        name: club.name,
+        players: stats.playersCount,
+        tournaments: stats.tournamentsCount,
+        date: new Date(latestTournament.date).toLocaleDateString(locale),
+      })
+    : t('clubs.clubPage.descriptionEmpty', { name: club.name });
+
   return {
     title: t('clubs.clubPage.title', { name: club.name }),
-    description: t('clubs.clubPage.description', { name: club.name }),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    description,
+    alternates: { canonical: url },
+    // clubs without tournaments are thin until they have content
+    ...(latestTournament ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       ...previous.openGraph,
       title: t('clubs.clubPage.title', { name: club.name }),
-      description: t('clubs.clubPage.description', { name: club.name }),
+      description,
       url,
     },
   };

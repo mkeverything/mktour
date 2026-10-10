@@ -147,6 +147,7 @@ const TournamentTitle = memo(function TournamentTitle({
     <div
       className={`p-mk flex items-center justify-between max-md:border-b md:pb-0`}
     >
+      <h1 className="sr-only">{controlledTitle || fallbackTitle}</h1>
       <InputGhost
         disabled={!isOrganizer}
         placeholder={fallbackTitle}

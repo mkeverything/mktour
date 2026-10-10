@@ -86,7 +86,7 @@ const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
     <div className="flex items-center justify-between">
       <div className="flex flex-col gap-1">
         <CardTitle className={`text-4xl font-light ${turboPascal.className}`}>
-          {player.nickname}
+          <h1>{player.nickname}</h1>
         </CardTitle>
         {player.realname && (
           <span className="text-muted-foreground text-sm">
@@ -136,10 +136,9 @@ export async function generateMetadata(
       rating: player.rating,
       club: club.name,
     }),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
+    // guest players are added by organizers without consent, often with real names
+    robots: { index: false, follow: true },
     openGraph: {
       ...previous.openGraph,
       title: t('player.page.title', { nickname: player.nickname }),

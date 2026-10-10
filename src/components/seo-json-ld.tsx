@@ -24,7 +24,7 @@ export async function getOrganizationSchema() {
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'mkevrthng@gmail.com',
+      email: 'hello@mktour.org',
       contactType: 'customer service',
     },
   };
@@ -37,15 +37,8 @@ export async function getWebsiteSchema() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'mktour',
+    alternateName: 'мктур',
     url: baseUrl,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${baseUrl}/api/search?query={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
   };
 }
 
@@ -70,7 +63,7 @@ export async function getSoftwareApplicationSchema() {
     featureList: [
       'Chess Tournament Management',
       'Automatic Rating Calculation',
-      'Swiss System, Round-Robin, Single & Double Elimination',
+      'Swiss System and Round-Robin Pairings',
       'Free Open API',
       'Made by Chess Players and Organizers',
     ],

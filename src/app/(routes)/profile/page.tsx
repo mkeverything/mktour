@@ -23,10 +23,7 @@ export async function generateMetadata(
   return {
     title: t('profile.my.title'),
     description: t('profile.my.description'),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
     openGraph: {
       ...previous.openGraph,
       title: t('profile.my.title'),

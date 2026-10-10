@@ -41,15 +41,13 @@ export async function generateMetadata(
   return {
     title: t('clubs.create.title'),
     description: t('clubs.create.description'),
-    alternates: {
-      canonical: url,
-      languages: { en: url, ru: url, 'x-default': url },
-    },
+    alternates: { canonical: url },
     openGraph: {
       ...previous.openGraph,
       title: t('clubs.create.title'),
       description: t('clubs.create.description'),
       url,
     },
+    robots: { index: false, follow: true },
   };
 }

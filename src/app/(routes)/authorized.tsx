@@ -15,6 +15,7 @@ import { TournamentWithClubModel } from '@/server/zod/tournaments';
 const RECENT_TOURNAMENTS_LIMIT = 5;
 
 export default async function Authorized() {
+  const t = await getTranslations('Home');
   const tournaments = await publicCaller.auth
     .myTournaments()
     .catch(() => [] as TournamentWithClubModel[]);
@@ -23,6 +24,7 @@ export default async function Authorized() {
 
   return (
     <>
+      <h1 className="sr-only">{t('title')}</h1>
       <div
         className={cn(
           'min-h-mk-content-height flex w-full flex-auto flex-col p-4',

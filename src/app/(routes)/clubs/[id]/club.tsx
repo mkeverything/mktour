@@ -96,7 +96,7 @@ const ClubHeader: FC<{
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
               <CardTitle className={`text-2xl ${turboPascal.className}`}>
-                {club.name}
+                <h1>{club.name}</h1>
               </CardTitle>
               {club.lichessTeam && (
                 <Link
