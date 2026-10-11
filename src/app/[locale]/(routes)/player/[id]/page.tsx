@@ -7,12 +7,12 @@ import PlayerStats from '@/app/[locale]/(routes)/player/[id]/player-stats';
 import LastTournaments from '@/components/last-tournaments';
 import { PlayerRatingRank } from '@/components/ui-custom/player-stats';
 import { CardTitle } from '@/components/ui/card';
-import { BASE_URL } from '@/lib/config/urls';
+import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { PlayerModel } from '@/server/zod/players';
 import { ChevronRight, Users2 } from 'lucide-react';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { getLocale, getTranslations } from 'next-intl/server';
+import type { ResolvingMetadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { FC, Suspense } from 'react';
@@ -109,13 +109,9 @@ export async function generateMetadata(
     params: Promise<{ id: string }>;
   },
   parent: ResolvingMetadata,
-): Promise<Metadata> {
+) {
   const params = await props.params;
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const baseUrl = BASE_URL || 'https://mktour.org';
-  const url = `${baseUrl}/player/${params.id}`;
-  const previous = await parent;
+  const t = await getTranslations('Seo');
 
   let playerData;
   try {
@@ -129,27 +125,17 @@ export async function generateMetadata(
 
   const { club, ...player } = playerData;
 
-  return {
+  return getPageMetadata(parent, {
+    path: `/player/${params.id}`,
     title: t('player.page.title', { nickname: player.nickname }),
     description: t('player.page.description', {
       nickname: player.nickname,
       rating: player.rating,
       club: club.name,
     }),
-    alternates: { canonical: url },
     // guest players are added by organizers without consent, often with real names
     robots: { index: false, follow: true },
-    openGraph: {
-      ...previous.openGraph,
-      title: t('player.page.title', { nickname: player.nickname }),
-      description: t('player.page.description', {
-        nickname: player.nickname,
-        rating: player.rating,
-        club: club.name,
-      }),
-      url,
-    },
-  };
+  });
 }
 
 export interface PlayerPageProps {

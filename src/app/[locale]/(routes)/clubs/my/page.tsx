@@ -2,9 +2,9 @@ import Dashboard from '@/app/[locale]/(routes)/clubs/my/dashboard';
 import { clubQueryPrefetch } from '@/app/[locale]/(routes)/clubs/my/prefetch';
 import { HydrateClient } from '@/components/trpc/server';
 import { publicCaller } from '@/server/api';
-import { getLocale, getTranslations } from 'next-intl/server';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { BASE_URL } from '@/lib/config/urls';
+import { getTranslations } from 'next-intl/server';
+import type { ResolvingMetadata } from 'next';
+import { getPageMetadata } from '@/lib/page-metadata';
 import { redirect } from 'next/navigation';
 
 export default async function ClubInfo() {
@@ -23,25 +23,11 @@ export default async function ClubInfo() {
   );
 }
 
-export async function generateMetadata(
-  _: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const baseUrl = BASE_URL || 'https://mktour.org';
-  const url = `${baseUrl}/clubs/my`;
-  const previous = await parent;
-
-  return {
+export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
+  const t = await getTranslations('Seo');
+  return getPageMetadata(parent, {
+    path: '/clubs/my',
     title: t('clubs.my.title'),
     description: t('clubs.my.description'),
-    alternates: { canonical: url },
-    openGraph: {
-      ...previous.openGraph,
-      title: t('clubs.my.title'),
-      description: t('clubs.my.description'),
-      url,
-    },
-  };
+  });
 }

@@ -4,16 +4,15 @@ import { getLocale, getTranslations } from 'next-intl/server';
 export async function getOrganizationSchema() {
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
-  const baseUrl = BASE_URL || 'https://mktour.org';
 
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'mktour',
-    url: baseUrl,
+    url: BASE_URL,
     logo: {
       '@type': 'ImageObject',
-      url: `${baseUrl}/app-icon.png`,
+      url: `${BASE_URL}/app-icon.png`,
       width: 512,
       height: 512,
     },
@@ -31,27 +30,24 @@ export async function getOrganizationSchema() {
 }
 
 export async function getWebsiteSchema() {
-  const baseUrl = BASE_URL || 'https://mktour.org';
-
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'mktour',
     alternateName: 'мктур',
-    url: baseUrl,
+    url: BASE_URL,
   };
 }
 
 export async function getSoftwareApplicationSchema() {
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
-  const baseUrl = BASE_URL || 'https://mktour.org';
 
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'mktour',
-    url: baseUrl,
+    url: BASE_URL,
     applicationCategory: 'SportsApplication',
     operatingSystem: 'Web',
     offers: {

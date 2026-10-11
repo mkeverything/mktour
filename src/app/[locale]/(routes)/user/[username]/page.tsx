@@ -1,12 +1,12 @@
 import Profile from '@/app/[locale]/(routes)/user/[username]/profile';
-import { getPageUrls } from '@/lib/page-urls';
 import { getAppErrorMessage } from '@/lib/errors';
+import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { UserPlayerClubModel } from '@/server/zod/players';
 import { TournamentModel } from '@/server/zod/tournaments';
 import { UserPublicModel } from '@/server/zod/users';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { getLocale, getTranslations } from 'next-intl/server';
+import type { ResolvingMetadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 export default async function UserPage(props: TournamentPageProps) {
@@ -43,12 +43,9 @@ export async function generateMetadata(
     params: Promise<{ username: string }>;
   },
   parent: ResolvingMetadata,
-): Promise<Metadata> {
+) {
   const params = await props.params;
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const { url, alternates } = await getPageUrls(`/user/${params.username}`);
-  const previous = await parent;
+  const t = await getTranslations('Seo');
 
   let data: UserPublicModel;
   try {
@@ -67,25 +64,15 @@ export async function generateMetadata(
     userId: data.id,
   });
 
-  return {
+  return getPageMetadata(parent, {
+    path: `/user/${params.username}`,
     title: t('user.profile.title', { username: data.username }),
     description: t('user.profile.description', {
       username: data.username,
       clubs: userPlayers.length,
       tournaments: lastTournaments.length,
     }),
-    alternates,
-    openGraph: {
-      ...previous.openGraph,
-      title: t('user.profile.title', { username: data.username }),
-      description: t('user.profile.description', {
-        username: data.username,
-        clubs: userPlayers.length,
-        tournaments: lastTournaments.length,
-      }),
-      url,
-    },
-  };
+  });
 }
 
 export type UserWithPlayers = UserPublicModel & {

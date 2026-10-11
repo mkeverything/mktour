@@ -2,10 +2,10 @@ import ClubPage from '@/app/[locale]/(routes)/clubs/[id]/club';
 import Loading from '@/app/[locale]/(routes)/loading';
 import { getQueryClient, trpc } from '@/components/trpc/server';
 import { validateRequest } from '@/lib/auth/lucia';
-import { getPageUrls } from '@/lib/page-urls';
+import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
@@ -62,12 +62,10 @@ export async function generateMetadata(
     params: Promise<{ id: string }>;
   },
   parent: ResolvingMetadata,
-): Promise<Metadata> {
+) {
   const params = await props.params;
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
-  const { url, alternates } = await getPageUrls(`/clubs/${params.id}`);
-  const previous = await parent;
 
   let club;
   try {
@@ -92,19 +90,13 @@ export async function generateMetadata(
       })
     : t('clubs.clubPage.descriptionEmpty', { name: club.name });
 
-  return {
+  return getPageMetadata(parent, {
+    path: `/clubs/${params.id}`,
     title: t('clubs.clubPage.title', { name: club.name }),
     description,
-    alternates,
     // clubs without tournaments are thin until they have content
     ...(latestTournament ? {} : { robots: { index: false, follow: true } }),
-    openGraph: {
-      ...previous.openGraph,
-      title: t('clubs.clubPage.title', { name: club.name }),
-      description,
-      url,
-    },
-  };
+  });
 }
 
 export interface ClubPageProps {

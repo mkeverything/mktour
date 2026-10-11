@@ -1,7 +1,7 @@
 import TournamentsAllList from '@/app/[locale]/(routes)/tournaments/all/tournaments-all-list';
-import { getPageUrls } from '@/lib/page-urls';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getPageMetadata } from '@/lib/page-metadata';
+import type { ResolvingMetadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 import { getQueryClient, trpc } from '@/components/trpc/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
@@ -29,24 +29,11 @@ export default async function Tournaments() {
   );
 }
 
-export async function generateMetadata(
-  _: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const { url, alternates } = await getPageUrls('/tournaments/all');
-  const previous = await parent;
-
-  return {
+export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
+  const t = await getTranslations('Seo');
+  return getPageMetadata(parent, {
+    path: '/tournaments/all',
     title: t('tournaments.all.title'),
     description: t('tournaments.all.description'),
-    alternates,
-    openGraph: {
-      ...previous.openGraph,
-      title: t('tournaments.all.title'),
-      description: t('tournaments.all.description'),
-      url,
-    },
-  };
+  });
 }

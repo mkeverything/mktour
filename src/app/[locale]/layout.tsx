@@ -23,13 +23,12 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const baseUrl = BASE_URL || 'https://mktour.org';
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
   const alternateLocales = LOCALES.filter((other) => other !== locale);
 
   return {
-    metadataBase: new URL(baseUrl),
+    metadataBase: new URL(BASE_URL),
     title: {
       default: t('homepage.title'),
       template: `%s | ${t('siteName')}`,
@@ -63,13 +62,13 @@ export async function generateMetadata(): Promise<Metadata> {
       alternateLocale: alternateLocales.map(
         (other) => OPEN_GRAPH_LOCALES[other],
       ),
-      url: baseUrl,
+      url: BASE_URL,
       siteName: t('siteName'),
       title: t('homepage.title'),
       description: t('homepage.description'),
       images: [
         {
-          url: `${baseUrl}/opengraph-image.png`,
+          url: `${BASE_URL}/opengraph-image.png`,
           width: 1200,
           height: 630,
           alt: 'mktour - chess tournament management',
@@ -78,7 +77,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      images: [`${baseUrl}/opengraph-image.png`],
+      images: [`${BASE_URL}/opengraph-image.png`],
     },
     formatDetection: { telephone: false },
   };

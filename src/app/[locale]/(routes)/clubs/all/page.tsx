@@ -1,7 +1,7 @@
 import ClubsAllList from '@/app/[locale]/(routes)/clubs/all/clubs-all-list';
-import { getPageUrls } from '@/lib/page-urls';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getPageMetadata } from '@/lib/page-metadata';
+import type { ResolvingMetadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 import Center from '@/components/center';
 import { getQueryClient, trpc } from '@/components/trpc/server';
@@ -30,24 +30,11 @@ export default async function ClubsAllPage() {
   );
 }
 
-export async function generateMetadata(
-  _: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const { url, alternates } = await getPageUrls('/clubs/all');
-  const previous = await parent;
-
-  return {
+export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
+  const t = await getTranslations('Seo');
+  return getPageMetadata(parent, {
+    path: '/clubs/all',
     title: t('clubs.all.title'),
     description: t('clubs.all.description'),
-    alternates,
-    openGraph: {
-      ...previous.openGraph,
-      title: t('clubs.all.title'),
-      description: t('clubs.all.description'),
-      url,
-    },
-  };
+  });
 }

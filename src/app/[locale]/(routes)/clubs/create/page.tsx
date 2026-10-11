@@ -2,9 +2,9 @@ import ForwardToEmptyClub from '@/app/[locale]/(routes)/clubs/create/forward-to-
 import NewClubForm from '@/app/[locale]/(routes)/clubs/create/new-club-form';
 import { getUserLichessTeams } from '@/lib/api/lichess';
 import { publicCaller } from '@/server/api';
-import { getLocale, getTranslations } from 'next-intl/server';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { BASE_URL } from '@/lib/config/urls';
+import { getTranslations } from 'next-intl/server';
+import type { ResolvingMetadata } from 'next';
+import { getPageMetadata } from '@/lib/page-metadata';
 import { redirect } from 'next/navigation';
 
 export default async function CreateClubPage() {
@@ -28,26 +28,12 @@ export default async function CreateClubPage() {
   );
 }
 
-export async function generateMetadata(
-  _: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const baseUrl = BASE_URL || 'https://mktour.org';
-  const url = `${baseUrl}/clubs/create`;
-  const previous = await parent;
-
-  return {
+export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
+  const t = await getTranslations('Seo');
+  return getPageMetadata(parent, {
+    path: '/clubs/create',
     title: t('clubs.create.title'),
     description: t('clubs.create.description'),
-    alternates: { canonical: url },
-    openGraph: {
-      ...previous.openGraph,
-      title: t('clubs.create.title'),
-      description: t('clubs.create.description'),
-      url,
-    },
     robots: { index: false, follow: true },
-  };
+  });
 }

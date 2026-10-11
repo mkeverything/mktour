@@ -3,11 +3,11 @@ import ApiTokens from '@/app/[locale]/(routes)/profile/settings/api-tokens';
 import DeleteUser from '@/app/[locale]/(routes)/profile/settings/delete-user';
 import EditProfileForm from '@/app/[locale]/(routes)/profile/settings/edit-profile-form';
 import { getQueryClient, trpc } from '@/components/trpc/server';
-import { BASE_URL } from '@/lib/config/urls';
+import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { getLocale, getTranslations } from 'next-intl/server';
+import type { ResolvingMetadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 
 export default async function EditUserPage() {
@@ -34,25 +34,11 @@ export default async function EditUserPage() {
   );
 }
 
-export async function generateMetadata(
-  _: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const baseUrl = BASE_URL || 'https://mktour.org';
-  const url = `${baseUrl}/profile/settings`;
-  const previous = await parent;
-
-  return {
+export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
+  const t = await getTranslations('Seo');
+  return getPageMetadata(parent, {
+    path: '/profile/settings',
     title: t('profile.settings.title'),
     description: t('profile.settings.description'),
-    alternates: { canonical: url },
-    openGraph: {
-      ...previous.openGraph,
-      title: t('profile.settings.title'),
-      description: t('profile.settings.description'),
-      url,
-    },
-  };
+  });
 }

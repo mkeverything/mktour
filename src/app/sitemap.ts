@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { BASE_URL } from '@/lib/config/urls';
 import { LOCALES, LOCALIZED_PATHS, localizePath } from '@/lib/locales';
-import { getLanguageAlternates, toAbsoluteUrl } from '@/lib/page-urls';
+import { getLanguageAlternates, toAbsoluteUrl } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 
 const PAGE_SIZE = 100;
@@ -20,8 +20,6 @@ async function collectPages<T>(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = BASE_URL || 'https://mktour.org';
-
   const staticPages: MetadataRoute.Sitemap = LOCALIZED_PATHS.flatMap((path) =>
     LOCALES.map((locale) => ({
       url: toAbsoluteUrl(localizePath(path, locale)),
@@ -56,18 +54,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         clubLastModified.set(tournament.clubId, lastModified);
       }
       return {
-        url: `${baseUrl}/tournaments/${tournament.id}`,
+        url: `${BASE_URL}/tournaments/${tournament.id}`,
         lastModified,
       };
     });
 
     const clubPages = clubs.map((club) => ({
-      url: `${baseUrl}/clubs/${club.id}`,
+      url: `${BASE_URL}/clubs/${club.id}`,
       lastModified: clubLastModified.get(club.id) ?? club.createdAt,
     }));
 
     const userPages = users.map((user) => ({
-      url: `${baseUrl}/user/${user.username}`,
+      url: `${BASE_URL}/user/${user.username}`,
     }));
 
     // guest player pages are noindex: organizer-entered people, thin and not opted in

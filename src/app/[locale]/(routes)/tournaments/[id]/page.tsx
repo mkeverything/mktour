@@ -3,12 +3,12 @@ import {
   tournamentQueryClient,
   tournamentQueryPrefetch,
 } from '@/app/[locale]/(routes)/tournaments/[id]/prefetch';
-import { getPageUrls } from '@/lib/page-urls';
 import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
+import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { TournamentInfoModel } from '@/server/zod/tournaments';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
@@ -51,7 +51,7 @@ export async function generateMetadata(
     params: Promise<{ id: string }>;
   },
   parent: ResolvingMetadata,
-): Promise<Metadata> {
+) {
   const params = await props.params;
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
@@ -59,8 +59,6 @@ export async function generateMetadata(
     locale,
     namespace: 'Seo.tournaments.format',
   });
-  const { url, alternates } = await getPageUrls(`/tournaments/${params.id}`);
-  const previous = await parent;
 
   let tournament: TournamentInfoModel;
   let units;
@@ -88,22 +86,11 @@ export async function generateMetadata(
     players: units.reduce((sum, unit) => sum + unit.players.length, 0),
   });
 
-  return {
+  return getPageMetadata(parent, {
+    path: `/tournaments/${params.id}`,
     title,
     description,
-    alternates,
-    openGraph: {
-      ...previous.openGraph,
-      title,
-      description,
-      url,
-    },
-    twitter: {
-      ...previous.twitter,
-      title,
-      description,
-    },
-  };
+  });
 }
 
 export interface TournamentPageProps {
