@@ -68,18 +68,12 @@ function parseLanguageRange(range: string) {
   };
 }
 
-export type Visitor = {
-  isCrawler: boolean;
-  isSignedIn: boolean;
-  savedLocale?: Locale;
-  // undefined when the browser states no preference at all
-  acceptedLocales?: Locale[];
-};
+export type Visitor = ReturnType<typeof readVisitor>;
 
 export function readVisitor(
   headers: Pick<Headers, 'get'>,
   cookies: Pick<NextRequest['cookies'], 'get'>,
-): Visitor {
+) {
   const savedLocale = cookies.get(LOCALE_COOKIE)?.value;
   const acceptLanguage = headers.get('accept-language')?.trim();
 
@@ -87,6 +81,7 @@ export function readVisitor(
     isCrawler: isbot(headers.get('user-agent')),
     isSignedIn: Boolean(cookies.get('auth_session')?.value),
     savedLocale: isLocale(savedLocale) ? savedLocale : undefined,
+    // undefined when the browser states no preference at all
     acceptedLocales: acceptLanguage
       ? getAcceptedLocales(acceptLanguage)
       : undefined,

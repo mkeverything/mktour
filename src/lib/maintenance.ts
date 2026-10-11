@@ -42,3 +42,13 @@ export async function getMaintenance() {
     clearTimeout(timeout);
   }
 }
+
+export async function getActiveMaintenance() {
+  const maintenance = await getMaintenance();
+  const now = Date.now();
+  const isActive =
+    maintenance !== undefined &&
+    (maintenance.startsAt ?? -Infinity) <= now &&
+    now < (maintenance.endsAt ?? Infinity);
+  return isActive ? maintenance : undefined;
+}

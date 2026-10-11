@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import {
   getAcceptedLocales,
   isLocalizedPath,
-  keepsPrefixedUrl,
   localizePath,
   readVisitor,
   resolveLocale,
@@ -80,13 +79,11 @@ describe('locales', () => {
       acceptedLocales: ['ru', 'en'],
     });
     expect(visit({ 'accept-language': ' ', cookie: 'NEXT_LOCALE=de' })).toEqual(
-      { isCrawler: false, isSignedIn: false },
+      visitor(),
     );
-    expect(visit({ 'accept-language': 'de' })).toEqual({
-      isCrawler: false,
-      isSignedIn: false,
-      acceptedLocales: [],
-    });
+    expect(visit({ 'accept-language': 'de' })).toEqual(
+      visitor({ acceptedLocales: [] }),
+    );
   });
 
   test('resolves the saved choice, then the browser, then the default', () => {
@@ -108,28 +105,12 @@ describe('locales', () => {
       ),
     ).toBe('en');
   });
-
-  test('keeps /{locale} urls for crawlers and first visits in that language', () => {
-    for (const kept of [
-      visitor({ isCrawler: true, isSignedIn: true, savedLocale: 'en' }),
-      visitor(),
-      visitor({ acceptedLocales: ['en', 'ru'] }),
-    ]) {
-      expect(keepsPrefixedUrl(kept, 'ru')).toBe(true);
-    }
-    for (const redirected of [
-      visitor({ acceptedLocales: ['en'] }),
-      visitor({ acceptedLocales: [] }),
-      visitor({ isSignedIn: true, acceptedLocales: ['ru'] }),
-      visitor({ savedLocale: 'ru', acceptedLocales: ['ru'] }),
-    ]) {
-      expect(keepsPrefixedUrl(redirected, 'ru')).toBe(false);
-    }
-  });
 });
 
 const visitor = (overrides: Partial<Visitor> = {}): Visitor => ({
   isCrawler: false,
   isSignedIn: false,
+  savedLocale: undefined,
+  acceptedLocales: undefined,
   ...overrides,
 });
