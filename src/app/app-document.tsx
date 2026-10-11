@@ -5,12 +5,12 @@ import ThemeProvider from '@/components/providers/theme-provider';
 import SpeedInsights from '@/components/speed-insights';
 import { TRPCReactProvider } from '@/components/trpc/client';
 import { Toaster } from '@/components/ui/sonner';
+
 import type { Locale } from '@/lib/locales';
 import { appleSplashStartupImages } from '@/lib/splash-screens';
 import '@/styles/globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import { AbstractIntlMessages } from 'next-intl';
-import Script from 'next/script';
 import { PropsWithChildren } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -37,12 +37,6 @@ export default function AppDocument({
         ))}
       </head>
       <body className="small-scrollbar">
-        {process.env.NODE_ENV === 'development' && (
-          <Script
-            src="https://unpkg.com/react-scan/dist/install-hook.global.js"
-            strategy="beforeInteractive"
-          />
-        )}
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <ThemeProvider
             attribute="class"
