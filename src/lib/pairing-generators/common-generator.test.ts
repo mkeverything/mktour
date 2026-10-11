@@ -1,6 +1,6 @@
 import { mock } from 'bun:test';
 
-import { countPlayerResults } from '@/lib/pairing-generators/common-generator';
+import { getUnitResultDeltas } from '@/lib/game-result-deltas';
 import { newid } from '@/lib/utils';
 import { ClubModel } from '@/server/zod/clubs';
 import { GameResult } from '@/server/zod/enums';
@@ -15,6 +15,9 @@ const INITIAL_LOSSES = 0;
 const INITIAL_DRAWS = 0;
 export const INITIAL_ONGOING_ROUND = 1;
 const INITIAL_COLOUR_INDEX = 0;
+
+/** a seeded game has no earlier result for the deltas to replace. */
+const NO_PREVIOUS_RESULT = null;
 
 const DEFAULT_PLACE = null;
 const DEFAULT_IS_EXITED = false;
@@ -194,71 +197,74 @@ export function getGamesBetweenPlayers(
   );
 }
 
+/** a unit's wins, draws, losses and colour index — production's ResultStats shape. */
+type ResultStats = ReturnType<typeof getUnitResultDeltas>['white'];
+
+const INITIAL_RESULT_STATS: ResultStats = {
+  wins: INITIAL_WINS,
+  draws: INITIAL_DRAWS,
+  losses: INITIAL_LOSSES,
+  colorIndex: INITIAL_COLOUR_INDEX,
+};
+
 /**
- * Calculates the number of byes (PAB) a player has received
+ * adds one game to a unit's stats, with the same deltas production applies.
  *
- * A player receives a bye when they don't play in a round that others did.
- * Per FIDE rules, bye recipients receive 1 full point (counted as a win).
- *
- * @param playerGamesCount - Number of games this player participated in
- * @param allGames - All games played so far in the tournament
- * @returns Number of byes the player received
+ * @param stats - the unit's stats before this game
+ * @param game - a game the unit played
+ * @param unitId - the unit whose side of the game to take
+ * @returns the stats after this game
  */
-function calculateByeCount(
-  playerGamesCount: number,
-  allGames: GameModel[],
-): number {
-  // If no games exist yet, no byes possible
-  if (allGames.length === 0) {
-    return 0;
-  }
+function addGameToStats(
+  stats: ResultStats,
+  game: GameModel,
+  unitId: UnitModel['id'],
+): ResultStats {
+  const deltas = getUnitResultDeltas(NO_PREVIOUS_RESULT, game.result);
+  const isWhite = game.whiteUnitId === unitId;
+  const unitDeltas = isWhite ? deltas.white : deltas.black;
 
-  // Find the maximum round number to determine how many rounds have been played
-  const maxRoundNumber = Math.max(...allGames.map((game) => game.roundNumber));
-
-  // Byes = rounds played by others minus games this player participated in
-  const byeCount = maxRoundNumber - playerGamesCount;
-
-  return byeCount;
+  return {
+    wins: stats.wins + unitDeltas.wins,
+    draws: stats.draws + unitDeltas.draws,
+    losses: stats.losses + unitDeltas.losses,
+    colorIndex: stats.colorIndex + unitDeltas.colorIndex,
+  };
 }
 
 /**
- * Updates a single player's score based on game history
+ * rebuilds a unit's results and colour index from its games.
  *
- * Includes PAB (bye) points: per FIDE rules, bye recipients receive 1 full point.
+ * uses the same per-game deltas the server and the client apply, so seeded
+ * units match production. a bye adds nothing here: the engine infers byes
+ * from the game history itself, and adding one here counted it twice.
  *
- * @param player - Player to update
- * @param games - All games played so far
- * @returns Updated player with recalculated wins/draws/losses
+ * @param player - unit to update
+ * @param games - all games played so far
+ * @returns the unit with wins, draws, losses and colour index rebuilt
  */
 function updateSinglePlayerScore(
   player: UnitModel,
   games: GameModel[],
 ): UnitModel {
-  // Filter games involving this player
   const playerGames = getPlayerGames(games, player.id);
 
-  // Count results from player's games
-  const results = countPlayerResults(player.id, playerGames);
+  let stats = INITIAL_RESULT_STATS;
+  for (const game of playerGames) {
+    stats = addGameToStats(stats, game, player.id);
+  }
 
-  // Calculate byes: per FIDE rules, each bye counts as 1 full point (win)
-  const byeCount = calculateByeCount(playerGames.length, games);
-
-  // Return updated player with new scores (including bye points)
-  return {
-    ...player,
-    wins: results.wins + byeCount,
-    draws: results.draws,
-    losses: results.losses,
-  };
+  return { ...player, ...stats };
 }
 
 /**
- * Updates all players' win/draw/loss counts based on game results
- * Essential for Swiss testing where scores must be updated between rounds
- * @param players - Array of players to update
- * @param games - All games played so far
- * @returns Updated players with recalculated wins/draws/losses
+ * rebuilds every unit's wins, draws, losses and colour index from the games so far.
+ *
+ * swiss tests call this between rounds so the engine sees the state production would.
+ *
+ * @param units - units to update
+ * @param games - all games played so far
+ * @returns the units with results and colour index rebuilt
  */
 export const updatePlayerScores = mock(
   (units: UnitModel[], games: GameModel[]): UnitModel[] => {
