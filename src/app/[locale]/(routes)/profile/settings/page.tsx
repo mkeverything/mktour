@@ -36,9 +36,11 @@ export default async function EditUserPage() {
 
 export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
   const t = await getTranslations('Seo');
+  // signed-out visitors are redirected by the page, so the empty name never shows
+  const user = await publicCaller.auth.info();
   return getPageMetadata(parent, {
     path: '/profile/settings',
-    title: t('profile.settings.title'),
+    title: t('profile.settings.title', { username: user?.username ?? '' }),
     description: t('profile.settings.description'),
   });
 }
