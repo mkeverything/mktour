@@ -70,20 +70,21 @@ describe('locales', () => {
       visit({
         'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
         'accept-language': 'en-US;q=0.5,ru-RU',
-        cookie: 'NEXT_LOCALE=ru; auth_session=abc',
+        cookie: 'NEXT_LOCALE=ru',
       }),
     ).toEqual({
       isCrawler: true,
-      isSignedIn: true,
       savedLocale: 'ru',
       acceptedLocales: ['ru', 'en'],
     });
-    expect(visit({ 'accept-language': ' ', cookie: 'NEXT_LOCALE=de' })).toEqual(
-      visitor(),
-    );
-    expect(visit({ 'accept-language': 'de' })).toEqual(
-      visitor({ acceptedLocales: [] }),
-    );
+    const withoutPreference: Record<string, string>[] = [
+      {},
+      { 'accept-language': ' ', cookie: 'NEXT_LOCALE=de' },
+      { 'accept-language': 'de' },
+    ];
+    for (const headers of withoutPreference) {
+      expect(visit(headers)).toEqual(visitor());
+    }
   });
 
   test('resolves the saved choice, then the browser, then the default', () => {
@@ -93,7 +94,6 @@ describe('locales', () => {
     expect(
       resolveLocale(visitor({ savedLocale: 'en', acceptedLocales: ['ru'] })),
     ).toBe('en');
-    expect(resolveLocale(visitor({ acceptedLocales: [] }))).toBe('en');
     expect(resolveLocale(visitor())).toBe('en');
     expect(
       resolveLocale(
@@ -109,8 +109,7 @@ describe('locales', () => {
 
 const visitor = (overrides: Partial<Visitor> = {}): Visitor => ({
   isCrawler: false,
-  isSignedIn: false,
   savedLocale: undefined,
-  acceptedLocales: undefined,
+  acceptedLocales: [],
   ...overrides,
 });

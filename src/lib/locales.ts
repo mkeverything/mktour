@@ -81,16 +81,11 @@ export function readVisitor(
   cookies: Pick<NextRequest['cookies'], 'get'>,
 ) {
   const savedLocale = cookies.get(COOKIES.LOCALE)?.value;
-  const acceptLanguage = headers.get('accept-language')?.trim();
 
   return {
     isCrawler: isbot(headers.get('user-agent')),
-    isSignedIn: Boolean(cookies.get(COOKIES.SESSION)?.value),
     savedLocale: isLocale(savedLocale) ? savedLocale : undefined,
-    // undefined when the browser states no preference at all
-    acceptedLocales: acceptLanguage
-      ? getAcceptedLocales(acceptLanguage)
-      : undefined,
+    acceptedLocales: getAcceptedLocales(headers.get('accept-language') ?? ''),
   };
 }
 
@@ -98,13 +93,5 @@ export function readVisitor(
 // they index has exactly one language
 export function resolveLocale(visitor: Visitor): Locale {
   if (visitor.isCrawler) return DEFAULT_LOCALE;
-  return visitor.savedLocale ?? visitor.acceptedLocales?.[0] ?? DEFAULT_LOCALE;
-}
-
-// the unprefixed url shows the saved choice, so only crawlers and visitors
-// without one whose browser accepts the language stay on /{locale}/...
-export function keepsPrefixedUrl(visitor: Visitor, locale: Locale) {
-  if (visitor.isCrawler) return true;
-  if (visitor.isSignedIn || visitor.savedLocale) return false;
-  return visitor.acceptedLocales?.includes(locale) ?? true;
+  return visitor.savedLocale ?? visitor.acceptedLocales[0] ?? DEFAULT_LOCALE;
 }

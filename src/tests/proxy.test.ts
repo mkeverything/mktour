@@ -319,12 +319,12 @@ describe('locale proxy', () => {
     }
   });
 
-  test('serves prefixed public pages to crawlers and matching visitors', async () => {
+  test('serves prefixed public pages to anyone without a saved language', async () => {
     const visitors: (Record<string, string> | undefined)[] = [
       undefined,
-      { 'accept-language': 'en-US,en;q=0.9,ru;q=0.8' },
-      { 'user-agent': GOOGLEBOT, 'accept-language': 'en-US' },
-      { 'user-agent': GOOGLEBOT, cookie: 'auth_session=abc' },
+      { 'accept-language': 'en-US,en' },
+      { cookie: 'auth_session=abc' },
+      { 'user-agent': GOOGLEBOT },
     ];
     for (const headers of visitors) {
       for (const path of ['/ru', '/ru/info/about', '/ru/tournaments/all']) {
@@ -335,7 +335,7 @@ describe('locale proxy', () => {
 
   test('keeps the prefixed language for the visit without saving it', async () => {
     const visitors: Record<string, string>[] = [
-      { 'accept-language': 'en-US,en;q=0.9,ru;q=0.8' },
+      { 'accept-language': 'en-US,en' },
       { 'accept-language': 'ru', cookie: 'NEXT_LOCALE=de' },
     ];
     for (const headers of visitors) {
@@ -362,10 +362,8 @@ describe('locale proxy', () => {
     expect(saved.headers.get('set-cookie')).toBeNull();
   });
 
-  test('sends everyone else to the unprefixed url', async () => {
+  test('sends saved languages and other pages to the unprefixed url', async () => {
     for (const [path, headers] of [
-      ['/ru/clubs/all', { 'accept-language': 'en-US,en' }],
-      ['/ru/clubs/all', { cookie: 'auth_session=abc' }],
       ['/ru/clubs/all', { cookie: 'NEXT_LOCALE=en', 'accept-language': 'ru' }],
       ['/ru', { cookie: 'NEXT_LOCALE=ru' }],
       ['/ru/clubs/my', { 'user-agent': GOOGLEBOT }],

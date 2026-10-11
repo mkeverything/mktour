@@ -3,7 +3,6 @@ import {
   DEFAULT_LOCALE,
   isLocalizedPath,
   isUnder,
-  keepsPrefixedUrl,
   readVisitor,
   resolveLocale,
   splitLocalePrefix,
@@ -79,15 +78,13 @@ function routeLocale(request: NextRequest) {
   if (prefixed.locale === DEFAULT_LOCALE) {
     return NextResponse.redirect(unprefixed, 308);
   }
-  if (
-    !isLocalizedPath(prefixed.pathname) ||
-    !keepsPrefixedUrl(visitor, prefixed.locale)
-  ) {
+  // a saved language wins over the url, and the unprefixed url renders it
+  if (!isLocalizedPath(prefixed.pathname) || visitor.savedLocale) {
     return NextResponse.redirect(unprefixed);
   }
 
   const response = NextResponse.next();
-  if (!visitor.isCrawler && !visitor.savedLocale) {
+  if (!visitor.isCrawler) {
     // keeps the language on unprefixed links for the rest of the visit. no
     // max-age, unlike the switcher's one-year cookie: one search result
     // shouldn't become a lasting choice
