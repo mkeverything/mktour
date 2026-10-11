@@ -1,5 +1,8 @@
 import { MetadataRoute } from 'next';
+import { connection } from 'next/server';
 import { BASE_URL } from '@/lib/config/urls';
+import { LOCALES, LOCALIZED_PATHS } from '@/lib/locales';
+import { getLanguageAlternates } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 
 const PAGE_SIZE = 100;
@@ -18,19 +21,18 @@ async function collectPages<T>(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = BASE_URL || 'https://mktour.org';
-
-  const staticPages: MetadataRoute.Sitemap = [
-    baseUrl,
-    `${baseUrl}/info/about`,
-    `${baseUrl}/info/faq`,
-    `${baseUrl}/info/contact`,
-    `${baseUrl}/clubs/all`,
-    `${baseUrl}/tournaments/all`,
-  ].map((url) => ({ url }));
+  const staticPages: MetadataRoute.Sitemap = LOCALIZED_PATHS.flatMap((path) => {
+    const languages = getLanguageAlternates(path);
+    return LOCALES.map((locale) => ({
+      url: languages[locale],
+      alternates: { languages },
+    }));
+  });
 
   let dynamicPages: MetadataRoute.Sitemap = [];
 
+  // the db is read per request, so the build doesn't start queries it then cancels
+  await connection();
   try {
     const [clubs, tournaments, users] = await Promise.all([
       collectPages(async (cursor) => {
@@ -56,18 +58,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         clubLastModified.set(tournament.clubId, lastModified);
       }
       return {
-        url: `${baseUrl}/tournaments/${tournament.id}`,
+        url: `${BASE_URL}/tournaments/${tournament.id}`,
         lastModified,
       };
     });
 
     const clubPages = clubs.map((club) => ({
-      url: `${baseUrl}/clubs/${club.id}`,
+      url: `${BASE_URL}/clubs/${club.id}`,
       lastModified: clubLastModified.get(club.id) ?? club.createdAt,
     }));
 
     const userPages = users.map((user) => ({
-      url: `${baseUrl}/user/${user.username}`,
+      url: `${BASE_URL}/user/${user.username}`,
     }));
 
     // guest player pages are noindex: organizer-entered people, thin and not opted in

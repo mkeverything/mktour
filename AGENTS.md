@@ -45,6 +45,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - no unnecessary comments in code
 - preserve `/** @deprecated ... */` / `/** deprecated */` markers on exports unless asked to remove them
 - files: kebab-case; components/types: PascalCase; variables: camelCase; constants: UPPER_SNAKE_CASE
+- where constants live: used by one module → unexported at the top of that module; owned by a domain → that domain's module (`LOCALES` in `src/lib/locales.ts`, `CACHE_TAGS` in `src/lib/cache-tags.ts`); app-wide identifiers no single module owns, like cookie names → `src/lib/config/constants.ts`, which stays import-free so the proxy and client can use it
 - absolute imports use `@/`
 - `src/components/ui/` is shadcn code; never edit it
 - extend/customize ui in `src/components/ui-custom/`
@@ -62,6 +63,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 
 - feature/project prs target `beta`; only `beta` prs into `main`
 - if asked to open a feature pr against `main`, confirm first
+- if a request can be read more than one way, ask before acting
 - do not push to remote without user approval
 - do not amend commits unless explicitly requested
 - syncing beta to main: `git checkout beta && git reset --hard origin/main && git push --force origin beta`

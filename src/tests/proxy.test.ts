@@ -9,7 +9,7 @@ import {
 } from 'bun:test';
 import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server';
 import { NextRequest } from 'next/server';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -30,6 +30,9 @@ const request = (
 const isPassedThrough = (response: Response) =>
   response.headers.get('x-middleware-next') === '1';
 
+const rewriteOf = (response: Response) =>
+  response.headers.get('x-middleware-rewrite');
+
 describe('maintenance proxy', () => {
   const originalGlobalConfig = process.env.GLOBAL_CONFIG;
 
@@ -47,7 +50,7 @@ describe('maintenance proxy', () => {
 
   test('passes through when maintenance is disabled', async () => {
     getMock.mockResolvedValue({ enabled: false });
-    expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
     expect(await publicCaller.maintenanceStartsAt()).toBeNull();
   });
 
@@ -57,7 +60,7 @@ describe('maintenance proxy', () => {
 
     expect(response.status).toBe(503);
     expect(response.headers.get('x-middleware-rewrite')).toBe(
-      'https://mktour.org/maintenance',
+      'https://mktour.org/en/maintenance',
     );
     expect(response.headers.get('Retry-After')).toBeNull();
     expect(await publicCaller.maintenanceStartsAt()).toBeNull();
@@ -97,11 +100,11 @@ describe('maintenance proxy', () => {
     expect(response.status).toBe(503);
     expect(response.headers.get('Retry-After')).toBe('1200');
     expect(response.headers.get('x-middleware-rewrite')).toBe(
-      `https://mktour.org/maintenance?endsAt=${encodeURIComponent('2026-08-10T21:30:00.000Z')}`,
+      `https://mktour.org/en/maintenance?endsAt=${encodeURIComponent('2026-08-10T21:30:00.000Z')}`,
     );
 
     setSystemTime(new Date('2026-08-10T20:59:59Z'));
-    expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
     expect(await publicCaller.maintenanceStartsAt()).toEqual(
       new Date('2026-08-10T21:00:00Z'),
     );
@@ -110,7 +113,7 @@ describe('maintenance proxy', () => {
     expect(await publicCaller.maintenanceStartsAt()).toBeNull();
 
     setSystemTime(new Date(endsAt));
-    expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
     expect(await publicCaller.maintenanceStartsAt()).toBeNull();
   });
 
@@ -152,7 +155,7 @@ describe('maintenance proxy', () => {
       const response = await request('/maintenance?endsAt=stale', { method });
       expect(response.status).toBe(503);
       expect(response.headers.get('x-middleware-rewrite')).toBe(
-        `https://mktour.org/maintenance?endsAt=${encodeURIComponent('2026-08-10T21:30:00.000Z')}`,
+        `https://mktour.org/en/maintenance?endsAt=${encodeURIComponent('2026-08-10T21:30:00.000Z')}`,
       );
       expect(response.headers.get('Cache-Control')).toBe('no-store');
       expect(response.headers.get('Retry-After')).toBe('1200');
@@ -161,7 +164,7 @@ describe('maintenance proxy', () => {
 
   test('fails open when global config is unavailable or invalid', async () => {
     getMock.mockRejectedValue(new Error('unavailable'));
-    expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
 
     for (const value of [
       { enabled: 'false' },
@@ -174,18 +177,30 @@ describe('maintenance proxy', () => {
       },
     ]) {
       getMock.mockResolvedValue(value);
-      expect(isPassedThrough(await request('/'))).toBe(true);
+      expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
       expect(await publicCaller.maintenanceStartsAt()).toBeNull();
     }
 
     delete process.env.GLOBAL_CONFIG;
     getMock.mockResolvedValue({ enabled: true });
-    expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
+  });
+
+  test('keeps the url locale on the maintenance page', async () => {
+    getMock.mockResolvedValue({ enabled: true });
+    expect(rewriteOf(await request('/ru/info/about'))).toBe(
+      'https://mktour.org/ru/maintenance',
+    );
+    expect(
+      rewriteOf(
+        await request('/clubs/all', { headers: { cookie: 'NEXT_LOCALE=ru' } }),
+      ),
+    ).toBe('https://mktour.org/ru/maintenance');
   });
 
   test('fails open when global config read stalls', async () => {
     getMock.mockReturnValue(new Promise(() => {}));
-    expect(isPassedThrough(await request('/'))).toBe(true);
+    expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
   });
 
   test('uses fresh local config only in development, with remote fallback', async () => {
@@ -210,7 +225,7 @@ describe('maintenance proxy', () => {
       expect(await publicCaller.maintenanceStartsAt()).toEqual(
         new Date(startsAt),
       );
-      expect(isPassedThrough(await request('/'))).toBe(true);
+      expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
 
       for (const value of ['{"enabled":false}', '{']) {
         await writeFile('maintenance.local.json', value);
@@ -228,6 +243,149 @@ describe('maintenance proxy', () => {
       process.env.GLOBAL_CONFIG = connection;
       await rm(directory, { recursive: true });
     }
+  });
+});
+
+describe('locale proxy', () => {
+  const GOOGLEBOT =
+    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+  const read = (path: string, headers?: Record<string, string>) =>
+    request(path, { headers });
+
+  beforeEach(() => {
+    getMock.mockReset();
+    getMock.mockResolvedValue({ enabled: false });
+  });
+
+  test('rewrites unprefixed pages to the saved or accepted locale', async () => {
+    expect(rewriteOf(await read('/clubs/all?page=2'))).toBe(
+      'https://mktour.org/en/clubs/all?page=2',
+    );
+    expect(
+      rewriteOf(await read('/clubs/all', { cookie: 'NEXT_LOCALE=ru' })),
+    ).toBe('https://mktour.org/ru/clubs/all');
+    expect(
+      rewriteOf(await read('/', { 'accept-language': 'de-DE,ru;q=0.8' })),
+    ).toBe('https://mktour.org/ru');
+    expect(
+      rewriteOf(
+        await read('/', {
+          cookie: 'NEXT_LOCALE=en',
+          'accept-language': 'ru-RU,ru',
+        }),
+      ),
+    ).toBe('https://mktour.org/en');
+    expect(
+      rewriteOf(
+        await read('/', { cookie: 'NEXT_LOCALE=de', 'accept-language': 'ru' }),
+      ),
+    ).toBe('https://mktour.org/ru');
+  });
+
+  test('gives crawlers the default locale on unprefixed urls', async () => {
+    expect(
+      rewriteOf(
+        await read('/info/about', {
+          'user-agent': GOOGLEBOT,
+          'accept-language': 'ru',
+          cookie: 'NEXT_LOCALE=ru',
+        }),
+      ),
+    ).toBe('https://mktour.org/en/info/about');
+  });
+
+  test('passes route handlers outside the locale segment through', async () => {
+    const entries = await readdir(join(process.cwd(), 'src/app'), {
+      withFileTypes: true,
+    });
+    const handlers = entries
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith('['))
+      .map((entry) => `/${entry.name}`);
+
+    expect(handlers.length).toBeGreaterThan(0);
+    for (const path of [...handlers, '/login/lichess/callback', '/_vercel/x']) {
+      expect(isPassedThrough(await read(path))).toBe(true);
+    }
+  });
+
+  test('redirects default locale prefixes permanently', async () => {
+    for (const [path, location] of [
+      ['/en', 'https://mktour.org/'],
+      ['/en/info/faq?x=1', 'https://mktour.org/info/faq?x=1'],
+    ]) {
+      const response = await read(path);
+      expect(response.status).toBe(308);
+      expect(response.headers.get('Location')).toBe(location);
+    }
+  });
+
+  test('serves prefixed public pages to anyone without a saved language', async () => {
+    const visitors: (Record<string, string> | undefined)[] = [
+      undefined,
+      { 'accept-language': 'en-US,en' },
+      { cookie: 'auth_session=abc' },
+      { 'user-agent': GOOGLEBOT },
+    ];
+    for (const headers of visitors) {
+      for (const path of ['/ru', '/ru/info/about', '/ru/tournaments/all']) {
+        expect(isPassedThrough(await read(path, headers))).toBe(true);
+      }
+    }
+  });
+
+  test('keeps the prefixed language for the visit without saving it', async () => {
+    const visitors: Record<string, string>[] = [
+      { 'accept-language': 'en-US,en' },
+      { 'accept-language': 'ru', cookie: 'NEXT_LOCALE=de' },
+    ];
+    for (const headers of visitors) {
+      const response = await read('/ru/clubs/all', headers);
+      const cookie = response.headers.get('set-cookie') ?? '';
+
+      expect(isPassedThrough(response)).toBe(true);
+      expect(cookie).toContain('NEXT_LOCALE=ru');
+      expect(cookie).toContain('Path=/');
+      expect(cookie).not.toMatch(/max-age|expires/i);
+    }
+  });
+
+  test('never sets the language cookie for crawlers or over a valid one', async () => {
+    const crawler = await read('/ru/clubs/all', { 'user-agent': GOOGLEBOT });
+    expect(isPassedThrough(crawler)).toBe(true);
+    expect(crawler.headers.get('set-cookie')).toBeNull();
+
+    const saved = await read('/ru/clubs/all', {
+      'accept-language': 'ru',
+      cookie: 'NEXT_LOCALE=en',
+    });
+    expect(saved.status).toBe(307);
+    expect(saved.headers.get('set-cookie')).toBeNull();
+  });
+
+  test('sends saved languages and other pages to the unprefixed url', async () => {
+    for (const [path, headers] of [
+      ['/ru/clubs/all', { cookie: 'NEXT_LOCALE=en', 'accept-language': 'ru' }],
+      ['/ru', { cookie: 'NEXT_LOCALE=ru' }],
+      ['/ru/clubs/my', { 'user-agent': GOOGLEBOT }],
+      ['/ru/tournaments/abc', { 'user-agent': GOOGLEBOT }],
+      ['/ru/user/magnus', undefined],
+      ['/ru/profile', undefined],
+    ] as const) {
+      const response = await read(path, headers);
+      const unprefixed = path.replace('/ru', '') || '/';
+      expect(response.status).toBe(307);
+      expect(response.headers.get('Location')).toBe(
+        `https://mktour.org${unprefixed}`,
+      );
+    }
+  });
+
+  test('passes prefixed non-read requests through', async () => {
+    const response = await request('/ru/clubs/my', {
+      method: 'POST',
+      headers: { 'next-action': 'abc', 'accept-language': 'en' },
+    });
+    expect(isPassedThrough(response)).toBe(true);
   });
 });
 

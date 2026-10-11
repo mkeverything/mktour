@@ -1,4 +1,5 @@
 import { promises as fs } from 'fs';
+import { cacheLife } from 'next/cache';
 import path from 'path';
 
 export interface ChangeItem {
@@ -18,6 +19,9 @@ export interface ChangelogVersion {
 }
 
 export async function getChangelog(limit = 3): Promise<ChangelogVersion[]> {
+  'use cache';
+  cacheLife('max');
+
   const filePath = path.join(process.cwd(), 'CHANGELOG.md');
 
   try {

@@ -35,6 +35,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
           DATABASE_AUTH_TOKEN: ${{ secrets.TEST_DATABASE_AUTH_TOKEN }}
+          NEXT_PUBLIC_BASE_URL: https://mktour.org
 
   release:
     name: Release

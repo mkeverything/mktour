@@ -3,7 +3,7 @@
   "Seo": {
     "siteName": "mktour",
     "homepage": {
-      "title": "free chess tournament manager: swiss & round robin | mktour",
+      "title": "mktour | chess tournaments",
       "description": "run chess tournaments for free: swiss and round robin pairings, live standings, club ratings and lichess sign-in. open-source and works on any device."
     },
     "signIn": {
@@ -24,7 +24,7 @@
     },
     "clubs": {
       "all": {
-        "title": "chess clubs",
+        "title": "all chess clubs",
         "description": "chess clubs that run their tournaments on mktour: players, club ratings and past events. join a club or start your own for free."
       },
       "my": {
@@ -43,7 +43,7 @@
     },
     "tournaments": {
       "all": {
-        "title": "chess tournaments: live standings and results",
+        "title": "all chess tournaments",
         "description": "follow chess tournaments run on mktour: live pairings, standings and results of swiss and round robin events from chess clubs."
       },
       "my": {
@@ -73,8 +73,8 @@
     },
     "user": {
       "profile": {
-        "title": "{username}'s profile",
-        "description": "{username} on mktour - {clubs} clubs, {tournaments} tournaments"
+        "title": "{username}",
+        "description": "{username} on mktour - {clubs, plural, one {# club} other {# clubs}}, {tournaments, plural, one {# tournament} other {# tournaments}}"
       }
     },
     "notifications": {
@@ -87,7 +87,7 @@
         "description": "your mktour profile and stats"
       },
       "settings": {
-        "title": "settings",
+        "title": "{username} | settings",
         "description": "account and notification settings"
       }
     }
