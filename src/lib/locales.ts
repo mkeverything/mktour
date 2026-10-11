@@ -7,19 +7,22 @@ export const DEFAULT_LOCALE: Locale = 'en';
 export const LOCALE_COOKIE = 'NEXT_LOCALE';
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-// our own public pages that also exist at /{locale}/... for search engines.
-// user-created pages keep one url, so their count doesn't multiply by languages
-const LOCALIZED_PATHS = [
-  /^\/$/,
-  /^\/info\/(about|faq|contact)$/,
-  /^\/(clubs|tournaments)\/all$/,
+// our own public pages, also served at /{locale}/... for search engines.
+// user-created pages keep a single url, however many languages are added
+export const LOCALIZED_PATHS = [
+  '/',
+  '/info/about',
+  '/info/faq',
+  '/info/contact',
+  '/clubs/all',
+  '/tournaments/all',
 ];
 
 export const isLocale = (value: unknown): value is Locale =>
   LOCALES.includes(value as Locale);
 
 export const isLocalizedPath = (pathname: string) =>
-  LOCALIZED_PATHS.some((pattern) => pattern.test(pathname));
+  LOCALIZED_PATHS.includes(pathname);
 
 export const localizePath = (pathname: string, locale: Locale) =>
   locale === DEFAULT_LOCALE
