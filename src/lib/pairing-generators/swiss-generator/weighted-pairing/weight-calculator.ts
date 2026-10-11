@@ -279,8 +279,8 @@ export const C5: CriterionDefinition = {
  * SCORE_TIER's |Δscore| weighs that exit by the score gap instead, so on its
  * own it could pick more downfloaters to avoid one float across a wide gap.
  *
- * Applies to: Regular edges only.
- * Priority: 1 - Highest priority for regular edges.
+ * applies to: regular edges only.
+ * priority: 1 - highest priority for regular edges.
  */
 export const C6: CriterionDefinition = {
   name: 'C6',
