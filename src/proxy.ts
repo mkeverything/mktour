@@ -1,15 +1,13 @@
 import {
   DEFAULT_LOCALE,
-  getAcceptedLocales,
-  isLocale,
   isLocalizedPath,
-  type Locale,
+  keepsPrefixedUrl,
   LOCALE_COOKIE,
+  readVisitor,
   resolveLocale,
   splitLocalePrefix,
 } from '@/lib/locales';
 import { getMaintenance } from '@/lib/maintenance';
-import { isbot } from 'isbot';
 import { NextRequest, NextResponse, type ProxyConfig } from 'next/server';
 
 const OPERATIONAL_PATHS = new Set([
@@ -51,7 +49,8 @@ export async function proxy(request: NextRequest) {
   }
 
   const locale =
-    splitLocalePrefix(pathname).locale ?? resolveRequestLocale(request);
+    splitLocalePrefix(pathname).locale ??
+    resolveLocale(readVisitor(request.headers, request.cookies));
   const url = new URL(`/${locale}/maintenance`, request.url);
   if (active.endsAt !== null) {
     url.searchParams.set('endsAt', new Date(active.endsAt).toISOString());
@@ -63,9 +62,10 @@ function routeLocale(request: NextRequest, isRead: boolean) {
   const { pathname, search } = request.nextUrl;
   if (isUnlocalized(pathname)) return NextResponse.next();
 
+  const visitor = readVisitor(request.headers, request.cookies);
   const prefixed = splitLocalePrefix(pathname);
   if (!prefixed.locale) {
-    const locale = resolveRequestLocale(request);
+    const locale = resolveLocale(visitor);
     const internal = `/${locale}${pathname === '/' ? '' : pathname}`;
     return NextResponse.rewrite(new URL(`${internal}${search}`, request.url));
   }
@@ -76,17 +76,18 @@ function routeLocale(request: NextRequest, isRead: boolean) {
   if (prefixed.locale === DEFAULT_LOCALE) {
     return NextResponse.redirect(unprefixed, 308);
   }
-  if (!servesPrefixed(request, prefixed.locale, prefixed.pathname)) {
+  if (
+    !isLocalizedPath(prefixed.pathname) ||
+    !keepsPrefixedUrl(visitor, prefixed.locale)
+  ) {
     return NextResponse.redirect(unprefixed);
   }
 
   const response = NextResponse.next();
-  if (
-    !isbot(request.headers.get('user-agent')) &&
-    !isLocale(request.cookies.get(LOCALE_COOKIE)?.value)
-  ) {
-    // keeps the language on unprefixed links for the rest of the visit,
-    // without turning one search result into a lasting choice
+  if (!visitor.isCrawler && !visitor.savedLocale) {
+    // keeps the language on unprefixed links for the rest of the visit. no
+    // max-age, unlike the switcher's one-year cookie: one search result
+    // shouldn't become a lasting choice
     response.cookies.set(LOCALE_COOKIE, prefixed.locale, {
       path: '/',
       sameSite: 'lax',
@@ -94,24 +95,6 @@ function routeLocale(request: NextRequest, isRead: boolean) {
   }
   return response;
 }
-
-// the unprefixed url shows the saved choice, so only crawlers and visitors
-// without one whose browser accepts the language stay on /{locale}/...
-function servesPrefixed(request: NextRequest, locale: Locale, path: string) {
-  if (!isLocalizedPath(path)) return false;
-  if (isbot(request.headers.get('user-agent'))) return true;
-  if (request.cookies.get('auth_session')?.value) return false;
-  if (isLocale(request.cookies.get(LOCALE_COOKIE)?.value)) return false;
-
-  const acceptLanguage = request.headers.get('accept-language');
-  return (
-    !acceptLanguage?.trim() ||
-    getAcceptedLocales(acceptLanguage).includes(locale)
-  );
-}
-
-const resolveRequestLocale = (request: NextRequest) =>
-  resolveLocale(request.headers, request.cookies.get(LOCALE_COOKIE)?.value);
 
 const isUnlocalized = (pathname: string) =>
   pathname.startsWith('/_') ||

@@ -2,14 +2,17 @@ import { describe, expect, test } from 'bun:test';
 import {
   getAcceptedLocales,
   isLocalizedPath,
+  keepsPrefixedUrl,
   localizePath,
+  readVisitor,
   resolveLocale,
   splitLocalePrefix,
+  type Visitor,
 } from '@/lib/locales';
+import { NextRequest } from 'next/server';
 
 describe('locales', () => {
   test('orders accepted locales by quality and drops unsupported ones', () => {
-    expect(getAcceptedLocales(null)).toEqual([]);
     expect(getAcceptedLocales('de-DE,de;q=0.9')).toEqual([]);
     expect(getAcceptedLocales('en-US;q=0.5,ru-RU,de;q=0.9')).toEqual([
       'ru',
@@ -58,24 +61,75 @@ describe('locales', () => {
     expect(splitLocalePrefix('/rus/clubs')).toEqual({ pathname: '/rus/clubs' });
   });
 
-  test('resolves the saved choice, then the browser, then the default', () => {
-    const browser = (headers: Record<string, string>) => new Headers(headers);
-    const russian = browser({ 'accept-language': 'ru-RU,ru;q=0.9,en;q=0.8' });
+  test('reads the visitor from request headers and cookies', () => {
+    const visit = (headers: Record<string, string>) => {
+      const request = new NextRequest('https://mktour.org', { headers });
+      return readVisitor(request.headers, request.cookies);
+    };
 
-    expect(resolveLocale(russian, undefined)).toBe('ru');
-    expect(resolveLocale(russian, 'en')).toBe('en');
-    expect(resolveLocale(russian, 'de')).toBe('ru');
-    expect(resolveLocale(browser({ 'accept-language': 'de' }), 'de')).toBe(
-      'en',
+    expect(
+      visit({
+        'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+        'accept-language': 'en-US;q=0.5,ru-RU',
+        cookie: 'NEXT_LOCALE=ru; auth_session=abc',
+      }),
+    ).toEqual({
+      isCrawler: true,
+      isSignedIn: true,
+      savedLocale: 'ru',
+      acceptedLocales: ['ru', 'en'],
+    });
+    expect(visit({ 'accept-language': ' ', cookie: 'NEXT_LOCALE=de' })).toEqual(
+      { isCrawler: false, isSignedIn: false },
+    );
+    expect(visit({ 'accept-language': 'de' })).toEqual({
+      isCrawler: false,
+      isSignedIn: false,
+      acceptedLocales: [],
+    });
+  });
+
+  test('resolves the saved choice, then the browser, then the default', () => {
+    expect(resolveLocale(visitor({ acceptedLocales: ['ru', 'en'] }))).toBe(
+      'ru',
     );
     expect(
+      resolveLocale(visitor({ savedLocale: 'en', acceptedLocales: ['ru'] })),
+    ).toBe('en');
+    expect(resolveLocale(visitor({ acceptedLocales: [] }))).toBe('en');
+    expect(resolveLocale(visitor())).toBe('en');
+    expect(
       resolveLocale(
-        browser({
-          'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
-          'accept-language': 'ru',
+        visitor({
+          isCrawler: true,
+          savedLocale: 'ru',
+          acceptedLocales: ['ru'],
         }),
-        'ru',
       ),
     ).toBe('en');
   });
+
+  test('keeps /{locale} urls for crawlers and first visits in that language', () => {
+    for (const kept of [
+      visitor({ isCrawler: true, isSignedIn: true, savedLocale: 'en' }),
+      visitor(),
+      visitor({ acceptedLocales: ['en', 'ru'] }),
+    ]) {
+      expect(keepsPrefixedUrl(kept, 'ru')).toBe(true);
+    }
+    for (const redirected of [
+      visitor({ acceptedLocales: ['en'] }),
+      visitor({ acceptedLocales: [] }),
+      visitor({ isSignedIn: true, acceptedLocales: ['ru'] }),
+      visitor({ savedLocale: 'ru', acceptedLocales: ['ru'] }),
+    ]) {
+      expect(keepsPrefixedUrl(redirected, 'ru')).toBe(false);
+    }
+  });
+});
+
+const visitor = (overrides: Partial<Visitor> = {}): Visitor => ({
+  isCrawler: false,
+  isSignedIn: false,
+  ...overrides,
 });

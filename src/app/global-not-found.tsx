@@ -1,6 +1,6 @@
 import NotFound from '@/app/[locale]/not-found';
 import AppDocument from '@/app/app-document';
-import { LOCALE_COOKIE, resolveLocale } from '@/lib/locales';
+import { readVisitor, resolveLocale } from '@/lib/locales';
 import type { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 
@@ -14,10 +14,7 @@ export const metadata: Metadata = {
 
 export default async function GlobalNotFound() {
   const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
-  const locale = resolveLocale(
-    headerList,
-    cookieStore.get(LOCALE_COOKIE)?.value,
-  );
+  const locale = resolveLocale(readVisitor(headerList, cookieStore));
   const messages = (await import(`@/messages/${locale}.json`)).default;
 
   return (
