@@ -1,7 +1,7 @@
 import AppDocument from '@/app/app-document';
 import JsonLd from '@/components/json-ld';
 import { BASE_URL } from '@/lib/config/urls';
-import { LOCALES } from '@/lib/locales';
+import { LOCALES, OPEN_GRAPH_LOCALES } from '@/lib/locales';
 import type { Metadata, Viewport } from 'next';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import { PropsWithChildren } from 'react';
@@ -26,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = BASE_URL || 'https://mktour.org';
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
+  const alternateLocales = LOCALES.filter((other) => other !== locale);
 
   return {
     metadataBase: new URL(baseUrl),
@@ -58,8 +59,10 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       type: 'website',
-      locale: locale === 'ru' ? 'ru_RU' : 'en_US',
-      alternateLocale: locale === 'ru' ? 'en_US' : 'ru_RU',
+      locale: OPEN_GRAPH_LOCALES[locale],
+      alternateLocale: alternateLocales.map(
+        (other) => OPEN_GRAPH_LOCALES[other],
+      ),
       url: baseUrl,
       siteName: t('siteName'),
       title: t('homepage.title'),

@@ -1,5 +1,6 @@
 'use client';
 
+import type { Locale } from '@/lib/locales';
 import { AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
 import { ReactNode } from 'react';
 
@@ -9,7 +10,7 @@ const IntlProvider = ({
 }: {
   children: ReactNode;
   messages: AbstractIntlMessages;
-  locale: string;
+  locale: Locale;
 }) => {
   return (
     <NextIntlClientProvider

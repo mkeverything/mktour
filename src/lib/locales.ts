@@ -7,6 +7,16 @@ export const DEFAULT_LOCALE: Locale = 'en';
 export const LOCALE_COOKIE = 'NEXT_LOCALE';
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
+export const LOCALE_LABELS: Record<Locale, string> = {
+  en: 'en',
+  ru: 'рус',
+};
+
+export const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
+  en: 'en_US',
+  ru: 'ru_RU',
+};
+
 // our own public pages, also served at /{locale}/... for search engines.
 // user-created pages keep a single url, however many languages are added
 export const LOCALIZED_PATHS = [

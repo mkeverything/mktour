@@ -5,6 +5,7 @@ import ThemeProvider from '@/components/providers/theme-provider';
 import SpeedInsights from '@/components/speed-insights';
 import { TRPCReactProvider } from '@/components/trpc/client';
 import { Toaster } from '@/components/ui/sonner';
+import type { Locale } from '@/lib/locales';
 import { appleSplashStartupImages } from '@/lib/splash-screens';
 import '@/styles/globals.css';
 import { Analytics } from '@vercel/analytics/react';
@@ -17,7 +18,7 @@ export default function AppDocument({
   locale,
   messages,
   children,
-}: PropsWithChildren<{ locale: string; messages: AbstractIntlMessages }>) {
+}: PropsWithChildren<{ locale: Locale; messages: AbstractIntlMessages }>) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>

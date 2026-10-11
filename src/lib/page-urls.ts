@@ -1,10 +1,5 @@
 import { BASE_URL } from '@/lib/config/urls';
-import {
-  isLocale,
-  isLocalizedPath,
-  LOCALES,
-  localizePath,
-} from '@/lib/locales';
+import { isLocalizedPath, LOCALES, localizePath } from '@/lib/locales';
 import type { Metadata } from 'next';
 import { getLocale } from 'next-intl/server';
 
@@ -28,7 +23,7 @@ export async function getPageUrls(
   path: string,
 ): Promise<{ url: string; alternates: Metadata['alternates'] }> {
   const locale = await getLocale();
-  if (!isLocalizedPath(path) || !isLocale(locale)) {
+  if (!isLocalizedPath(path)) {
     const url = toAbsoluteUrl(path);
     return { url, alternates: { canonical: url } };
   }
