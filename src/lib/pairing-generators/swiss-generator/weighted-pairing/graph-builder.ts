@@ -21,13 +21,13 @@ import {
 /** Maps score values to the count of players with that score. */
 type ScoregroupSizeMap = Map<number, number>;
 
-/** Maps each occupied score to its bracket level index, 0 being the highest. */
+/** maps each occupied score to its bracket level index, 0 being the highest. */
 type LevelIndexMap = Map<number, number>;
 
 /** Default count when a scoregroup has not been seen yet. */
 const DEFAULT_SCOREGROUP_COUNT = 0;
 
-/** Level index of the highest occupied score. */
+/** level index of the highest occupied score. */
 const TOP_LEVEL_INDEX = 0;
 
 /** Graph type for pairing graphs - always undirected. */
@@ -56,13 +56,13 @@ function computeScoregroupSizes(
 }
 
 /**
- * Indexes the occupied scores as bracket levels, highest score first.
+ * indexes the occupied scores as bracket levels, highest score first.
  *
- * Only occupied scores are levels (FIDE C.04.3 1.3), so the difference of two
+ * only occupied scores are levels (FIDE C.04.3 1.3), so the difference of two
  * indices counts the brackets a player exits when floating between them.
  *
- * @param scoregroupSizes - Map from score to count of players with that score
- * @returns Map from each occupied score to its level index, 0 being the highest
+ * @param scoregroupSizes - map from score to count of players with that score
+ * @returns map from each occupied score to its level index, 0 being the highest
  */
 function computeLevelIndexByScore(
   scoregroupSizes: ScoregroupSizeMap,

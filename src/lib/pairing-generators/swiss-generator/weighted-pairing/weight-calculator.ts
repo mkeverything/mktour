@@ -163,13 +163,13 @@ function getC5PerEdgeMax(ctx: WeightContext): number {
 }
 
 /**
- * Computes max penalty for C6 (downfloater count).
+ * computes max penalty for C6 (downfloater count).
  *
- * The penalty is the number of brackets an edge crosses, so the worst an edge
+ * the penalty is the number of brackets an edge crosses, so the worst an edge
  * can do is carry its higher player from the top level to the bottom one.
  *
- * @param ctx - Weight context with tournament parameters
- * @returns Maximum possible bracket crossings per edge
+ * @param ctx - weight context with tournament parameters
+ * @returns maximum possible bracket crossings per edge
  */
 function getC6PerEdgeMax(ctx: WeightContext): number {
   const deepestFloat = ctx.levelIndexByScore.size - 1;
@@ -273,9 +273,9 @@ export const C5: CriterionDefinition = {
 };
 
 /**
- * C6: Minimise the number of downfloaters.
+ * C6: minimize the number of downfloaters.
  *
- * FIDE C.04.3 [C6]. Counts each bracket a floater exits as one downfloater.
+ * FIDE C.04.3 [C6]. counts each bracket a floater exits as one downfloater.
  * SCORE_TIER's |Δscore| weighs that exit by the score gap instead, so on its
  * own it could pick more downfloaters to avoid one float across a wide gap.
  *
@@ -291,9 +291,9 @@ export const C6: CriterionDefinition = {
 };
 
 /**
- * SCORE_TIER: Minimise score difference between paired players.
+ * SCORE_TIER: minimize score difference between paired players.
  *
- * Stand-in for FIDE C7 until #140 replaces it. It sits directly below C6, so
+ * stand-in for FIDE C7 until #140 replaces it. it sits directly below C6, so
  * it only decides between pairings with the same number of downfloaters,
  * preferring those whose floats cross narrower score gaps.
  *
@@ -686,15 +686,15 @@ export function computeMultipliers(
 // ============================================================================
 
 /**
- * Computes the C6 penalty for a player pair.
+ * computes the C6 penalty for a player pair.
  *
- * FIDE C.04.3 [C6]: minimise the number of downfloaters. Pairing across
- * scores floats the higher player out of his bracket, and out of every
- * occupied bracket between the two scores, each of which counts him as a
- * downfloater (FIDE 1.4.1). Penalty = brackets crossed, 0 for equal scores.
+ * FIDE C.04.3 [C6]: minimize the number of downfloaters. pairing across
+ * scores floats the higher player out of their bracket, and out of every
+ * occupied bracket between the two scores, each of which counts them as a
+ * downfloater (FIDE 1.4.1). penalty = brackets crossed, 0 for equal scores.
  *
- * @param penaltyInput - Regular penalty input with colouredPair
- * @returns Number of brackets the edge crosses
+ * @param penaltyInput - regular penalty input with colouredPair
+ * @returns number of brackets the edge crosses
  */
 export function computeC6Penalty(penaltyInput: PenaltyInput): number {
   if (!isRegularPenaltyInput(penaltyInput)) {

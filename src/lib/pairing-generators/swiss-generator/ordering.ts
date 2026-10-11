@@ -45,20 +45,20 @@ export function compareByPairingNumber(
 }
 
 /**
- * Compares two scores (descending order - higher score first)
+ * compares two scores (descending order - higher score first)
  *
- * WHY: Bracket levels run from the highest score downwards (FIDE C.04.3 1.3),
+ * why: bracket levels run from the highest score downwards (FIDE C.04.3 1.3),
  * so bare score values need the same ordering entities get in compareByScore.
  *
- * @param firstScore - First score
- * @param secondScore - Second score
- * @returns Comparison result for sorting
+ * @param firstScore - first score
+ * @param secondScore - second score
+ * @returns comparison result for sorting
  */
 export function compareScoresDescending(
   firstScore: number,
   secondScore: number,
 ): number {
-  // Note: Reversed order (secondScore - firstScore) for descending sort
+  // note: reversed order (secondScore - firstScore) for descending sort
   return compareNumeric(secondScore, firstScore);
 }
 
