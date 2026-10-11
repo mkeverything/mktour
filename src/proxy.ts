@@ -1,11 +1,13 @@
+import { COOKIES } from '@/lib/config/constants';
 import {
   DEFAULT_LOCALE,
   isLocalizedPath,
+  isUnder,
   keepsPrefixedUrl,
-  LOCALE_COOKIE,
   readVisitor,
   resolveLocale,
   splitLocalePrefix,
+  toInternalPath,
 } from '@/lib/locales';
 import { getActiveMaintenance } from '@/lib/maintenance';
 import { NextRequest, NextResponse, type ProxyConfig } from 'next/server';
@@ -41,14 +43,14 @@ function serveMaintenance(request: NextRequest, endsAt: number | null) {
     headers.set('Retry-After', String(Math.ceil(seconds)));
   }
 
-  if (!isRead(request) || pathname === '/api' || pathname.startsWith('/api/')) {
+  if (!isRead(request) || isUnder(pathname, '/api')) {
     return Response.json({ error: 'MAINTENANCE' }, { status: 503, headers });
   }
 
   const locale =
     splitLocalePrefix(pathname).locale ??
     resolveLocale(readVisitor(request.headers, request.cookies));
-  const url = new URL(`/${locale}/maintenance`, request.url);
+  const url = new URL(toInternalPath('/maintenance', locale), request.url);
   if (endsAt !== null) {
     url.searchParams.set('endsAt', new Date(endsAt).toISOString());
   }
@@ -62,8 +64,7 @@ function routeLocale(request: NextRequest) {
   const visitor = readVisitor(request.headers, request.cookies);
   const prefixed = splitLocalePrefix(pathname);
   if (!prefixed.locale) {
-    const locale = resolveLocale(visitor);
-    const internal = `/${locale}${pathname === '/' ? '' : pathname}`;
+    const internal = toInternalPath(pathname, resolveLocale(visitor));
     return NextResponse.rewrite(new URL(`${internal}${search}`, request.url));
   }
 
@@ -85,7 +86,7 @@ function routeLocale(request: NextRequest) {
     // keeps the language on unprefixed links for the rest of the visit. no
     // max-age, unlike the switcher's one-year cookie: one search result
     // shouldn't become a lasting choice
-    response.cookies.set(LOCALE_COOKIE, prefixed.locale, {
+    response.cookies.set(COOKIES.LOCALE, prefixed.locale, {
       path: '/',
       sameSite: 'lax',
     });
@@ -98,9 +99,7 @@ const isRead = (request: NextRequest) =>
 
 const isUnlocalized = (pathname: string) =>
   pathname.startsWith('/_') ||
-  UNLOCALIZED_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`),
-  );
+  UNLOCALIZED_PATHS.some((path) => isUnder(pathname, path));
 
 export const config: ProxyConfig = {
   matcher: [

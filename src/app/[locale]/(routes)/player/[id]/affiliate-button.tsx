@@ -1,6 +1,6 @@
 'use client';
 
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import useAffiliationAuthMutation from '@/components/hooks/mutation-hooks/use-affiliation-auth';
 import { Button } from '@/components/ui/button';
 import { PlayerModel } from '@/server/zod/players';

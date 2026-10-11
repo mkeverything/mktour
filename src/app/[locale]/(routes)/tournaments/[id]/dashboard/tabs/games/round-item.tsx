@@ -1,5 +1,5 @@
 'use client';
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import {
   DashboardContext,
   DashboardRoundContext,

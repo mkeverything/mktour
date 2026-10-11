@@ -2,7 +2,7 @@
 
 import { TeamSelector } from '@/app/[locale]/(routes)/clubs/create/team-selector';
 import { ClubTabProps } from '@/app/[locale]/(routes)/clubs/my/tabMap';
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import useEditClubMutation from '@/components/hooks/mutation-hooks/use-club-edit';
 import { useClubInfo } from '@/components/hooks/query-hooks/use-club-info';
 import SkeletonList from '@/components/skeleton-list';

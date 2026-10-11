@@ -2,10 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import {
   getAcceptedLocales,
   isLocalizedPath,
-  localizePath,
   readVisitor,
   resolveLocale,
   splitLocalePrefix,
+  toPublicPath,
   type Visitor,
 } from '@/lib/locales';
 import { NextRequest } from 'next/server';
@@ -49,9 +49,9 @@ describe('locales', () => {
   });
 
   test('adds and strips locale prefixes', () => {
-    expect(localizePath('/', 'en')).toBe('/');
-    expect(localizePath('/', 'ru')).toBe('/ru');
-    expect(localizePath('/clubs/all', 'ru')).toBe('/ru/clubs/all');
+    expect(toPublicPath('/', 'en')).toBe('/');
+    expect(toPublicPath('/', 'ru')).toBe('/ru');
+    expect(toPublicPath('/clubs/all', 'ru')).toBe('/ru/clubs/all');
     expect(splitLocalePrefix('/ru')).toEqual({ locale: 'ru', pathname: '/' });
     expect(splitLocalePrefix('/ru/clubs/all')).toEqual({
       locale: 'ru',

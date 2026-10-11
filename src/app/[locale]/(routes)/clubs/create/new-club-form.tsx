@@ -3,7 +3,7 @@
 import ClubDescription from '@/app/[locale]/(routes)/clubs/create/description';
 import { TeamSelector } from '@/app/[locale]/(routes)/clubs/create/team-selector';
 import { turboPascal } from '@/app/fonts';
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { useClubCreate } from '@/components/hooks/query-hooks/use-club-create';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { Button } from '@/components/ui/button';

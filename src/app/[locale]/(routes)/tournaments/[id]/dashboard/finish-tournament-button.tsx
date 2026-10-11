@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentFinish from '@/components/hooks/mutation-hooks/use-tournament-finish';
 import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';

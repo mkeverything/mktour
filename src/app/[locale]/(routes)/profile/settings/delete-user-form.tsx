@@ -1,6 +1,6 @@
 'use client';
 
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import useDeleteUserMutation from '@/components/hooks/mutation-hooks/use-user-delete';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useIntlError } from '@/components/hooks/use-intl-error';

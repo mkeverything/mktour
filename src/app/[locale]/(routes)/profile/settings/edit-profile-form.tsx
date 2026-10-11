@@ -1,6 +1,6 @@
 'use client';
 
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import useEditUserMutation from '@/components/hooks/mutation-hooks/use-user-edit';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import HalfCard from '@/components/ui-custom/half-card';

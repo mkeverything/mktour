@@ -1,3 +1,4 @@
+import { COOKIES } from '@/lib/config/constants';
 import { isbot } from 'isbot';
 import type { NextRequest } from 'next/server';
 
@@ -5,7 +6,6 @@ export const LOCALES = ['en', 'ru'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = 'en';
-export const LOCALE_COOKIE = 'NEXT_LOCALE';
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 export const LOCALE_LABELS: Record<Locale, string> = {
@@ -35,10 +35,16 @@ export const isLocale = (value: unknown): value is Locale =>
 export const isLocalizedPath = (pathname: string) =>
   LOCALIZED_PATHS.includes(pathname);
 
-export const localizePath = (pathname: string, locale: Locale) =>
-  locale === DEFAULT_LOCALE
-    ? pathname
-    : `/${locale}${pathname === '/' ? '' : pathname}`;
+export const isUnder = (pathname: string, path: string) =>
+  pathname === path || pathname.startsWith(`${path}/`);
+
+// the app/[locale] route the proxy rewrites to
+export const toInternalPath = (pathname: string, locale: Locale) =>
+  `/${locale}${pathname === '/' ? '' : pathname}`;
+
+// the url visitors and crawlers see: the default locale stays unprefixed
+export const toPublicPath = (pathname: string, locale: Locale) =>
+  locale === DEFAULT_LOCALE ? pathname : toInternalPath(pathname, locale);
 
 export function splitLocalePrefix(pathname: string): {
   locale?: Locale;
@@ -74,12 +80,12 @@ export function readVisitor(
   headers: Pick<Headers, 'get'>,
   cookies: Pick<NextRequest['cookies'], 'get'>,
 ) {
-  const savedLocale = cookies.get(LOCALE_COOKIE)?.value;
+  const savedLocale = cookies.get(COOKIES.LOCALE)?.value;
   const acceptLanguage = headers.get('accept-language')?.trim();
 
   return {
     isCrawler: isbot(headers.get('user-agent')),
-    isSignedIn: Boolean(cookies.get('auth_session')?.value),
+    isSignedIn: Boolean(cookies.get(COOKIES.SESSION)?.value),
     savedLocale: isLocale(savedLocale) ? savedLocale : undefined,
     // undefined when the browser states no preference at all
     acceptedLocales: acceptLanguage

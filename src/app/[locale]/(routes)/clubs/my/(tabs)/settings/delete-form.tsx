@@ -1,6 +1,6 @@
 'use client';
 
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import useDeleteClubMutation from '@/components/hooks/mutation-hooks/use-club-delete';
 import { useClubInfo } from '@/components/hooks/query-hooks/use-club-info';
 import { Button } from '@/components/ui/button';

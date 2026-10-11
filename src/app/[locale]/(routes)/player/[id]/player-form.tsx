@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import DeletePlayer from '@/app/[locale]/(routes)/player/[id]/delete-button';
 import FormattedMessage from '@/components/formatted-message';
 import useEditPlayerMutation from '@/components/hooks/mutation-hooks/use-player-edit';

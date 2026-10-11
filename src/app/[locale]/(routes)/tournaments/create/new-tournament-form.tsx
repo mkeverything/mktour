@@ -1,7 +1,7 @@
 'use client';
 
 import { turboPascal } from '@/app/fonts';
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import FormDatePicker from '@/app/[locale]/(routes)/tournaments/create/form-date-picker';
 import { useTournamentCreate } from '@/components/hooks/mutation-hooks/use-tournament-create';
 import { useIntlError } from '@/components/hooks/use-intl-error';

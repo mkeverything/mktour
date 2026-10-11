@@ -1,24 +1,25 @@
 import { selected } from '@/components/navigation/mobile/menu';
 import MenuItem from '@/components/navigation/mobile/menu-item';
-import { NavbarItem } from '@/components/navigation/nav-menu-items';
-import { splitLocalePrefix } from '@/lib/locales';
+import {
+  NavbarItem,
+  useIsActivePath,
+} from '@/components/navigation/nav-menu-items';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 const MenuItemWithSubMenu: React.FC<MenuItemWithSubMenuProps> = ({
   item,
   toggleOpen,
 }) => {
-  const { pathname } = splitLocalePrefix(usePathname());
+  const isActivePath = useIsActivePath();
   const t = useTranslations('Menu');
 
   return (
     <>
       <MenuItem>
         <Link
-          className={`flex text-2xl ${cn(pathname.startsWith(item.path) ? selected : 'ml-3')}`}
+          className={`flex text-2xl ${cn(isActivePath(item.path) ? selected : 'ml-3')}`}
           onClick={() => toggleOpen()}
           href={item.path}
         >
@@ -34,7 +35,7 @@ const MenuItemWithSubMenu: React.FC<MenuItemWithSubMenuProps> = ({
               <Link
                 href={subItem.path}
                 onClick={() => toggleOpen()}
-                className={` ${pathname.includes(subItem.path) ? selected : 'ml-3'}`}
+                className={` ${isActivePath(subItem.path) ? selected : 'ml-3'}`}
               >
                 {t(`Subs.${subItem.title}`)}
               </Link>

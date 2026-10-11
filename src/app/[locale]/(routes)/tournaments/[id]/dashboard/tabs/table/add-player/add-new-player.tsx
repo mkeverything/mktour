@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { DrawerProps } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddNewPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-new-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';

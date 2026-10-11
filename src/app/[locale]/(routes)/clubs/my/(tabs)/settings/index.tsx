@@ -2,7 +2,7 @@ import ClubDelete from '@/app/[locale]/(routes)/clubs/my/(tabs)/settings/delete-
 import ClubManagersList from '@/app/[locale]/(routes)/clubs/my/(tabs)/settings/managers';
 import ClubSettingsForm from '@/app/[locale]/(routes)/clubs/my/(tabs)/settings/settings-form';
 import { ClubTabProps } from '@/app/[locale]/(routes)/clubs/my/tabMap';
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { useClubLeaveMutation } from '@/components/hooks/mutation-hooks/use-club-leave';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Button } from '@/components/ui/button';

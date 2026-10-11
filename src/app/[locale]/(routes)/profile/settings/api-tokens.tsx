@@ -1,6 +1,6 @@
 'use client';
 
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { useTokenGenerateMutation } from '@/components/hooks/mutation-hooks/use-token-generate';
 import { useTokenRevokeMutation } from '@/components/hooks/mutation-hooks/use-token-revoke';
 import { useTRPC } from '@/components/trpc/client';

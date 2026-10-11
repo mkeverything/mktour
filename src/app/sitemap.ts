@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { BASE_URL } from '@/lib/config/urls';
-import { LOCALES, LOCALIZED_PATHS, localizePath } from '@/lib/locales';
+import { LOCALES, LOCALIZED_PATHS, toPublicPath } from '@/lib/locales';
 import { getLanguageAlternates, toAbsoluteUrl } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 
@@ -22,7 +22,7 @@ async function collectPages<T>(
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = LOCALIZED_PATHS.flatMap((path) =>
     LOCALES.map((locale) => ({
-      url: toAbsoluteUrl(localizePath(path, locale)),
+      url: toAbsoluteUrl(toPublicPath(path, locale)),
       alternates: { languages: getLanguageAlternates(path) },
     })),
   );

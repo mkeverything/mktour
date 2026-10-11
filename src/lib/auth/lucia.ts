@@ -1,3 +1,4 @@
+import { COOKIES } from '@/lib/config/constants';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { BASE_URL } from '@/lib/config/urls';
 import { AppError } from '@/lib/errors';
@@ -13,6 +14,7 @@ import { cache } from 'react';
 
 export const lucia = new Lucia(adapter, {
   sessionCookie: {
+    name: COOKIES.SESSION,
     attributes: {
       secure: process.env.NODE_ENV === 'production',
     },

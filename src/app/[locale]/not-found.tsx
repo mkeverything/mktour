@@ -1,5 +1,5 @@
 import { turboPascal } from '@/app/fonts';
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import ClientTypeAnimation from '@/app/[locale]/not-found-client';
 import AppShell from '@/components/app-shell';
 import '@/styles/cursor.css';

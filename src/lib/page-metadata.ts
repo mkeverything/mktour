@@ -1,5 +1,5 @@
 import { BASE_URL } from '@/lib/config/urls';
-import { isLocalizedPath, LOCALES, localizePath } from '@/lib/locales';
+import { isLocalizedPath, LOCALES, toPublicPath } from '@/lib/locales';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale } from 'next-intl/server';
 
@@ -11,7 +11,7 @@ export const getLanguageAlternates = (path: string) => ({
   ...Object.fromEntries(
     LOCALES.map((locale) => [
       locale,
-      toAbsoluteUrl(localizePath(path, locale)),
+      toAbsoluteUrl(toPublicPath(path, locale)),
     ]),
   ),
 });
@@ -33,7 +33,7 @@ export async function getPageMetadata(
 ): Promise<Metadata> {
   const [locale, previous] = await Promise.all([getLocale(), parent]);
   const isLocalized = isLocalizedPath(path);
-  const url = toAbsoluteUrl(isLocalized ? localizePath(path, locale) : path);
+  const url = toAbsoluteUrl(isLocalized ? toPublicPath(path, locale) : path);
   const languages = isLocalized ? getLanguageAlternates(path) : undefined;
 
   return {

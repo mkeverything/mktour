@@ -1,6 +1,6 @@
 'use client';
 
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentDelete from '@/components/hooks/mutation-hooks/use-tournament-delete';
 import {

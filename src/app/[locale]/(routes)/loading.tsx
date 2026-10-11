@@ -1,5 +1,4 @@
-import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 
 export default function Loading() {
   return (
@@ -9,7 +8,3 @@ export default function Loading() {
     </div>
   );
 }
-
-export const LoadingSpinner = ({ className }: { className?: string }) => (
-  <Loader2 className={cn(`animate-spin`, className)} />
-);

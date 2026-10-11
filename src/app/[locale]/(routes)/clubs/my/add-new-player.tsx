@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import Fab from '@/components/fab';
 import { usePlayerAddMutation } from '@/components/hooks/mutation-hooks/use-player-add';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';

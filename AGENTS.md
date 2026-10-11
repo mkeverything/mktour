@@ -45,6 +45,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - no unnecessary comments in code
 - preserve `/** @deprecated ... */` / `/** deprecated */` markers on exports unless asked to remove them
 - files: kebab-case; components/types: PascalCase; variables: camelCase; constants: UPPER_SNAKE_CASE
+- where constants live: used by one module → unexported at the top of that module; owned by a domain → that domain's module (`LOCALES` in `src/lib/locales.ts`, `CACHE_TAGS` in `src/lib/cache-tags.ts`); app-wide identifiers no single module owns, like cookie names → `src/lib/config/constants.ts`, which stays import-free so the proxy and client can use it
 - absolute imports use `@/`
 - `src/components/ui/` is shadcn code; never edit it
 - extend/customize ui in `src/components/ui-custom/`

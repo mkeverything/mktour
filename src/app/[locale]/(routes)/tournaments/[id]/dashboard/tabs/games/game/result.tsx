@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { Card } from '@/components/ui/card';
 import { GameResult } from '@/server/zod/enums';
 import { useTranslations } from 'next-intl';

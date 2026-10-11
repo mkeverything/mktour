@@ -1,6 +1,6 @@
 'use client';
 
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import usePlayerMergeMutation from '@/components/hooks/mutation-hooks/use-player-merge';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';

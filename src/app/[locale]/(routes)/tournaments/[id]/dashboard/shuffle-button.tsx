@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@/app/[locale]/(routes)/loading';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import Fab from '@/components/fab';
 import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
