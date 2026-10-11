@@ -6,7 +6,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type { ChessTournamentEntity } from '@/lib/pairing-generators/common-generator';
 
-import { createWeightContext } from './graph-builder';
+import { createWeightContext } from '@/lib/pairing-generators/swiss-generator/weighted-pairing/graph-builder';
 
 /** Round number for cases where the round itself does not matter. */
 const ANY_ROUND = 6;
