@@ -18,19 +18,21 @@ describe('locales', () => {
     expect(getAcceptedLocales('ru;q=0,en')).toEqual(['en']);
   });
 
-  test('localizes only public indexable pages', () => {
+  test('localizes only our own public pages', () => {
     for (const path of [
       '/',
       '/info/about',
+      '/info/faq',
+      '/info/contact',
       '/clubs/all',
-      '/clubs/abc',
       '/tournaments/all',
-      '/tournaments/abc',
-      '/user/magnus',
     ]) {
       expect(isLocalizedPath(path)).toBe(true);
     }
     for (const path of [
+      '/clubs/abc',
+      '/tournaments/abc',
+      '/user/magnus',
       '/clubs/my',
       '/clubs/create',
       '/tournaments/my',

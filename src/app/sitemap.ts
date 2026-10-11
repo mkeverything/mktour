@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { LOCALES, localizePath } from '@/lib/locales';
+import { isLocalizedPath, LOCALES, localizePath } from '@/lib/locales';
 import { getLanguageAlternates, toAbsoluteUrl } from '@/lib/page-urls';
 import { publicCaller } from '@/server/api';
 
@@ -20,8 +20,12 @@ async function collectPages<T>(
 
 type SitemapPage = { path: string; lastModified?: Date };
 
-const localize = (pages: SitemapPage[]): MetadataRoute.Sitemap =>
+const toSitemapEntries = (pages: SitemapPage[]): MetadataRoute.Sitemap =>
   pages.flatMap(({ path, lastModified }) => {
+    if (!isLocalizedPath(path)) {
+      return [{ url: toAbsoluteUrl(path), lastModified }];
+    }
+
     const languages = getLanguageAlternates(path);
     return LOCALES.map((locale) => ({
       url: toAbsoluteUrl(localizePath(path, locale)),
@@ -87,5 +91,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate sitemap dynamic pages:', error);
   }
 
-  return localize([...staticPages, ...dynamicPages]);
+  return toSitemapEntries([...staticPages, ...dynamicPages]);
 }

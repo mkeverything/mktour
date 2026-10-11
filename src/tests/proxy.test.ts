@@ -315,7 +315,7 @@ describe('locale proxy', () => {
       { 'user-agent': GOOGLEBOT, cookie: 'auth_session=abc' },
     ];
     for (const headers of visitors) {
-      for (const path of ['/ru', '/ru/tournaments/abc', '/ru/user/magnus']) {
+      for (const path of ['/ru', '/ru/info/about', '/ru/tournaments/all']) {
         expect(isPassedThrough(await read(path, headers))).toBe(true);
       }
     }
@@ -357,6 +357,8 @@ describe('locale proxy', () => {
       ['/ru/clubs/all', { cookie: 'NEXT_LOCALE=en', 'accept-language': 'ru' }],
       ['/ru', { cookie: 'NEXT_LOCALE=ru' }],
       ['/ru/clubs/my', { 'user-agent': GOOGLEBOT }],
+      ['/ru/tournaments/abc', { 'user-agent': GOOGLEBOT }],
+      ['/ru/user/magnus', undefined],
       ['/ru/profile', undefined],
     ] as const) {
       const response = await read(path, headers);

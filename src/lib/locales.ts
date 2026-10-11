@@ -7,12 +7,12 @@ export const DEFAULT_LOCALE: Locale = 'en';
 export const LOCALE_COOKIE = 'NEXT_LOCALE';
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-// public indexable pages that also exist at /{locale}/... for search engines
+// our own public pages that also exist at /{locale}/... for search engines.
+// user-created pages keep one url, so their count doesn't multiply by languages
 const LOCALIZED_PATHS = [
   /^\/$/,
   /^\/info\/(about|faq|contact)$/,
-  /^\/(clubs|tournaments)\/(?!my$|create$)[^/]+$/,
-  /^\/user\/[^/]+$/,
+  /^\/(clubs|tournaments)\/all$/,
 ];
 
 export const isLocale = (value: unknown): value is Locale =>
