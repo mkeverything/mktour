@@ -414,6 +414,33 @@ describe('calculateBuchholzCut1', () => {
     // Opponent scores: [0], sum = 0, min = 0, cut1 = 0
     expect(calculateBuchholzCut1(player, 1, [], scoresMap)).toBe(0);
   });
+
+  it('should cap bye contribution at a draw per round (fide §16.4.2)', () => {
+    const player = makePlayer({ id: 'p1', nickname: 'Alice', wins: 1 });
+    const games = [
+      makeGame({
+        whiteUnitId: 'p1',
+        blackUnitId: 'p2',
+        roundNumber: 1,
+        result: '1-0',
+      }),
+      makeGame({
+        whiteUnitId: 'p3',
+        blackUnitId: 'p1',
+        roundNumber: 2,
+        result: '1-0',
+      }),
+      // round 3 is a bye
+    ];
+    const scoresMap = new Map([
+      ['p1', 2],
+      ['p2', 2],
+      ['p3', 1],
+    ]);
+    // bye = min(2, 3 * 0.5) = 1.5
+    // opponent scores: [2, 1, 1.5], sum = 4.5, min = 1, cut1 = 3.5
+    expect(calculateBuchholzCut1(player, 3, games, scoresMap)).toBe(3.5);
+  });
 });
 
 describe('sortUnitsByResults', () => {
