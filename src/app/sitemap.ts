@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next';
+import { connection } from 'next/server';
 import { BASE_URL } from '@/lib/config/urls';
 import { LOCALES, LOCALIZED_PATHS } from '@/lib/locales';
 import { getLanguageAlternates } from '@/lib/page-metadata';
@@ -30,6 +31,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let dynamicPages: MetadataRoute.Sitemap = [];
 
+  // the db is read per request, so the build doesn't start queries it then cancels
+  await connection();
   try {
     const [clubs, tournaments, users] = await Promise.all([
       collectPages(async (cursor) => {
