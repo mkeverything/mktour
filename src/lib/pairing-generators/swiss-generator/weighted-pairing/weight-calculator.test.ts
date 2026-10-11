@@ -12,6 +12,7 @@ import type { CriterionMultipliers } from '@/lib/pairing-generators/swiss-genera
 import {
   ALL_CRITERIA,
   C5,
+  computeC6Penalty,
   computeCriterionWeight,
   computeMultipliers,
   computeRegularEdgeWeight,
@@ -81,6 +82,18 @@ const FOUR_DOWNFLOATERS: readonly ResultsPair[] = [
   [WON_TWO_DREW_ONE, WON_TWO_LOST_ONE],
   [LOST_EVERY_GAME, LOST_EVERY_GAME],
 ];
+
+/**
+ * field 3 · 2.5,2.5 · 2: the 3 meets the 2 and floats through the 2.5
+ * bracket on the way down.
+ */
+const THROUGH_FLOAT: readonly ResultsPair[] = [
+  [WON_EVERY_GAME, WON_TWO_LOST_ONE],
+  [WON_TWO_DREW_ONE, WON_TWO_DREW_ONE],
+];
+
+/** its own bracket and the 2.5 one; FIDE 1.4.1 counts both. */
+const BRACKETS_LEFT_BY_THE_THROUGH_FLOAT = 2;
 
 /**
  * builds a unit that has played every round before ROUND_NUMBER.
@@ -288,5 +301,22 @@ describe('C6 downfloater count', () => {
     const fourDownfloatersWeight = weighMatching(FOUR_DOWNFLOATERS);
 
     expect(twoDownfloatersWeight).toBeGreaterThan(fourDownfloatersWeight);
+  });
+
+  test('a through-float counts each bracket it leaves', () => {
+    const pairs = buildColouredPairs(THROUGH_FLOAT, NO_RECORDED_GAMES);
+    const field = collectField(pairs);
+    const context = createWeightContext(field, ROUND_NUMBER);
+    const multipliers = computeMultipliers(ALL_CRITERIA, context);
+    const [throughFloat] = pairs;
+
+    const penalty = computeC6Penalty({
+      colouredPair: throughFloat,
+      context,
+      multipliers,
+      topscorers: NO_TOPSCORERS,
+    });
+
+    expect(penalty).toBe(BRACKETS_LEFT_BY_THE_THROUGH_FLOAT);
   });
 });
