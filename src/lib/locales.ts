@@ -20,7 +20,7 @@ export const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
 
 // our own public pages, also served at /{locale}/... for search engines.
 // user-created pages keep a single url, however many languages are added
-export const LOCALIZED_PATHS = [
+export const LOCALIZED_PATHS: readonly string[] = [
   '/',
   '/info/about',
   '/info/faq',

@@ -186,6 +186,18 @@ describe('maintenance proxy', () => {
     expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
   });
 
+  test('keeps the url locale on the maintenance page', async () => {
+    getMock.mockResolvedValue({ enabled: true });
+    expect(rewriteOf(await request('/ru/info/about'))).toBe(
+      'https://mktour.org/ru/maintenance',
+    );
+    expect(
+      rewriteOf(
+        await request('/clubs/all', { headers: { cookie: 'NEXT_LOCALE=ru' } }),
+      ),
+    ).toBe('https://mktour.org/ru/maintenance');
+  });
+
   test('fails open when global config read stalls', async () => {
     getMock.mockReturnValue(new Promise(() => {}));
     expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
@@ -376,23 +388,6 @@ describe('locale proxy', () => {
       headers: { 'next-action': 'abc', 'accept-language': 'en' },
     });
     expect(isPassedThrough(response)).toBe(true);
-  });
-
-  test('keeps the url locale on the maintenance page', async () => {
-    getMock.mockResolvedValue({ enabled: true });
-    const original = process.env.GLOBAL_CONFIG;
-    process.env.GLOBAL_CONFIG =
-      'https://global-config.vercel.com/ecfg_test?token=test';
-    try {
-      expect(rewriteOf(await read('/ru/info/about'))).toBe(
-        'https://mktour.org/ru/maintenance',
-      );
-      expect(
-        rewriteOf(await read('/clubs/all', { cookie: 'NEXT_LOCALE=ru' })),
-      ).toBe('https://mktour.org/ru/maintenance');
-    } finally {
-      process.env.GLOBAL_CONFIG = original;
-    }
   });
 });
 

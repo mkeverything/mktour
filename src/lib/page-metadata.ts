@@ -1,5 +1,10 @@
 import { BASE_URL } from '@/lib/config/urls';
-import { isLocalizedPath, LOCALES, toPublicPath } from '@/lib/locales';
+import {
+  isLocalizedPath,
+  type Locale,
+  LOCALES,
+  toPublicPath,
+} from '@/lib/locales';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale } from 'next-intl/server';
 
@@ -8,12 +13,12 @@ export const toAbsoluteUrl = (path: string) =>
 
 export const getLanguageAlternates = (path: string) => ({
   'x-default': toAbsoluteUrl(path),
-  ...Object.fromEntries(
+  ...(Object.fromEntries(
     LOCALES.map((locale) => [
       locale,
       toAbsoluteUrl(toPublicPath(path, locale)),
     ]),
-  ),
+  ) as Record<Locale, string>),
 });
 
 // every language version is canonical to itself and lists all versions.
@@ -32,9 +37,10 @@ export async function getPageMetadata(
   },
 ): Promise<Metadata> {
   const [locale, previous] = await Promise.all([getLocale(), parent]);
-  const isLocalized = isLocalizedPath(path);
-  const url = toAbsoluteUrl(isLocalized ? toPublicPath(path, locale) : path);
-  const languages = isLocalized ? getLanguageAlternates(path) : undefined;
+  const languages = isLocalizedPath(path)
+    ? getLanguageAlternates(path)
+    : undefined;
+  const url = languages?.[locale] ?? toAbsoluteUrl(path);
 
   return {
     ...metadata,

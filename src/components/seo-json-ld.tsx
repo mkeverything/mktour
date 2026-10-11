@@ -1,9 +1,8 @@
 import { BASE_URL } from '@/lib/config/urls';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 export async function getOrganizationSchema() {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
+  const t = await getTranslations('Seo');
 
   return {
     '@context': 'https://schema.org',
@@ -40,8 +39,7 @@ export async function getWebsiteSchema() {
 }
 
 export async function getSoftwareApplicationSchema() {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
+  const t = await getTranslations('Seo');
 
   return {
     '@context': 'https://schema.org',

@@ -9,7 +9,7 @@ import {
   splitLocalePrefix,
   toInternalPath,
 } from '@/lib/locales';
-import { getActiveMaintenance } from '@/lib/maintenance';
+import { getMaintenance } from '@/lib/maintenance';
 import { NextRequest, NextResponse, type ProxyConfig } from 'next/server';
 
 const OPERATIONAL_PATHS = new Set([
@@ -24,8 +24,13 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (OPERATIONAL_PATHS.has(pathname)) return NextResponse.next();
 
-  const maintenance = await getActiveMaintenance();
-  if (maintenance) return serveMaintenance(request, maintenance.endsAt);
+  const maintenance = await getMaintenance();
+  const now = Date.now();
+  const isMaintenanceActive =
+    maintenance !== undefined &&
+    (maintenance.startsAt ?? -Infinity) <= now &&
+    now < (maintenance.endsAt ?? Infinity);
+  if (isMaintenanceActive) return serveMaintenance(request, maintenance.endsAt);
 
   if (isRead(request) && pathname === '/maintenance') {
     return NextResponse.redirect(new URL('/', request.url), {

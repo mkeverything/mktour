@@ -11,16 +11,13 @@ const IntlProvider = ({
   children: ReactNode;
   messages: AbstractIntlMessages;
   locale: Locale;
-}) => {
-  return (
-    <NextIntlClientProvider
-      locale={props.locale}
-      messages={props.messages}
-      timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
-    >
-      {children}
-    </NextIntlClientProvider>
-  );
-};
+}) => (
+  <NextIntlClientProvider
+    {...props}
+    timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+  >
+    {children}
+  </NextIntlClientProvider>
+);
 
 export default IntlProvider;
