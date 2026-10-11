@@ -27,6 +27,7 @@ import {
 import { resetLabels } from './initialization';
 import {
   IS_MATCHING_DEBUG_ENABLED,
+  IS_MATCHING_VERIFY_ENABLED,
   matchingLogger,
   type BlossomExpansionInfo,
   type DeltaComputationInfo,
@@ -35,6 +36,7 @@ import {
   type WeightedMatchingStartInfo,
 } from './matching-logger';
 import { assignLabel, findBaseVertexInfo } from './tree-operations';
+import { verifyMatchingOptimum } from './verify-optimum';
 import {
   addWeightedBlossom,
   initialiseWeightedState,
@@ -427,6 +429,16 @@ function performSearchStage(
       );
 
       if (shouldTerminate) {
+        // galil 1986, condition 7.2: the duals prove optimality only if every
+        // free vertex ends at zero. free vertices are S-labelled at every
+        // step, so the smallest S-vertex dual is theirs, and null means none
+        // is left. cardinality mode is left uncertified for now.
+        const shouldCloseDuals = !maxCardinality && terminationBound !== null;
+
+        if (shouldCloseDuals) {
+          applyDualUpdates(state, terminationBound);
+        }
+
         result = StageResult.NO_MORE_DELTAS;
       } else if (minDelta !== null) {
         applyDeltaAndExpand(state, minDelta);
@@ -528,6 +540,13 @@ export function maximumWeightMatching(
       maxCardinality,
     );
     hasMoreWork = stageResult === StageResult.PATH_FOUND;
+  }
+
+  // only weight mode is certified for now, see verify-optimum.ts
+  const shouldVerify = IS_MATCHING_VERIFY_ENABLED && !maxCardinality;
+
+  if (shouldVerify) {
+    verifyMatchingOptimum(state, graph);
   }
 
   return extractMatchingResult(state);
