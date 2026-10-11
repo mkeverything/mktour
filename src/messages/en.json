@@ -74,7 +74,7 @@
     "user": {
       "profile": {
         "title": "{username}'s profile",
-        "description": "{username} on mktour - {clubs} clubs, {tournaments} tournaments"
+        "description": "{username} on mktour - {clubs, plural, one {# club} other {# clubs}}, {tournaments, plural, one {# tournament} other {# tournaments}}"
       }
     },
     "notifications": {

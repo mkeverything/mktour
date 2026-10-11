@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(baseUrl),
     title: {
       default: t('homepage.title'),
-      template: '%s | mktour',
+      template: `%s | ${t('siteName')}`,
     },
     description: t('homepage.description'),
     authors: [{ url: 'https://mkeverything.ru' }],

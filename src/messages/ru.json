@@ -74,7 +74,7 @@
     "user": {
       "profile": {
         "title": "профиль {username}",
-        "description": "{username} на мктуре - {clubs} клубов, {tournaments} турниров"
+        "description": "{username} на мктуре - {clubs, plural, one {# клуб} few {# клуба} many {# клубов} other {# клуба}}, {tournaments, plural, one {# турнир} few {# турнира} many {# турниров} other {# турнира}}"
       }
     },
     "notifications": {
