@@ -5,13 +5,15 @@ import { publicCaller } from '@/server/api';
 import { UserPlayerClubModel } from '@/server/zod/players';
 import { TournamentModel } from '@/server/zod/tournaments';
 import { UserPublicModel } from '@/server/zod/users';
-import type { ResolvingMetadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 export default async function UserPage(props: TournamentPageProps) {
-  const params = await props.params;
-  const user = await publicCaller.auth.info();
+  const [params, user] = await Promise.all([
+    props.params,
+    publicCaller.auth.info(),
+  ]);
   let data: UserPublicModel;
   try {
     data = await publicCaller.user.infoByUsername({
@@ -23,12 +25,10 @@ export default async function UserPage(props: TournamentPageProps) {
   }
   const isOwner = !!user && user.username === params.username;
 
-  const userPlayers = await publicCaller.user.playerClubs({
-    userId: data.id,
-  });
-  const lastTournaments = await publicCaller.user.lastTournaments({
-    userId: data.id,
-  });
+  const [userPlayers, lastTournaments] = await Promise.all([
+    publicCaller.user.playerClubs({ userId: data.id }),
+    publicCaller.user.lastTournaments({ userId: data.id }),
+  ]);
   const userWithPlayers: UserWithPlayers = {
     ...data,
     userPlayers,
@@ -43,7 +43,7 @@ export async function generateMetadata(
     params: Promise<{ username: string }>;
   },
   parent: ResolvingMetadata,
-) {
+): Promise<Metadata> {
   const params = await props.params;
   const t = await getTranslations('Seo');
 
@@ -57,12 +57,10 @@ export async function generateMetadata(
     throw e;
   }
 
-  const userPlayers = await publicCaller.user.playerClubs({
-    userId: data.id,
-  });
-  const lastTournaments = await publicCaller.user.lastTournaments({
-    userId: data.id,
-  });
+  const [userPlayers, lastTournaments] = await Promise.all([
+    publicCaller.user.playerClubs({ userId: data.id }),
+    publicCaller.user.lastTournaments({ userId: data.id }),
+  ]);
 
   return getPageMetadata(parent, {
     path: `/user/${params.username}`,
