@@ -32,8 +32,8 @@ export async function GET(request: Request): Promise<Response> {
     !codeVerifier
   ) {
     const retryUrl = authFrom
-      ? `/login/lichess?from=${encodeURIComponent(authFrom)}`
-      : '/login/lichess';
+      ? `/sign-in?from=${encodeURIComponent(authFrom)}`
+      : '/sign-in';
     return new Response(null, {
       status: 302,
       headers: {

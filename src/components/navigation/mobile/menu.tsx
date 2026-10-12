@@ -112,13 +112,9 @@ const Menu: FC = () => {
             ))}
             <MenuItem className="ml-3 text-2xl">
               {!user ? (
-                <Link
-                  href="/login/lichess"
-                  onClick={() => toggleOpen()}
-                  prefetch={false}
-                >
-                  {t('Profile.sign in')}
-                </Link>
+                <form action="/login/lichess" method="post">
+                  <button type="submit">{t('Profile.sign in')}</button>
+                </form>
               ) : (
                 <button name="log out" onClick={handleSignOut}>
                   {t('Profile.logout')}
