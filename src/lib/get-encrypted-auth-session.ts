@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { COOKIES } from '@/lib/config/constants';
 import { cookies } from 'next/headers';

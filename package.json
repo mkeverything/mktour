@@ -22,7 +22,7 @@
     "knip": "knip-bun --use-tsconfig-files",
     "generate-erd": "bun run src/lib/generate-erd.ts",
     "prepare": "husky",
-    "generate-openapi": "bun run src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
+    "generate-openapi": "bun run --conditions=react-server src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
     "test:noseed": "SKIP_SEED=1 bun test",
     "check": "bun run --bun tsc --noEmit && bun run --bun lint && bun test"
   },

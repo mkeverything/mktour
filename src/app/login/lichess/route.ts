@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { lichess } from '@/lib/auth/lucia';
 import { COOKIES } from '@/lib/config/constants';
