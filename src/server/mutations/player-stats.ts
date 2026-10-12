@@ -22,9 +22,9 @@ import {
   isNotNull,
   isNull,
   or,
-  sql,
   type SQL,
 } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/sqlite-core';
 
 type Database = Pick<typeof db, 'select'>;
 type Tx = Pick<typeof db, 'select' | 'insert'>;
@@ -42,9 +42,9 @@ const RATING_COLUMNS = {
 };
 
 const UPSERT_SET = Object.fromEntries(
-  Object.entries(STORED_COLUMNS)
-    .filter(([key]) => key !== 'playerId' && key !== 'clubId')
-    .map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)]),
+  Object.entries(getColumns(alias(player_stats, 'excluded'))).filter(
+    ([key]) => key !== 'playerId' && key !== 'clubId' && key !== 'gamesPlayed',
+  ),
 );
 
 // 11 bound parameters per row keeps every statement far below sqlite's variable limit
