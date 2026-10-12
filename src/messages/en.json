@@ -200,6 +200,7 @@
       "merge": "merge player",
       "rating tooltip": "rating cannot be combined, tournaments of {player} become kinda unrated",
       "result": "result will be:",
+      "swap players": "swap players",
       "title": "merge player"
     },
     "Stats": {
@@ -516,6 +517,8 @@
       "started at": "started at",
       "ended at": "ended at",
       "number of rounds": "amount of rounds:",
+      "decrease rounds": "decrease number of rounds",
+      "increase rounds": "increase number of rounds",
       "unrated": "unrated",
       "save": "save",
       "fullscreen": "fullscreen mode",

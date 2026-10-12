@@ -166,6 +166,7 @@ const MergePlayerDrawer: FC<MergePlayerDrawerProps> = ({
               <span>{t('result')}</span>
               <button
                 type="button"
+                aria-label={t('swap players')}
                 className="hover:text-foreground active:scale-[0.97]"
                 onClick={() => setIsSwapped((value) => !value)}
               >
