@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { lichess, lucia } from '@/lib/auth/lucia';
 import { CACHE_TAGS, userPublicProfileTag } from '@/lib/cache-tags';
 import { COOKIES } from '@/lib/config/constants';
+import { AppError } from '@/lib/errors';
 import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
@@ -49,6 +50,9 @@ export async function GET(request: Request): Promise<Response> {
         Authorization: `Bearer ${tokens.accessToken()}`,
       },
     });
+    if (!lichessUserResponse.ok) {
+      throw new AppError('LICHESS_API_ERROR');
+    }
     const lichessUserEmailResponse = await fetch(
       'https://lichess.org/api/account/email',
       {
@@ -57,6 +61,9 @@ export async function GET(request: Request): Promise<Response> {
         },
       },
     );
+    if (!lichessUserEmailResponse.ok) {
+      throw new AppError('LICHESS_API_ERROR');
+    }
     const lichessUser: LichessUser = await lichessUserResponse.json();
     const lichessUserEmail = (await lichessUserEmailResponse.json())
       .email as string;
