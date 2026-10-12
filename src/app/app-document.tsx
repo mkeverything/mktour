@@ -38,12 +38,7 @@ export default function AppDocument({
       </head>
       <body className="small-scrollbar">
         <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+          <ThemeProvider>
             <MediaQueryProvider>
               <TRPCReactProvider>
                 <IntlProvider messages={messages} locale={locale}>
