@@ -50,6 +50,7 @@ const UnitDrawer: FC<{
   const open = !!unit;
   const { status } = useContext(DashboardContext);
   const t = useTranslations('Tournament.AddPlayer');
+  const tCommon = useTranslations('Common');
   const { id: tournamentId } = useParams<{ id: string }>();
   const editDoublesUnit = useTournamentEditDoublesUnit(tournamentId);
   const isDoublesUnit = unit.players.length === 2;
@@ -94,6 +95,7 @@ const UnitDrawer: FC<{
               <Button
                 size="icon"
                 variant="ghost"
+                aria-label={tCommon('edit')}
                 onClick={() => setIsEditingUnit(true)}
               >
                 <Pencil className="size-4" />

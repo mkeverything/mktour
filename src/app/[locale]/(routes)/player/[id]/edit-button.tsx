@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { StatusInClub } from '@/server/zod/enums';
 import { PlayerEditModel, PlayerModel } from '@/server/zod/players';
 import { Pencil } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { FC, useState } from 'react';
 
 const EditButton: FC<{
@@ -20,11 +21,12 @@ const EditButton: FC<{
   status: StatusInClub | null;
   canEditRealname?: boolean;
 }> = ({ player, status, canEditRealname = true }) => {
+  const t = useTranslations('Common');
   const [open, setOpen] = useState(false);
   return (
     <Root open={open} onOpenChange={setOpen}>
       <Trigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" aria-label={t('edit')}>
           <Pencil />
         </Button>
       </Trigger>

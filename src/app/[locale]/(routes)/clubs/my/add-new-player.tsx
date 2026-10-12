@@ -26,6 +26,7 @@ import { useForm } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
 
 const AddPlayerDrawer = () => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -60,6 +61,9 @@ const AddPlayerDrawer = () => {
     </Button>
   ) : (
     <Fab
+      aria-label={
+        open ? t('Common.close') : t('Tournament.AddPlayer.add player')
+      }
       container={open || isAnimating ? document.body : undefined}
       className={`${(open || isAnimating) && 'z-100'} fixed right-4 bottom-4`}
       onClick={() => handleChange(!open)}

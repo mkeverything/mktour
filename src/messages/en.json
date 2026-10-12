@@ -536,6 +536,7 @@
     "Round": {
       "round": "round {roundInView}",
       "new round button": "next round",
+      "shuffle": "shuffle pairings",
       "add two players": "add at least two players to see generated round",
       "start tournament": {
         "title": "start tournament?",

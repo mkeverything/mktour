@@ -9,11 +9,13 @@ import { MediaQueryContext } from '@/components/providers/media-query-context';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
 import { UserPlus, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Dispatch, SetStateAction, useContext, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
 const AddUnitDrawer = () => {
+  const t = useTranslations();
   const { id: tournamentId } = useParams<{ id: string }>();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -73,6 +75,9 @@ const AddUnitDrawer = () => {
     </Button>
   ) : (
     <Fab
+      aria-label={
+        open ? t('Common.close') : t('Tournament.AddPlayer.add player')
+      }
       container={open || isAnimating ? document.body : undefined}
       className={`${(open || isAnimating) && 'z-60 md:hidden'}`}
       disabled={preStartLocked}

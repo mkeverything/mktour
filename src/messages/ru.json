@@ -536,6 +536,7 @@
     "Round": {
       "round": "тур {roundInView}",
       "new round button": "следующий тур",
+      "shuffle": "перемешать пары",
       "add two players": "добавьте хотя бы двоих игроков чтобы увидеть пары первого тура",
       "start tournament": {
         "title": "начать турнир?",
