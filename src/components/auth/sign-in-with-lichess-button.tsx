@@ -24,18 +24,14 @@ export default function SignInWithLichessButton({
         `m-auto flex h-28 min-h-28 w-full max-w-md flex-none flex-col gap-2 px-1 font-bold`,
         className,
       )}
-      variant="outline"
       disabled={clicked}
       onClick={() => {
         setClicked(true);
         window.location.href = `/login/lichess${from ? '?from=' + from : ''}`;
       }}
     >
-      <div className="grid-flow-col"></div>
-      <span className="grid-col-3">
-        <LichessLogo className="size-10" />
-      </span>
-      <span className="grid-col--9 text-[1.4rem] leading-none font-light md:px-4 md:text-xl">
+      <LichessLogo className="size-10 fill-current stroke-current" />
+      <span className="text-[1.4rem] leading-none font-light md:px-4 md:text-xl">
         {t('Home.sign in with lichess')}
       </span>
     </Button>
