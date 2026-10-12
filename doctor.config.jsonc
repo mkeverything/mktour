@@ -1,0 +1,13 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "overrides": [
+      {
+        // useEmblaCarousel destroys its api on unmount and clears all listeners.
+        // cleanup is owned by the hook rather than this shadcn effect.
+        "files": ["src/components/ui/carousel.tsx"],
+        "rules": ["react-doctor/effect-needs-cleanup"],
+      },
+    ],
+  },
+}
