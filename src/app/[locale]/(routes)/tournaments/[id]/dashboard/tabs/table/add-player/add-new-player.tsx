@@ -137,6 +137,7 @@ const AddNewPlayer = ({
                   className="drop-shadow-md"
                   placeholder={t('name')}
                   {...field}
+                  aria-label={t('name')}
                   autoComplete="off"
                   autoFocus
                   onKeyUp={() => {
