@@ -112,7 +112,7 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
                 {isFullscreen && (
                   <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
                     <Button
-                      className="opacity-30 duration-500 hover:opacity-90"
+                      className="opacity-30 transition-[background-color,box-shadow,opacity,scale] duration-500 hover:opacity-90"
                       variant="secondary"
                       onClick={toggleFullscreen}
                     >

@@ -130,7 +130,7 @@ export default function ApiTokens() {
                   href="/api"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary underline transition-all"
+                  className="hover:text-primary underline transition-colors"
                 >
                   {t('here')}
                 </Link>

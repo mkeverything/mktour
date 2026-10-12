@@ -26,8 +26,8 @@ export default function ModeToggler() {
 
   return (
     <Button variant="ghost" size="icon" onClick={toggleTheme}>
-      <Sun className="block scale-100 rotate-0 transition-all dark:hidden dark:scale-0 dark:-rotate-90" />
-      <MoonStarIcon className="hidden scale-0 rotate-290 transition-all dark:block dark:scale-100 dark:rotate-0" />
+      <Sun className="dark:hidden" />
+      <MoonStarIcon className="hidden dark:block" />
       <span className="sr-only">Toggle theme</span>
     </Button>
   );
