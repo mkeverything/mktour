@@ -59,6 +59,11 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - `bun test:noseed path/to/file` - fast tests without db seed
 - mobile dev setup: `bash .cursor/skills/mobile-dev/scripts/setup-mobile-dev.sh`
 
+## commit messages
+
+- types come from `commitlint.config.js`: use `ref`, not `refactor`; `impr` for improvements to existing features
+- formatting is obligatory
+
 ## development flow
 
 - feature/project prs target `beta`; only `beta` prs into `main`
