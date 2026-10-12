@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+
 @plugin 'tailwindcss-animate';
 @config '../../tailwind.config.js';
 
@@ -315,18 +316,35 @@ button {
   }
 }
 
+/*
+  reduced motion removes movement, not every animation: fades, colour changes
+  and spinners stay, while zooms, slides and spins of tailwindcss-animate
+  become plain fades, drawers fade instead of sliding in from the edge,
+  and view transitions cross-fade without moving elements
+*/
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  * {
+    --tw-enter-opacity: 0;
+    --tw-enter-scale: 1;
+    --tw-enter-rotate: 0;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-exit-opacity: 0;
+    --tw-exit-scale: 1;
+    --tw-exit-rotate: 0;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
   }
 
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation-duration: 0.01ms !important;
+  [data-vaul-drawer][data-state='open'] {
+    animation-name: enter !important;
+  }
+
+  [data-vaul-drawer][data-state='closed'] {
+    animation-name: exit !important;
+  }
+
+  ::view-transition-group(*) {
+    animation-duration: 0s;
   }
 }

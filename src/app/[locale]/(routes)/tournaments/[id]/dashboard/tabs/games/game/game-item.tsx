@@ -11,7 +11,7 @@ import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GameResult } from '@/server/zod/enums';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Dispatch, FC, memo, SetStateAction, useContext, useRef } from 'react';
@@ -42,6 +42,7 @@ const GameItem: FC<GameProps> = ({
   });
   const { data } = useTournamentGameResultInfo(tournamentId);
   const ref = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
   const hasStarted = !!data?.hasStarted;
   const isActive = selected && hasStarted;
   const muted = result && !selected;
@@ -54,6 +55,7 @@ const GameItem: FC<GameProps> = ({
     (status === 'player' && isPlayerUnitInGame && hasStarted);
   const disabled = !canEdit || isClosed || saveRoundPending;
   const draw = result === '1/2-1/2';
+  const lift = reduceMotion ? { scale: 1.01, y: -2 } : { scale: 1.05, y: -10 };
 
   const handleOpenGame = () => {
     if (selected) {
@@ -104,7 +106,7 @@ const GameItem: FC<GameProps> = ({
         }`}
         initial={{ scale: 1, y: 0 }}
         exit={{ scale: 1, y: 0 }}
-        animate={isActive ? { scale: 1.05, y: -10 } : { scale: 1, y: 0 }}
+        animate={isActive ? lift : { scale: 1, y: 0 }}
         transition={{ type: 'spring', bounce: 0.4 }}
         onClick={handleOpenGame}
       >
