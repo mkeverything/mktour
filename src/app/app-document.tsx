@@ -1,6 +1,7 @@
 import ErrorFallback from '@/components/providers/error-boundary';
 import IntlProvider from '@/components/providers/intl-provider';
 import MediaQueryProvider from '@/components/providers/media-query-provider';
+import MotionProvider from '@/components/providers/motion-provider';
 import ThemeProvider from '@/components/providers/theme-provider';
 import SpeedInsights from '@/components/speed-insights';
 import { TRPCReactProvider } from '@/components/trpc/client';
@@ -42,10 +43,12 @@ export default function AppDocument({
             <MediaQueryProvider>
               <TRPCReactProvider>
                 <IntlProvider messages={messages} locale={locale}>
-                  {children}
-                  <Analytics />
-                  <SpeedInsights />
-                  <Toaster richColors />
+                  <MotionProvider>
+                    {children}
+                    <Analytics />
+                    <SpeedInsights />
+                    <Toaster richColors />
+                  </MotionProvider>
                 </IntlProvider>
               </TRPCReactProvider>
             </MediaQueryProvider>

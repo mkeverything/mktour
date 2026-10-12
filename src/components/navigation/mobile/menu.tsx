@@ -12,7 +12,13 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useQueryClient } from '@tanstack/react-query';
-import { motion, StyleTransitions, useCycle, Variants } from 'framer-motion';
+import {
+  motion,
+  StyleTransitions,
+  useCycle,
+  useReducedMotion,
+  Variants,
+} from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -26,6 +32,7 @@ const Menu: FC = () => {
   const { mutate: signOut } = useSignOutMutation(queryClient);
   const { height } = useDimensions(containerRef);
   const [isOpen, toggleOpen] = useCycle(false, true);
+  const reduceMotion = useReducedMotion();
   const isActivePath = useIsActivePath();
   const handleSignOut = async () => {
     signOut(undefined, {
@@ -52,22 +59,26 @@ const Menu: FC = () => {
     (): Variants => ({
       open: (height = 1000) => ({
         clipPath: `circle(${height * 2 + 200}px at 100% 0)`,
-        transition: {
-          type: 'spring',
-          stiffness: 20,
-          restDelta: 2,
-        } as StyleTransitions,
+        transition: reduceMotion
+          ? { duration: 0 }
+          : ({
+              type: 'spring',
+              stiffness: 20,
+              restDelta: 2,
+            } as StyleTransitions),
       }),
       closed: {
         clipPath: 'circle(0px at 100% 0)',
-        transition: {
-          type: 'spring',
-          stiffness: 400,
-          damping: 40,
-        } as StyleTransitions,
+        transition: reduceMotion
+          ? { duration: 0 }
+          : ({
+              type: 'spring',
+              stiffness: 400,
+              damping: 40,
+            } as StyleTransitions),
       },
     }),
-    [],
+    [reduceMotion],
   );
 
   const t = useTranslations('Menu');
