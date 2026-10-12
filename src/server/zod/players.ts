@@ -5,6 +5,7 @@ import {
 } from '@/lib/glicko2';
 import {
   affiliations,
+  player_stats,
   players,
   rating_events,
 } from '@/server/db/schema/players';
@@ -147,16 +148,13 @@ export const playerMergeInputSchema = z.object({
   mergedPlayerId: z.string(),
 });
 
-export const statItemSchema = z.object({
-  value: z.number(),
-  rank: z.number().nullable(),
+export const playerStatsSchema = createSelectSchema(player_stats).omit({
+  playerId: true,
+  clubId: true,
 });
 
-export const playerStatsSchema = z.object({
-  tournamentsPlayed: statItemSchema,
-  gamesPlayed: statItemSchema,
-  winRate: statItemSchema,
-  ratingPeakRank: z.number().nullable(),
+export const playerStatsRowSchema = createSelectSchema(player_stats).omit({
+  gamesPlayed: true,
 });
 
 export const playerAuthStatsSchema = z.object({
@@ -209,5 +207,6 @@ export const userPlayerClubSchema = z.object({
 });
 
 export type PlayerStatsModel = z.infer<typeof playerStatsSchema>;
+export type PlayerStatsRowModel = z.infer<typeof playerStatsRowSchema>;
 export type PlayerAuthStatsModel = z.infer<typeof playerAuthStatsSchema>;
 export type UserPlayerClubModel = z.infer<typeof userPlayerClubSchema>;

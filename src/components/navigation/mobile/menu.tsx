@@ -5,14 +5,17 @@ import MenuItem from '@/components/navigation/mobile/menu-item';
 import MenuItemWithSubMenu from '@/components/navigation/mobile/menu-item-with-sub';
 import MenuToggle from '@/components/navigation/mobile/menu-toggle';
 import ModeToggler from '@/components/navigation/mode-toggler';
-import { NAVMENU_ITEMS } from '@/components/navigation/nav-menu-items';
+import {
+  NAVMENU_ITEMS,
+  useIsActivePath,
+} from '@/components/navigation/nav-menu-items';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion, StyleTransitions, useCycle, Variants } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FC, RefObject, useEffect, useMemo, useRef, useState } from 'react';
 
 const Menu: FC = () => {
@@ -23,7 +26,7 @@ const Menu: FC = () => {
   const { mutate: signOut } = useSignOutMutation(queryClient);
   const { height } = useDimensions(containerRef);
   const [isOpen, toggleOpen] = useCycle(false, true);
-  const pathname = usePathname();
+  const isActivePath = useIsActivePath();
   const handleSignOut = async () => {
     signOut(undefined, {
       onSuccess: () => {
@@ -94,11 +97,7 @@ const Menu: FC = () => {
                     <Link
                       href={item.path}
                       onClick={() => toggleOpen()}
-                      className={`text-2xl ${
-                        pathname.includes(item.path.replaceAll('/', ''))
-                          ? selected
-                          : ''
-                      }`}
+                      className={`text-2xl ${isActivePath(item.path) ? selected : ''}`}
                     >
                       {t(item.title)}
                     </Link>

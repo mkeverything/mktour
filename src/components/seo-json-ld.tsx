@@ -1,19 +1,17 @@
 import { BASE_URL } from '@/lib/config/urls';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 export async function getOrganizationSchema() {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const baseUrl = BASE_URL || 'https://mktour.org';
+  const t = await getTranslations('Seo');
 
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'mktour',
-    url: baseUrl,
+    url: BASE_URL,
     logo: {
       '@type': 'ImageObject',
-      url: `${baseUrl}/app-icon.png`,
+      url: `${BASE_URL}/app-icon.png`,
       width: 512,
       height: 512,
     },
@@ -24,41 +22,30 @@ export async function getOrganizationSchema() {
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'mkevrthng@gmail.com',
+      email: 'hello@mktour.org',
       contactType: 'customer service',
     },
   };
 }
 
 export async function getWebsiteSchema() {
-  const baseUrl = BASE_URL || 'https://mktour.org';
-
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'mktour',
-    url: baseUrl,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${baseUrl}/api/search?query={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
+    alternateName: 'мктур',
+    url: BASE_URL,
   };
 }
 
 export async function getSoftwareApplicationSchema() {
-  const locale = await getLocale();
-  const t = await getTranslations({ locale, namespace: 'Seo' });
-  const baseUrl = BASE_URL || 'https://mktour.org';
+  const t = await getTranslations('Seo');
 
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'mktour',
-    url: baseUrl,
+    url: BASE_URL,
     applicationCategory: 'SportsApplication',
     operatingSystem: 'Web',
     offers: {
@@ -70,7 +57,7 @@ export async function getSoftwareApplicationSchema() {
     featureList: [
       'Chess Tournament Management',
       'Automatic Rating Calculation',
-      'Swiss System, Round-Robin, Single & Double Elimination',
+      'Swiss System and Round-Robin Pairings',
       'Free Open API',
       'Made by Chess Players and Organizers',
     ],

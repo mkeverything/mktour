@@ -16,7 +16,6 @@ import {
   newid,
   nowTimestamp,
 } from '@/lib/utils';
-import { revalidateClubPlayerStats } from '@/server/cache/player-stats';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
@@ -41,6 +40,7 @@ import {
   UnitModel,
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
 import { replaceRoundGames } from './tournament-games';
 import { applyPreStartUnitOrder } from './tournament-unit-order';
@@ -277,7 +277,7 @@ export async function finishTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
 
-  const { clubId, closedAt } = await db.transaction(async (tx) => {
+  const closedAt = await db.transaction(async (tx) => {
     const [tournament, allGames, unitsUnsorted] = await Promise.all([
       getTournamentById(tournamentId, tx),
       getTournamentGames(tournamentId, tx),
@@ -351,9 +351,16 @@ export async function finishTournament({
       await calculateAndApplyGlickoRatings(tournamentId, tx, closedAt);
     }
 
-    return { clubId: tournament.clubId, closedAt };
+    await refreshPlayerStats(tx, {
+      clubId: tournament.clubId,
+      playerIds: sortedUnits.flatMap((unit) =>
+        unit.players.map((player) => player.id),
+      ),
+      now: closedAt,
+    });
+
+    return closedAt;
   });
-  revalidateClubPlayerStats(clubId);
   return { closedAt };
 }
 
@@ -366,16 +373,26 @@ export async function deleteTournament({
   if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
-  const tournament = await db
-    .select({ clubId: tournaments.clubId, closedAt: tournaments.closedAt })
-    .from(tournaments)
-    .where(eq(tournaments.id, tournamentId))
-    .get();
   await db.transaction(async (tx) => {
-    const units = await tx
-      .select({ id: tournament_units.id })
-      .from(tournament_units)
-      .where(eq(tournament_units.tournamentId, tournamentId));
+    const [tournament, units, participants] = await Promise.all([
+      tx
+        .select({ clubId: tournaments.clubId, closedAt: tournaments.closedAt })
+        .from(tournaments)
+        .where(eq(tournaments.id, tournamentId))
+        .get(),
+      tx
+        .select({ id: tournament_units.id })
+        .from(tournament_units)
+        .where(eq(tournament_units.tournamentId, tournamentId)),
+      tx
+        .select({ playerId: players_to_units.playerId })
+        .from(players_to_units)
+        .innerJoin(
+          tournament_units,
+          eq(players_to_units.unitId, tournament_units.id),
+        )
+        .where(eq(tournament_units.tournamentId, tournamentId)),
+    ]);
     if (units.length > 0) {
       const unitIds = units.map((unit) => unit.id);
 
@@ -392,8 +409,15 @@ export async function deleteTournament({
     }
 
     await tx.delete(tournaments).where(eq(tournaments.id, tournamentId));
+
+    if (tournament?.closedAt) {
+      await refreshPlayerStats(tx, {
+        clubId: tournament.clubId,
+        playerIds: participants.map((participant) => participant.playerId),
+        now: new Date(),
+      });
+    }
   });
-  if (tournament?.closedAt) revalidateClubPlayerStats(tournament.clubId);
 }
 
 export async function updateSwissRoundsNumber({

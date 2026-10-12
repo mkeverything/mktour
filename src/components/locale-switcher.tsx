@@ -1,25 +1,26 @@
-import { LoadingSpinner } from '@/app/loading';
-import { setUserLocale } from '@/components/get-user-locale';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { Button } from '@/components/ui/button';
+import { COOKIES } from '@/lib/config/constants';
+import { LOCALE_COOKIE_MAX_AGE, LOCALE_LABELS, LOCALES } from '@/lib/locales';
 import { useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 
 const LocaleSwitcher = () => {
   const locale = useLocale();
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const handleClickLocale = () => {
-    startTransition(() => {
-      setUserLocale(locale === 'en' ? 'ru' : 'en');
-    });
+    const nextLocale = LOCALES[(LOCALES.indexOf(locale) + 1) % LOCALES.length];
+    document.cookie = `${COOKIES.LOCALE}=${nextLocale}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE}; samesite=lax`;
+    // refresh also drops prefetches in the old locale; on /{locale}/... urls
+    // the proxy redirects visitors with a saved choice to the unprefixed url
+    startTransition(() => router.refresh());
   };
 
   return (
     <Button variant="ghost" size="icon" onClick={handleClickLocale}>
-      {pending ? (
-        <LoadingSpinner />
-      ) : (
-        <span>{locale === 'en' ? 'en' : 'рус'}</span>
-      )}
+      {pending ? <LoadingSpinner /> : <span>{LOCALE_LABELS[locale]}</span>}
     </Button>
   );
 };
