@@ -151,8 +151,10 @@ export const playerRouter = {
     .input(playerIdInputSchema)
     .output(z.void())
     .mutation(async ({ input, ctx }) => {
-      const clubs = await getUserClubIds({ userId: ctx.user.id });
-      const player = await getPlayer(input.playerId);
+      const [clubs, player] = await Promise.all([
+        getUserClubIds({ userId: ctx.user.id }),
+        getPlayer(input.playerId),
+      ]);
       if (!player) throw new AppError('PLAYER_NOT_FOUND');
       const isAdmin = Object.keys(clubs).find(
         (clubId) => clubId === player.clubId,

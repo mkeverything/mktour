@@ -10,8 +10,10 @@ import { redirect } from 'next/navigation';
 export default async function CreateClubPage() {
   const user = await publicCaller.auth.info();
   if (!user) redirect('/sign-in');
-  const club = await publicCaller.auth.emptyClub();
-  const teamsFull = await getUserLichessTeams(user.username);
+  const [club, teamsFull] = await Promise.all([
+    publicCaller.auth.emptyClub(),
+    getUserLichessTeams(user.username),
+  ]);
   const teams = teamsFull.map((el) => ({
     label: el.name.toLowerCase(),
     value: el.id,

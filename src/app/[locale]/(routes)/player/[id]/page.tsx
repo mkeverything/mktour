@@ -36,15 +36,13 @@ async function PlayerPageContent(props: PlayerPageProps) {
   if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
 
   const { club, ...player } = playerData;
-  const [status, affiliation] = await Promise.all([
+  const [status, affiliation, playerLastTournaments] = await Promise.all([
     publicCaller.club.authStatus({
       clubId: club.id,
     }),
     publicCaller.auth.affiliationInClub({ clubId: club.id }),
+    publicCaller.player.lastTournaments({ playerId: player.id }),
   ]);
-  const playerLastTournaments = await publicCaller.player.lastTournaments({
-    playerId: player.id,
-  });
 
   const canEdit = status !== null;
   const canClaim = !status && user && !player.userId;
