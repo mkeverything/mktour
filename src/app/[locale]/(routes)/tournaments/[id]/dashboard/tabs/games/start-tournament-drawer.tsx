@@ -16,7 +16,20 @@ import { Button } from '@/components/ui/button';
 import { DialogOverlay, DialogPortal } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { FC, useContext } from 'react';
+import { FC, useContext, useSyncExternalStore } from 'react';
+
+function subscribeToFullscreen(onChange: () => void) {
+  document.addEventListener('fullscreenchange', onChange);
+  return () => document.removeEventListener('fullscreenchange', onChange);
+}
+
+function getPortalContainer() {
+  return document.fullscreenElement ?? document.body;
+}
+
+function getServerPortalContainer() {
+  return null;
+}
 
 const StartTournamentDrawer: FC<{
   startedAt: number | undefined;
@@ -25,6 +38,11 @@ const StartTournamentDrawer: FC<{
 }> = ({ startedAt, open, onOpenChange }) => {
   const { status } = useContext(DashboardContext);
   const { isMobile } = useContext(MediaQueryContext);
+  const portalContainer = useSyncExternalStore(
+    subscribeToFullscreen,
+    getPortalContainer,
+    getServerPortalContainer,
+  );
   const visible = !startedAt && open && status === 'organizer';
 
   const body = (
@@ -51,7 +69,7 @@ const StartTournamentDrawer: FC<{
       {isMobile ? (
         <Content>{body}</Content>
       ) : (
-        <DialogPortal container={document.fullscreenElement ?? document.body}>
+        <DialogPortal container={portalContainer}>
           <DialogOverlay />
           <DialogPrimitive.Content
             className={cn(
