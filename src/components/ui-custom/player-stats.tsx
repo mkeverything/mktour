@@ -3,7 +3,7 @@
 import AuthStatsCard from '@/app/[locale]/(routes)/player/[id]/auth-stats-card';
 import { usePlayerStats } from '@/components/hooks/query-hooks/use-player-stats';
 import HalfCard from '@/components/ui-custom/half-card';
-import { Card, CardContent } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type {
   PlayerAuthStatsModel,
@@ -16,7 +16,7 @@ import { FC, ReactNode } from 'react';
 
 interface PlayerStatsProps {
   player: Pick<PlayerModel, 'id' | 'nickname' | 'ratingPeak'>;
-  wrapper?: 'card' | 'half-card' | 'none';
+  wrapper?: 'half-card' | 'none';
   clubName: string;
   renderAuthStatsCard?: boolean;
   authStats?: PlayerAuthStatsModel | null;
@@ -33,25 +33,23 @@ export default function PlayerStats({
   isAuthStatsPending,
   showAuthStatsWhenEmpty = true,
 }: PlayerStatsProps) {
-  const { data: stats, isPending } = usePlayerStats(player.id);
+  const { data: stats } = usePlayerStats(player.id);
   const t = useTranslations('Player.Stats');
 
   const content = (
-    <>
-      <div className="grid grid-cols-2 gap-3">
+    <div className="@container">
+      <div className="grid grid-cols-2 gap-3 @xl:grid-cols-4">
         <StatItem
           icon={Trophy}
           label={t('tournaments')}
           value={stats?.tournamentsPlayed}
           rank={stats?.tournamentsPlayedRank}
-          isLoading={isPending}
         />
         <StatItem
           icon={Crown}
           label={t('tournamentsWon')}
           value={stats?.tournamentsWon}
           rank={stats?.tournamentsWonRank}
-          isLoading={isPending}
         />
         <StatItem
           icon={Swords}
@@ -59,35 +57,27 @@ export default function PlayerStats({
           value={stats?.gamesPlayed}
           detail={stats && <GamesRecord {...stats} />}
           rank={stats?.gamesPlayedRank}
-          isLoading={isPending}
         />
         <StatItem
           icon={TrendingUp}
           label={t('ratingPeak')}
           value={player.ratingPeak ?? '—'}
-          isLoading={isPending}
         />
+        {renderAuthStatsCard && (
+          <AuthStatsCard
+            playerId={player.id}
+            playerNickname={player.nickname}
+            clubName={clubName}
+            authStats={authStats}
+            isPending={isAuthStatsPending}
+            showWhenEmpty={showAuthStatsWhenEmpty}
+          />
+        )}
       </div>
-      {renderAuthStatsCard && (
-        <AuthStatsCard
-          playerId={player.id}
-          playerNickname={player.nickname}
-          clubName={clubName}
-          authStats={authStats}
-          isPending={isAuthStatsPending}
-          showWhenEmpty={showAuthStatsWhenEmpty}
-        />
-      )}
-    </>
+    </div>
   );
 
-  if (wrapper === 'none') {
-    return <div className="flex flex-col gap-4">{content}</div>;
-  }
-
-  if (wrapper === 'card') {
-    return <Card className="p-mk-3">{content}</Card>;
-  }
+  if (wrapper === 'none') return content;
 
   return (
     <HalfCard>
@@ -107,7 +97,7 @@ export const PlayerRatingRank: FC<{ playerId: string }> = ({ playerId }) => {
 export const GamesRecord: FC<
   Pick<PlayerStatsModel, 'gamesWon' | 'gamesDrawn' | 'gamesLost'>
 > = ({ gamesWon, gamesDrawn, gamesLost }) => (
-  <span className="ml-2">
+  <span>
     {gamesWon}-{gamesDrawn}-{gamesLost}
   </span>
 );
@@ -118,7 +108,6 @@ interface StatItemProps {
   value?: string | number;
   detail?: ReactNode;
   rank?: number | null;
-  isLoading?: boolean;
 }
 
 const StatItem: FC<StatItemProps> = ({
@@ -127,36 +116,24 @@ const StatItem: FC<StatItemProps> = ({
   value,
   detail,
   rank,
-  isLoading,
 }) => (
-  <div className="bg-muted/50 grid grid-cols-[auto_50%_auto] items-center justify-between gap-4 rounded-lg p-4">
-    <Icon className="text-muted-foreground size-5" />
-    <div className="flex flex-col">
-      {isLoading ? (
-        <>
-          <Skeleton className="mb-1 h-5 w-12" />
-          <Skeleton className="h-3 w-16" />
-        </>
-      ) : (
-        <>
-          <span className="flex items-baseline gap-1.5">
-            <span className="text-primary text-lg font-semibold">{value}</span>
-            {detail && (
-              <span className="text-muted-foreground text-3xs truncate sm:text-xs">
-                {detail}
-              </span>
-            )}
-          </span>
-          <span className="text-muted-foreground text-3xs truncate text-left sm:text-xs">
-            {label}
-          </span>
-        </>
-      )}
+  <div className="bg-muted/50 text-muted-foreground flex flex-col gap-3 rounded-xl p-4 text-xs">
+    <div className="flex items-center justify-between">
+      <Icon className="size-4" />
+      {rank && `#${rank}`}
     </div>
-    {!isLoading && rank !== undefined && (
-      <span className="text-muted-foreground text-xs">
-        {rank === null ? '—' : `#${rank}`}
-      </span>
-    )}
+    <div>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        {value === undefined ? (
+          <Skeleton className="h-8 w-12" />
+        ) : (
+          <span className="text-foreground text-2xl font-semibold">
+            {value}
+          </span>
+        )}
+        {detail}
+      </div>
+      {label}
+    </div>
   </div>
 );
