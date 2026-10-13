@@ -94,11 +94,11 @@ const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
           </span>
         )}
       </div>
-      <div className="flex flex-col items-end">
+      <div className="flex items-baseline gap-2">
+        <PlayerRatingRank playerId={player.id} />
         <span className="text-3xl font-bold">
           {player.isEstablished ? player.rating : `${player.rating}?`}
         </span>
-        <PlayerRatingRank playerId={player.id} />
       </div>
     </div>
   </div>
