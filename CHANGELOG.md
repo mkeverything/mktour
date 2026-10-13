@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/mkeverything/mktour/compare/v1.13.0...v1.14.0) (2026-10-13)
+
+
+### Features
+
+* **home:** add about us button next to lichess sign-in ([18175ef](https://github.com/mkeverything/mktour/commit/18175ef8d49909530152512174b1dc9adda12813))
+
 # [1.13.0](https://github.com/mkeverything/mktour/compare/v1.12.1...v1.13.0) (2026-10-13)
 
 
