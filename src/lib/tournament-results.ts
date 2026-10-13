@@ -56,8 +56,8 @@ export const calculateBuchholzCut1 = (
   allGames: GameModel[],
   unitScoresMap: Map<string, number>,
 ): number => {
-  // for bye rounds (no opponent), use the unit's own score as virtual opponent score
-  // (standard FIDE Buchholz convention for unplayed games / byes)
+  // for bye rounds (no opponent), use the unit's own score as virtual opponent score,
+  // capped at a draw for every round (fide §16.4.2)
   const unitTotalScore = unitScoresMap.get(unit.id) ?? 0;
   const opponentScores: number[] = [];
   const opponentsByRound = new Map<number, string>();
@@ -80,7 +80,7 @@ export const calculateBuchholzCut1 = (
     if (opponentId) {
       opponentScores.push(unitScoresMap.get(opponentId) ?? 0);
     } else {
-      opponentScores.push(unitTotalScore);
+      opponentScores.push(Math.min(unitTotalScore, roundNumber * 0.5));
     }
   }
 

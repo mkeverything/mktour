@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 
 import { lichess, lucia } from '@/lib/auth/lucia';
 import { CACHE_TAGS, userPublicProfileTag } from '@/lib/cache-tags';
+import { COOKIES } from '@/lib/config/constants';
 import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
@@ -18,10 +19,10 @@ export async function GET(request: Request): Promise<Response> {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const cooks = await cookies();
-  const authFrom = cooks.get('auth_from')?.value ?? null;
-  cooks.delete('auth_from');
-  const storedState = cooks.get('lichess_oauth_state')?.value ?? null;
-  const codeVerifier = cooks.get('lichess_oauth_code_validation')?.value;
+  const authFrom = cooks.get(COOKIES.AUTH_FROM)?.value ?? null;
+  cooks.delete(COOKIES.AUTH_FROM);
+  const storedState = cooks.get(COOKIES.OAUTH_STATE)?.value ?? null;
+  const codeVerifier = cooks.get(COOKIES.OAUTH_CODE_VERIFIER)?.value;
 
   if (
     !code ||

@@ -2,8 +2,6 @@ import { MetadataRoute } from 'next';
 import { BASE_URL } from '@/lib/config/urls';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = BASE_URL || 'https://mktour.org';
-
   return {
     rules: [
       {
@@ -18,6 +16,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${BASE_URL}/sitemap.xml`,
   };
 }

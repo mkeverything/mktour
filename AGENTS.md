@@ -45,6 +45,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - no unnecessary comments in code
 - preserve `/** @deprecated ... */` / `/** deprecated */` markers on exports unless asked to remove them
 - files: kebab-case; components/types: PascalCase; variables: camelCase; constants: UPPER_SNAKE_CASE
+- where constants live: used by one module → unexported at the top of that module; owned by a domain → that domain's module (`LOCALES` in `src/lib/locales.ts`, `CACHE_TAGS` in `src/lib/cache-tags.ts`); app-wide identifiers no single module owns, like cookie names → `src/lib/config/constants.ts`, which stays import-free so the proxy and client can use it
 - absolute imports use `@/`
 - `src/components/ui/` is shadcn code; never edit it
 - extend/customize ui in `src/components/ui-custom/`
@@ -62,6 +63,17 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 
 - feature/project prs target `beta`; only `beta` prs into `main`
 - if asked to open a feature pr against `main`, confirm first
+- if a request can be read more than one way, ask before acting
 - do not push to remote without user approval
 - do not amend commits unless explicitly requested
 - syncing beta to main: `git checkout beta && git reset --hard origin/main && git push --force origin beta`
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
