@@ -31,6 +31,7 @@ export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
     path: '/notifications',
     title: t('notifications.title'),
     description: t('notifications.description'),
+    robots: { index: false, follow: false },
   });
 }
 
