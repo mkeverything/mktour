@@ -13,13 +13,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  motion,
   MotionConfig,
   StyleTransitions,
   useCycle,
   useReducedMotion,
   Variants,
 } from 'framer-motion';
+import * as m from 'framer-motion/m';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -96,20 +96,20 @@ const Menu: FC = () => {
 
   return (
     <div className="w-8">
-      <motion.nav
+      <m.nav
         initial={false}
         animate={isOpen ? 'open' : 'closed'}
         custom={height}
         className={`fixed inset-0 z-100 block w-full ${isOpen ? '' : 'pointer-events-none'}`}
         ref={containerRef}
       >
-        <motion.div variants={panel}>
+        <m.div variants={panel}>
           <MotionConfig skipAnimations={!!reduceMotion}>
-            <motion.div
+            <m.div
               className="bg-card absolute inset-0 right-0 w-full"
               variants={sidebar}
             />
-            <motion.ul variants={variants}>
+            <m.ul variants={variants}>
               <ScrollArea
                 className="offset-4 grid h-[92svh] w-full gap-2 px-8 pt-[calc(var(--spacing-mk-4)+var(--spacing-mk-safe-area-top))] pb-4"
                 type="auto"
@@ -154,11 +154,11 @@ const Menu: FC = () => {
                 <LocaleSwitcher />
                 <ModeToggler />
               </MenuItem>
-            </motion.ul>
+            </m.ul>
           </MotionConfig>
-        </motion.div>
+        </m.div>
         <MenuToggle toggle={toggleOpen} />
-      </motion.nav>
+      </m.nav>
     </div>
   );
 };

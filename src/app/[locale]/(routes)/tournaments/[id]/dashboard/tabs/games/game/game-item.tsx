@@ -11,7 +11,8 @@ import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GameResult } from '@/server/zod/enums';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
+import * as m from 'framer-motion/m';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Dispatch, FC, memo, SetStateAction, useContext, useRef } from 'react';
@@ -98,7 +99,7 @@ const GameItem: FC<GameProps> = ({
 
   return (
     <PortalWrapper portalled={isActive}>
-      <motion.div
+      <m.div
         key={id}
         ref={ref}
         className={`${disabled && 'pointer-events-none'} w-full min-w-0 cursor-pointer ${
@@ -137,7 +138,7 @@ const GameItem: FC<GameProps> = ({
             className={`${unitId === blackUnitId && 'font-bold'}`}
           />
         </Card>
-      </motion.div>
+      </m.div>
     </PortalWrapper>
   );
 };
