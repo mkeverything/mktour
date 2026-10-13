@@ -8,6 +8,10 @@
         "files": ["src/components/ui/carousel.tsx"],
         "rules": ["react-doctor/effect-needs-cleanup"],
       },
+      {
+        "files": ["src/lib/pairing-generators/**"],
+        "rules": ["react-doctor/js-set-map-lookups"],
+      },
     ],
   },
 }

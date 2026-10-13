@@ -101,7 +101,10 @@ export const removeUnitById = (
 export const removePlayersOutByIds = <T extends { id: string }>(
   players: T[] | undefined,
   ids: string[],
-) => players?.filter((player) => !ids.includes(player.id));
+) => {
+  const idsToRemove = new Set(ids);
+  return players?.filter((player) => !idsToRemove.has(player.id));
+};
 
 export const hasDuplicateUnitNickname = (
   units: UnitModel[] | undefined,
