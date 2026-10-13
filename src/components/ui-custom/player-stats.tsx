@@ -33,7 +33,7 @@ export default function PlayerStats({
   isAuthStatsPending,
   showAuthStatsWhenEmpty = true,
 }: PlayerStatsProps) {
-  const { data: stats } = usePlayerStats(player.id);
+  const { data: stats, isPending } = usePlayerStats(player.id);
   const t = useTranslations('Player.Stats');
 
   const content = (
@@ -43,25 +43,28 @@ export default function PlayerStats({
           icon={Trophy}
           label={t('tournaments')}
           value={stats?.tournamentsPlayed}
+          isLoading={isPending}
           rank={stats?.tournamentsPlayedRank}
         />
         <StatItem
           icon={Crown}
           label={t('tournamentsWon')}
           value={stats?.tournamentsWon}
+          isLoading={isPending}
           rank={stats?.tournamentsWonRank}
         />
         <StatItem
           icon={Swords}
           label={t('gamesPlayed')}
           value={stats?.gamesPlayed}
+          isLoading={isPending}
           detail={stats && <GamesRecord {...stats} />}
           rank={stats?.gamesPlayedRank}
         />
         <StatItem
           icon={TrendingUp}
           label={t('ratingPeak')}
-          value={player.ratingPeak ?? '—'}
+          value={player.ratingPeak}
         />
         {renderAuthStatsCard && (
           <AuthStatsCard
@@ -105,9 +108,10 @@ export const GamesRecord: FC<
 interface StatItemProps {
   icon: FC<{ className?: string }>;
   label: string;
-  value?: string | number;
+  value?: number | null;
   detail?: ReactNode;
   rank?: number | null;
+  isLoading?: boolean;
 }
 
 const StatItem: FC<StatItemProps> = ({
@@ -116,6 +120,7 @@ const StatItem: FC<StatItemProps> = ({
   value,
   detail,
   rank,
+  isLoading,
 }) => (
   <div className="bg-muted/50 text-muted-foreground flex flex-col gap-3 rounded-xl p-4 text-xs">
     <div className="flex items-center justify-between">
@@ -124,11 +129,11 @@ const StatItem: FC<StatItemProps> = ({
     </div>
     <div>
       <div className="flex flex-wrap items-baseline gap-x-2">
-        {value === undefined ? (
+        {isLoading ? (
           <Skeleton className="h-8 w-12" />
         ) : (
           <span className="text-foreground text-2xl font-semibold">
-            {value}
+            {value ?? '—'}
           </span>
         )}
         {detail}
