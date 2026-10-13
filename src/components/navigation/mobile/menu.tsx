@@ -114,10 +114,10 @@ const Menu: FC = () => {
                 className="offset-4 grid h-[92svh] w-full gap-2 px-8 pt-[calc(var(--spacing-mk-4)+var(--spacing-mk-safe-area-top))] pb-4"
                 type="auto"
               >
-                {NAVMENU_ITEMS.map((item, idx) => (
-                  <div key={idx}>
+                {NAVMENU_ITEMS.map((item) => (
+                  <div key={item.path}>
                     {!item.subMenuItems ? (
-                      <MenuItem key={idx}>
+                      <MenuItem>
                         <Link
                           href={item.path}
                           onClick={() => toggleOpen()}
