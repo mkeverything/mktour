@@ -1,5 +1,4 @@
 import { cacheLife } from 'next/cache';
-import { connection } from 'next/server';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
