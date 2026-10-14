@@ -35,7 +35,7 @@ import { FC, ReactNode } from 'react';
 const ClubPage: FC<{
   club: ClubModel;
   statusInClub: StatusInClub | null;
-  userId: string;
+  userId?: string;
 }> = ({ club, statusInClub, userId }) => {
   return (
     <div className="mk-container gap-mk-2 flex flex-col">

@@ -10,7 +10,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, ReactNode } from 'react';
 
-const AffiliatedPlayerCard: FC<{ clubId: string; userId: string }> = ({
+const AffiliatedPlayerCard: FC<{ clubId: string; userId?: string }> = ({
   clubId,
   userId,
 }) => {

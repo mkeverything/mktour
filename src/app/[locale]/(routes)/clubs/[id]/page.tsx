@@ -1,7 +1,6 @@
 import ClubPage from '@/app/[locale]/(routes)/clubs/[id]/club';
 import Loading from '@/app/[locale]/(routes)/loading';
 import { getQueryClient, trpc } from '@/components/trpc/server';
-import { validateRequest } from '@/lib/auth/lucia';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
@@ -12,11 +11,11 @@ import { Suspense } from 'react';
 
 export default async function Page(props: ClubPageProps) {
   const params = await props.params;
-  const club = await publicCaller.club.info({ clubId: params.id });
-  const { user } = await validateRequest();
-  const statusInClub = await publicCaller.club.authStatus({
-    clubId: params.id,
-  });
+  const [club, user, statusInClub] = await Promise.all([
+    publicCaller.club.info({ clubId: params.id }),
+    publicCaller.auth.info(),
+    publicCaller.club.authStatus({ clubId: params.id }),
+  ]);
 
   if (!club) notFound();
 
@@ -47,11 +46,7 @@ export default async function Page(props: ClubPageProps) {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Suspense fallback={<Loading />}>
-        <ClubPage
-          club={club}
-          statusInClub={statusInClub}
-          userId={user?.id || ''}
-        />
+        <ClubPage club={club} statusInClub={statusInClub} userId={user?.id} />
       </Suspense>
     </HydrationBoundary>
   );
