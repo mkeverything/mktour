@@ -26,7 +26,7 @@ import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 
@@ -60,16 +60,6 @@ const AddNewPlayer = ({
     defaultValues: getDefaultValues(value),
     reValidateMode: 'onSubmit',
   });
-
-  const nickname = useWatch({
-    control: form.control,
-    name: 'nickname',
-  });
-
-  useEffect(() => {
-    if (nickname === undefined) return;
-    setValue(nickname);
-  }, [nickname, setValue]);
 
   useEffect(() => {
     const clubId = tournament.data?.club?.id;
@@ -137,6 +127,10 @@ const AddNewPlayer = ({
                   className="drop-shadow-md"
                   placeholder={t('name')}
                   {...field}
+                  onChange={(event) => {
+                    field.onChange(event);
+                    setValue(event.target.value);
+                  }}
                   aria-label={t('name')}
                   autoComplete="off"
                   autoFocus
