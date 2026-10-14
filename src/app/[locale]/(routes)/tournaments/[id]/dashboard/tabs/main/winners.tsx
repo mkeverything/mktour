@@ -1,8 +1,7 @@
 'use client';
 
-import Medal, {
-  PLACE_LABEL_KEYS,
-} from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/medal';
+import Medal from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/medal';
+import { PLACE_LABEL_KEYS } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/podium';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { playerPublicProfileHref } from '@/lib/utils';
 import { UnitModel } from '@/server/zod/tournaments';

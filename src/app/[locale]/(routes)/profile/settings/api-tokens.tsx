@@ -4,7 +4,7 @@ import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { useTokenGenerateMutation } from '@/components/hooks/mutation-hooks/use-token-generate';
 import { useTokenRevokeMutation } from '@/components/hooks/mutation-hooks/use-token-revoke';
 import { useTRPC } from '@/components/trpc/client';
-import ComboModal, { Description } from '@/components/ui-custom/combo-modal';
+import * as ComboModal from '@/components/ui-custom/combo-modal';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -144,7 +144,9 @@ export default function ApiTokens() {
         <ComboModal.Content>
           <ComboModal.Header>
             <ComboModal.Title>{t('modal title')}</ComboModal.Title>
-            <Description>{t('modal description')}</Description>
+            <ComboModal.Description>
+              {t('modal description')}
+            </ComboModal.Description>
           </ComboModal.Header>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
