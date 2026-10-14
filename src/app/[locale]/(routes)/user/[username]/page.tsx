@@ -9,7 +9,7 @@ import type { Metadata, ResolvingMetadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
-export default async function UserPage(props: TournamentPageProps) {
+export default async function UserPage(props: UserPageProps) {
   const [params, user] = await Promise.all([
     props.params,
     publicCaller.auth.info(),
@@ -78,6 +78,6 @@ export type UserWithPlayers = UserPublicModel & {
   lastTournaments: TournamentModel[];
 };
 
-export interface TournamentPageProps {
+export interface UserPageProps {
   params: Promise<{ username: string }>;
 }

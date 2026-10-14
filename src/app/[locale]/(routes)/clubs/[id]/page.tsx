@@ -1,5 +1,4 @@
 import ClubPage from '@/app/[locale]/(routes)/clubs/[id]/club';
-import Loading from '@/app/[locale]/(routes)/loading';
 import { getQueryClient, trpc } from '@/components/trpc/server';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
@@ -7,7 +6,6 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 
 export default async function Page(props: ClubPageProps) {
   const params = await props.params;
@@ -45,9 +43,7 @@ export default async function Page(props: ClubPageProps) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Suspense fallback={<Loading />}>
-        <ClubPage club={club} statusInClub={statusInClub} userId={user?.id} />
-      </Suspense>
+      <ClubPage club={club} statusInClub={statusInClub} userId={user?.id} />
     </HydrationBoundary>
   );
 }
