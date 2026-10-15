@@ -33,13 +33,14 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import type {
   PlayerAuthStatsModel,
   UserPlayerClubModel,
 } from '@/server/zod/players';
 import { useQueries } from '@tanstack/react-query';
 import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, ReactNode, useMemo } from 'react';
 
@@ -50,9 +51,9 @@ const Profile: FC<{
   const { data: authUser } = useAuth();
   const { data: managedClubs, isPending } = useUserClubs(user.id);
   const { data: viewerClubs } = useUserClubs(authUser?.id);
-  const format = useFormatter();
+  const formatDate = useFormatDate();
   const preparedCreatedAt = user.createdAt
-    ? format.dateTime(user.createdAt, { dateStyle: 'long' })
+    ? formatDate(user.createdAt, 'long')
     : null;
   const t = useTranslations('Profile');
 
@@ -328,7 +329,7 @@ const ClubPlayerCard: FC<
   showAuthStatsWhenEmpty,
 }) => {
   const t = useTranslations('Profile');
-  const format = useFormatter();
+  const formatDate = useFormatDate();
   const tStatus = useTranslations('Status');
   const formattedPlayerRating = !player.rating
     ? '—'
@@ -392,9 +393,7 @@ const ClubPlayerCard: FC<
             icon={CalendarDays}
             label={t('lastTournament')}
             value={
-              player.lastSeenAt
-                ? format.dateTime(player.lastSeenAt, { dateStyle: 'medium' })
-                : '—'
+              player.lastSeenAt ? formatDate(player.lastSeenAt, 'short') : '—'
             }
           />
         </div>

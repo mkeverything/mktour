@@ -2,24 +2,22 @@ import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fa
 import { Card, CardTitle } from '@/components/ui/card';
 import { ClubModel } from '@/server/zod/clubs';
 import { TournamentModel } from '@/server/zod/tournaments';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { Dot } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 const TournamentItem = ({ club, tournament }: Props) => {
   const { date, type, format, id } = tournament;
-  const formatUtil = useFormatter();
+  const formatDate = useFormatDate();
   const t = useTranslations('MakeTournament');
   const fallbackTitle = useTournamentFallbackTitle(tournament);
   const title = tournament.title || fallbackTitle;
-  const localizedDate = formatUtil.dateTime(new Date(date), {
-    dateStyle: 'short',
-  });
   const details = [
     ['rated', tournament.rated ? t('rated') : t('unrated')],
     ['format', t(format)],
     ['type', t(`Types.${type}`)],
-    ['date', localizedDate],
+    ['date', formatDate(date, 'short')],
   ] as const;
 
   const description = details.map(([key, detail], i) => {

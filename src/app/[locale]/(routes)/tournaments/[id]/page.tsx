@@ -4,6 +4,7 @@ import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { TournamentInfoModel } from '@/server/zod/tournaments';
+import { formatDate } from '@/lib/local-date';
 import { dehydrate, HydrationBoundary, noop } from '@tanstack/react-query';
 import { TRPCError } from '@trpc/server';
 import type { ResolvingMetadata } from 'next';
@@ -74,14 +75,16 @@ export async function generateMetadata(
   const format = tTournaments(
     tournament.tournament.format as keyof typeof tTournaments,
   );
-  const date = new Date(tournament.tournament.date).toLocaleDateString(locale);
+  const { date } = tournament.tournament;
   const title = t('tournaments.tournamentPage.title', {
-    name: tournament.tournament.title || `${format} ${date}`,
+    name:
+      tournament.tournament.title?.trim() ||
+      `${format} ${formatDate(date, locale, 'short')}`,
   });
   const description = t('tournaments.tournamentPage.description', {
     format,
-    clubName: tournament.club.name,
-    date,
+    clubName: tournament.club.name.trim(),
+    date: formatDate(date, locale, 'long', { withYear: true }),
     players: units.reduce((sum, unit) => sum + unit.players.length, 0),
   });
 

@@ -42,5 +42,6 @@ export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
     path: '/profile/settings',
     title: t('profile.settings.title', { username: user?.username ?? '' }),
     description: t('profile.settings.description'),
+    robots: { index: false, follow: false },
   });
 }
