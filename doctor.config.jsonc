@@ -12,6 +12,10 @@
         "files": ["src/lib/pairing-generators/**"],
         "rules": ["react-doctor/js-set-map-lookups"],
       },
+      {
+        "files": ["src/lib/pairing-generators/**"],
+        "rules": ["react-doctor/js-index-maps"],
+      },
     ],
   },
 }
