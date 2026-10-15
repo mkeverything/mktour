@@ -259,6 +259,8 @@ export async function refreshPlayerStats(
     .map(toPlayerStatsRow);
 
   for (let i = 0; i < changedRows.length; i += UPSERT_CHUNK_SIZE) {
+    // these chunks share one transaction; a failed write must prevent the next chunk from being sent.
+    // react-doctor-disable-next-line react-doctor/async-await-in-loop
     await tx
       .insert(player_stats)
       .values(changedRows.slice(i, i + UPSERT_CHUNK_SIZE))

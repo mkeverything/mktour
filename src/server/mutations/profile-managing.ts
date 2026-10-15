@@ -65,6 +65,8 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
 
   if (notSelectedClubs.length !== 0) {
     for (const clubId in notSelectedClubs) {
+      // concurrent deletions could remove more clubs after one fails; stop before starting the next club.
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
       await deleteClubFunction({
         userId,
         clubId: notSelectedClubs[clubId],
