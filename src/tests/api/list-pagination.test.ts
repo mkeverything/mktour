@@ -13,7 +13,9 @@ import { newid } from '@/lib/utils';
 import { publicCaller } from '@/server/api';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
+import { players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
+import { ClubPlayersSortModel } from '@/server/zod/players';
 
 // cacheTag throws outside the next runtime
 mock.module('next/cache', () => ({ ...nextCache, cacheTag: () => {} }));
@@ -22,6 +24,14 @@ setDefaultTimeout(60_000);
 
 // smaller than the tied group below, so a page boundary falls inside it
 const PAGE_SIZE = 2;
+
+const clubIds = [newid(), newid(), newid()];
+const clubPlayers = [1600, 1500, 1500, 1500].map((rating, i) => ({
+  id: newid(),
+  nickname: `${i % 2 ? 'Player' : 'player'} ${i}`,
+  rating,
+  clubId: clubIds[0],
+}));
 
 async function collectIds(
   fetchPage: (cursor?: number) => Promise<[string[], number | null]>,
@@ -40,7 +50,6 @@ describe('list pagination', () => {
   beforeAll(async () => {
     // future-dated so they head the lists: 3 clubs and 6 tournaments sharing one createdAt
     const createdAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-    const clubIds = [newid(), newid(), newid()];
     await db
       .insert(clubs)
       .values(
@@ -61,6 +70,7 @@ describe('list pagination', () => {
         })),
       ),
     );
+    await db.insert(players).values(clubPlayers);
   });
 
   test('tournament.all returns every tournament exactly once', async () => {
@@ -96,5 +106,28 @@ describe('list pagination', () => {
 
     expect(ids.length).toBe(new Set(ids).size);
     expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
+  });
+
+  test('club.players pages through rating ties and orders nicknames case-insensitively', async () => {
+    const collectPlayerIds = (sort: ClubPlayersSortModel) =>
+      collectIds(async (cursor) => {
+        const page = await publicCaller.club.players({
+          clubId: clubIds[0],
+          limit: PAGE_SIZE,
+          cursor,
+          ...sort,
+        });
+        return [page.players.map(({ id }) => id), page.nextCursor];
+      });
+    const byRatingDesc = clubPlayers.toSorted(
+      (a, b) => b.rating - a.rating || (a.id < b.id ? 1 : -1),
+    );
+
+    expect(await collectPlayerIds({ sortBy: 'rating', order: 'desc' })).toEqual(
+      byRatingDesc.map(({ id }) => id),
+    );
+    expect(
+      await collectPlayerIds({ sortBy: 'nickname', order: 'asc' }),
+    ).toEqual(clubPlayers.map(({ id }) => id));
   });
 });

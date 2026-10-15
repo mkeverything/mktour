@@ -148,6 +148,13 @@ export const playerMergeInputSchema = z.object({
   mergedPlayerId: z.string(),
 });
 
+export const clubPlayersSortSchema = z.object({
+  sortBy: z.enum(['rating', 'nickname']).default('rating'),
+  order: z.enum(['asc', 'desc']).default('desc'),
+});
+
+export const CLUB_PLAYERS_DEFAULT_SORT = clubPlayersSortSchema.parse({});
+
 export const playerStatsSchema = createSelectSchema(player_stats).omit({
   playerId: true,
   clubId: true,
@@ -180,6 +187,7 @@ export type PlayerInsertModel = z.infer<typeof playersInsertSchema>;
 export type PlayerUpdateModel = z.infer<typeof playersUpdateSchema>;
 export type PlayerEditModel = z.infer<typeof playerEditSchema>;
 export type PlayerMergeInputModel = z.infer<typeof playerMergeInputSchema>;
+export type ClubPlayersSortModel = z.infer<typeof clubPlayersSortSchema>;
 
 export const userPlayerClubSchema = z.object({
   club: z.object({ id: z.string(), name: z.string() }),

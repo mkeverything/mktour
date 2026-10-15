@@ -49,6 +49,7 @@ import {
 import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
 import {
   affiliationExtendedSchema,
+  clubPlayersSortSchema,
   playerOutputSchema,
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
@@ -113,7 +114,7 @@ export const clubRouter = createTRPCRouter({
     }),
   players: publicProcedure
     .meta(meta.clubPlayers)
-    .input(clubPaginatedInputSchema)
+    .input(clubPaginatedInputSchema.extend(clubPlayersSortSchema.shape))
     .output(
       z.object({
         players: z.array(playerOutputSchema),
@@ -125,6 +126,7 @@ export const clubRouter = createTRPCRouter({
         opts.input.clubId,
         opts.input.limit,
         opts.input.cursor,
+        { sortBy: opts.input.sortBy, order: opts.input.order },
       );
     }),
   tournaments: publicProcedure

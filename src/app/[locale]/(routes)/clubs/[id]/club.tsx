@@ -7,7 +7,9 @@ import {
 import { ClubTournaments } from '@/app/[locale]/(routes)/clubs/tournaments';
 import { turboPascal } from '@/app/fonts';
 import Empty from '@/components/empty';
-import FormattedMessage from '@/components/formatted-message';
+import FormattedMessage, {
+  IntlMessageId,
+} from '@/components/formatted-message';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tournaments';
@@ -18,19 +20,48 @@ import { useTRPC } from '@/components/trpc/client';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import Paginator from '@/components/ui-custom/paginator';
 import { ScrollArea } from '@/components/ui-custom/scroll-area';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
-import { PlayerModel } from '@/server/zod/players';
+import {
+  CLUB_PLAYERS_DEFAULT_SORT,
+  ClubPlayersSortModel,
+  PlayerModel,
+} from '@/server/zod/players';
 import { TournamentModel } from '@/server/zod/tournaments';
 import { useQuery } from '@tanstack/react-query';
-import { Dot, Swords, Trophy, Users2 } from 'lucide-react';
+import {
+  Column,
+  createColumnHelper,
+  rowSortingFeature,
+  SortingState,
+  tableFeatures,
+  useTable,
+} from '@tanstack/react-table';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Dot,
+  Swords,
+  Trophy,
+  Users2,
+} from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC, ReactNode } from 'react';
+import { FC, PropsWithChildren, ReactNode, useMemo, useState } from 'react';
 
 const ClubPage: FC<{
   club: ClubModel;
@@ -275,8 +306,60 @@ const LiveDot: FC = () => (
 const mockGamesPlayed = (rating: number) => (rating % 53) + 5;
 const mockTournamentsPlayed = (rating: number) => (rating % 17) + 1;
 
-const LEADERBOARD_ROW_GRID =
-  'grid grid-cols-[2rem_minmax(0,1fr)_3.5rem_2.5rem_2.5rem] items-center gap-2';
+const leaderboardFeatures = tableFeatures({
+  rowSortingFeature,
+  columnMeta: {} as { className: string },
+});
+
+const leaderboardColumnHelper = createColumnHelper<
+  typeof leaderboardFeatures,
+  PlayerModel
+>();
+
+const leaderboardColumns = leaderboardColumnHelper.columns([
+  leaderboardColumnHelper.accessor('nickname', {
+    header: ({ column }) => (
+      <SortableHead column={column}>
+        <FormattedMessage id="Player.nickname" />
+      </SortableHead>
+    ),
+    cell: ({ row }) => (
+      <Link
+        href={`/player/${row.original.id}`}
+        className="after:absolute after:inset-0"
+      >
+        {row.original.nickname}
+      </Link>
+    ),
+    meta: { className: 'w-full max-w-0 truncate' },
+  }),
+  leaderboardColumnHelper.accessor('rating', {
+    header: ({ column }) => (
+      <SortableHead column={column}>
+        <FormattedMessage id="Player.rating" />
+      </SortableHead>
+    ),
+    cell: ({ getValue }) => <span className="font-semibold">{getValue()}</span>,
+    sortDescFirst: true,
+    meta: { className: 'text-right' },
+  }),
+  leaderboardColumnHelper.display({
+    id: 'tournaments',
+    header: () => (
+      <StatHead icon={Trophy} messageId="Player.Stats.tournaments" />
+    ),
+    cell: ({ row }) => mockTournamentsPlayed(row.original.rating),
+    meta: { className: 'text-muted-foreground min-w-10 text-right text-xs' },
+  }),
+  leaderboardColumnHelper.display({
+    id: 'gamesPlayed',
+    header: () => (
+      <StatHead icon={Swords} messageId="Player.Stats.gamesPlayed" />
+    ),
+    cell: ({ row }) => mockGamesPlayed(row.original.rating),
+    meta: { className: 'text-muted-foreground min-w-10 text-right text-xs' },
+  }),
+]);
 
 const PlayersLeaderboard: FC<{
   clubId: string;
@@ -293,18 +376,55 @@ const PlayersLeaderboard: FC<{
     setSearch,
     debouncedSearch,
   } = useClubScopedSearch({ clubId, type: 'players' });
-  const playersInfinite = useClubPlayers(clubId);
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: CLUB_PLAYERS_DEFAULT_SORT.sortBy,
+      desc: CLUB_PLAYERS_DEFAULT_SORT.order === 'desc',
+    },
+  ]);
+  const [{ id: sortBy, desc: isDesc }] = sorting;
+  const playersInfinite = useClubPlayers(clubId, {
+    sortBy: sortBy as ClubPlayersSortModel['sortBy'],
+    order: isDesc ? 'desc' : 'asc',
+  });
   const { data: me } = useQuery(
     trpc.club.authPlayer.queryOptions({ clubId }, { enabled: Boolean(userId) }),
   );
 
   const useSearch = debouncedSearch.length > 0;
-  const playersFromPages =
-    playersInfinite.data?.pages.flatMap((p) => p.players) ?? [];
-  const players = useSearch ? (searchResults?.players ?? []) : playersFromPages;
+  const isPending = !useSearch && playersInfinite.status === 'pending';
+  const isRanked = !useSearch && sortBy === 'rating' && isDesc;
+  const playersFromPages = useMemo(
+    () => playersInfinite.data?.pages.flatMap((p) => p.players) ?? [],
+    [playersInfinite.data],
+  );
   const meLoaded = Boolean(
     me && playersFromPages.some((player) => player.id === me.id),
   );
+  const players = useMemo(() => {
+    if (useSearch) return searchResults?.players ?? [];
+    return me && playersInfinite.isSuccess && !meLoaded
+      ? [...playersFromPages, me]
+      : playersFromPages;
+  }, [
+    useSearch,
+    searchResults,
+    me,
+    playersInfinite.isSuccess,
+    meLoaded,
+    playersFromPages,
+  ]);
+
+  const table = useTable({
+    features: leaderboardFeatures,
+    columns: leaderboardColumns,
+    data: players,
+    manualSorting: true,
+    enableSorting: !useSearch,
+    enableSortingRemoval: false,
+    onSortingChange: setSorting,
+    state: { sorting },
+  });
 
   return (
     <section className={cn('flex min-w-0 flex-col', className)}>
@@ -319,90 +439,126 @@ const PlayersLeaderboard: FC<{
       <div className="pb-2">
         <ClubSearchInput search={search} setSearch={setSearch} />
       </div>
-      <div
-        className={cn(
-          LEADERBOARD_ROW_GRID,
-          'text-muted-foreground border-b px-1 pb-1 text-xs',
-        )}
-      >
-        <span>#</span>
-        <span>{t('Player.nickname')}</span>
-        <span className="text-right">{t('Player.rating')}</span>
-        <span
-          className="flex justify-end"
-          title={t('Player.Stats.tournaments')}
-        >
-          <Trophy className="size-3.5" />
-          <span className="sr-only">{t('Player.Stats.tournaments')}</span>
-        </span>
-        <span
-          className="flex justify-end"
-          title={t('Player.Stats.gamesPlayed')}
-        >
-          <Swords className="size-3.5" />
-          <span className="sr-only">{t('Player.Stats.gamesPlayed')}</span>
-        </span>
-      </div>
-      {playersInfinite.status === 'pending' && !useSearch ? (
-        <SkeletonList length={8} className="h-8" />
-      ) : (
-        <ScrollArea className="min-h-0 flex-1">
-          <div className="flex flex-col">
-            {players.map((player, index) => (
-              <LeaderboardRow
-                key={player.id}
-                player={player}
-                rank={useSearch ? null : index + 1}
-                isMe={player.id === me?.id}
-              />
+      <ScrollArea className="min-h-0 flex-1">
+        <Table>
+          <TableHeader className="bg-background sticky top-0 z-20">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                <TableHead className="h-8 w-8 px-1 text-xs">#</TableHead>
+                {headerGroup.headers.map((header) => {
+                  const sorted = header.column.getIsSorted();
+                  return (
+                    <TableHead
+                      key={header.id}
+                      aria-sort={
+                        sorted === 'asc'
+                          ? 'ascending'
+                          : sorted === 'desc'
+                            ? 'descending'
+                            : undefined
+                      }
+                      className={cn(
+                        'h-8 px-1 text-xs',
+                        header.column.columnDef.meta?.className,
+                      )}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <table.FlexRender header={header} />
+                      )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
             ))}
-            {players.length === 0 && (
-              <Empty className="text-center text-balance">
-                {stats?.playersCount !== 0
-                  ? t('GlobalSearch.not found')
-                  : t('Empty.players')}
-              </Empty>
-            )}
-            <Paginator
-              disabled={useSearch}
-              hasNextPage={playersInfinite.hasNextPage}
-              isFetchingNextPage={playersInfinite.isFetchingNextPage}
-              fetchNextPage={playersInfinite.fetchNextPage}
-              skeleton={<SkeletonList length={3} className="h-8" />}
-            />
-            {me && !useSearch && !meLoaded && (
-              <LeaderboardRow player={me} rank={null} isMe />
-            )}
-          </div>
-        </ScrollArea>
-      )}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                className={cn(
+                  'relative',
+                  row.original.id === me?.id &&
+                    'bg-muted hover:bg-muted sticky top-8 bottom-0 z-10 font-medium',
+                )}
+              >
+                <TableCell className="text-muted-foreground px-1 py-1.5 text-xs">
+                  {isRanked && row.index < playersFromPages.length
+                    ? row.index + 1
+                    : '—'}
+                </TableCell>
+                {row.getAllCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className={cn(
+                      'px-1 py-1.5',
+                      cell.column.columnDef.meta?.className,
+                    )}
+                  >
+                    <table.FlexRender cell={cell} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {isPending ? (
+          <SkeletonList length={8} className="h-8" />
+        ) : (
+          players.length === 0 && (
+            <Empty className="text-center text-balance">
+              {stats?.playersCount !== 0
+                ? t('GlobalSearch.not found')
+                : t('Empty.players')}
+            </Empty>
+          )
+        )}
+        <Paginator
+          disabled={useSearch}
+          hasNextPage={playersInfinite.hasNextPage}
+          isFetchingNextPage={playersInfinite.isFetchingNextPage}
+          fetchNextPage={playersInfinite.fetchNextPage}
+          skeleton={<SkeletonList length={3} className="h-8" />}
+        />
+      </ScrollArea>
     </section>
   );
 };
 
-const LeaderboardRow: FC<{
-  player: PlayerModel;
-  rank: number | null;
-  isMe?: boolean;
-}> = ({ player, rank, isMe }) => (
-  <Link
-    href={`/player/${player.id}`}
-    className={cn(
-      LEADERBOARD_ROW_GRID,
-      'hover:bg-muted/50 border-b px-1 py-1.5 text-sm transition-colors last:border-0',
-      isMe && 'bg-muted hover:bg-muted sticky top-0 bottom-0 z-10 font-medium',
-    )}
-  >
-    <span className="text-muted-foreground text-xs">{rank ?? '—'}</span>
-    <span className="min-w-0 truncate">{player.nickname}</span>
-    <span className="text-right font-semibold">{player.rating}</span>
-    <span className="text-muted-foreground text-right text-xs">
-      {mockTournamentsPlayed(player.rating)}
+const SortableHead = <TValue,>({
+  column,
+  children,
+}: PropsWithChildren<{
+  column: Column<typeof leaderboardFeatures, PlayerModel, TValue>;
+}>) => {
+  const sorted = column.getIsSorted();
+  if (!column.getCanSort()) return children;
+
+  const SortIcon =
+    sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="-mx-2 h-7 px-2 text-xs"
+      onClick={() => column.toggleSorting()}
+    >
+      {children}
+      <SortIcon className="size-3.5" />
+    </Button>
+  );
+};
+
+const StatHead: FC<{
+  icon: FC<{ className?: string }>;
+  messageId: IntlMessageId;
+}> = ({ icon: Icon, messageId }) => {
+  const t = useTranslations();
+  return (
+    <span className="flex justify-end" title={t(messageId)}>
+      <Icon className="size-3.5" />
+      <span className="sr-only">{t(messageId)}</span>
     </span>
-    <span className="text-muted-foreground text-right text-xs">
-      {mockGamesPlayed(player.rating)}
-    </span>
-  </Link>
-);
+  );
+};
 
 export default ClubPage;

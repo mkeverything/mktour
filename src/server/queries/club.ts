@@ -1,10 +1,11 @@
+import { lower } from '@/lib/sql-sqlite-string';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { ClubModel } from '@/server/zod/clubs';
-import { PlayerRecordModel } from '@/server/zod/players';
-import { and, countDistinct, desc, eq } from 'drizzle-orm';
+import { ClubPlayersSortModel, PlayerRecordModel } from '@/server/zod/players';
+import { and, asc, countDistinct, desc, eq } from 'drizzle-orm';
 
 export const getClubInfo = async (id: ClubModel['id']) => {
   const data = (await db.select().from(clubs).where(eq(clubs.id, id)))?.at(0);
@@ -15,13 +16,20 @@ export const getClubInfo = async (id: ClubModel['id']) => {
 export const getClubPlayers = async (
   clubId: PlayerRecordModel['clubId'],
   limit: number,
-  cursor?: number | null,
+  cursor: number | null | undefined,
+  { sortBy, order }: ClubPlayersSortModel,
 ): Promise<{ players: PlayerRecordModel[]; nextCursor: number | null }> => {
+  const direction = order === 'asc' ? asc : desc;
   const result = await db
     .select()
     .from(players)
     .where(eq(players.clubId, clubId))
-    .orderBy(desc(players.rating))
+    .orderBy(
+      direction(
+        sortBy === 'nickname' ? lower(players.nickname) : players.rating,
+      ),
+      direction(players.id),
+    )
     .offset(cursor ?? 0)
     .limit(limit + 1);
 
