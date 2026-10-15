@@ -78,5 +78,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to generate sitemap dynamic pages:', error);
   }
 
-  return [...staticPages, ...dynamicPages];
+  return [...staticPages, { url: `${BASE_URL}/for-llms` }, ...dynamicPages];
 }

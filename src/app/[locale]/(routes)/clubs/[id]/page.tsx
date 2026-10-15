@@ -4,6 +4,7 @@ import { getQueryClient, trpc } from '@/components/trpc/server';
 import { validateRequest } from '@/lib/auth/lucia';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
+import { formatDate } from '@/lib/local-date';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -81,18 +82,21 @@ export async function generateMetadata(
     publicCaller.club.tournaments({ clubId: club.id, limit: 1 }),
   ]);
   const latestTournament = latest.tournaments[0];
+  const name = club.name.trim();
   const description = latestTournament
     ? t('clubs.clubPage.description', {
-        name: club.name,
+        name,
         players: stats.playersCount,
         tournaments: stats.tournamentsCount,
-        date: new Date(latestTournament.date).toLocaleDateString(locale),
+        date: formatDate(latestTournament.date, locale, 'long', {
+          withYear: true,
+        }),
       })
-    : t('clubs.clubPage.descriptionEmpty', { name: club.name });
+    : t('clubs.clubPage.descriptionEmpty', { name });
 
   return getPageMetadata(parent, {
     path: `/clubs/${params.id}`,
-    title: t('clubs.clubPage.title', { name: club.name }),
+    title: t('clubs.clubPage.title', { name }),
     description,
     // clubs without tournaments are thin until they have content
     ...(latestTournament ? {} : { robots: { index: false, follow: true } }),

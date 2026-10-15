@@ -10,8 +10,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { type ChangeItem, type ChangelogVersion } from '@/lib/changelog';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { MailIcon } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 interface AboutContentProps {
@@ -20,7 +21,7 @@ interface AboutContentProps {
 
 export default function AboutContent({ changelog }: AboutContentProps) {
   const t = useTranslations('About');
-  const format = useFormatter();
+  const formatDate = useFormatDate();
 
   return (
     <Center className="pt-8">
@@ -54,11 +55,7 @@ export default function AboutContent({ changelog }: AboutContentProps) {
                       {v.version}
                     </h3>
                     <span className="text-muted-foreground text-xs tracking-wider uppercase">
-                      {format.dateTime(new Date(v.date), {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+                      {formatDate(v.date, 'long')}
                     </span>
                   </div>
                   <ul className="space-y-4 text-sm">
