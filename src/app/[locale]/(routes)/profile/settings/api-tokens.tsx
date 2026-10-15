@@ -25,9 +25,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ApiTokenModel } from '@/server/zod/users';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Eye, EyeOff, Info, Plus, Trash2 } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, useState } from 'react';
 import { toast } from 'sonner';
@@ -191,16 +192,16 @@ const ApiTokenIteratee = (token: ApiTokenModel) => {
 };
 
 const ApiTokenRow: FC<{ token: ApiTokenModel }> = ({ token }) => {
-  const locale = useLocale();
+  const formatDate = useFormatDate();
   const { mutate: revoke, isPending: isRevoking } = useTokenRevokeMutation();
   return (
     <TableRow key={token.id}>
       <TableCell className="font-medium lowercase">{token.name}</TableCell>
       <TableCell className="text-muted-foreground text-xs lowercase">
-        {token.createdAt.toLocaleDateString([locale])}
+        {formatDate(token.createdAt, 'short')}
       </TableCell>
       <TableCell className="text-muted-foreground text-xs lowercase">
-        {token.lastUsedAt ? token.lastUsedAt.toLocaleDateString([locale]) : '-'}
+        {token.lastUsedAt ? formatDate(token.lastUsedAt, 'short') : '-'}
       </TableCell>
       <TableCell className="text-right">
         <Button

@@ -26,9 +26,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Home, Trophy, Users2 } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, ReactNode } from 'react';
 
@@ -80,7 +81,7 @@ const ClubHeader: FC<{
 }> = ({ club, statusInClub }) => {
   const t = useTranslations('Club');
   const tStatus = useTranslations('Status');
-  const locale = useLocale();
+  const formatDate = useFormatDate();
   const queryClient = useQueryClient();
   const { data: user } = useAuth();
   const { mutate } = useAuthSelectClub(queryClient);
@@ -155,9 +156,7 @@ const ClubHeader: FC<{
           <CalendarDays className="size-4" />
           {club.createdAt &&
             t('Page.createdAt', {
-              date: club.createdAt.toLocaleDateString(locale, {
-                dateStyle: 'long',
-              }),
+              date: formatDate(club.createdAt, 'long'),
             })}
         </div>
       </CardContent>

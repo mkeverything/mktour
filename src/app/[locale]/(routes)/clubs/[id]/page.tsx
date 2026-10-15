@@ -4,6 +4,7 @@ import { getQueryClient, trpc } from '@/components/trpc/server';
 import { validateRequest } from '@/lib/auth/lucia';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
+import { formatDate } from '@/lib/local-date';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -87,7 +88,9 @@ export async function generateMetadata(
         name,
         players: stats.playersCount,
         tournaments: stats.tournamentsCount,
-        date: new Date(latestTournament.date).toLocaleDateString(locale),
+        date: formatDate(latestTournament.date, locale, 'long', {
+          withYear: true,
+        }),
       })
     : t('clubs.clubPage.descriptionEmpty', { name });
 
