@@ -50,6 +50,7 @@ export function GamesGridLoadingSkeleton() {
   );
 }
 
+// react-doctor-disable-next-line react-doctor/only-export-components
 export function AddPlayerListLoadingSkeleton() {
   return Array.from({ length: 20 }).map((_, i) => (
     <TableRow key={i} className="p-0">
