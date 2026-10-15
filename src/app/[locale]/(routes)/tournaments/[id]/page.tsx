@@ -77,11 +77,11 @@ export async function generateMetadata(
   );
   const date = new Date(tournament.tournament.date).toLocaleDateString(locale);
   const title = t('tournaments.tournamentPage.title', {
-    name: tournament.tournament.title || `${format} ${date}`,
+    name: tournament.tournament.title?.trim() || `${format} ${date}`,
   });
   const description = t('tournaments.tournamentPage.description', {
     format,
-    clubName: tournament.club.name,
+    clubName: tournament.club.name.trim(),
     date,
     players: units.reduce((sum, unit) => sum + unit.players.length, 0),
   });

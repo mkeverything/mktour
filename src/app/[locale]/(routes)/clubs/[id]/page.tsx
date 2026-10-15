@@ -81,18 +81,19 @@ export async function generateMetadata(
     publicCaller.club.tournaments({ clubId: club.id, limit: 1 }),
   ]);
   const latestTournament = latest.tournaments[0];
+  const name = club.name.trim();
   const description = latestTournament
     ? t('clubs.clubPage.description', {
-        name: club.name,
+        name,
         players: stats.playersCount,
         tournaments: stats.tournamentsCount,
         date: new Date(latestTournament.date).toLocaleDateString(locale),
       })
-    : t('clubs.clubPage.descriptionEmpty', { name: club.name });
+    : t('clubs.clubPage.descriptionEmpty', { name });
 
   return getPageMetadata(parent, {
     path: `/clubs/${params.id}`,
-    title: t('clubs.clubPage.title', { name: club.name }),
+    title: t('clubs.clubPage.title', { name }),
     description,
     // clubs without tournaments are thin until they have content
     ...(latestTournament ? {} : { robots: { index: false, follow: true } }),
