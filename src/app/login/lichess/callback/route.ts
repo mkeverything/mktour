@@ -150,7 +150,7 @@ export async function GET(request: Request): Promise<Response> {
         language: 'en',
       });
 
-      cooks.set('show_new_user_toast', 'true');
+      cooks.set(COOKIES.NEW_USER_TOAST, 'true');
 
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);

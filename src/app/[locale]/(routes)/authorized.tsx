@@ -8,6 +8,7 @@ import MakeTournamentButton from '@/components/button-make-tournament';
 import TeamJoinToaster from '@/components/team-join-toaster';
 import TournamentItemIteratee from '@/components/tournament-item';
 import { Button } from '@/components/ui/button';
+import { COOKIES } from '@/lib/config/constants';
 import { cn } from '@/lib/utils';
 import { publicCaller } from '@/server/api';
 import { TournamentWithClubModel } from '@/server/zod/tournaments';
@@ -91,7 +92,7 @@ async function RecentTournamentsSection({
 
 const TeamJoinToasterServer = async () => {
   const { cookies } = await import('next/headers');
-  const isNew = (await cookies()).get('show_new_user_toast');
+  const isNew = (await cookies()).get(COOKIES.NEW_USER_TOAST);
   if (!isNew) return null;
   return <TeamJoinToaster />;
 };
