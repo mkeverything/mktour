@@ -1,6 +1,6 @@
 import Loading from '@/app/[locale]/(routes)/loading';
 import UserNotifications from '@/app/[locale]/(routes)/notifications/notifications';
-import { getQueryClient, trpc } from '@/components/trpc/server';
+import { getQueryClient, trpc } from '@/server/api/query-client';
 import { getPageMetadata } from '@/lib/page-metadata';
 import type { ResolvingMetadata } from 'next';
 import { getTranslations } from 'next-intl/server';

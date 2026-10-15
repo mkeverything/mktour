@@ -1,5 +1,5 @@
 import Dashboard from '@/app/[locale]/(routes)/tournaments/[id]/dashboard';
-import { getQueryClient, trpc } from '@/components/trpc/server';
+import { getQueryClient, trpc } from '@/server/api/query-client';
 import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';

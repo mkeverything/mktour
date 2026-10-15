@@ -1,5 +1,5 @@
 import ClubPage from '@/app/[locale]/(routes)/clubs/[id]/club';
-import { getQueryClient, trpc } from '@/components/trpc/server';
+import { getQueryClient, trpc } from '@/server/api/query-client';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';

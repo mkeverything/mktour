@@ -1,6 +1,6 @@
 import Dashboard from '@/app/[locale]/(routes)/clubs/my/dashboard';
 import { clubQueryPrefetch } from '@/app/[locale]/(routes)/clubs/my/prefetch';
-import { HydrateClient } from '@/components/trpc/server';
+import { HydrateClient } from '@/components/trpc/hydrate-client';
 import { publicCaller } from '@/server/api';
 import { getTranslations } from 'next-intl/server';
 import type { ResolvingMetadata } from 'next';

@@ -2,7 +2,7 @@ import { turboPascal } from '@/app/fonts';
 import ApiTokens from '@/app/[locale]/(routes)/profile/settings/api-tokens';
 import DeleteUser from '@/app/[locale]/(routes)/profile/settings/delete-user';
 import EditProfileForm from '@/app/[locale]/(routes)/profile/settings/edit-profile-form';
-import { getQueryClient, trpc } from '@/components/trpc/server';
+import { getQueryClient, trpc } from '@/server/api/query-client';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
