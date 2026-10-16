@@ -69,8 +69,11 @@ export default function AboutContent({ changelog }: AboutContentProps) {
                               {t(`Changelog.${category}`)}
                             </h4>
                             <ul className="text-muted-foreground/80 space-y-1.5">
-                              {changes.map((change, i) => (
-                                <li key={i} className="flex gap-2">
+                              {changes.map((change) => (
+                                <li
+                                  key={change.commitHash}
+                                  className="flex gap-2"
+                                >
                                   <span className="text-primary/50 pt-1.5 leading-none">
                                     •
                                   </span>

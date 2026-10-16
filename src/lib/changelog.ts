@@ -77,7 +77,7 @@ export async function getChangelog(limit = 3): Promise<ChangelogVersion[]> {
       if (change) {
         // extract commit info if present
         const commitMatch = change.match(
-          /\s\(\[([0-9a-f]{7})\]\((https:\/\/github\.com\/.*)\)\)$/i,
+          /\s\(\[([0-9a-f]{7})\]\((https:\/\/github\.com\/[^)]+)\)\)/i,
         );
 
         let description = change;
