@@ -4,7 +4,7 @@ import { useGlobalWebsocket } from '@/components/hooks/use-global-websocket';
 import { useTRPC } from '@/components/trpc/client';
 import { GlobalMessage } from '@/types/notifications';
 import { useQuery } from '@tanstack/react-query';
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, ReactNode, useContext, useMemo } from 'react';
 
 type GlobalWebSocketContextType = {
   sendJsonMessage: (message: GlobalMessage) => void;
@@ -12,11 +12,15 @@ type GlobalWebSocketContextType = {
   readyState: number;
 };
 
-const GlobalWebSocketContext = createContext<GlobalWebSocketContextType>({
+const DEFAULT_GLOBAL_WEBSOCKET_CONTEXT: GlobalWebSocketContextType = {
   sendJsonMessage: () => null,
   lastJsonMessage: null,
   readyState: -1,
-});
+};
+
+const GlobalWebSocketContext = createContext<GlobalWebSocketContextType>(
+  DEFAULT_GLOBAL_WEBSOCKET_CONTEXT,
+);
 
 export const useGlobalWebSocketContext = () =>
   useContext(GlobalWebSocketContext);
@@ -39,13 +43,7 @@ export const GlobalWebSocketProvider = ({
   // While loading or no session, provide stub context without WebSocket
   if (isLoading || !encryptedSession) {
     return (
-      <GlobalWebSocketContext.Provider
-        value={{
-          sendJsonMessage: () => null,
-          lastJsonMessage: null,
-          readyState: -1,
-        }}
-      >
+      <GlobalWebSocketContext.Provider value={DEFAULT_GLOBAL_WEBSOCKET_CONTEXT}>
         {children}
       </GlobalWebSocketContext.Provider>
     );
@@ -67,14 +65,12 @@ const WebsocketProvider = ({
 }) => {
   const { sendJsonMessage, lastJsonMessage, readyState } =
     useGlobalWebsocket(encryptedSession);
+  const value = useMemo(
+    () => ({ sendJsonMessage, lastJsonMessage, readyState }),
+    [sendJsonMessage, lastJsonMessage, readyState],
+  );
   return (
-    <GlobalWebSocketContext.Provider
-      value={{
-        sendJsonMessage,
-        lastJsonMessage,
-        readyState,
-      }}
-    >
+    <GlobalWebSocketContext.Provider value={value}>
       {children}
     </GlobalWebSocketContext.Provider>
   );

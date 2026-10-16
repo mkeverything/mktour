@@ -1,11 +1,12 @@
 'use client';
 
-import { DashboardContext } from '@/app/(routes)/tournaments/[id]/dashboard/dashboard-context';
+import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import useSaveRoundsNumberMutation from '@/components/hooks/mutation-hooks/use-tournament-update-swiss-rounds-number';
 import { useTournamentSwissRoundsInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentActiveUnitsCount } from '@/components/hooks/query-hooks/use-tournament-units';
 import { cn, getSwissMaxRoundsNumber } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useContext } from 'react';
 
@@ -16,6 +17,7 @@ type SwissRoundsNumberProps = {
 export default function SwissRoundsNumber({
   className,
 }: SwissRoundsNumberProps) {
+  const t = useTranslations('Tournament.Main');
   const { id: tournamentId } = useParams<{ id: string }>();
   const { data } = useTournamentSwissRoundsInfo(tournamentId);
   const { data: unitCount = 0 } = useTournamentActiveUnitsCount(tournamentId);
@@ -62,6 +64,7 @@ export default function SwissRoundsNumber({
     >
       <button
         type="button"
+        aria-label={t('decrease rounds')}
         onClick={handleDecrement}
         disabled={!canDecrement}
         className={cn(
@@ -81,6 +84,7 @@ export default function SwissRoundsNumber({
       </div>
       <button
         type="button"
+        aria-label={t('increase rounds')}
         onClick={handleIncrement}
         disabled={!canIncrement}
         className={cn(

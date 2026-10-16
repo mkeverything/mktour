@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { db } from '@/server/db';

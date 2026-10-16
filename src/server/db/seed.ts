@@ -216,9 +216,11 @@ export const seedComprehensiveTestData = async () => {
     const seededClubs = await db
       .select({ id: schema.clubs.id })
       .from(schema.clubs);
-    for (const club of seededClubs) {
-      const rows = await buildClubPlayerStats(db, club.id, now);
-      if (rows.length > 0) await db.insert(schema.player_stats).values(rows);
-    }
+    const rows = (
+      await Promise.all(
+        seededClubs.map((club) => buildClubPlayerStats(db, club.id, now)),
+      )
+    ).flat();
+    if (rows.length > 0) await db.insert(schema.player_stats).values(rows);
   }
 };

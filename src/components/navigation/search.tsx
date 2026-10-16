@@ -149,14 +149,10 @@ export default function GlobalSearch() {
               <Skeleton className="h-12 w-full" />
             </div>
           ) : data &&
-            data?.players &&
-            data?.players.length === 0 &&
-            data?.tournaments &&
-            data?.tournaments.length === 0 &&
-            data?.users &&
-            data?.users.length === 0 &&
-            data?.clubs &&
-            data?.clubs.length === 0 &&
+            data.players?.length === 0 &&
+            data.tournaments?.length === 0 &&
+            data.users?.length === 0 &&
+            data.clubs?.length === 0 &&
             filteredActions.length === 0 ? (
             <div className="p-2">
               <p className="text-muted-foreground text-center text-sm">
@@ -167,7 +163,7 @@ export default function GlobalSearch() {
             <>
               {data && (
                 <>
-                  {data?.users && data?.users.length > 0 && (
+                  {!!data.users?.length && (
                     <>
                       <CommandGroup heading={t('users')}>
                         {data.users.map((item: UserPublicModel) => (
@@ -187,10 +183,10 @@ export default function GlobalSearch() {
                       <CommandSeparator />
                     </>
                   )}
-                  {'clubs' in data && data?.clubs && data?.clubs.length > 0 && (
+                  {!!data.clubs?.length && (
                     <>
                       <CommandGroup heading={t('clubs')}>
-                        {data?.clubs.map((item: ClubModel) => (
+                        {data.clubs.map((item: ClubModel) => (
                           <Link key={item.id} href={`/clubs/${item.id}`}>
                             <CommandItem
                               value={item.id}
@@ -208,7 +204,7 @@ export default function GlobalSearch() {
                     </>
                   )}
 
-                  {data?.tournaments && data?.tournaments.length > 0 && (
+                  {!!data.tournaments?.length && (
                     <CommandGroup heading={t('tournaments')}>
                       {data.tournaments.map((item) => (
                         <Link key={item.id} href={`/tournaments/${item.id}`}>
@@ -226,7 +222,7 @@ export default function GlobalSearch() {
                     </CommandGroup>
                   )}
                   <CommandSeparator />
-                  {data?.players && data?.players.length > 0 && (
+                  {!!data.players?.length && (
                     <>
                       <CommandGroup heading={t('players')}>
                         {data.players.map((item: PlayerModel) => (

@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { db } from '@/server/db';
 import { tournaments } from '@/server/db/schema/tournaments';
