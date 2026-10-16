@@ -22,7 +22,7 @@
     "knip": "knip-bun --use-tsconfig-files",
     "generate-erd": "bun run src/lib/generate-erd.ts",
     "prepare": "husky",
-    "generate-openapi": "bun run src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
+    "generate-openapi": "bun run --conditions=react-server src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
     "test:noseed": "SKIP_SEED=1 bun test",
     "check": "bun run --bun tsc --noEmit && bun run --bun lint && bun test"
   },
@@ -92,7 +92,6 @@
     "react-error-boundary": "^6.1.3",
     "react-hook-form": "^7.86.0",
     "react-hotkeys-hook": "^5.3.3",
-    "react-responsive": "^10.0.1",
     "react-type-animation": "^3.2.0",
     "react-use-websocket": "^4.13.0",
     "server-only": "^0.0.1",

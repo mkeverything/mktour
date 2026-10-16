@@ -1,47 +1,46 @@
 import Dashboard from '@/app/[locale]/(routes)/tournaments/[id]/dashboard';
-import {
-  tournamentQueryClient,
-  tournamentQueryPrefetch,
-} from '@/app/[locale]/(routes)/tournaments/[id]/prefetch';
+import { getQueryClient, trpc } from '@/server/api/query-client';
 import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { TournamentInfoModel } from '@/server/zod/tournaments';
 import { formatDate } from '@/lib/local-date';
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { dehydrate, HydrationBoundary, noop } from '@tanstack/react-query';
+import { TRPCError } from '@trpc/server';
 import type { ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
-export default async function TournamentPage(props: TournamentPageProps) {
-  const params = await props.params;
-  const session = await getEncryptedAuthSession();
-  const user = await publicCaller.auth.info();
-  let tournament: TournamentInfoModel;
-  try {
-    tournament = await publicCaller.tournament.info({
-      tournamentId: params.id,
-    });
-    await tournamentQueryPrefetch(params.id);
-  } catch (e) {
-    console.log(e);
-    notFound();
-  }
+const notFoundOnMissing = (e: unknown): never => {
+  if (e instanceof TRPCError && e.code === 'NOT_FOUND') notFound();
+  throw e;
+};
 
-  const authStatus = await publicCaller.tournament.authStatus({
-    tournamentId: params.id,
-  });
+export default async function TournamentPage(props: TournamentPageProps) {
+  const { id: tournamentId } = await props.params;
+  const queryClient = getQueryClient();
+  const [session, user, authStatus] = await Promise.all([
+    getEncryptedAuthSession(),
+    publicCaller.auth.info(),
+    publicCaller.tournament.authStatus({ tournamentId }),
+    queryClient.query(trpc.tournament.info.queryOptions({ tournamentId })),
+    queryClient
+      .query(trpc.tournament.units.queryOptions({ tournamentId }))
+      .catch(noop),
+    queryClient
+      .query(trpc.tournament.allGames.queryOptions({ tournamentId }))
+      .catch(noop),
+  ]).catch(notFoundOnMissing);
   const unitId = authStatus.status === 'player' ? authStatus.unitId : null;
 
   return (
-    <HydrationBoundary state={dehydrate(tournamentQueryClient)}>
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <Dashboard
         session={session}
-        id={params.id}
+        id={tournamentId}
         status={authStatus.status}
         unitId={unitId}
         userId={user?.id}
-        currentRound={tournament.tournament.ongoingRound}
       />
     </HydrationBoundary>
   );

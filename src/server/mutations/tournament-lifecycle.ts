@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';

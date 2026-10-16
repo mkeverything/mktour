@@ -15,10 +15,12 @@ import {
   UnitModel,
 } from '@/server/zod/tournaments';
 import { Loader2, Shuffle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useContext } from 'react';
 
 const ShuffleButton = () => {
+  const t = useTranslations('Tournament.Round');
   const { isPending, handleClick, tournament, units, games } = useShuffle();
   const { userId, status } = useContext(DashboardContext);
   const { isDesktop } = useContext(MediaQueryContext);
@@ -49,6 +51,7 @@ const ShuffleButton = () => {
 
   const mobile = (
     <Fab
+      aria-label={t('shuffle')}
       disabled={isPending || preStartLocked || !isSufficient}
       icon={!isPending ? Shuffle : Loader2}
       onClick={handleClick}

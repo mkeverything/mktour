@@ -4,8 +4,13 @@ import {
   MediaQueryContext,
   MediaQueryContextType,
 } from '@/components/providers/media-query-context';
-import { FC, PropsWithChildren, useEffect, useMemo, useState } from 'react';
-import { useMediaQuery } from 'react-responsive';
+import {
+  FC,
+  PropsWithChildren,
+  useCallback,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 
 const DEFAULT_CONTEXT: MediaQueryContextType = {
   isMobile: true,
@@ -14,19 +19,22 @@ const DEFAULT_CONTEXT: MediaQueryContextType = {
 };
 
 const MediaQueryProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [isMounted, setIsMounted] = useState(false);
-  const isMobile = useMediaQuery({ maxWidth: 640 });
-  const isTablet = useMediaQuery({ maxWidth: 767 }); // NB: this probably should be 1023px
-  const isDesktop = useMediaQuery({ minWidth: 768 }); // whilst this should be 1024px
-
-  useEffect(() => {
-    // eslint-disable-next-line
-    setIsMounted(true);
-  }, []);
+  const isMobile = useMediaQuery(
+    '(max-width: 640px)',
+    DEFAULT_CONTEXT.isMobile,
+  );
+  const isTablet = useMediaQuery(
+    '(max-width: 767px)',
+    DEFAULT_CONTEXT.isTablet,
+  ); // NB: this probably should be 1023px
+  const isDesktop = useMediaQuery(
+    '(min-width: 768px)',
+    DEFAULT_CONTEXT.isDesktop,
+  ); // whilst this should be 1024px
 
   const value = useMemo(
-    () => (isMounted ? { isMobile, isTablet, isDesktop } : DEFAULT_CONTEXT),
-    [isMounted, isMobile, isTablet, isDesktop],
+    () => ({ isMobile, isTablet, isDesktop }),
+    [isMobile, isTablet, isDesktop],
   );
 
   return (
@@ -35,5 +43,26 @@ const MediaQueryProvider: FC<PropsWithChildren> = ({ children }) => {
     </MediaQueryContext.Provider>
   );
 };
+
+function useMediaQuery(query: string, defaultMatches: boolean) {
+  const mediaQuery = useMemo(
+    () => (typeof window === 'undefined' ? null : window.matchMedia(query)),
+    [query],
+  );
+
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      mediaQuery?.addEventListener('change', onChange);
+      return () => mediaQuery?.removeEventListener('change', onChange);
+    },
+    [mediaQuery],
+  );
+
+  return useSyncExternalStore(
+    subscribe,
+    () => mediaQuery?.matches ?? defaultMatches,
+    () => defaultMatches,
+  );
+}
 
 export default MediaQueryProvider;

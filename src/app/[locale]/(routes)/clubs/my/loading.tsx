@@ -85,11 +85,7 @@ const TournamentsLoading: FC = () => (
 
 const ClubDashboardTabList: FC = () => {
   return (
-    <Tabs
-      defaultValue="main"
-      value="main"
-      className="z-40 w-full rounded-none transition-all duration-500"
-    >
+    <Tabs defaultValue="main" value="main" className="z-40 w-full rounded-none">
       <TabsList className="no-scrollbar w-full justify-around overflow-scroll rounded-none md:justify-start">
         {Object.entries(CLUB_DASHBOARD_NAVBAR_ITEMS).map(([title]) => (
           <TabsTrigger key={title} className="w-full" value={title}>

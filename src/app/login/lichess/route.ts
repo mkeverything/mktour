@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { lichess } from '@/lib/auth/lucia';
 import { COOKIES } from '@/lib/config/constants';
@@ -6,7 +6,7 @@ import { generateCodeVerifier, generateState } from 'arctic';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
-export async function GET(request: NextRequest): Promise<Response> {
+export async function POST(request: NextRequest): Promise<Response> {
   const from = request.nextUrl.searchParams.get('from');
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
@@ -43,5 +43,5 @@ export async function GET(request: NextRequest): Promise<Response> {
     sameSite: 'lax',
   });
 
-  return Response.redirect(url);
+  return Response.redirect(url, 303);
 }

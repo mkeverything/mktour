@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { AppError } from '@/lib/errors';
 
@@ -305,19 +305,20 @@ export const deleteClubFunction = async ({
   userId,
   userDeletion = false, // true when function is invoked while deleting the user - single owner of a club
 }: ClubDeleteProps) => {
-  const otherClubs = await db
-    .select()
-    .from(clubs_to_users)
-    .where(
-      and(
-        eq(clubs_to_users.userId, userId),
-        ne(clubs_to_users.clubId, clubId),
-        eq(clubs_to_users.status, 'co-owner'),
-      ),
-    )
-    .limit(1);
-
-  const userStatus = await getStatusInClub({ userId, clubId });
+  const [otherClubs, userStatus] = await Promise.all([
+    db
+      .select()
+      .from(clubs_to_users)
+      .where(
+        and(
+          eq(clubs_to_users.userId, userId),
+          ne(clubs_to_users.clubId, clubId),
+          eq(clubs_to_users.status, 'co-owner'),
+        ),
+      )
+      .limit(1),
+    getStatusInClub({ userId, clubId }),
+  ]);
   if (userStatus !== 'co-owner') throw new AppError('UNAUTHENTICATED');
 
   if (otherClubs.length === 0 && !userDeletion)
@@ -449,14 +450,10 @@ export const deleteClubManager = async ({
   userId: string;
   user: UserModel;
 }) => {
-  const authorStatus = await getStatusInClub({
-    userId: user.id,
-    clubId,
-  });
-  const targetStatus = await getStatusInClub({
-    userId,
-    clubId,
-  });
+  const [authorStatus, targetStatus] = await Promise.all([
+    getStatusInClub({ userId: user.id, clubId }),
+    getStatusInClub({ userId, clubId }),
+  ]);
   if (targetStatus === 'co-owner') throw new AppError('FORBIDDEN');
   if (authorStatus !== 'co-owner') throw new AppError('FORBIDDEN');
   await db

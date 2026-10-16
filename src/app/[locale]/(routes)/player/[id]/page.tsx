@@ -1,5 +1,4 @@
 import { turboPascal } from '@/app/fonts';
-import Loading from '@/app/[locale]/(routes)/loading';
 import { AffiliateButton } from '@/app/[locale]/(routes)/player/[id]/affiliate-button';
 import ClaimPlayer from '@/app/[locale]/(routes)/player/[id]/claim-button';
 import EditButton from '@/app/[locale]/(routes)/player/[id]/edit-button';
@@ -15,18 +14,10 @@ import type { ResolvingMetadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { FC, Suspense } from 'react';
+import { FC } from 'react';
 import 'server-only';
 
 export default async function PlayerPage(props: PlayerPageProps) {
-  return (
-    <Suspense fallback={<Loading />}>
-      <PlayerPageContent {...props} />
-    </Suspense>
-  );
-}
-
-async function PlayerPageContent(props: PlayerPageProps) {
   const { id } = await props.params;
   const [user, playerData] = await Promise.all([
     publicCaller.auth.info(),
@@ -36,15 +27,13 @@ async function PlayerPageContent(props: PlayerPageProps) {
   if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
 
   const { club, ...player } = playerData;
-  const [status, affiliation] = await Promise.all([
+  const [status, affiliation, playerLastTournaments] = await Promise.all([
     publicCaller.club.authStatus({
       clubId: club.id,
     }),
     publicCaller.auth.affiliationInClub({ clubId: club.id }),
+    publicCaller.player.lastTournaments({ playerId: player.id }),
   ]);
-  const playerLastTournaments = await publicCaller.player.lastTournaments({
-    playerId: player.id,
-  });
 
   const canEdit = status !== null;
   const canClaim = !status && user && !player.userId;

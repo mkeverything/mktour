@@ -1,0 +1,16 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "files": ["src/components/ui/**"],
+    "overrides": [
+      {
+        "files": ["src/lib/pairing-generators/**"],
+        "rules": ["react-doctor/js-set-map-lookups"],
+      },
+      {
+        "files": ["src/lib/pairing-generators/**"],
+        "rules": ["react-doctor/js-index-maps"],
+      },
+    ],
+  },
+}

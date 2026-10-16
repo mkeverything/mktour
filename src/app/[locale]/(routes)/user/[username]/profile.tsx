@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/card';
 import {
   Carousel,
-  CarouselApi,
   CarouselContent,
   CarouselItem,
   CarouselNext,
@@ -43,14 +42,7 @@ import { useQueries } from '@tanstack/react-query';
 import { CalendarDays, Settings, Star, User, Users2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import {
-  FC,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { FC, ReactNode, useMemo } from 'react';
 
 const Profile: FC<{
   user: UserWithPlayers;
@@ -241,26 +233,6 @@ const ClubProfilesCarousel: FC<{
   );
   const shouldRenderAuthStatsCard = hasAnyHeadToHead || areAuthStatsResolved;
   const shouldShowEmptyHeadToHead = hasAnyHeadToHead;
-  const [api, setApi] = useState<CarouselApi>();
-  const [carouselState, setCarouselState] = useState({
-    isFirst: true,
-    isLast: false,
-  });
-
-  const handleSelect = useCallback(() => {
-    if (!api) return;
-    const isFirst = !api.canScrollPrev();
-    const isLast = !api.canScrollNext();
-
-    setCarouselState({ isFirst, isLast });
-  }, [api]);
-
-  useEffect(() => {
-    if (!api) return;
-
-    api.on('init', handleSelect);
-    api.on('select', handleSelect);
-  }, [api, handleSelect]);
 
   if (!userPlayers || userPlayers.length === 0) {
     return (
@@ -303,7 +275,7 @@ const ClubProfilesCarousel: FC<{
   }
 
   return (
-    <Carousel setApi={setApi} opts={{ loop: false }}>
+    <Carousel opts={{ loop: false }}>
       <CarouselContent>
         {userPlayers.map(({ club, player }) => (
           <CarouselItem key={club.id}>
@@ -327,12 +299,8 @@ const ClubProfilesCarousel: FC<{
         ))}
       </CarouselContent>
       <CarouselDots count={userPlayers.length} />
-      <CarouselPrevious
-        className={`max-sm:hidden ${carouselState?.isFirst && 'hidden'}`}
-      />
-      <CarouselNext
-        className={`max-sm:hidden ${carouselState?.isLast && 'hidden'}`}
-      />
+      <CarouselPrevious className="disabled:hidden max-sm:hidden" />
+      <CarouselNext className="disabled:hidden max-sm:hidden" />
     </Carousel>
   );
 };

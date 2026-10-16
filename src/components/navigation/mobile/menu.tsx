@@ -12,7 +12,14 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useQueryClient } from '@tanstack/react-query';
-import { motion, StyleTransitions, useCycle, Variants } from 'framer-motion';
+import {
+  MotionConfig,
+  StyleTransitions,
+  useCycle,
+  useReducedMotion,
+  Variants,
+} from 'framer-motion';
+import * as m from 'framer-motion/m';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -26,6 +33,7 @@ const Menu: FC = () => {
   const { mutate: signOut } = useSignOutMutation(queryClient);
   const { height } = useDimensions(containerRef);
   const [isOpen, toggleOpen] = useCycle(false, true);
+  const reduceMotion = useReducedMotion();
   const isActivePath = useIsActivePath();
   const handleSignOut = async () => {
     signOut(undefined, {
@@ -70,70 +78,87 @@ const Menu: FC = () => {
     [],
   );
 
+  // with reduced motion the panel fades as one piece while its contents switch instantly
+  const panel = useMemo<Variants>(
+    () => ({
+      open: { opacity: 1, transition: { duration: reduceMotion ? 0.2 : 0 } },
+      closed: {
+        opacity: 0,
+        transition: reduceMotion
+          ? { duration: 0.2, when: 'beforeChildren' }
+          : { duration: 0, when: 'afterChildren' },
+      },
+    }),
+    [reduceMotion],
+  );
+
   const t = useTranslations('Menu');
 
   return (
     <div className="w-8">
-      <motion.nav
+      <m.nav
         initial={false}
         animate={isOpen ? 'open' : 'closed'}
         custom={height}
         className={`fixed inset-0 z-100 block w-full ${isOpen ? '' : 'pointer-events-none'}`}
         ref={containerRef}
       >
-        <motion.div
-          className="bg-card absolute inset-0 right-0 w-full"
-          variants={sidebar}
-        />
-        <motion.ul variants={variants}>
-          <ScrollArea
-            className="offset-4 grid h-[92svh] w-full gap-2 px-8 pt-[calc(var(--spacing-mk-4)+var(--spacing-mk-safe-area-top))] pb-4"
-            type="auto"
-          >
-            {NAVMENU_ITEMS.map((item, idx) => (
-              <div key={idx}>
-                {!item.subMenuItems ? (
-                  <MenuItem key={idx}>
-                    <Link
-                      href={item.path}
-                      onClick={() => toggleOpen()}
-                      className={`text-2xl ${isActivePath(item.path) ? selected : ''}`}
-                    >
-                      {t(item.title)}
-                    </Link>
-                  </MenuItem>
-                ) : (
-                  <MenuItemWithSubMenu toggleOpen={toggleOpen} item={item} />
-                )}
-                <MenuItem>
-                  <Separator className="my-3 h-px" />
+        <m.div variants={panel}>
+          <MotionConfig skipAnimations={!!reduceMotion}>
+            <m.div
+              className="bg-card absolute inset-0 right-0 w-full"
+              variants={sidebar}
+            />
+            <m.ul variants={variants}>
+              <ScrollArea
+                className="offset-4 grid h-[92svh] w-full gap-2 px-8 pt-[calc(var(--spacing-mk-4)+var(--spacing-mk-safe-area-top))] pb-4"
+                type="auto"
+              >
+                {NAVMENU_ITEMS.map((item) => (
+                  <div key={item.path}>
+                    {!item.subMenuItems ? (
+                      <MenuItem>
+                        <Link
+                          href={item.path}
+                          onClick={() => toggleOpen()}
+                          className={`text-2xl ${isActivePath(item.path) ? selected : ''}`}
+                        >
+                          {t(item.title)}
+                        </Link>
+                      </MenuItem>
+                    ) : (
+                      <MenuItemWithSubMenu
+                        toggleOpen={toggleOpen}
+                        item={item}
+                      />
+                    )}
+                    <MenuItem>
+                      <Separator className="my-3 h-px" />
+                    </MenuItem>
+                  </div>
+                ))}
+                <MenuItem className="ml-3 text-2xl">
+                  {!user ? (
+                    <form action="/login/lichess" method="post">
+                      <button type="submit">{t('Profile.sign in')}</button>
+                    </form>
+                  ) : (
+                    <button name="log out" onClick={handleSignOut}>
+                      {t('Profile.logout')}
+                    </button>
+                  )}
+                  <div className="my-3 h-px w-full bg-transparent"></div>
                 </MenuItem>
-              </div>
-            ))}
-            <MenuItem className="ml-3 text-2xl">
-              {!user ? (
-                <Link
-                  href="/login/lichess"
-                  onClick={() => toggleOpen()}
-                  prefetch={false}
-                >
-                  {t('Profile.sign in')}
-                </Link>
-              ) : (
-                <button name="log out" onClick={handleSignOut}>
-                  {t('Profile.logout')}
-                </button>
-              )}
-              <div className="my-3 h-px w-full bg-transparent"></div>
-            </MenuItem>
-          </ScrollArea>
-          <MenuItem className="absolute bottom-4 flex w-full items-center justify-center gap-8">
-            <LocaleSwitcher />
-            <ModeToggler />
-          </MenuItem>
-        </motion.ul>
+              </ScrollArea>
+              <MenuItem className="absolute bottom-4 flex w-full items-center justify-center gap-8">
+                <LocaleSwitcher />
+                <ModeToggler />
+              </MenuItem>
+            </m.ul>
+          </MotionConfig>
+        </m.div>
         <MenuToggle toggle={toggleOpen} />
-      </motion.nav>
+      </m.nav>
     </div>
   );
 };

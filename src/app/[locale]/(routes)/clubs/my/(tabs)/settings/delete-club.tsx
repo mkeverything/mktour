@@ -4,7 +4,7 @@ import DeleteConfirmationForm from '@/app/[locale]/(routes)/clubs/my/(tabs)/sett
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { useClubManagers } from '@/components/hooks/query-hooks/use-club-managers';
 import { useTRPC } from '@/components/trpc/client';
-import ComboModal from '@/components/ui-custom/combo-modal';
+import * as ComboModal from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
 import { useIsMutating } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';

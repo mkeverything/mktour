@@ -86,6 +86,7 @@ export default function DeleteUserForm({
               <FormControl>
                 <Input
                   {...field}
+                  aria-label={t('username')}
                   disabled={isPending || isNavigating}
                   autoComplete="off"
                   onPaste={(e) => {

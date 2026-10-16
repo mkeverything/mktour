@@ -1,4 +1,4 @@
-import { prefetch, trpc } from '@/components/trpc/server';
+import { prefetch, trpc } from '@/server/api/query-client';
 
 const clubQueryPrefetch = (clubId: string) => {
   prefetch(trpc.auth.info.queryOptions());

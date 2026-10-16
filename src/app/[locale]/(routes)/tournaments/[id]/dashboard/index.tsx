@@ -13,7 +13,6 @@ const Dashboard: FC<TournamentPageContentProps> = ({
   id,
   status,
   unitId,
-  currentRound,
 }) => {
   const [currentTab, setCurrentTab] = useState<DashboardTab>('main');
   const { isDesktop } = useContext(MediaQueryContext);
@@ -28,7 +27,6 @@ const Dashboard: FC<TournamentPageContentProps> = ({
       status={status}
       unitId={unitId}
       userId={userId}
-      currentRound={currentRound}
     />
   );
 };
@@ -50,7 +48,6 @@ interface TournamentPageContentProps {
   status: TournamentAuthStatus;
   unitId: string | null;
   userId: string | undefined;
-  currentRound: number | null;
 }
 
 export default Dashboard;

@@ -63,16 +63,4 @@ function Close(props: CloseProps) {
   return <ComboModal.Close {...props} />;
 }
 
-const ComboModal = {
-  Root,
-  Trigger,
-  Content,
-  Header,
-  Title,
-  Description,
-  Footer,
-  Close,
-};
-
 export { Root, Trigger, Content, Header, Title, Description, Footer, Close };
-export default ComboModal;

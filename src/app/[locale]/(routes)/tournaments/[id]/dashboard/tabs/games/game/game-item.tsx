@@ -10,8 +10,10 @@ import useOutsideClick from '@/components/hooks/use-outside-click';
 import PortalWrapper from '@/components/portal-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { GameResult } from '@/server/zod/enums';
-import { motion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
+import * as m from 'framer-motion/m';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Dispatch, FC, memo, SetStateAction, useContext, useRef } from 'react';
@@ -42,9 +44,9 @@ const GameItem: FC<GameProps> = ({
   });
   const { data } = useTournamentGameResultInfo(tournamentId);
   const ref = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
   const hasStarted = !!data?.hasStarted;
   const isActive = selected && hasStarted;
-  const muted = result && !selected;
   const isClosed = !!data?.isClosed;
   const allowPlayersSetResults = !!data?.allowPlayersSetResults;
   // players can only edit their own games, and only after tournament has started
@@ -53,7 +55,7 @@ const GameItem: FC<GameProps> = ({
     status === 'organizer' ||
     (status === 'player' && isPlayerUnitInGame && hasStarted);
   const disabled = !canEdit || isClosed || saveRoundPending;
-  const draw = result === '1/2-1/2';
+  const lift = reduceMotion ? { scale: 1.01, y: -2 } : { scale: 1.05, y: -10 };
 
   const handleOpenGame = () => {
     if (selected) {
@@ -96,20 +98,30 @@ const GameItem: FC<GameProps> = ({
 
   return (
     <PortalWrapper portalled={isActive}>
-      <motion.div
+      <m.div
         key={id}
         ref={ref}
-        className={`${disabled && 'pointer-events-none'} w-full min-w-0 cursor-pointer ${
-          isActive ? 'z-50' : 'z-0'
-        }`}
+        className={cn(
+          'w-full min-w-0 cursor-pointer',
+          isActive ? 'z-50' : 'z-0',
+          { 'pointer-events-none': disabled },
+        )}
         initial={{ scale: 1, y: 0 }}
         exit={{ scale: 1, y: 0 }}
-        animate={isActive ? { scale: 1.05, y: -10 } : { scale: 1, y: 0 }}
+        animate={isActive ? lift : { scale: 1, y: 0 }}
         transition={{ type: 'spring', bounce: 0.4 }}
         onClick={handleOpenGame}
       >
         <Card
-          className={`grid ${muted && 'opacity-50'} p-mk px-mk-2 gap-mk h-12 w-full min-w-0 items-center rounded-lg p-1 shadow-md transition-all select-none ${isActive ? 'grid-cols-3' : 'grid-cols-5'} ${!isActive && 'pointer-events-none'} ${isPlayerUnitInGame && 'border-3'}`}
+          className={cn(
+            'p-mk px-mk-2 gap-mk grid h-12 w-full min-w-0 items-center rounded-lg p-1 shadow-md transition-all select-none',
+            isActive ? 'grid-cols-3' : 'grid-cols-5',
+            {
+              'opacity-50': result && !selected,
+              'pointer-events-none': !isActive,
+              'border-3': isPlayerUnitInGame,
+            },
+          )}
         >
           <Player
             isWinner={result === '1-0'}
@@ -117,12 +129,18 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={whiteNickname}
             position={{ justify: 'justify-self-start', text: 'text-left' }}
-            className={`${unitId === whiteUnitId && 'font-bold'}`}
+            className={cn({ 'font-bold': unitId === whiteUnitId })}
           />
           <Button
             variant="ghost"
             onClick={() => handleMutate('1/2-1/2')}
-            className={`mx-mk-2 gap-mk col-span-1 flex size-full ${!isActive && 'max-w-10'} justify-self-center rounded-sm p-0 select-none ${isActive && draw && 'mk-link'}`}
+            className={cn(
+              'mx-mk-2 gap-mk col-span-1 flex size-full justify-self-center rounded-sm p-0 select-none',
+              {
+                'max-w-10': !isActive,
+                'mk-link': isActive && result === '1/2-1/2',
+              },
+            )}
           >
             <Result {...resultProps} selected={isActive} />
           </Button>
@@ -132,10 +150,10 @@ const GameItem: FC<GameProps> = ({
             selected={isActive}
             nickname={blackNickname}
             position={{ justify: 'justify-self-end', text: 'text-right' }}
-            className={`${unitId === blackUnitId && 'font-bold'}`}
+            className={cn({ 'font-bold': unitId === blackUnitId })}
           />
         </Card>
-      </motion.div>
+      </m.div>
     </PortalWrapper>
   );
 };

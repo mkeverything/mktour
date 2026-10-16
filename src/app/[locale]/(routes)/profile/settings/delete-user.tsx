@@ -2,10 +2,11 @@
 
 import DeleteUserForm from '@/app/[locale]/(routes)/profile/settings/delete-user-form';
 import RichText from '@/components/rich-text';
-import ComboModal, {
+import {
   Close,
   Content,
   Header,
+  Root,
   Title,
   Trigger,
 } from '@/components/ui-custom/combo-modal';
@@ -23,7 +24,7 @@ export default function DeleteUser({ userId }: { userId: string }) {
       <h2 className="pl-4">{t('danger zone')}</h2>
       <HalfCard className="w-full">
         <CardContent className="p-mk flex flex-col gap-4 sm:p-8">
-          <ComboModal.Root open={open} onOpenChange={setOpen}>
+          <Root open={open} onOpenChange={setOpen}>
             <Trigger asChild>
               <Button variant="destructive">{t('delete profile')}</Button>
             </Trigger>
@@ -41,7 +42,7 @@ export default function DeleteUser({ userId }: { userId: string }) {
                 <Button variant="outline">{t('cancel')}</Button>
               </Close>
             </Content>
-          </ComboModal.Root>
+          </Root>
         </CardContent>
       </HalfCard>
     </div>

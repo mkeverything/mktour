@@ -37,7 +37,7 @@ export default function ForwardToEmptyClub({ club }: { club: ClubModel }) {
             }}
           >
             <p>{`${t('button text')} ${club.name}`}</p>
-            <ArrowRight className="transition-all duration-200 group-hover:translate-x-0.5" />
+            <ArrowRight className="transition-transform duration-200 group-hover:translate-x-0.5" />
           </Button>
         </CardContent>
       </HalfCard>

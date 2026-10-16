@@ -14,20 +14,20 @@ const TournamentItem = ({ club, tournament }: Props) => {
   const fallbackTitle = useTournamentFallbackTitle(tournament);
   const title = tournament.title || fallbackTitle;
   const details = [
-    tournament.rated ? t('rated') : t('unrated'),
-    t(format),
-    t(`Types.${type}`),
-    formatDate(date, 'short'),
-  ];
+    ['rated', tournament.rated ? t('rated') : t('unrated')],
+    ['format', t(format)],
+    ['type', t(`Types.${type}`)],
+    ['date', formatDate(date, 'short')],
+  ] as const;
 
-  const description = details.map((detail, i) => {
+  const description = details.map(([key, detail], i) => {
     const separator = i !== details.length - 1 && (
       <div className="relative inline max-h-4 w-4">
         <Dot className="absolute top-0 bottom-0 m-auto w-full" />
       </div>
     );
     return (
-      <span key={i} className="flex items-center">
+      <span key={key} className="flex items-center">
         {detail}
         {separator}
       </span>
