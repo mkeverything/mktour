@@ -3,7 +3,7 @@
   "Seo": {
     "siteName": "mktour",
     "homepage": {
-      "title": "free chess tournament manager: swiss & round robin | mktour",
+      "title": "mktour | chess tournaments",
       "description": "run chess tournaments for free: swiss and round robin pairings, live standings, club ratings and lichess sign-in. open-source and works on any device."
     },
     "signIn": {
@@ -24,7 +24,7 @@
     },
     "clubs": {
       "all": {
-        "title": "chess clubs",
+        "title": "all chess clubs",
         "description": "chess clubs that run their tournaments on mktour: players, club ratings and past events. join a club or start your own for free."
       },
       "my": {
@@ -43,7 +43,7 @@
     },
     "tournaments": {
       "all": {
-        "title": "chess tournaments: live standings and results",
+        "title": "all chess tournaments",
         "description": "follow chess tournaments run on mktour: live pairings, standings and results of swiss and round robin events from chess clubs."
       },
       "my": {
@@ -73,8 +73,8 @@
     },
     "user": {
       "profile": {
-        "title": "{username}'s profile",
-        "description": "{username} on mktour - {clubs} clubs, {tournaments} tournaments"
+        "title": "{username}",
+        "description": "{username} on mktour - {clubs, plural, one {# club} other {# clubs}}, {tournaments, plural, one {# tournament} other {# tournaments}}"
       }
     },
     "notifications": {
@@ -87,7 +87,7 @@
         "description": "your mktour profile and stats"
       },
       "settings": {
-        "title": "settings",
+        "title": "{username} | settings",
         "description": "account and notification settings"
       }
     }
@@ -200,6 +200,7 @@
       "merge": "merge player",
       "rating tooltip": "rating cannot be combined, tournaments of {player} become kinda unrated",
       "result": "result will be:",
+      "swap players": "swap players",
       "title": "merge player"
     },
     "Stats": {
@@ -516,6 +517,8 @@
       "started at": "started at",
       "ended at": "ended at",
       "number of rounds": "amount of rounds:",
+      "decrease rounds": "decrease number of rounds",
+      "increase rounds": "increase number of rounds",
       "unrated": "unrated",
       "save": "save",
       "fullscreen": "fullscreen mode",
@@ -536,6 +539,7 @@
     "Round": {
       "round": "round {roundInView}",
       "new round button": "next round",
+      "shuffle": "shuffle pairings",
       "add two players": "add at least two players to see generated round",
       "start tournament": {
         "title": "start tournament?",
@@ -627,8 +631,10 @@
     "title": "home",
     "make tournament": "make tournament",
     "sign in with lichess": "sign in with lichess",
+    "learn more": "learn more",
+    "learn more description": "if you don't take our word for it",
     "big text 1": "organize any chess tournament",
-    "big text 2": "organize any chess tournament the easy way",
+    "big text 2": "organize any chess tournament the easiest way",
     "popular clubs": "popular clubs",
     "my clubs": "my clubs",
     "my tournaments": "my tournaments",

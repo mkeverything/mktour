@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { applyManualUnitOrder } from '@/lib/reorder-tournament-units';
 import { SQLCaseWhen } from '@/lib/sql-case-when';

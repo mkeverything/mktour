@@ -5,6 +5,8 @@ import { cookies } from 'next/headers';
 
 import { lichess, lucia } from '@/lib/auth/lucia';
 import { CACHE_TAGS, userPublicProfileTag } from '@/lib/cache-tags';
+import { COOKIES } from '@/lib/config/constants';
+import { AppError } from '@/lib/errors';
 import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
@@ -18,10 +20,10 @@ export async function GET(request: Request): Promise<Response> {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const cooks = await cookies();
-  const authFrom = cooks.get('auth_from')?.value ?? null;
-  cooks.delete('auth_from');
-  const storedState = cooks.get('lichess_oauth_state')?.value ?? null;
-  const codeVerifier = cooks.get('lichess_oauth_code_validation')?.value;
+  const authFrom = cooks.get(COOKIES.AUTH_FROM)?.value ?? null;
+  cooks.delete(COOKIES.AUTH_FROM);
+  const storedState = cooks.get(COOKIES.OAUTH_STATE)?.value ?? null;
+  const codeVerifier = cooks.get(COOKIES.OAUTH_CODE_VERIFIER)?.value;
 
   if (
     !code ||
@@ -31,8 +33,8 @@ export async function GET(request: Request): Promise<Response> {
     !codeVerifier
   ) {
     const retryUrl = authFrom
-      ? `/login/lichess?from=${encodeURIComponent(authFrom)}`
-      : '/login/lichess';
+      ? `/sign-in?from=${encodeURIComponent(authFrom)}`
+      : '/sign-in';
     return new Response(null, {
       status: 302,
       headers: {
@@ -48,6 +50,9 @@ export async function GET(request: Request): Promise<Response> {
         Authorization: `Bearer ${tokens.accessToken()}`,
       },
     });
+    if (!lichessUserResponse.ok) {
+      throw new AppError('LICHESS_API_ERROR');
+    }
     const lichessUserEmailResponse = await fetch(
       'https://lichess.org/api/account/email',
       {
@@ -56,6 +61,9 @@ export async function GET(request: Request): Promise<Response> {
         },
       },
     );
+    if (!lichessUserEmailResponse.ok) {
+      throw new AppError('LICHESS_API_ERROR');
+    }
     const lichessUser: LichessUser = await lichessUserResponse.json();
     const lichessUserEmail = (await lichessUserEmailResponse.json())
       .email as string;
@@ -142,7 +150,7 @@ export async function GET(request: Request): Promise<Response> {
         language: 'en',
       });
 
-      cooks.set('show_new_user_toast', 'true');
+      cooks.set(COOKIES.NEW_USER_TOAST, 'true');
 
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);

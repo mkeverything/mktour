@@ -13,6 +13,7 @@ const nextConfig = {
   cacheComponents: true,
   htmlLimitedBots: getPattern(),
   experimental: {
+    globalNotFound: true,
     turbopackFileSystemCacheForDev: true,
   },
   logging: {

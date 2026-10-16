@@ -2,34 +2,32 @@ import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fa
 import { Card, CardTitle } from '@/components/ui/card';
 import { ClubModel } from '@/server/zod/clubs';
 import { TournamentModel } from '@/server/zod/tournaments';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { Dot } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 const TournamentItem = ({ club, tournament }: Props) => {
   const { date, type, format, id } = tournament;
-  const formatUtil = useFormatter();
+  const formatDate = useFormatDate();
   const t = useTranslations('MakeTournament');
   const fallbackTitle = useTournamentFallbackTitle(tournament);
   const title = tournament.title || fallbackTitle;
-  const localizedDate = formatUtil.dateTime(new Date(date), {
-    dateStyle: 'short',
-  });
   const details = [
-    tournament.rated ? t('rated') : t('unrated'),
-    t(format),
-    t(`Types.${type}`),
-    localizedDate,
-  ];
+    ['rated', tournament.rated ? t('rated') : t('unrated')],
+    ['format', t(format)],
+    ['type', t(`Types.${type}`)],
+    ['date', formatDate(date, 'short')],
+  ] as const;
 
-  const description = details.map((detail, i) => {
+  const description = details.map(([key, detail], i) => {
     const separator = i !== details.length - 1 && (
       <div className="relative inline max-h-4 w-4">
         <Dot className="absolute top-0 bottom-0 m-auto w-full" />
       </div>
     );
     return (
-      <span key={i} className="flex items-center">
+      <span key={key} className="flex items-center">
         {detail}
         {separator}
       </span>
