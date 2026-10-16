@@ -31,8 +31,10 @@ function SavedThemeSync() {
   const { theme, setTheme } = useTheme();
 
   useLayoutEffect(() => {
-    const savedTheme = localStorage.getItem(STORAGE_KEY);
-    if (savedTheme && savedTheme !== theme) setTheme(savedTheme);
+    try {
+      const savedTheme = localStorage.getItem(STORAGE_KEY);
+      if (savedTheme && savedTheme !== theme) setTheme(savedTheme);
+    } catch {}
   }, [theme, setTheme]);
 
   return null;
