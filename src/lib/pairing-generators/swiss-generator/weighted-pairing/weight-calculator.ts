@@ -75,7 +75,7 @@ export interface PabPenaltyInput extends BasePenaltyInput {
  * Input for computing penalty on a regular (player vs player) edge.
  *
  * Contains the coloured pair (whiteEntity/blackEntity) for evaluation.
- * All regular edge criteria (SCORE_TIER, C10-C21, RANKING) apply.
+ * All regular edge criteria (C6, SCORE_TIER, C10-C21, RANKING) apply.
  */
 export interface RegularPenaltyInput extends BasePenaltyInput {
   /** The coloured pair being evaluated */
@@ -160,6 +160,21 @@ export interface CriterionDefinition {
  */
 function getC5PerEdgeMax(ctx: WeightContext): number {
   return ctx.maxPossibleScore;
+}
+
+/**
+ * computes max penalty for C6 (downfloater count).
+ *
+ * the penalty is the number of brackets an edge crosses, so the worst an edge
+ * can do is carry its higher player from the top level to the bottom one.
+ *
+ * @param ctx - weight context with tournament parameters
+ * @returns maximum possible bracket crossings per edge
+ */
+function getC6PerEdgeMax(ctx: WeightContext): number {
+  const deepestFloat = ctx.levelIndexByScore.size - 1;
+
+  return deepestFloat;
 }
 
 /**
@@ -258,24 +273,38 @@ export const C5: CriterionDefinition = {
 };
 
 /**
- * SCORE_TIER: Minimise score difference between paired players.
+ * C6: minimize the number of downfloaters.
  *
- * This criterion encodes FIDE C6-C8:
- * - C6: Minimise the number of downfloaters
- * - C7: Minimise the scores of downfloaters
- * - C8: Ensure completion of following brackets
+ * FIDE C.04.3 [C6]. counts each bracket a floater exits as one downfloater.
+ * SCORE_TIER's |Δscore| weighs that exit by the score gap instead, so on its
+ * own it could pick more downfloaters to avoid one float across a wide gap.
  *
- * By prioritising same-score pairings (penalty 0) over cross-score
- * pairings (penalty = score difference), we naturally achieve C6-C8.
+ * applies to: regular edges only.
+ * priority: 1 - highest priority for regular edges.
+ */
+export const C6: CriterionDefinition = {
+  name: 'C6',
+  getPerEdgeMax: getC6PerEdgeMax,
+  appliesTo: EdgeType.Regular,
+  priority: 1,
+  computePenalty: computeC6Penalty,
+};
+
+/**
+ * SCORE_TIER: minimize score difference between paired players.
+ *
+ * stand-in for FIDE C7 until #140 replaces it. it sits directly below C6, so
+ * it only decides between pairings with the same number of downfloaters,
+ * preferring those whose floats cross narrower score gaps.
  *
  * Applies to: Regular edges only.
- * Priority: 1 - Highest priority for regular edges.
+ * Priority: 2 - Directly below C6.
  */
 export const SCORE_TIER: CriterionDefinition = {
   name: 'SCORE_TIER',
   getPerEdgeMax: getScoreTierPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 1,
+  priority: 2,
   computePenalty: computeScoreTierPenalty,
 };
 
@@ -286,13 +315,13 @@ export const SCORE_TIER: CriterionDefinition = {
  * missed games (fewer unplayed = fewer missed rounds).
  *
  * Applies to: PAB edges only.
- * Priority: 2 - Below SCORE_TIER but still important for PAB.
+ * Priority: 3 - Below C6 and SCORE_TIER, but still important for PAB.
  */
 export const C9: CriterionDefinition = {
   name: 'C9',
   getPerEdgeMax: getC9PerEdgeMax,
   appliesTo: EdgeType.Pab,
-  priority: 2,
+  priority: 3,
   computePenalty: computeC9Penalty,
 };
 
@@ -303,13 +332,13 @@ export const C9: CriterionDefinition = {
  * after colour assignment.
  *
  * Applies to: Regular edges only.
- * Priority: 3.
+ * Priority: 4.
  */
 export const C10: CriterionDefinition = {
   name: 'C10',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 3,
+  priority: 4,
   computePenalty: computeC10Penalty,
 };
 
@@ -319,13 +348,13 @@ export const C10: CriterionDefinition = {
  * FIDE: Topscorers should not play the same colour three times in a row.
  *
  * Applies to: Regular edges only.
- * Priority: 4.
+ * Priority: 5.
  */
 export const C11: CriterionDefinition = {
   name: 'C11',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 4,
+  priority: 5,
   computePenalty: computeC11Penalty,
 };
 
@@ -336,13 +365,13 @@ export const C11: CriterionDefinition = {
  * Preference determined by colourIndex sign.
  *
  * Applies to: Regular edges only.
- * Priority: 5.
+ * Priority: 6.
  */
 export const C12: CriterionDefinition = {
   name: 'C12',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 5,
+  priority: 6,
   computePenalty: computeC12Penalty,
 };
 
@@ -353,13 +382,13 @@ export const C12: CriterionDefinition = {
  * Violating strong preference is worse than mild preference.
  *
  * Applies to: Regular edges only.
- * Priority: 6.
+ * Priority: 7.
  */
 export const C13: CriterionDefinition = {
   name: 'C13',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 6,
+  priority: 7,
   computePenalty: computeC13Penalty,
 };
 
@@ -369,13 +398,13 @@ export const C13: CriterionDefinition = {
  * FIDE: Players who downfloated in round N-1 should not downfloat again.
  *
  * Applies to: Regular edges only.
- * Priority: 7.
+ * Priority: 8.
  */
 export const C14: CriterionDefinition = {
   name: 'C14',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 7,
+  priority: 8,
   computePenalty: computeC14Penalty,
 };
 
@@ -385,13 +414,13 @@ export const C14: CriterionDefinition = {
  * FIDE: Residents paired with MDPs should not have upfloated in round N-1.
  *
  * Applies to: Regular edges only.
- * Priority: 8.
+ * Priority: 9.
  */
 export const C15: CriterionDefinition = {
   name: 'C15',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 8,
+  priority: 9,
   computePenalty: computeC15Penalty,
 };
 
@@ -401,13 +430,13 @@ export const C15: CriterionDefinition = {
  * FIDE: Players who downfloated in round N-2 should not downfloat again.
  *
  * Applies to: Regular edges only.
- * Priority: 9.
+ * Priority: 10.
  */
 export const C16: CriterionDefinition = {
   name: 'C16',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 9,
+  priority: 10,
   computePenalty: computeC16Penalty,
 };
 
@@ -417,13 +446,13 @@ export const C16: CriterionDefinition = {
  * FIDE: Residents paired with MDPs should not have upfloated in round N-2.
  *
  * Applies to: Regular edges only.
- * Priority: 10.
+ * Priority: 11.
  */
 export const C17: CriterionDefinition = {
   name: 'C17',
   getPerEdgeMax: getBinaryPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 10,
+  priority: 11,
   computePenalty: computeC17Penalty,
 };
 
@@ -434,13 +463,13 @@ export const C17: CriterionDefinition = {
  * with their current opponent.
  *
  * Applies to: Regular edges only.
- * Priority: 11.
+ * Priority: 12.
  */
 export const C18: CriterionDefinition = {
   name: 'C18',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 11,
+  priority: 12,
   computePenalty: computeC18Penalty,
 };
 
@@ -451,13 +480,13 @@ export const C18: CriterionDefinition = {
  * with their current MDP opponent.
  *
  * Applies to: Regular edges only.
- * Priority: 12.
+ * Priority: 13.
  */
 export const C19: CriterionDefinition = {
   name: 'C19',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 12,
+  priority: 13,
   computePenalty: computeC19Penalty,
 };
 
@@ -468,13 +497,13 @@ export const C19: CriterionDefinition = {
  * with their current opponent.
  *
  * Applies to: Regular edges only.
- * Priority: 13.
+ * Priority: 14.
  */
 export const C20: CriterionDefinition = {
   name: 'C20',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 13,
+  priority: 14,
   computePenalty: computeC20Penalty,
 };
 
@@ -485,13 +514,13 @@ export const C20: CriterionDefinition = {
  * with their current MDP opponent.
  *
  * Applies to: Regular edges only.
- * Priority: 14.
+ * Priority: 15.
  */
 export const C21: CriterionDefinition = {
   name: 'C21',
   getPerEdgeMax: getMdpScoreDiffPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 14,
+  priority: 15,
   computePenalty: computeC21Penalty,
 };
 
@@ -503,13 +532,13 @@ export const C21: CriterionDefinition = {
  * This is the lowest priority criterion.
  *
  * Applies to: Regular edges only.
- * Priority: 15 - Lowest priority.
+ * Priority: 16 - Lowest priority.
  */
 export const RANKING: CriterionDefinition = {
   name: 'RANKING',
   getPerEdgeMax: getRankingPerEdgeMax,
   appliesTo: EdgeType.Regular,
-  priority: 15,
+  priority: 16,
   computePenalty: computeRankingPenalty,
 };
 
@@ -522,6 +551,7 @@ export const RANKING: CriterionDefinition = {
  */
 export const ALL_CRITERIA: readonly CriterionDefinition[] = [
   C5,
+  C6,
   SCORE_TIER,
   C9,
   C10,
@@ -649,6 +679,42 @@ export function computeMultipliers(
   }
 
   return { multipliers, bases };
+}
+
+// ============================================================================
+// Penalty Computation - C6 (Downfloater Count)
+// ============================================================================
+
+/**
+ * computes the C6 penalty for a player pair.
+ *
+ * FIDE C.04.3 [C6]: minimize the number of downfloaters. pairing across
+ * scores floats the higher player out of their bracket, and out of every
+ * occupied bracket between the two scores, each of which counts them as a
+ * downfloater (FIDE 1.4.1). penalty = brackets crossed, 0 for equal scores.
+ *
+ * @param penaltyInput - regular penalty input with colouredPair
+ * @returns number of brackets the edge crosses
+ */
+export function computeC6Penalty(penaltyInput: PenaltyInput): number {
+  if (!isRegularPenaltyInput(penaltyInput)) {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C6 requires regular penalty input',
+    });
+  }
+
+  const { whiteEntity, blackEntity } = penaltyInput.colouredPair;
+  const { levelIndexByScore } = penaltyInput.context;
+  const whiteLevel = levelIndexByScore.get(whiteEntity.entityScore);
+  const blackLevel = levelIndexByScore.get(blackEntity.entityScore);
+
+  if (whiteLevel === undefined || blackLevel === undefined) {
+    throw new AppError('PAIRING_GENERATOR_ERROR', {
+      cause: 'C6 found a paired score with no bracket level',
+    });
+  }
+
+  return Math.abs(whiteLevel - blackLevel);
 }
 
 // ============================================================================
@@ -1196,7 +1262,7 @@ export function computePabEdgeWeight(
 /**
  * Computes regular edge weight using all regular criteria.
  *
- * Sums weight contributions from SCORE_TIER, C10-C21, and RANKING.
+ * Sums weight contributions from C6, SCORE_TIER, C10-C21, and RANKING.
  */
 export function computeRegularEdgeWeight(
   colouredPair: ColouredEntitiesPair,
