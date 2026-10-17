@@ -229,6 +229,7 @@
     "AFFILIATION_NOT_FOUND": "пользователь не привязан к игроку",
     "AFFILIATION_STATUS_NOT_REQUESTED": "пользователь и так не запросил привязку к игроку",
     "ALREADY_AFFILIATED": "пользователь уже привязан к игроку",
+    "CANNOT_LEAVE_AS_ONLY_MANAGER": "нельзя выйти из клуба, в котором вы единственный админ",
     "CANNOT_LEAVE_ONLY_CLUB": "нельзя выйти из своего единственного клуба",
     "CLUB_ID_NOT_MATCHING": "ID клуба не соответствует",
     "CLUB_MISMATCH": "клуб не соответствует",

@@ -2,7 +2,7 @@ import { getDatabaseAuthToken, getDatabaseUrl } from '@/lib/config/urls';
 import { relations } from '@/server/db/relations';
 import type { Client } from '@libsql/client';
 import { createClient } from '@libsql/client';
-import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { LibSQLDatabase, LibSQLTransaction } from 'drizzle-orm/libsql';
 import { drizzle } from 'drizzle-orm/libsql';
 
 let _sqlite: Client | null = null;
@@ -30,3 +30,4 @@ export const sqlite = getSqlite();
 export const db = getDatabase();
 
 export type Database = Pick<typeof db, 'select' | 'update'>;
+export type Transaction = LibSQLTransaction<typeof relations>;

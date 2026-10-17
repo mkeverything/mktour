@@ -229,6 +229,7 @@
     "AFFILIATION_NOT_FOUND": "affiliation not found",
     "AFFILIATION_STATUS_NOT_REQUESTED": "affiliation was not requested",
     "ALREADY_AFFILIATED": "this player is already affiliated",
+    "CANNOT_LEAVE_AS_ONLY_MANAGER": "you can not leave a club you are the only manager of",
     "CANNOT_LEAVE_ONLY_CLUB": "you can not leave the only club you are in",
     "CLUB_ID_NOT_MATCHING": "club id does not match",
     "CLUB_MISMATCH": "club does not match",
