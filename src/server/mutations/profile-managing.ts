@@ -14,9 +14,12 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { sessions, user_preferences, users } from '@/server/db/schema/users';
-import { deleteClubFunction } from '@/server/mutations/club-managing';
+import {
+  deleteClubFunction,
+  promoteSuccessorCoOwners,
+} from '@/server/mutations/club-managing';
 import { EditProfileFormModel } from '@/server/zod/users';
-import { and, asc, count, eq, inArray, sql } from 'drizzle-orm';
+import { count, eq, inArray, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 export const editUser = async (
@@ -77,85 +80,16 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
 
   const clubId = user.selectedClub;
 
-  const clubsNeedingPromotion = await db
-    .select({
-      clubId: clubs_to_users.clubId,
-    })
-    .from(clubs_to_users)
-    .where(
-      and(
-        eq(clubs_to_users.userId, userId),
-        eq(clubs_to_users.status, 'co-owner'),
-      ),
-    )
-    .groupBy(clubs_to_users.clubId);
-
-  const clubsToPromote: string[] = [];
-  if (clubsNeedingPromotion.length > 0) {
-    const clubIds = clubsNeedingPromotion.map((c) => c.clubId);
-
-    const coOwnerCounts = await db
-      .select({
-        clubId: clubs_to_users.clubId,
-        count: count(),
-      })
-      .from(clubs_to_users)
-      .where(
-        and(
-          sql`${clubs_to_users.clubId} IN (${sql.join(
-            clubIds.map((id) => sql`${id}`),
-            sql`, `,
-          )})`,
-          eq(clubs_to_users.status, 'co-owner'),
-        ),
-      )
-      .groupBy(clubs_to_users.clubId);
-
-    for (const { clubId, count } of coOwnerCounts) {
-      if (count === 1) {
-        clubsToPromote.push(clubId);
-      }
-    }
-  }
-
-  if (clubsToPromote.length > 0) {
-    const allAdmins = await db
-      .select()
-      .from(clubs_to_users)
-      .where(
-        and(
-          sql`${clubs_to_users.clubId} IN (${sql.join(
-            clubsToPromote.map((id) => sql`${id}`),
-            sql`, `,
-          )})`,
-          eq(clubs_to_users.status, 'admin'),
-        ),
-      )
-      .orderBy(asc(clubs_to_users.promotedAt));
-
-    const oldestAdminsByClub = new Map<string, (typeof allAdmins)[0]>();
-    for (const admin of allAdmins) {
-      if (!oldestAdminsByClub.has(admin.clubId)) {
-        oldestAdminsByClub.set(admin.clubId, admin);
-      }
-    }
-
-    const promotionDate = new Date();
-    const updatePromises = Array.from(oldestAdminsByClub.values()).map(
-      (admin) =>
-        db
-          .update(clubs_to_users)
-          .set({
-            status: 'co-owner',
-            promotedAt: promotionDate,
-          })
-          .where(eq(clubs_to_users.id, admin.id)),
-    );
-
-    await Promise.all(updatePromises);
-  }
-
   await db.transaction(async (tx) => {
+    const managedClubs = await tx
+      .select({ clubId: clubs_to_users.clubId })
+      .from(clubs_to_users)
+      .where(eq(clubs_to_users.userId, userId));
+    await promoteSuccessorCoOwners(tx, {
+      userId,
+      clubIds: managedClubs.map(({ clubId }) => clubId),
+    });
+
     if (userClubs.includes(clubId)) {
       const selectedClubTournamentIds = tx
         .select({ id: tournaments.id })

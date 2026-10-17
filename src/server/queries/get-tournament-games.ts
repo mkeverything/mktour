@@ -1,6 +1,6 @@
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import { baselineUnitSort } from '@/lib/tournament-results';
-import { db } from '@/server/db';
+import { db, type Database } from '@/server/db';
 import {
   games,
   tournament_units,
@@ -16,7 +16,7 @@ function normalizeGames(rows: GameModel[]): GameModel[] {
 
 async function getTournamentStartedAt(
   tournamentId: string,
-  database: Pick<typeof db, 'select'>,
+  database: Database,
 ) {
   return await database
     .select({ startedAt: tournaments.startedAt })
@@ -27,7 +27,7 @@ async function getTournamentStartedAt(
 
 export async function getPersistedTournamentGames(
   tournamentId: string,
-  database: Pick<typeof db, 'select'>,
+  database: Database,
 ): Promise<GameModel[]> {
   const whiteUnit = aliasedTable(tournament_units, 'white_unit');
   const blackUnit = aliasedTable(tournament_units, 'black_unit');
@@ -46,7 +46,7 @@ export async function getPersistedTournamentGames(
 
 export async function getTournamentGames(
   tournamentId: string,
-  database: Pick<typeof db, 'select'> = db,
+  database: Database = db,
 ): Promise<GameModel[]> {
   const startedAt = await getTournamentStartedAt(tournamentId, database);
   if (!startedAt) return [];
@@ -60,7 +60,7 @@ export async function getTournamentRoundGames({
 }: {
   tournamentId: string;
   roundNumber: number;
-  database?: Pick<typeof db, 'select'>;
+  database?: Database;
 }): Promise<GameModel[]> {
   const startedAt = await getTournamentStartedAt(tournamentId, database);
 

@@ -2,7 +2,7 @@ import { AppError } from '@/lib/errors';
 import { eq } from 'drizzle-orm';
 
 import { baselineUnitSort, sortUnitsByResults } from '@/lib/tournament-results';
-import { db } from '@/server/db';
+import { db, type Database } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
   players_to_units,
@@ -15,7 +15,7 @@ import { getTournamentGames } from './get-tournament-games';
 
 export async function getRawTournamentUnits(
   id: string,
-  database: Pick<typeof db, 'select'> = db,
+  database: Database = db,
 ): Promise<Array<UnitModel>> {
   const rows = await database
     .select({
@@ -87,7 +87,7 @@ export async function getRawTournamentUnits(
 
 export async function getTournamentUnits(
   id: string,
-  database: Pick<typeof db, 'select'> = db,
+  database: Database = db,
 ): Promise<Array<UnitModel>> {
   const [tournament] = await database
     .select()

@@ -1,17 +1,14 @@
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
-import { sqlite } from '@/server/db/index';
+import { db } from '@/server/db/index';
 import * as schema from '@/server/db/schema';
 import { buildClubPlayerStats } from '@/server/mutations/player-stats';
 import { and, eq, notInArray } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/libsql';
 import { reset, seed } from 'drizzle-seed';
 
 import { verifyTestDatabase } from '@/lib/config/urls';
 
 export const seedComprehensiveTestData = async () => {
   if (verifyTestDatabase()) {
-    const db = drizzle({ client: sqlite });
-
     await reset(db, schema);
 
     await seed(

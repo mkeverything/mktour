@@ -1,6 +1,6 @@
 import { getCurrentRatingDeviation, isEstablishedRating } from '@/lib/glicko2';
 import { caseWhen } from '@/lib/sql-case-when';
-import type { db } from '@/server/db';
+import type { Database, Transaction } from '@/server/db';
 import { player_stats, players } from '@/server/db/schema/players';
 import {
   games,
@@ -25,9 +25,6 @@ import {
   type SQL,
 } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
-
-type Database = Pick<typeof db, 'select'>;
-type Tx = Pick<typeof db, 'select' | 'insert'>;
 
 const { gamesPlayed: _, ...STORED_COLUMNS } = getColumns(player_stats);
 const STORED_KEYS = Object.keys(
@@ -226,7 +223,7 @@ export async function buildClubPlayerStats(
  * of the event that changed the source data.
  */
 export async function refreshPlayerStats(
-  tx: Tx,
+  tx: Transaction,
   {
     clubId,
     playerIds,
