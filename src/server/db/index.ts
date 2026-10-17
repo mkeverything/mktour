@@ -29,5 +29,5 @@ export const getDatabase = () => {
 export const sqlite = getSqlite();
 export const db = getDatabase();
 
-export type Database = Pick<typeof db, 'select' | 'update'>;
+export type Database = LibSQLDatabase<typeof relations> | Transaction;
 export type Transaction = LibSQLTransaction<typeof relations>;

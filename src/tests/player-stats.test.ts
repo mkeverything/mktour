@@ -356,14 +356,18 @@ describe('player stats projection', () => {
       rating: 1600,
       ratingDeviation: 50,
     });
-    await refreshPlayerStats(db, { clubId, playerIds: [], now: new Date() });
+    await db.transaction((tx) =>
+      refreshPlayerStats(tx, { clubId, playerIds: [], now: new Date() }),
+    );
     expect(await ratingRanksOf([first, second])).toEqual([1, 2]);
 
     await db
       .update(players)
       .set({ rating: 1800 })
       .where(eq(players.id, second));
-    await refreshPlayerStats(db, { clubId, playerIds: [], now: new Date() });
+    await db.transaction((tx) =>
+      refreshPlayerStats(tx, { clubId, playerIds: [], now: new Date() }),
+    );
     expect(await ratingRanksOf([first, second])).toEqual([2, 1]);
   });
 
@@ -374,7 +378,9 @@ describe('player stats projection', () => {
       await makePlayer(clubId, { rating: 1600, ratingDeviation: 50 }),
       await makePlayer(clubId, { rating: 1500, ratingDeviation: 50 }),
     ];
-    await refreshPlayerStats(db, { clubId, playerIds: [], now: new Date() });
+    await db.transaction((tx) =>
+      refreshPlayerStats(tx, { clubId, playerIds: [], now: new Date() }),
+    );
     expect(await ratingRanksOf(ids)).toEqual([1, 2, 3]);
 
     await deletePlayer({ playerId: ids[0] });
@@ -514,7 +520,9 @@ describe('player stats projection', () => {
     );
 
     const now = new Date();
-    await refreshPlayerStats(db, { clubId, playerIds: ids, now });
+    await db.transaction((tx) =>
+      refreshPlayerStats(tx, { clubId, playerIds: ids, now }),
+    );
 
     const stored = await db
       .select()

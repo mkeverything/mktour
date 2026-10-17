@@ -136,7 +136,7 @@ export const deleteClub = async ({
 export const createPlayer = async (
   player: PlayerFormModel,
   options: {
-    database?: Pick<typeof db, 'insert'>;
+    database?: Transaction;
     id?: string;
   } = {},
 ) => {
@@ -149,9 +149,7 @@ export const createPlayer = async (
     throw new AppError('PLAYER_EXISTS_ERROR');
   }
 
-  const insertPlayerWithStartingEvent = async (
-    database: Pick<typeof db, 'insert'>,
-  ) => {
+  const insertPlayerWithStartingEvent = async (database: Transaction) => {
     const createdAt = nowTimestamp();
     const newPlayer = (
       await database
