@@ -1,5 +1,6 @@
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
 import { Card, CardTitle } from '@/components/ui/card';
+import { localDateStringToDate } from '@/lib/local-date';
 import { ClubModel } from '@/server/zod/clubs';
 import { TournamentModel } from '@/server/zod/tournaments';
 import { Dot } from 'lucide-react';
@@ -12,7 +13,7 @@ const TournamentItem = ({ club, tournament }: Props) => {
   const t = useTranslations('MakeTournament');
   const fallbackTitle = useTournamentFallbackTitle(tournament);
   const title = tournament.title || fallbackTitle;
-  const localizedDate = formatUtil.dateTime(new Date(date), {
+  const localizedDate = formatUtil.dateTime(localDateStringToDate(date), {
     dateStyle: 'short',
   });
   const details = [

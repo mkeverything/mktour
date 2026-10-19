@@ -8,7 +8,7 @@ import { useIntlError } from '@/components/hooks/use-intl-error';
 import SwissRoundsNumber from '@/components/swiss-rounds-number';
 import {
   formatTournamentDisplayDate,
-  parseLocalDateString,
+  localDateStringToDate,
 } from '@/lib/local-date';
 import {
   CalendarDays,
@@ -45,11 +45,10 @@ const TournamentInfoList = () => {
   }
   if (!data) return 'tournament info is `undefined` somehow';
 
-  const tournamentDateTimestamp = parseLocalDateString(data.date);
-  const tournamentDate = tournamentDateTimestamp
-    ? new Date(tournamentDateTimestamp)
-    : new Date(data.date);
-  const formattedDate = formatTournamentDisplayDate(tournamentDate, locale);
+  const formattedDate = formatTournamentDisplayDate(
+    localDateStringToDate(data.date),
+    locale,
+  );
 
   return (
     <>

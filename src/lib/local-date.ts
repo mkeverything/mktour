@@ -33,6 +33,9 @@ export const parseLocalDateString = (value: string): number | null => {
   return date.getTime();
 };
 
+export const localDateStringToDate = (value: string): Date =>
+  new Date(parseLocalDateString(value) ?? value);
+
 const getTodayTimestamp = (): number => {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
