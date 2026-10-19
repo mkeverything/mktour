@@ -129,10 +129,7 @@ export async function saveRound({
     if (roundNumber !== tournament.ongoingRound + 1) {
       throw new AppError('INVALID_ROUND_PROGRESSION');
     }
-    if (
-      tournament.roundsNumber === null ||
-      tournament.ongoingRound >= tournament.roundsNumber
-    ) {
+    if (tournament.ongoingRound >= tournament.roundsNumber) {
       throw new AppError('INVALID_ROUNDS_NUMBER');
     }
 

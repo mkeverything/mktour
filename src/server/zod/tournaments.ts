@@ -126,7 +126,7 @@ export const withdrawTournamentUnitInputSchema = z.object({
   userId: z.string(),
 });
 export const withdrawTournamentUnitResultSchema = z.object({
-  roundsNumber: z.number().int().min(1).nullable(),
+  roundsNumber: z.number().int().nonnegative(),
   roundsNumberAutoDecreased: z.boolean(),
 });
 

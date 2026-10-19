@@ -67,6 +67,7 @@ describe('list pagination', () => {
           clubId,
           startedAt: createdAt,
           closedAt: createdAt,
+          roundsNumber: 1,
         })),
       ),
     );
