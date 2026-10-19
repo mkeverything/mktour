@@ -1,19 +1,20 @@
 import useOnReach from '@/components/hooks/use-on-reach';
 import SkeletonList from '@/components/skeleton-list';
-import { FC, ReactNode } from 'react';
+import { FC, ReactNode, RefObject } from 'react';
 
 const Paginator: FC<Props> = ({
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
   disabled,
+  root,
   skeleton = <SkeletonList length={3} />,
 }) => {
   const triggerRef = useOnReach(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  });
+  }, root);
 
   if (disabled) return null;
   return (
@@ -29,6 +30,7 @@ type Props = {
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   disabled?: boolean;
+  root?: RefObject<Element | null>;
   skeleton?: ReactNode;
 };
 

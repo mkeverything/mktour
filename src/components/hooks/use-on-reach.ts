@@ -1,10 +1,10 @@
 import { useInView } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { RefObject, useEffect, useRef } from 'react';
 
-const useOnReach = (handler: () => void) => {
+const useOnReach = (handler: () => void, root?: RefObject<Element | null>) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const handlerRef = useRef(handler);
-  const isInView = useInView(ref, { margin: '300px' });
+  const isInView = useInView(ref, { root, margin: '300px' });
   const wasInViewRef = useRef(false);
 
   useEffect(() => {

@@ -48,7 +48,7 @@ export const ClubTournamentsSection: FC<{
   );
 };
 
-export const ClubTournaments: FC<{
+const ClubTournaments: FC<{
   clubId: string;
   statusInClub?: StatusInClub | null;
 }> = ({ clubId, statusInClub }) => {
@@ -121,7 +121,7 @@ export const ClubTournaments: FC<{
   );
 };
 
-const MakeTournament = () => (
+export const MakeTournament = () => (
   <Button size="lg" variant="default" asChild>
     <Link
       href="/tournaments/create"

@@ -149,8 +149,12 @@ export const playerMergeInputSchema = z.object({
 });
 
 export const clubPlayersSortSchema = z.object({
-  sortBy: z.enum(['rating', 'nickname']).default('rating'),
+  sortBy: z.enum(['rating', 'nickname', 'tournamentsPlayed']).default('rating'),
   order: z.enum(['asc', 'desc']).default('desc'),
+});
+
+export const clubPlayersFilterSchema = clubPlayersSortSchema.extend({
+  search: z.string().optional(),
 });
 
 export const CLUB_PLAYERS_DEFAULT_SORT = clubPlayersSortSchema.parse({});
@@ -159,6 +163,16 @@ export const playerStatsSchema = createSelectSchema(player_stats).omit({
   playerId: true,
   clubId: true,
 });
+
+const clubPlayerRankingShape = {
+  tournamentsPlayed: playerStatsSchema.shape.tournamentsPlayed,
+  position: z.number().int(),
+};
+
+export const clubPlayerOutputSchema = playersSelectSchema
+  .extend(clubPlayerRankingShape)
+  .transform(toPublicPlayer)
+  .pipe(playerPublicSchema.extend(clubPlayerRankingShape));
 
 export const playerStatsRowSchema = createSelectSchema(player_stats).omit({
   gamesPlayed: true,
@@ -188,6 +202,8 @@ export type PlayerUpdateModel = z.infer<typeof playersUpdateSchema>;
 export type PlayerEditModel = z.infer<typeof playerEditSchema>;
 export type PlayerMergeInputModel = z.infer<typeof playerMergeInputSchema>;
 export type ClubPlayersSortModel = z.infer<typeof clubPlayersSortSchema>;
+export type ClubPlayersFilterModel = z.infer<typeof clubPlayersFilterSchema>;
+export type ClubPlayerModel = z.infer<typeof clubPlayerOutputSchema>;
 
 export const userPlayerClubSchema = z.object({
   club: z.object({ id: z.string(), name: z.string() }),

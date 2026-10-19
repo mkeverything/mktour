@@ -105,7 +105,9 @@
     "save": "save",
     "settings": "settings",
     "search": "search",
-    "profile": "profile"
+    "profile": "profile",
+    "expand": "expand",
+    "collapse": "collapse"
   },
   "Menu": {
     "club": "club",
@@ -396,7 +398,6 @@
       "linkedProfile": "linked profile",
       "yourStatsInClub": "your own stats",
       "nickname": "nickname",
-      "liveNow": "live now",
       "roundOf": "round {round} of {rounds}"
     },
     "New": {

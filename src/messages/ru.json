@@ -105,7 +105,9 @@
     "save": "сохранить",
     "settings": "настройки",
     "search": "поиск",
-    "profile": "профиль"
+    "profile": "профиль",
+    "expand": "развернуть",
+    "collapse": "свернуть"
   },
   "Menu": {
     "club": "клубы",
@@ -396,7 +398,6 @@
       "linkedProfile": "привязанный профиль",
       "yourStatsInClub": "ваша статистика",
       "nickname": "никнейм",
-      "liveNow": "прямо сейчас",
       "roundOf": "тур {round} из {rounds}"
     },
     "New": {

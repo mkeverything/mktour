@@ -13,9 +13,9 @@ import { newid } from '@/lib/utils';
 import { publicCaller } from '@/server/api';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
-import { players } from '@/server/db/schema/players';
+import { player_stats, players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
-import { ClubPlayersSortModel } from '@/server/zod/players';
+import { ClubPlayersFilterModel } from '@/server/zod/players';
 
 // cacheTag throws outside the next runtime
 mock.module('next/cache', () => ({ ...nextCache, cacheTag: () => {} }));
@@ -48,7 +48,7 @@ async function collectIds(
 
 describe('list pagination', () => {
   beforeAll(async () => {
-    // future-dated so they head the lists: 3 clubs and 6 tournaments sharing one createdAt
+    // future-dated so they head the lists: 3 clubs and 9 tournaments sharing one createdAt
     const createdAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
     await db
       .insert(clubs)
@@ -57,7 +57,7 @@ describe('list pagination', () => {
       );
     await db.insert(tournaments).values(
       clubIds.flatMap((clubId) =>
-        [0, 1].map(() => ({
+        [0, 1, 2].map(() => ({
           id: newid(),
           title: 'pagination test',
           format: 'round robin' as const,
@@ -72,6 +72,13 @@ describe('list pagination', () => {
       ),
     );
     await db.insert(players).values(clubPlayers);
+    await db.insert(player_stats).values(
+      clubPlayers.map(({ id, clubId }, i) => ({
+        playerId: id,
+        clubId,
+        tournamentsPlayed: i % 2 ? 3 : 0,
+      })),
+    );
   });
 
   test('tournament.all returns every tournament exactly once', async () => {
@@ -109,26 +116,62 @@ describe('list pagination', () => {
     expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
   });
 
-  test('club.players pages through rating ties and orders nicknames case-insensitively', async () => {
-    const collectPlayerIds = (sort: ClubPlayersSortModel) =>
+  test('club.tournaments returns every club tournament exactly once', async () => {
+    const ids = await collectIds(async (cursor) => {
+      const page = await publicCaller.club.tournaments({
+        clubId: clubIds[0],
+        limit: PAGE_SIZE,
+        cursor,
+      });
+      return [page.tournaments.map(({ id }) => id), page.nextCursor];
+    });
+    const expected = await db
+      .select({ id: tournaments.id })
+      .from(tournaments)
+      .where(eq(tournaments.clubId, clubIds[0]));
+
+    expect(ids.length).toBe(new Set(ids).size);
+    expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
+  });
+
+  test('club.players numbers players by the sorted column whichever way the list runs', async () => {
+    const collectRows = (filter: ClubPlayersFilterModel) =>
       collectIds(async (cursor) => {
         const page = await publicCaller.club.players({
           clubId: clubIds[0],
           limit: PAGE_SIZE,
           cursor,
-          ...sort,
+          ...filter,
         });
-        return [page.players.map(({ id }) => id), page.nextCursor];
+        return [
+          page.players.map(({ position, id }) => `${position} ${id}`),
+          page.nextCursor,
+        ];
       });
-    const byRatingDesc = clubPlayers.toSorted(
-      (a, b) => b.rating - a.rating || (a.id < b.id ? 1 : -1),
-    );
+    const numbered = (ids: string[]) => ids.map((id, i) => `${i + 1} ${id}`);
+    const [p0, p1, p2, p3] = clubPlayers.map(({ id }) => id);
+    // rating ties fall back to case-insensitive nicknames, so both sorts share one order
+    const byRating = numbered([p0, p1, p2, p3]);
+    const byTournaments = numbered([p1, p3, p0, p2]);
 
-    expect(await collectPlayerIds({ sortBy: 'rating', order: 'desc' })).toEqual(
-      byRatingDesc.map(({ id }) => id),
+    expect(await collectRows({ sortBy: 'rating', order: 'desc' })).toEqual(
+      byRating,
+    );
+    expect(await collectRows({ sortBy: 'rating', order: 'asc' })).toEqual(
+      byRating.toReversed(),
+    );
+    expect(await collectRows({ sortBy: 'nickname', order: 'asc' })).toEqual(
+      byRating,
     );
     expect(
-      await collectPlayerIds({ sortBy: 'nickname', order: 'asc' }),
-    ).toEqual(clubPlayers.map(({ id }) => id));
+      await collectRows({ sortBy: 'tournamentsPlayed', order: 'desc' }),
+    ).toEqual(byTournaments);
+    expect(
+      await collectRows({
+        sortBy: 'tournamentsPlayed',
+        order: 'desc',
+        search: 'PLAYER 3',
+      }),
+    ).toEqual([byTournaments[1]]);
   });
 });
