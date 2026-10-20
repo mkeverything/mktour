@@ -97,7 +97,7 @@ export const PlayerRatingRank: FC<{ playerId: string }> = ({ playerId }) => {
   );
 };
 
-export const GamesRecord: FC<
+const GamesRecord: FC<
   Pick<PlayerStatsModel, 'gamesWon' | 'gamesDrawn' | 'gamesLost'>
 > = ({ gamesWon, gamesDrawn, gamesLost }) => (
   <span>

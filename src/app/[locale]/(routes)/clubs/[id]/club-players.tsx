@@ -1,7 +1,6 @@
 import {
   PanelHeader,
   PanelScroller,
-  usePanelScroller,
 } from '@/app/[locale]/(routes)/clubs/[id]/club-panel';
 import {
   leaderboardColumns,
@@ -13,7 +12,6 @@ import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useDebounce } from '@/components/hooks/use-debounce';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
-import Paginator from '@/components/ui-custom/paginator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -26,7 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import {
   CLUB_PLAYERS_DEFAULT_SORT,
-  ClubPlayersSortModel,
+  ClubPlayersFilterModel,
 } from '@/server/zod/players';
 import { useQuery } from '@tanstack/react-query';
 import { SortingState, useTable } from '@tanstack/react-table';
@@ -51,7 +49,7 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
   ]);
   const [{ id: sortBy, desc: isDesc }] = sorting;
   const playersInfinite = useClubPlayers(clubId, {
-    sortBy: sortBy as ClubPlayersSortModel['sortBy'],
+    sortBy: sortBy as ClubPlayersFilterModel['sortBy'],
     order: isDesc ? 'desc' : 'asc',
     search: debouncedSearch || undefined,
   });
@@ -59,15 +57,13 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
     trpc.club.authPlayer.queryOptions({ clubId }, { enabled: Boolean(userId) }),
   );
 
-  const { scrollerRef, paginatorRoot } = usePanelScroller();
-
   // the table keeps showing the previous order until the new one arrives
   const [shownSorting, setShownSorting] = useState(sorting);
   if (!playersInfinite.isPlaceholderData && shownSorting !== sorting) {
     setShownSorting(sorting);
   }
 
-  const shownSortBy = shownSorting[0].id as ClubPlayersSortModel['sortBy'];
+  const shownSortBy = shownSorting[0].id as ClubPlayersFilterModel['sortBy'];
   // names carry no standing, so the auth player is pinned and sticky only in ranked orders
   const isRankedOrder = shownSortBy !== 'nickname';
   const isSearching = debouncedSearch.length > 0;
@@ -75,15 +71,13 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
     () => playersInfinite.data?.pages.flatMap((p) => p.players) ?? [],
     [playersInfinite.data],
   );
-  const isAuthPlayerMissing = Boolean(
+  const isAuthPlayerPinned = Boolean(
     authPlayer &&
-    !playersFromPages.some((player) => player.id === authPlayer.id),
-  );
-  const isAuthPlayerPinned =
-    isAuthPlayerMissing &&
     isRankedOrder &&
     !isSearching &&
-    playersInfinite.isSuccess;
+    playersInfinite.isSuccess &&
+    !playersFromPages.some((player) => player.id === authPlayer.id),
+  );
   const players = useMemo(
     () =>
       authPlayer && isAuthPlayerPinned
@@ -125,7 +119,7 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
           <Link
             href={`/player/${row.original.id}`}
             tabIndex={cell.column.id === 'nickname' ? undefined : -1}
-            className="block px-2 py-2"
+            className="block p-2"
           >
             <table.FlexRender cell={cell} />
           </Link>
@@ -142,7 +136,12 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
         search={search}
         setSearch={setSearch}
       />
-      <PanelScroller ref={scrollerRef}>
+      <PanelScroller
+        hasNextPage={playersInfinite.hasNextPage}
+        isFetchingNextPage={playersInfinite.isFetchingNextPage}
+        fetchNextPage={playersInfinite.fetchNextPage}
+        skeleton={null}
+      >
         <Table className="border-separate border-spacing-0 [&_td]:border-b [&_th]:border-b">
           <TableHeader className="bg-background sticky top-(--club-sticky-top) z-20">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -160,13 +159,11 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
                             : undefined
                       }
                       className={cn(
-                        'h-8 px-2 text-xs',
+                        'h-8 text-xs',
                         header.column.columnDef.meta?.className,
                       )}
                     >
-                      {header.isPlaceholder ? null : (
-                        <table.FlexRender header={header} />
-                      )}
+                      <table.FlexRender header={header} />
                     </TableHead>
                   );
                 })}
@@ -190,13 +187,6 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
             </Empty>
           )
         )}
-        <Paginator
-          hasNextPage={playersInfinite.hasNextPage}
-          isFetchingNextPage={playersInfinite.isFetchingNextPage}
-          fetchNextPage={playersInfinite.fetchNextPage}
-          root={paginatorRoot}
-          skeleton={null}
-        />
       </PanelScroller>
     </>
   );
@@ -205,7 +195,7 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
 const SkeletonRows: FC = () =>
   Array.from({ length: 3 }, (_, i) => (
     <TableRow key={i} className="hover:bg-transparent">
-      <TableCell colSpan={4} className="px-2 py-2">
+      <TableCell colSpan={4}>
         <Skeleton className="h-5 w-full" />
       </TableCell>
     </TableRow>

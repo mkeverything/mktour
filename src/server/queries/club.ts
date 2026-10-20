@@ -6,7 +6,6 @@ import { tournaments } from '@/server/db/schema/tournaments';
 import { ClubModel } from '@/server/zod/clubs';
 import {
   ClubPlayersFilterModel,
-  ClubPlayersSortModel,
   PlayerRecordModel,
 } from '@/server/zod/players';
 import {
@@ -22,7 +21,7 @@ import {
 
 type Ordering = [
   column: AnyColumn | SQL,
-  direction: ClubPlayersSortModel['order'],
+  direction: ClubPlayersFilterModel['order'],
 ][];
 
 // rankClubPlayers numbers players in this order, so stored ranks count along the list
@@ -33,21 +32,13 @@ const BY_RATING: Ordering = [
   [players.id, 'asc'],
 ];
 
-const ORDERINGS: Record<ClubPlayersSortModel['sortBy'], Ordering> = {
+const ORDERINGS: Record<ClubPlayersFilterModel['sortBy'], Ordering> = {
   rating: BY_RATING,
   tournamentsPlayed: [[player_stats.tournamentsPlayed, 'desc'], ...BY_RATING],
   nickname: [
     [lower(players.nickname), 'asc'],
     [players.id, 'asc'],
   ],
-};
-
-const orderFor = ({ sortBy, order }: ClubPlayersSortModel) => {
-  const ordering = ORDERINGS[sortBy];
-  // asking for the sorted column's other direction reverses the whole list
-  const directions =
-    order === ordering[0][1] ? { asc, desc } : { asc: desc, desc: asc };
-  return ordering.map(([column, direction]) => directions[direction](column));
 };
 
 const selectClubPlayers = () =>
@@ -79,6 +70,10 @@ export const getClubPlayers = async (
 ) => {
   const pattern = `%${search}%`;
   const offset = cursor ?? 0;
+  const ordering = ORDERINGS[sortBy];
+  // asking for the sorted column's other direction reverses the whole list
+  const directions =
+    order === ordering[0][1] ? { asc, desc } : { asc: desc, desc: asc };
   const result = await selectClubPlayers()
     .where(
       and(
@@ -91,7 +86,9 @@ export const getClubPlayers = async (
           : undefined,
       ),
     )
-    .orderBy(...orderFor({ sortBy, order }))
+    .orderBy(
+      ...ordering.map(([column, direction]) => directions[direction](column)),
+    )
     .offset(offset)
     .limit(limit + 1);
 

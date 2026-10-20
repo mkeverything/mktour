@@ -33,9 +33,6 @@ export const parseLocalDateString = (value: string): number | null => {
   return date.getTime();
 };
 
-export const localDateStringToDate = (value: string): Date =>
-  new Date(parseLocalDateString(value) ?? value);
-
 const getTodayTimestamp = (): number => {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -62,7 +59,7 @@ export const getLocalDateStringValidationError = (
 
 // a 'yyyy-mm-dd' string is read as local midnight. without the time it would be
 // read as utc midnight and show the previous day west of utc
-const toDate = (date: Date | string): Date =>
+export const toDate = (date: Date | string): Date =>
   typeof date === 'string' ? new Date(`${date}T00:00`) : date;
 
 // 'sep 21' / '21 сент.' with a short month, 'september 21' / '21 сентября' with a long one.

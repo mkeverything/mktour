@@ -1,7 +1,6 @@
 import {
   PanelHeader,
   PanelScroller,
-  usePanelScroller,
 } from '@/app/[locale]/(routes)/clubs/[id]/club-panel';
 import { MakeTournament } from '@/app/[locale]/(routes)/clubs/tournaments';
 import Empty from '@/components/empty';
@@ -10,8 +9,7 @@ import { useClubTournaments } from '@/components/hooks/query-hooks/use-club-tour
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
 import { useTournamentFallbackTitle } from '@/components/hooks/use-tournament-fallback-title';
 import SkeletonList from '@/components/skeleton-list';
-import Paginator from '@/components/ui-custom/paginator';
-import { localDateStringToDate } from '@/lib/local-date';
+import { toDate } from '@/lib/local-date';
 import { StatusInClub } from '@/server/zod/enums';
 import { TournamentModel } from '@/server/zod/tournaments';
 import { useFormatter, useTranslations } from 'next-intl';
@@ -32,10 +30,9 @@ export const TournamentsPanel: FC<{
   } = useClubScopedSearch({ clubId, type: 'tournaments' });
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useClubTournaments(clubId);
-  const { scrollerRef, paginatorRoot } = usePanelScroller();
 
-  const useSearch = debouncedSearch.length > 0;
-  const tournaments = useSearch
+  const isSearching = debouncedSearch.length > 0;
+  const tournaments = isSearching
     ? (searchResults?.tournaments ?? [])
     : (data?.pages.flatMap((page) => page.tournaments) ?? []);
 
@@ -47,8 +44,14 @@ export const TournamentsPanel: FC<{
         search={search}
         setSearch={setSearch}
       />
-      <PanelScroller ref={scrollerRef}>
-        {!useSearch && isPending && (
+      <PanelScroller
+        disabled={isSearching}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+        skeleton={<SkeletonList length={3} className="mt-2 h-16" />}
+      >
+        {!isSearching && isPending && (
           <SkeletonList length={8} className="h-16" />
         )}
         {groupByMonth(tournaments).map(([month, monthTournaments]) => (
@@ -61,7 +64,7 @@ export const TournamentsPanel: FC<{
             </div>
           </section>
         ))}
-        {(useSearch || !isPending) && !tournaments.length && (
+        {(isSearching || !isPending) && !tournaments.length && (
           <div className="flex flex-col items-center">
             <Empty className="text-center text-balance">
               {stats?.tournamentsCount !== 0
@@ -73,14 +76,6 @@ export const TournamentsPanel: FC<{
             )}
           </div>
         )}
-        <Paginator
-          disabled={useSearch}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          fetchNextPage={fetchNextPage}
-          root={paginatorRoot}
-          skeleton={<SkeletonList length={3} className="mt-2 h-16" />}
-        />
       </PanelScroller>
     </>
   );
@@ -99,7 +94,7 @@ const groupByMonth = (tournaments: TournamentModel[]) => {
 
 const MonthHeading: FC<{ month: string }> = ({ month }) => {
   const format = useFormatter();
-  const date = localDateStringToDate(`${month}-01`);
+  const date = toDate(`${month}-01`);
   const isThisYear = date.getFullYear() === new Date().getFullYear();
 
   return (
@@ -147,7 +142,7 @@ const TournamentRow: FC<{ tournament: TournamentModel }> = ({ tournament }) => {
         </span>
       ) : (
         <span className="text-muted-foreground shrink-0 text-xs lowercase tabular-nums">
-          {format.dateTime(localDateStringToDate(tournament.date), {
+          {format.dateTime(toDate(tournament.date), {
             day: 'numeric',
             month: 'long',
           })}

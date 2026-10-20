@@ -148,29 +148,20 @@ export const playerMergeInputSchema = z.object({
   mergedPlayerId: z.string(),
 });
 
-export const clubPlayersSortSchema = z.object({
+export const clubPlayersFilterSchema = z.object({
   sortBy: z.enum(['rating', 'nickname', 'tournamentsPlayed']).default('rating'),
   order: z.enum(['asc', 'desc']).default('desc'),
-});
-
-export const clubPlayersFilterSchema = clubPlayersSortSchema.extend({
   search: z.string().optional(),
 });
 
-export const CLUB_PLAYERS_DEFAULT_SORT = clubPlayersSortSchema.parse({});
+export const CLUB_PLAYERS_DEFAULT_SORT = clubPlayersFilterSchema.parse({});
 
 export const playerStatsSchema = createSelectSchema(player_stats).omit({
   playerId: true,
   clubId: true,
 });
 
-const clubPlayerStatsShape = playerStatsSchema.pick({
-  tournamentsPlayed: true,
-  ratingRank: true,
-  tournamentsPlayedRank: true,
-}).shape;
-
-export const playerListItemSchema = playerPublicSchema.pick({
+const playerListItemSchema = playerPublicSchema.pick({
   id: true,
   nickname: true,
   realname: true,
@@ -179,10 +170,14 @@ export const playerListItemSchema = playerPublicSchema.pick({
 
 const clubPlayerShape = {
   ...playerListItemSchema.shape,
-  ...clubPlayerStatsShape,
+  ...playerStatsSchema.pick({
+    tournamentsPlayed: true,
+    ratingRank: true,
+    tournamentsPlayedRank: true,
+  }).shape,
 };
 
-// unlike isEstablished, ratingEstablished reads the stored rd, which doesn't grow while a club is idle (docs/adr/0002)
+// unlike isEstablished, isRatingEstablished reads the stored rd, which doesn't grow while a club is idle (docs/adr/0002)
 export const clubPlayerOutputSchema = z
   .object({
     ...clubPlayerShape,
@@ -190,9 +185,9 @@ export const clubPlayerOutputSchema = z
   })
   .transform(({ ratingDeviation, ...player }) => ({
     ...player,
-    ratingEstablished: isEstablishedRating(ratingDeviation),
+    isRatingEstablished: isEstablishedRating(ratingDeviation),
   }))
-  .pipe(z.object({ ...clubPlayerShape, ratingEstablished: z.boolean() }));
+  .pipe(z.object({ ...clubPlayerShape, isRatingEstablished: z.boolean() }));
 
 export const playerStatsRowSchema = createSelectSchema(player_stats).omit({
   gamesPlayed: true,
@@ -222,7 +217,6 @@ export type PlayerInsertModel = z.infer<typeof playersInsertSchema>;
 export type PlayerUpdateModel = z.infer<typeof playersUpdateSchema>;
 export type PlayerEditModel = z.infer<typeof playerEditSchema>;
 export type PlayerMergeInputModel = z.infer<typeof playerMergeInputSchema>;
-export type ClubPlayersSortModel = z.infer<typeof clubPlayersSortSchema>;
 export type ClubPlayersFilterModel = z.infer<typeof clubPlayersFilterSchema>;
 export type ClubPlayerModel = z.infer<typeof clubPlayerOutputSchema>;
 

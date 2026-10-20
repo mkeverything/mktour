@@ -33,7 +33,7 @@ const ClubPage: FC<{
   return (
     <div
       data-fixed-viewport
-      className="lg:h-mk-content-height p-mk-2 flex w-full flex-col gap-4 scroll-smooth lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[17rem_minmax(0,1fr)]"
+      className="lg:h-mk-content-height p-mk-2 flex w-full flex-col gap-4 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[17rem_minmax(0,1fr)]"
     >
       <ClubInfo club={club} statusInClub={statusInClub} />
       <Tabs

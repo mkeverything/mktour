@@ -1,10 +1,8 @@
-import FormattedMessage, {
-  IntlMessageId,
-} from '@/components/formatted-message';
+import FormattedMessage from '@/components/formatted-message';
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ClubPlayerModel, ClubPlayersSortModel } from '@/server/zod/players';
+import { ClubPlayerModel, ClubPlayersFilterModel } from '@/server/zod/players';
 import {
   createColumnHelper,
   HeaderContext,
@@ -20,7 +18,7 @@ export const leaderboardFeatures = tableFeatures({
   columnMeta: {} as { className: string },
   tableMeta: {} as {
     isSortPending: boolean;
-    sortBy: ClubPlayersSortModel['sortBy'];
+    sortBy: ClubPlayersFilterModel['sortBy'];
   },
 });
 
@@ -66,12 +64,12 @@ export const leaderboardColumns = leaderboardColumnHelper.columns([
       <span
         className={cn(
           'font-semibold',
-          !original.ratingEstablished && 'text-muted-foreground',
+          !original.isRatingEstablished && 'text-muted-foreground',
         )}
       >
         <NumericCell
           value={original.rating}
-          mark={original.ratingEstablished ? undefined : '?'}
+          mark={original.isRatingEstablished ? undefined : '?'}
         />
       </span>
     ),
@@ -81,7 +79,7 @@ export const leaderboardColumns = leaderboardColumnHelper.columns([
   leaderboardColumnHelper.accessor('tournamentsPlayed', {
     header: (context) => (
       <SortableHead {...context}>
-        <StatHead icon={Trophy} messageId="Player.Stats.tournaments" />
+        <TournamentsHead />
       </SortableHead>
     ),
     cell: ({ getValue }) => <NumericCell value={getValue()} />,
@@ -103,8 +101,6 @@ const SortableHead = <TValue,>({
   >
 >) => {
   const sorted = column.getIsSorted();
-  if (!column.getCanSort()) return children;
-
   const SortIcon =
     sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
   return (
@@ -137,15 +133,12 @@ const NumericCell: FC<{ value: number; mark?: string }> = ({ value, mark }) => (
   </>
 );
 
-const StatHead: FC<{
-  icon: FC<{ className?: string }>;
-  messageId: IntlMessageId;
-}> = ({ icon: Icon, messageId }) => {
-  const t = useTranslations();
+const TournamentsHead: FC = () => {
+  const t = useTranslations('Player.Stats');
   return (
-    <span title={t(messageId)}>
-      <Icon className="size-3.5" />
-      <span className="sr-only">{t(messageId)}</span>
+    <span title={t('tournaments')}>
+      <Trophy className="size-3.5" />
+      <span className="sr-only">{t('tournaments')}</span>
     </span>
   );
 };

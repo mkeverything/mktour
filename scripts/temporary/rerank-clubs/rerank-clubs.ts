@@ -17,13 +17,12 @@ folder once beta and main are done.
 */
 import { createClient } from '@libsql/client';
 import { count, isNull } from 'drizzle-orm';
-import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
+import { drizzle } from 'drizzle-orm/libsql';
 import { AppError } from '@/lib/errors';
+import type { Database } from '@/server/db';
 import { relations } from '@/server/db/relations';
 import { player_stats } from '@/server/db/schema/players';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
-
-type Database = LibSQLDatabase<typeof relations>;
 
 export async function rerankClubs(database: Database) {
   const clubs = await database

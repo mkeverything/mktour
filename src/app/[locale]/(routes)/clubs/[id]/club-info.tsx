@@ -36,11 +36,7 @@ export const ClubInfo: FC<{
         {club.name}
         {club.lichessTeam && <LichessTeamLink team={club.lichessTeam} />}
       </h1>
-      <DashboardButton
-        clubId={club.id}
-        statusInClub={statusInClub}
-        className="lg:justify-self-start"
-      />
+      <DashboardButton clubId={club.id} statusInClub={statusInClub} />
       {club.description && <ClubDescription description={club.description} />}
       <div className="text-muted-foreground col-span-full flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs lg:flex-col lg:items-start lg:gap-6">
         {club.createdAt && (
@@ -110,7 +106,7 @@ const ClubDescription: FC<{ description: string }> = ({ description }) => {
           aria-expanded={isExpanded}
           aria-label={isExpanded ? t('collapse') : t('expand')}
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-muted-foreground hover:text-foreground active:bg-muted -mx-1.5 mx-auto rounded-full p-1.5 transition-colors active:transition-none"
+          className="text-muted-foreground hover:text-foreground active:bg-muted mx-auto rounded-full p-1.5 transition-colors active:transition-none"
         >
           <ChevronDown
             className={cn(
@@ -127,8 +123,7 @@ const ClubDescription: FC<{ description: string }> = ({ description }) => {
 const DashboardButton: FC<{
   clubId: string;
   statusInClub: StatusInClub | null;
-  className?: string;
-}> = ({ clubId, statusInClub, className }) => {
+}> = ({ clubId, statusInClub }) => {
   const t = useTranslations('Club');
   const queryClient = useQueryClient();
   const { data: user } = useAuth();
@@ -139,7 +134,7 @@ const DashboardButton: FC<{
     <Button
       variant="secondary"
       size="sm"
-      className={cn('shrink-0 gap-2', className)}
+      className="shrink-0 gap-2 lg:justify-self-start"
       asChild
     >
       <Link
