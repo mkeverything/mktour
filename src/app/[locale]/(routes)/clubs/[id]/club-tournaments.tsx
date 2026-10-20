@@ -139,7 +139,7 @@ const TournamentRow: FC<{ tournament: TournamentModel }> = ({ tournament }) => {
       </div>
       {isLive ? (
         <span className="shrink-0 text-xs">
-          <span className="bg-destructive mr-1 inline-block size-1.5 animate-pulse rounded-full align-middle motion-reduce:animate-none" />
+          <span className="bg-destructive mr-1.5 inline-block size-1.5 animate-pulse rounded-full align-middle motion-reduce:animate-none" />
           {tPage('roundOf', {
             round: tournament.ongoingRound,
             rounds: tournament.roundsNumber,
