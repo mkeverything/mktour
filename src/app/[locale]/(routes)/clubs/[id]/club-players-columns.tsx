@@ -54,6 +54,9 @@ export const leaderboardColumns = leaderboardColumnHelper.columns([
         <FormattedMessage id="Player.nickname" />
       </SortableHead>
     ),
+    cell: ({ getValue }) => (
+      <span className="block truncate">{getValue()}</span>
+    ),
     meta: { className: 'w-full max-w-0' },
   }),
   leaderboardColumnHelper.accessor('rating', {
@@ -69,10 +72,10 @@ export const leaderboardColumns = leaderboardColumnHelper.columns([
           !original.ratingEstablished && 'text-muted-foreground',
         )}
       >
-        {original.rating}
-        <span className="inline-block w-[1ch] text-left">
-          {!original.ratingEstablished && '?'}
-        </span>
+        <NumericCell
+          value={original.rating}
+          mark={original.ratingEstablished ? undefined : '?'}
+        />
       </span>
     ),
     sortDescFirst: true,
@@ -84,6 +87,7 @@ export const leaderboardColumns = leaderboardColumnHelper.columns([
         <StatHead icon={Trophy} messageId="Player.Stats.tournaments" />
       </SortableHead>
     ),
+    cell: ({ getValue }) => <NumericCell value={getValue()} />,
     sortDescFirst: true,
     meta: {
       className: 'text-muted-foreground text-right text-xs tabular-nums',
@@ -111,7 +115,8 @@ const SortableHead = <TValue,>({
       variant="ghost"
       size="sm"
       className={cn(
-        '-mx-1 h-7 gap-1 px-1 text-xs has-[>svg]:px-1',
+        // the chip's padding sits in the cell's, so its label lines up with the values
+        '-mx-2 h-7 gap-1 px-2 text-xs has-[>svg]:px-2',
         sorted && 'text-foreground',
       )}
       onClick={() => column.toggleSorting()}
@@ -125,6 +130,15 @@ const SortableHead = <TValue,>({
     </Button>
   );
 };
+
+// numbers end where their header's label does: the slot after them is as wide as the
+// sort icon beside the label (gap-1 + size-3), and an unsure rating puts its ? there
+const NumericCell: FC<{ value: number; mark?: string }> = ({ value, mark }) => (
+  <>
+    {value}
+    <span className="inline-block w-4 text-left">{mark}</span>
+  </>
+);
 
 const StatHead: FC<{
   icon: FC<{ className?: string }>;

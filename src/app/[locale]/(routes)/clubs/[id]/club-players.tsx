@@ -117,7 +117,7 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
           <Link
             href={`/player/${row.original.id}`}
             tabIndex={cell.column.id === 'nickname' ? undefined : -1}
-            className="block truncate px-1 py-2"
+            className="block px-2 py-2"
           >
             <table.FlexRender cell={cell} />
           </Link>
@@ -152,7 +152,7 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
                             : undefined
                       }
                       className={cn(
-                        'h-8 px-1 text-xs',
+                        'h-8 px-2 text-xs',
                         header.column.columnDef.meta?.className,
                       )}
                     >
@@ -197,7 +197,7 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
 const SkeletonRows: FC = () =>
   Array.from({ length: 3 }, (_, i) => (
     <TableRow key={i} className="hover:bg-transparent">
-      <TableCell colSpan={4} className="px-1 py-2">
+      <TableCell colSpan={4} className="px-2 py-2">
         <Skeleton className="h-5 w-full" />
       </TableCell>
     </TableRow>
