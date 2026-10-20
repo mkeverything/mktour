@@ -111,7 +111,7 @@ const SortableHead = <TValue,>({
       variant="ghost"
       size="sm"
       className={cn(
-        '-mx-1 h-7 gap-1 px-1 text-xs',
+        '-mx-1 h-7 gap-1 px-1 text-xs has-[>svg]:px-1',
         sorted && 'text-foreground',
       )}
       onClick={() => column.toggleSorting()}
