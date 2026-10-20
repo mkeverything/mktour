@@ -10,50 +10,60 @@ import {
   PlayerRecordModel,
 } from '@/server/zod/players';
 import {
+  and,
   asc,
   countDistinct,
   desc,
   eq,
-  getColumns,
   or,
-  sql,
-  SQL,
+  type AnyColumn,
+  type SQL,
 } from 'drizzle-orm';
 
-const BY_NICKNAME = [asc(lower(players.nickname)), asc(players.id)];
-const BY_RATING = [desc(players.rating), ...BY_NICKNAME];
+type Ordering = [
+  column: AnyColumn | SQL,
+  direction: ClubPlayersSortModel['order'],
+][];
 
-// how each column ranks players; the other order lists the same ranking reversed, so positions never change
-const RANKINGS: Record<
-  ClubPlayersSortModel['sortBy'],
-  { order: ClubPlayersSortModel['order']; by: SQL[] }
-> = {
-  rating: { order: 'desc', by: BY_RATING },
-  tournamentsPlayed: {
-    order: 'desc',
-    by: [desc(player_stats.tournamentsPlayed), ...BY_RATING],
-  },
-  nickname: { order: 'asc', by: BY_NICKNAME },
+// rankClubPlayers numbers players in this order, so stored ranks count along the list
+const BY_RATING: Ordering = [
+  [players.rating, 'desc'],
+  [players.ratingDeviation, 'asc'],
+  [players.lastSeenAt, 'asc'],
+  [players.id, 'asc'],
+];
+
+const ORDERINGS: Record<ClubPlayersSortModel['sortBy'], Ordering> = {
+  rating: BY_RATING,
+  tournamentsPlayed: [[player_stats.tournamentsPlayed, 'desc'], ...BY_RATING],
+  nickname: [
+    [lower(players.nickname), 'asc'],
+    [players.id, 'asc'],
+  ],
 };
 
-// ranks the whole club before anything filters it, so searched or single players keep their real position
-const rankedClubPlayers = (
-  clubId: PlayerRecordModel['clubId'],
-  sortBy: ClubPlayersSortModel['sortBy'],
-) => {
-  const rankBy = sql.join(RANKINGS[sortBy].by, sql`, `);
-  const position = sql<number>`row_number() over (order by ${rankBy})`;
-  return db
+const orderFor = ({ sortBy, order }: ClubPlayersSortModel) => {
+  const ordering = ORDERINGS[sortBy];
+  // asking for the sorted column's other direction reverses the whole list
+  const directions =
+    order === ordering[0][1] ? { asc, desc } : { asc: desc, desc: asc };
+  return ordering.map(([column, direction]) => directions[direction](column));
+};
+
+const selectClubPlayers = () =>
+  db
     .select({
-      ...getColumns(players),
+      id: players.id,
+      nickname: players.nickname,
+      realname: players.realname,
+      rating: players.rating,
+      ratingDeviation: players.ratingDeviation,
       tournamentsPlayed: player_stats.tournamentsPlayed,
-      position: position.as('position'),
+      ratingRank: player_stats.ratingRank,
+      tournamentsPlayedRank: player_stats.tournamentsPlayedRank,
     })
     .from(players)
-    .innerJoin(player_stats, eq(player_stats.playerId, players.id))
-    .where(eq(players.clubId, clubId))
-    .as('ranked');
-};
+    .innerJoin(player_stats, eq(player_stats.playerId, players.id));
 
 export const getClubInfo = async (id: ClubModel['id']) => {
   const data = (await db.select().from(clubs).where(eq(clubs.id, id)))?.at(0);
@@ -67,22 +77,21 @@ export const getClubPlayers = async (
   cursor: number | null | undefined,
   { sortBy, order, search }: ClubPlayersFilterModel,
 ) => {
-  const ranked = rankedClubPlayers(clubId, sortBy);
-  const direction = order === RANKINGS[sortBy].order ? asc : desc;
   const pattern = `%${search}%`;
   const offset = cursor ?? 0;
-  const result = await db
-    .select()
-    .from(ranked)
+  const result = await selectClubPlayers()
     .where(
-      search
-        ? or(
-            lowerLike(ranked.nickname, pattern),
-            lowerLike(ranked.realname, pattern),
-          )
-        : undefined,
+      and(
+        eq(players.clubId, clubId),
+        search
+          ? or(
+              lowerLike(players.nickname, pattern),
+              lowerLike(players.realname, pattern),
+            )
+          : undefined,
+      ),
     )
-    .orderBy(direction(ranked.position))
+    .orderBy(...orderFor({ sortBy, order }))
     .offset(offset)
     .limit(limit + 1);
 
@@ -95,17 +104,12 @@ export const getClubPlayers = async (
 export const getUserClubPlayer = async ({
   clubId,
   userId,
-  sortBy,
 }: {
   clubId: string;
   userId: string;
-  sortBy: ClubPlayersSortModel['sortBy'];
 }) => {
-  const ranked = rankedClubPlayers(clubId, sortBy);
-  const player = await db
-    .select()
-    .from(ranked)
-    .where(eq(ranked.userId, userId))
+  const player = await selectClubPlayers()
+    .where(and(eq(players.clubId, clubId), eq(players.userId, userId)))
     .get();
 
   return player ?? null;

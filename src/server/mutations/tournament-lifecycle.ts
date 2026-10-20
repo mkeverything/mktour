@@ -350,7 +350,6 @@ export async function finishTournament({
       playerIds: sortedUnits.flatMap((unit) =>
         unit.players.map((player) => player.id),
       ),
-      now: closedAt,
     });
 
     return closedAt;
@@ -408,7 +407,6 @@ export async function deleteTournament({
       await refreshPlayerStats(tx, {
         clubId: tournament.clubId,
         playerIds: participants.map((participant) => participant.playerId),
-        now: new Date(),
       });
     }
   });

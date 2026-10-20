@@ -4,7 +4,7 @@ import FormattedMessage, {
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ClubPlayerModel } from '@/server/zod/players';
+import { ClubPlayerModel, ClubPlayersSortModel } from '@/server/zod/players';
 import {
   createColumnHelper,
   HeaderContext,
@@ -18,7 +18,11 @@ import { FC, PropsWithChildren } from 'react';
 export const leaderboardFeatures = tableFeatures({
   rowSortingFeature,
   columnMeta: {} as { className: string },
-  tableMeta: {} as { isSortPending: boolean },
+  tableMeta: {} as {
+    isSortPending: boolean;
+    sortBy: ClubPlayersSortModel['sortBy'];
+    pinnedPlayerId?: string;
+  },
 });
 
 const leaderboardColumnHelper = createColumnHelper<
@@ -27,9 +31,21 @@ const leaderboardColumnHelper = createColumnHelper<
 >();
 
 export const leaderboardColumns = leaderboardColumnHelper.columns([
-  leaderboardColumnHelper.accessor('position', {
+  leaderboardColumnHelper.display({
+    id: 'position',
     header: '#',
-    enableSorting: false,
+    cell: ({ row, table }) => {
+      const meta = table.options.meta;
+      // names have no stored ranks, so the list numbers its own rows and your pinned row stays blank
+      if (meta?.sortBy === 'nickname') {
+        return row.original.id === meta.pinnedPlayerId ? null : row.index + 1;
+      }
+      const rank =
+        meta?.sortBy === 'tournamentsPlayed'
+          ? row.original.tournamentsPlayedRank
+          : row.original.ratingRank;
+      return rank ?? '—';
+    },
     meta: { className: 'text-muted-foreground w-[6ch] text-xs tabular-nums' },
   }),
   leaderboardColumnHelper.accessor('nickname', {
@@ -50,12 +66,12 @@ export const leaderboardColumns = leaderboardColumnHelper.columns([
       <span
         className={cn(
           'font-semibold',
-          !original.isEstablished && 'text-muted-foreground',
+          !original.ratingEstablished && 'text-muted-foreground',
         )}
       >
         {original.rating}
         <span className="inline-block w-[1ch] text-left">
-          {!original.isEstablished && '?'}
+          {!original.ratingEstablished && '?'}
         </span>
       </span>
     ),

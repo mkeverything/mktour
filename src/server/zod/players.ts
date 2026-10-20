@@ -164,15 +164,35 @@ export const playerStatsSchema = createSelectSchema(player_stats).omit({
   clubId: true,
 });
 
-const clubPlayerRankingShape = {
-  tournamentsPlayed: playerStatsSchema.shape.tournamentsPlayed,
-  position: z.number().int(),
+const clubPlayerStatsShape = playerStatsSchema.pick({
+  tournamentsPlayed: true,
+  ratingRank: true,
+  tournamentsPlayedRank: true,
+}).shape;
+
+export const playerListItemSchema = playerPublicSchema.pick({
+  id: true,
+  nickname: true,
+  realname: true,
+  rating: true,
+});
+
+const clubPlayerShape = {
+  ...playerListItemSchema.shape,
+  ...clubPlayerStatsShape,
 };
 
-export const clubPlayerOutputSchema = playersSelectSchema
-  .extend(clubPlayerRankingShape)
-  .transform(toPublicPlayer)
-  .pipe(playerPublicSchema.extend(clubPlayerRankingShape));
+// unlike isEstablished, ratingEstablished reads the stored rd, which doesn't grow while a club is idle (docs/adr/0002)
+export const clubPlayerOutputSchema = z
+  .object({
+    ...clubPlayerShape,
+    ratingDeviation: playersSelectSchema.shape.ratingDeviation,
+  })
+  .transform(({ ratingDeviation, ...player }) => ({
+    ...player,
+    ratingEstablished: isEstablishedRating(ratingDeviation),
+  }))
+  .pipe(z.object({ ...clubPlayerShape, ratingEstablished: z.boolean() }));
 
 export const playerStatsRowSchema = createSelectSchema(player_stats).omit({
   gamesPlayed: true,
@@ -194,6 +214,7 @@ export type AffiliationExtendedModel = z.infer<
 export type AffiliationMinimalModel = z.infer<typeof affiliationMinimalSchema>;
 export type PlayerRecordModel = z.infer<typeof playersSelectSchema>;
 export type PlayerModel = z.infer<typeof playerPublicSchema>;
+export type PlayerListItemModel = z.infer<typeof playerListItemSchema>;
 export type PlayerWithUsernameModel = z.infer<typeof playersWithUsernameSchema>;
 export type PlayerMinimalModel = z.infer<typeof playersMinimalSchema>;
 export type PlayerFormModel = z.infer<typeof playerFormSchema>;

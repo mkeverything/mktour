@@ -15,6 +15,7 @@ import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { player_stats, players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { ClubPlayersFilterModel } from '@/server/zod/players';
 
 // cacheTag throws outside the next runtime
@@ -31,6 +32,7 @@ const clubPlayers = [1600, 1500, 1500, 1500].map((rating, i) => ({
   nickname: `${i % 2 ? 'Player' : 'player'} ${i}`,
   rating,
   clubId: clubIds[0],
+  lastSeenAt: new Date(2026, 0, i + 1),
 }));
 
 async function collectIds(
@@ -79,6 +81,7 @@ describe('list pagination', () => {
         tournamentsPlayed: i % 2 ? 3 : 0,
       })),
     );
+    await refreshPlayerStats(db, { clubId: clubIds[0], playerIds: [] });
   });
 
   test('tournament.all returns every tournament exactly once', async () => {
@@ -134,7 +137,7 @@ describe('list pagination', () => {
     expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
   });
 
-  test('club.players numbers players by the sorted column whichever way the list runs', async () => {
+  test('club.players runs every sort along its stored ranks, both ways', async () => {
     const collectRows = (filter: ClubPlayersFilterModel) =>
       collectIds(async (cursor) => {
         const page = await publicCaller.club.players({
@@ -144,13 +147,16 @@ describe('list pagination', () => {
           ...filter,
         });
         return [
-          page.players.map(({ position, id }) => `${position} ${id}`),
+          page.players.map(
+            ({ id, ratingRank, tournamentsPlayedRank }) =>
+              `${filter.sortBy === 'tournamentsPlayed' ? tournamentsPlayedRank : ratingRank} ${id}`,
+          ),
           page.nextCursor,
         ];
       });
     const numbered = (ids: string[]) => ids.map((id, i) => `${i + 1} ${id}`);
     const [p0, p1, p2, p3] = clubPlayers.map(({ id }) => id);
-    // rating ties fall back to case-insensitive nicknames, so both sorts share one order
+    // rating ties fall back to last seen, so the rating and nickname sorts share one order
     const byRating = numbered([p0, p1, p2, p3]);
     const byTournaments = numbered([p1, p3, p0, p2]);
 

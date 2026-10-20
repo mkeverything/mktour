@@ -8,7 +8,6 @@ import {
 } from 'bun:test';
 import { eq, inArray } from 'drizzle-orm';
 
-import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
@@ -173,7 +172,7 @@ describe('rankClubPlayers', () => {
     overrides: Partial<{
       rating: number;
       ratingDeviation: number;
-      ratingLastUpdateAt: Date;
+      lastSeenAt: Date;
       tournamentsPlayed: number;
       tournamentsWon: number;
       gamesWon: number;
@@ -182,8 +181,7 @@ describe('rankClubPlayers', () => {
     playerId,
     rating: 1500,
     ratingDeviation: 50,
-    ratingVolatility: GLICKO2_CONSTANTS.DEFAULT_VOLATILITY,
-    ratingLastUpdateAt: now,
+    lastSeenAt: now,
     tournamentsPlayed: 0,
     tournamentsWon: 0,
     gamesWon: 0,
@@ -192,63 +190,47 @@ describe('rankClubPlayers', () => {
     ...overrides,
   });
 
-  test('breaks every metric tie by rating, then stored rd, then id', () => {
-    const ranked = rankClubPlayers(
-      [
-        player('b', { rating: 1600, tournamentsPlayed: 2 }),
-        player('a', { rating: 1600, tournamentsPlayed: 2 }),
-        player('c', {
-          rating: 1600,
-          ratingDeviation: 40,
-          tournamentsPlayed: 2,
-        }),
-        player('d', { rating: 1700, tournamentsPlayed: 2 }),
-        player('e', { rating: 1900, tournamentsPlayed: 1 }),
-      ],
-      now,
-    );
+  test('breaks every metric tie by rating, stored rd, last seen, then id', () => {
+    const ranked = rankClubPlayers([
+      player('f', { rating: 1600, tournamentsPlayed: 2 }),
+      player('a', { rating: 1600, tournamentsPlayed: 2 }),
+      player('b', {
+        rating: 1600,
+        lastSeenAt: new Date('2026-05-01T12:00:00Z'),
+        tournamentsPlayed: 2,
+      }),
+      player('c', { rating: 1600, ratingDeviation: 40, tournamentsPlayed: 2 }),
+      player('d', { rating: 1700, tournamentsPlayed: 2 }),
+      player('e', { rating: 1900, tournamentsPlayed: 1 }),
+    ]);
     expect(
       Object.fromEntries(
         ranked.map((p) => [p.playerId, p.tournamentsPlayedRank]),
       ),
-    ).toEqual({ d: 1, c: 2, a: 3, b: 4, e: 5 });
+    ).toEqual({ d: 1, c: 2, b: 3, a: 4, f: 5, e: 6 });
     expect(
       Object.fromEntries(ranked.map((p) => [p.playerId, p.ratingRank])),
-    ).toEqual({ e: 1, d: 2, c: 3, a: 4, b: 5 });
+    ).toEqual({ e: 1, d: 2, c: 3, b: 4, a: 5, f: 6 });
   });
 
-  test('preserves input order and leaves ineligible players unranked', () => {
-    const ranked = rankClubPlayers(
-      [
-        player('provisional', { rating: 2000, ratingDeviation: 200 }),
-        player('stale', {
-          rating: 1900,
-          ratingDeviation: 100,
-          ratingLastUpdateAt: new Date('2020-01-01T00:00:00Z'),
-        }),
-        player('winner', {
-          tournamentsPlayed: 1,
-          tournamentsWon: 1,
-          gamesWon: 2,
-        }),
-        player('idle'),
-      ],
-      now,
-    );
+  test('preserves input order and numbers every player, zero counts included', () => {
+    const ranked = rankClubPlayers([
+      player('provisional', { rating: 2000, ratingDeviation: 350 }),
+      player('winner', {
+        tournamentsPlayed: 1,
+        tournamentsWon: 1,
+        gamesWon: 2,
+      }),
+      player('idle', { rating: 1400 }),
+    ]);
     expect(ranked.map((p) => p.playerId)).toEqual([
       'provisional',
-      'stale',
       'winner',
       'idle',
     ]);
-    expect(ranked.map((p) => p.ratingRank)).toEqual([null, null, 2, 1]);
-    expect(ranked.map((p) => p.tournamentsWonRank)).toEqual([
-      null,
-      null,
-      1,
-      null,
-    ]);
-    expect(ranked.map((p) => p.gamesPlayedRank)).toEqual([null, null, 1, null]);
+    expect(ranked.map((p) => p.ratingRank)).toEqual([1, 2, 3]);
+    expect(ranked.map((p) => p.tournamentsWonRank)).toEqual([2, 1, 3]);
+    expect(ranked.map((p) => p.gamesPlayedRank)).toEqual([2, 1, 3]);
   });
 });
 
@@ -299,6 +281,7 @@ describe('player stats projection', () => {
       ],
     );
 
+    // rated: a 1624, the outsider 1600, c 1500, b 1338
     expect(await statsOf(a)).toMatchObject({
       tournamentsPlayed: 1,
       tournamentsWon: 1,
@@ -306,7 +289,7 @@ describe('player stats projection', () => {
       gamesDrawn: 1,
       gamesLost: 0,
       gamesPlayed: 2,
-      ratingRank: null,
+      ratingRank: 1,
       tournamentsPlayedRank: 1,
       tournamentsWonRank: 1,
       gamesPlayedRank: 1,
@@ -316,34 +299,40 @@ describe('player stats projection', () => {
       tournamentsWon: 0,
       gamesDrawn: 1,
       gamesPlayed: 1,
+      ratingRank: 3,
       tournamentsPlayedRank: 2,
-      tournamentsWonRank: null,
+      tournamentsWonRank: 3,
       gamesPlayedRank: 2,
     });
     expect(await statsOf(b)).toMatchObject({
       gamesLost: 1,
+      ratingRank: 4,
       tournamentsPlayedRank: 3,
+      tournamentsWonRank: 4,
       gamesPlayedRank: 3,
     });
     expect(await statsOf(outsider)).toMatchObject({
       tournamentsPlayed: 0,
-      ratingRank: 1,
-      tournamentsPlayedRank: null,
+      ratingRank: 2,
+      tournamentsPlayedRank: 4,
+      tournamentsWonRank: 2,
+      gamesPlayedRank: 4,
     });
 
     await deleteTournament({ tournamentId });
 
-    for (const playerId of [a, b, c]) {
+    // every count is back to zero, so each metric numbers the club by rating
+    for (const [position, playerId] of [a, outsider, c, b].entries()) {
       expect(await statsOf(playerId)).toMatchObject({
         tournamentsPlayed: 0,
         tournamentsWon: 0,
         gamesPlayed: 0,
-        tournamentsPlayedRank: null,
-        tournamentsWonRank: null,
-        gamesPlayedRank: null,
+        ratingRank: position + 1,
+        tournamentsPlayedRank: position + 1,
+        tournamentsWonRank: position + 1,
+        gamesPlayedRank: position + 1,
       });
     }
-    expect((await statsOf(outsider)).ratingRank).toBe(1);
   });
 
   test('re-ranking can swap stored positions despite the rank indexes', async () => {
@@ -356,14 +345,14 @@ describe('player stats projection', () => {
       rating: 1600,
       ratingDeviation: 50,
     });
-    await refreshPlayerStats(db, { clubId, playerIds: [], now: new Date() });
+    await refreshPlayerStats(db, { clubId, playerIds: [] });
     expect(await ratingRanksOf([first, second])).toEqual([1, 2]);
 
     await db
       .update(players)
       .set({ rating: 1800 })
       .where(eq(players.id, second));
-    await refreshPlayerStats(db, { clubId, playerIds: [], now: new Date() });
+    await refreshPlayerStats(db, { clubId, playerIds: [] });
     expect(await ratingRanksOf([first, second])).toEqual([2, 1]);
   });
 
@@ -374,7 +363,7 @@ describe('player stats projection', () => {
       await makePlayer(clubId, { rating: 1600, ratingDeviation: 50 }),
       await makePlayer(clubId, { rating: 1500, ratingDeviation: 50 }),
     ];
-    await refreshPlayerStats(db, { clubId, playerIds: [], now: new Date() });
+    await refreshPlayerStats(db, { clubId, playerIds: [] });
     expect(await ratingRanksOf(ids)).toEqual([1, 2, 3]);
 
     await deletePlayer({ playerId: ids[0] });
@@ -408,7 +397,7 @@ describe('player stats projection', () => {
     expect(await statsOf(opponent)).toMatchObject({
       tournamentsWon: 0,
       tournamentsPlayedRank: 2,
-      tournamentsWonRank: null,
+      tournamentsWonRank: 2,
     });
   });
 
@@ -513,8 +502,7 @@ describe('player stats projection', () => {
       [{ round: 1, white: d, black: e, result: '1-0' }],
     );
 
-    const now = new Date();
-    await refreshPlayerStats(db, { clubId, playerIds: ids, now });
+    await refreshPlayerStats(db, { clubId, playerIds: ids });
 
     const stored = await db
       .select()
@@ -539,11 +527,11 @@ describe('player stats projection', () => {
       [1, 1, 0, 1, 0, 2, 2, 2],
       [1, 1, 0, 1, 0, 3, 3, 3],
       [1, 1, 0, 1, 0, 4, 4, 4],
-      [1, 0, 1, 0, 0, 5, null, 5],
-      [1, 0, 0, 0, 0, 6, null, null],
+      [1, 0, 1, 0, 0, 5, 5, 5],
+      [1, 0, 0, 0, 0, 6, 6, 6],
     ]);
 
-    const rebuilt = await buildClubPlayerStats(db, clubId, now);
+    const rebuilt = await buildClubPlayerStats(db, clubId);
     expect(
       rebuilt.toSorted((x, y) => x.playerId.localeCompare(y.playerId)),
     ).toEqual(

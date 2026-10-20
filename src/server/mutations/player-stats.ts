@@ -1,4 +1,3 @@
-import { getCurrentRatingDeviation, isEstablishedRating } from '@/lib/glicko2';
 import { caseWhen } from '@/lib/sql-case-when';
 import type { db } from '@/server/db';
 import { player_stats, players } from '@/server/db/schema/players';
@@ -34,11 +33,10 @@ const STORED_KEYS = Object.keys(
   STORED_COLUMNS,
 ) as (keyof PlayerStatsRowModel)[];
 
-const RATING_COLUMNS = {
+const RATING_ORDER_COLUMNS = {
   rating: players.rating,
   ratingDeviation: players.ratingDeviation,
-  ratingVolatility: players.ratingVolatility,
-  ratingLastUpdateAt: players.ratingLastUpdateAt,
+  lastSeenAt: players.lastSeenAt,
 };
 
 const UPSERT_SET = Object.fromEntries(
@@ -59,7 +57,9 @@ type PlayerStatsCounts = Pick<
   | 'gamesLost'
 >;
 type RankingPlayer = PlayerStatsCounts &
-  Pick<PlayerRecordModel, keyof typeof RATING_COLUMNS> & { playerId: string };
+  Pick<PlayerRecordModel, keyof typeof RATING_ORDER_COLUMNS> & {
+    playerId: string;
+  };
 
 const ZERO_COUNTS: PlayerStatsCounts = {
   tournamentsPlayed: 0,
@@ -77,31 +77,22 @@ const toPlayerStatsRow = (row: PlayerStatsRowModel) =>
 const compareByRating = (a: RankingPlayer, b: RankingPlayer) =>
   b.rating - a.rating ||
   a.ratingDeviation - b.ratingDeviation ||
+  a.lastSeenAt.getTime() - b.lastSeenAt.getTime() ||
   (a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0);
 
-/** assigns unique club positions; ties fall back to rating, stored rd, then id */
-export function rankClubPlayers<T extends RankingPlayer>(
-  clubPlayers: T[],
-  now: Date,
-) {
-  const positions = (
-    isEligible: (player: T) => boolean,
-    metric: (player: T) => number = () => 0,
-  ) => {
-    const sorted = clubPlayers
-      .filter(isEligible)
-      .toSorted((a, b) => metric(b) - metric(a) || compareByRating(a, b));
+/** numbers every club player by each metric; ties fall back to rating, stored rd, last seen, then id */
+export function rankClubPlayers<T extends RankingPlayer>(clubPlayers: T[]) {
+  const positions = (metric: (player: T) => number = () => 0) => {
+    const sorted = clubPlayers.toSorted(
+      (a, b) => metric(b) - metric(a) || compareByRating(a, b),
+    );
     return new Map(sorted.map((player, i) => [player.playerId, i + 1]));
   };
-  const byMetric = (metric: (player: T) => number) =>
-    positions((player) => metric(player) > 0, metric);
 
-  const rating = positions((player) =>
-    isEstablishedRating(getCurrentRatingDeviation(player, now)),
-  );
-  const tournamentsPlayed = byMetric((player) => player.tournamentsPlayed);
-  const tournamentsWon = byMetric((player) => player.tournamentsWon);
-  const gamesPlayed = byMetric(
+  const rating = positions();
+  const tournamentsPlayed = positions((player) => player.tournamentsPlayed);
+  const tournamentsWon = positions((player) => player.tournamentsWon);
+  const gamesPlayed = positions(
     (player) => player.gamesWon + player.gamesDrawn + player.gamesLost,
   );
 
@@ -197,14 +188,13 @@ async function getPlayerStatsCounts(database: Database, where: SQL) {
 export async function buildClubPlayerStats(
   database: Database,
   clubId: string,
-  now: Date,
 ): Promise<PlayerStatsRowModel[]> {
   const [clubPlayers, counts] = await Promise.all([
     database
       .select({
         playerId: players.id,
         clubId: players.clubId,
-        ...RATING_COLUMNS,
+        ...RATING_ORDER_COLUMNS,
       })
       .from(players)
       .where(eq(players.clubId, clubId)),
@@ -216,7 +206,6 @@ export async function buildClubPlayerStats(
       ...player,
       ...(counts.get(player.playerId) ?? ZERO_COUNTS),
     })),
-    now,
   ).map(toPlayerStatsRow);
 }
 
@@ -227,15 +216,11 @@ export async function buildClubPlayerStats(
  */
 export async function refreshPlayerStats(
   tx: Tx,
-  {
-    clubId,
-    playerIds,
-    now,
-  }: { clubId: string; playerIds: string[]; now: Date },
+  { clubId, playerIds }: { clubId: string; playerIds: string[] },
 ) {
   const [storedRows, counts] = await Promise.all([
     tx
-      .select({ ...STORED_COLUMNS, ...RATING_COLUMNS })
+      .select({ ...STORED_COLUMNS, ...RATING_ORDER_COLUMNS })
       .from(player_stats)
       .innerJoin(players, eq(players.id, player_stats.playerId))
       .where(eq(player_stats.clubId, clubId)),
@@ -251,7 +236,6 @@ export async function refreshPlayerStats(
         ? { ...row, ...(counts.get(row.playerId) ?? ZERO_COUNTS) }
         : row,
     ),
-    now,
   )
     .filter((row, i) =>
       STORED_KEYS.some((key) => row[key] !== storedRows[i][key]),

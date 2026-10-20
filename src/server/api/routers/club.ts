@@ -51,7 +51,6 @@ import {
   affiliationExtendedSchema,
   clubPlayerOutputSchema,
   clubPlayersFilterSchema,
-  clubPlayersSortSchema,
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
@@ -162,17 +161,12 @@ export const clubRouter = createTRPCRouter({
     }),
   authPlayer: protectedProcedure
     .meta(meta.clubAuthPlayer)
-    .input(
-      clubIdInputSchema.extend(
-        clubPlayersSortSchema.pick({ sortBy: true }).shape,
-      ),
-    )
+    .input(clubIdInputSchema)
     .output(clubPlayerOutputSchema.nullable())
     .query(async (opts) => {
       return await getUserClubPlayer({
         clubId: opts.input.clubId,
         userId: opts.ctx.user.id,
-        sortBy: opts.input.sortBy,
       });
     }),
   authStatus: publicProcedure

@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { StatusInClub } from '@/server/zod/enums';
-import { PlayerModel } from '@/server/zod/players';
+import { PlayerListItemModel } from '@/server/zod/players';
 import { UserRound, Users2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -106,6 +106,7 @@ const ClubPlayers: FC<{
           {players.map((player) => (
             <PlayerItem
               key={player.id}
+              clubId={clubId}
               player={player}
               statusInClub={statusInClub}
             />
@@ -131,9 +132,10 @@ const ClubPlayers: FC<{
 };
 
 const PlayerItem: FC<{
-  player: PlayerModel;
+  clubId: string;
+  player: PlayerListItemModel;
   statusInClub?: StatusInClub | null;
-}> = ({ player, statusInClub }) => {
+}> = ({ clubId, player, statusInClub }) => {
   const [open, setOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
 
@@ -166,7 +168,7 @@ const PlayerItem: FC<{
             </ComboModal.Title>
           </ComboModal.Header>
           <EditPlayerForm
-            clubId={player.clubId}
+            clubId={clubId}
             player={{ playerId: player.id, ...player }}
             status={statusInClub}
             setOpen={setOpen}
@@ -179,7 +181,7 @@ const PlayerItem: FC<{
       </ComboModal.Root>
       {mergeOpen && (
         <MergePlayerDrawer
-          clubId={player.clubId}
+          clubId={clubId}
           sourcePlayer={player}
           open={mergeOpen}
           setOpen={setMergeOpen}
@@ -189,11 +191,9 @@ const PlayerItem: FC<{
   );
 };
 
-const PlayerCard: FC<{ player: PlayerModel } & ComponentProps<typeof Card>> = ({
-  player,
-  className,
-  ...props
-}) => (
+const PlayerCard: FC<
+  { player: PlayerListItemModel } & ComponentProps<typeof Card>
+> = ({ player, className, ...props }) => (
   <Card
     {...props}
     className={cn(

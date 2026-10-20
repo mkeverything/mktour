@@ -28,7 +28,7 @@ import {
   CLUB_PLAYERS_DEFAULT_SORT,
   ClubPlayersSortModel,
 } from '@/server/zod/players';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { SortingState, useTable } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -56,10 +56,7 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
     search: debouncedSearch || undefined,
   });
   const { data: me } = useQuery(
-    trpc.club.authPlayer.queryOptions(
-      { clubId, sortBy: sortBy as ClubPlayersSortModel['sortBy'] },
-      { enabled: Boolean(userId), placeholderData: keepPreviousData },
-    ),
+    trpc.club.authPlayer.queryOptions({ clubId }, { enabled: Boolean(userId) }),
   );
 
   const { scrollerRef, paginatorRoot } = usePanelScroller();
@@ -94,7 +91,11 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
     enableSortingRemoval: false,
     onSortingChange: setSorting,
     state: { sorting },
-    meta: { isSortPending: shownSorting !== sorting },
+    meta: {
+      isSortPending: shownSorting !== sorting,
+      sortBy: shownSorting[0].id as ClubPlayersSortModel['sortBy'],
+      pinnedPlayerId: isMePinned ? me?.id : undefined,
+    },
   });
 
   const rows = table.getRowModel().rows;

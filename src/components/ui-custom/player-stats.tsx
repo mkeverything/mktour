@@ -125,7 +125,7 @@ const StatItem: FC<StatItemProps> = ({
   <div className="bg-muted/50 text-muted-foreground flex flex-col gap-3 rounded-xl p-4 text-xs">
     <div className="flex items-center justify-between">
       <Icon className="size-4" />
-      {rank && `#${rank}`}
+      {value && rank ? `#${rank}` : null}
     </div>
     <div>
       <div className="flex flex-wrap items-baseline gap-x-2">
