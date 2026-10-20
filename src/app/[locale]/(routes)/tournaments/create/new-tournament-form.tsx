@@ -51,6 +51,8 @@ import { useRef, useTransition } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
+const DEFAULT_RATED = true;
+
 export default function NewTournamentForm({
   clubs,
   user,
@@ -62,7 +64,7 @@ export default function NewTournamentForm({
       format: undefined,
       date: new Date(),
       type: 'solo',
-      rated: true,
+      rated: DEFAULT_RATED,
     },
   });
   const t = useTranslations('MakeTournament');
@@ -76,7 +78,7 @@ export default function NewTournamentForm({
     name: 'type',
   });
   const isDoubles = tournamentType === 'doubles';
-  const soloRatedRef = useRef(form.getValues('rated'));
+  const soloRatedRef = useRef(DEFAULT_RATED);
 
   const handleSubmit = (data: NewTournamentFormModel) => {
     mutate(

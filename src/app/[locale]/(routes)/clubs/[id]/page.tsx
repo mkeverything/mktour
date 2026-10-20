@@ -1,23 +1,21 @@
 import ClubPage from '@/app/[locale]/(routes)/clubs/[id]/club';
-import Loading from '@/app/[locale]/(routes)/loading';
-import { getQueryClient, trpc } from '@/components/trpc/server';
-import { validateRequest } from '@/lib/auth/lucia';
+import { getQueryClient, trpc } from '@/server/api/query-client';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
+import { formatDate } from '@/lib/local-date';
 import { CLUB_PLAYERS_DEFAULT_SORT } from '@/server/zod/players';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 
 export default async function Page(props: ClubPageProps) {
   const params = await props.params;
-  const club = await publicCaller.club.info({ clubId: params.id });
-  const { user } = await validateRequest();
-  const statusInClub = await publicCaller.club.authStatus({
-    clubId: params.id,
-  });
+  const [club, user, statusInClub] = await Promise.all([
+    publicCaller.club.info({ clubId: params.id }),
+    publicCaller.auth.info(),
+    publicCaller.club.authStatus({ clubId: params.id }),
+  ]);
 
   if (!club) notFound();
 
@@ -47,13 +45,7 @@ export default async function Page(props: ClubPageProps) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Suspense fallback={<Loading />}>
-        <ClubPage
-          club={club}
-          statusInClub={statusInClub}
-          userId={user?.id || ''}
-        />
-      </Suspense>
+      <ClubPage club={club} statusInClub={statusInClub} userId={user?.id} />
     </HydrationBoundary>
   );
 }
@@ -82,18 +74,21 @@ export async function generateMetadata(
     publicCaller.club.tournaments({ clubId: club.id, limit: 1 }),
   ]);
   const latestTournament = latest.tournaments[0];
+  const name = club.name.trim();
   const description = latestTournament
     ? t('clubs.clubPage.description', {
-        name: club.name,
+        name,
         players: stats.playersCount,
         tournaments: stats.tournamentsCount,
-        date: new Date(latestTournament.date).toLocaleDateString(locale),
+        date: formatDate(latestTournament.date, locale, 'long', {
+          withYear: true,
+        }),
       })
-    : t('clubs.clubPage.descriptionEmpty', { name: club.name });
+    : t('clubs.clubPage.descriptionEmpty', { name });
 
   return getPageMetadata(parent, {
     path: `/clubs/${params.id}`,
-    title: t('clubs.clubPage.title', { name: club.name }),
+    title: t('clubs.clubPage.title', { name }),
     description,
     // clubs without tournaments are thin until they have content
     ...(latestTournament ? {} : { robots: { index: false, follow: true } }),

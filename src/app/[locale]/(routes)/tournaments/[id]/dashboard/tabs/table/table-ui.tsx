@@ -1,7 +1,4 @@
-import {
-  Medal,
-  medalColour,
-} from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main/winners';
+import Medal from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/medal';
 import FormattedMessage, {
   IntlMessageId,
 } from '@/components/formatted-message';
@@ -206,11 +203,7 @@ const Place: FC<{ unit: UnitModel; hasEnded: boolean } & PropsWithChildren> = ({
 
   if (!place || !hasEnded) return children;
 
-  return place > 3 ? (
-    place
-  ) : (
-    <Medal className={`${medalColour[place - 1]} size-4`} />
-  );
+  return place > 3 ? place : <Medal place={place} className="size-4" />;
 };
 
 const Status: FC<

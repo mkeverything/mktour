@@ -3,7 +3,7 @@ import DeleteTournamentButton from '@/app/[locale]/(routes)/tournaments/[id]/das
 import ResetTournamentPButton from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main/reset-players-button';
 import ResetTournamentButton from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main/reset-tournament-button';
 import StartTournamentButton from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main/start-tournament-button';
-import ComboModal from '@/components/ui-custom/combo-modal';
+import * as ComboModal from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
 import { TournamentModel } from '@/server/zod/tournaments';
 import { MoreVertical } from 'lucide-react';

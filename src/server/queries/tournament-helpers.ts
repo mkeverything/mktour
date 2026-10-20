@@ -1,11 +1,11 @@
 import { eq } from 'drizzle-orm';
 
-import { db } from '@/server/db';
+import { db, type Database } from '@/server/db';
 import { tournaments } from '@/server/db/schema/tournaments';
 
 export async function getTournamentById(
   tournamentId: string,
-  database: Pick<typeof db, 'select'> = db,
+  database: Database = db,
 ) {
   return (
     await database

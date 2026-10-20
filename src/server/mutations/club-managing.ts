@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { AppError } from '@/lib/errors';
 
@@ -6,7 +6,7 @@ import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid, nowTimestamp } from '@/lib/utils';
-import { db } from '@/server/db';
+import { db, type Transaction } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
   club_notifications,
@@ -41,7 +41,7 @@ import {
   playerFormSchema,
 } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { and, desc, eq, inArray, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
@@ -136,7 +136,7 @@ export const deleteClub = async ({
 export const createPlayer = async (
   player: PlayerFormModel,
   options: {
-    database?: Pick<typeof db, 'insert'>;
+    database?: Transaction;
     id?: string;
   } = {},
 ) => {
@@ -149,9 +149,7 @@ export const createPlayer = async (
     throw new AppError('PLAYER_EXISTS_ERROR');
   }
 
-  const insertPlayerWithStartingEvent = async (
-    database: Pick<typeof db, 'insert'>,
-  ) => {
+  const insertPlayerWithStartingEvent = async (database: Transaction) => {
     const createdAt = nowTimestamp();
     const newPlayer = (
       await database
@@ -301,19 +299,20 @@ export const deleteClubFunction = async ({
   userId,
   userDeletion = false, // true when function is invoked while deleting the user - single owner of a club
 }: ClubDeleteProps) => {
-  const otherClubs = await db
-    .select()
-    .from(clubs_to_users)
-    .where(
-      and(
-        eq(clubs_to_users.userId, userId),
-        ne(clubs_to_users.clubId, clubId),
-        eq(clubs_to_users.status, 'co-owner'),
-      ),
-    )
-    .limit(1);
-
-  const userStatus = await getStatusInClub({ userId, clubId });
+  const [otherClubs, userStatus] = await Promise.all([
+    db
+      .select()
+      .from(clubs_to_users)
+      .where(
+        and(
+          eq(clubs_to_users.userId, userId),
+          ne(clubs_to_users.clubId, clubId),
+          eq(clubs_to_users.status, 'co-owner'),
+        ),
+      )
+      .limit(1),
+    getStatusInClub({ userId, clubId }),
+  ]);
   if (userStatus !== 'co-owner') throw new AppError('UNAUTHENTICATED');
 
   if (otherClubs.length === 0 && !userDeletion)
@@ -445,14 +444,10 @@ export const deleteClubManager = async ({
   userId: string;
   user: UserModel;
 }) => {
-  const authorStatus = await getStatusInClub({
-    userId: user.id,
-    clubId,
-  });
-  const targetStatus = await getStatusInClub({
-    userId,
-    clubId,
-  });
+  const [authorStatus, targetStatus] = await Promise.all([
+    getStatusInClub({ userId: user.id, clubId }),
+    getStatusInClub({ userId, clubId }),
+  ]);
   if (targetStatus === 'co-owner') throw new AppError('FORBIDDEN');
   if (authorStatus !== 'co-owner') throw new AppError('FORBIDDEN');
   await db
@@ -460,6 +455,61 @@ export const deleteClubManager = async ({
     .where(
       and(eq(clubs_to_users.clubId, clubId), eq(clubs_to_users.userId, userId)),
     );
+};
+
+/** in each club the user is leaving with no other co-owner, the longest-serving admin becomes co-owner */
+export const promoteSuccessorCoOwners = async (
+  tx: Transaction,
+  { userId, clubIds }: { userId: string; clubIds: string[] },
+) => {
+  const clubsWithOtherCoOwner = tx
+    .select({ clubId: clubs_to_users.clubId })
+    .from(clubs_to_users)
+    .where(
+      and(
+        inArray(clubs_to_users.clubId, clubIds),
+        ne(clubs_to_users.userId, userId),
+        eq(clubs_to_users.status, 'co-owner'),
+      ),
+    );
+  const admins = await tx
+    .select()
+    .from(clubs_to_users)
+    .where(
+      and(
+        inArray(clubs_to_users.clubId, clubIds),
+        ne(clubs_to_users.userId, userId),
+        eq(clubs_to_users.status, 'admin'),
+        notInArray(clubs_to_users.clubId, clubsWithOtherCoOwner),
+      ),
+    )
+    .orderBy(asc(clubs_to_users.promotedAt));
+  const adminsByClub = Map.groupBy(admins, ({ clubId }) => clubId);
+  const successors = [...adminsByClub.values()].map(
+    ([oldestAdmin]) => oldestAdmin,
+  );
+  if (successors.length === 0) return;
+
+  const promotedAt = new Date();
+  await tx
+    .update(clubs_to_users)
+    .set({ status: 'co-owner', promotedAt })
+    .where(
+      inArray(
+        clubs_to_users.id,
+        successors.map(({ id }) => id),
+      ),
+    );
+  await tx.insert(user_notifications).values(
+    successors.map(({ clubId, userId }): UserNotificationInsertModel => ({
+      id: newid(),
+      userId,
+      event: 'became_club_manager',
+      isSeen: false,
+      createdAt: promotedAt,
+      metadata: { clubId, role: 'co-owner' },
+    })),
+  );
 };
 
 export const leaveClub = async ({
@@ -485,6 +535,13 @@ export const leaveClub = async ({
   if (!otherClubId) throw new AppError('NO_OTHER_CLUB_CO_OWNER');
 
   await db.transaction(async (tx) => {
+    const otherManager = await tx.query.clubs_to_users.findFirst({
+      where: { clubId, userId: { ne: userId } },
+      columns: { id: true },
+    });
+    if (!otherManager) throw new AppError('CANNOT_LEAVE_AS_ONLY_MANAGER');
+    await promoteSuccessorCoOwners(tx, { userId, clubIds: [clubId] });
+
     await tx
       .update(users)
       .set({ selectedClub: otherClubId })

@@ -6,10 +6,7 @@ import Winners from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/mai
 import { useTournamentSummaryInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import SwissRoundsNumber from '@/components/swiss-rounds-number';
-import {
-  formatTournamentDisplayDate,
-  localDateStringToDate,
-} from '@/lib/local-date';
+import { formatTournamentDisplayDate } from '@/lib/local-date';
 import {
   CalendarDays,
   ChartNoAxesCombinedIcon,
@@ -45,10 +42,7 @@ const TournamentInfoList = () => {
   }
   if (!data) return 'tournament info is `undefined` somehow';
 
-  const formattedDate = formatTournamentDisplayDate(
-    localDateStringToDate(data.date),
-    locale,
-  );
+  const formattedDate = formatTournamentDisplayDate(data.date, locale);
 
   return (
     <>

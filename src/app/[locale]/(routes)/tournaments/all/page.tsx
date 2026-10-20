@@ -3,7 +3,7 @@ import { getPageMetadata } from '@/lib/page-metadata';
 import type { ResolvingMetadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
-import { getQueryClient, trpc } from '@/components/trpc/server';
+import { getQueryClient, trpc } from '@/server/api/query-client';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { connection } from 'next/server';
 

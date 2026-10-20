@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import * as m from 'framer-motion/m';
 import { ReactNode } from 'react';
 
 const MenuItem = ({
@@ -9,9 +9,9 @@ const MenuItem = ({
   children?: ReactNode;
 }) => {
   return (
-    <motion.li variants={MenuItemVariants} className={className}>
+    <m.li variants={MenuItemVariants} className={className}>
       {children}
-    </motion.li>
+    </m.li>
   );
 };
 

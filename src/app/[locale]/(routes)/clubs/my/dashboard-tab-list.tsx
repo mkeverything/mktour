@@ -37,7 +37,7 @@ const ClubDashboardTabList: FC<{
       defaultValue="main"
       onValueChange={(value) => setTab(value as ClubDashboardTab)}
       value={activeTab}
-      className="z-40 w-full rounded-none transition-all duration-500"
+      className="z-40 w-full rounded-none"
     >
       <TabsList className="no-scrollbar w-full justify-around overflow-scroll rounded-none md:justify-start lg:px-[20%]">
         {preparedTabs.map((tab) => (

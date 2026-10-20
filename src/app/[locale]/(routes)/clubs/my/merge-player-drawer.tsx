@@ -53,10 +53,10 @@ const MergePlayerDrawer: FC<MergePlayerDrawerProps> = ({
     debouncedSearch,
   } = useClubScopedSearch({ clubId, type: 'players' });
   const useSearch = debouncedSearch.length > 0;
-  const playersFromPages =
-    playersInfinite.data?.pages.flatMap((page) => page.players) ?? [];
   const players = (
-    useSearch ? (searchResults?.players ?? []) : playersFromPages
+    (useSearch
+      ? searchResults?.players
+      : playersInfinite.data?.pages.flatMap((page) => page.players)) ?? []
   ).filter((player) => player.id !== sourcePlayer.id);
   const sourceInfo = useQuery(
     trpc.player.info.queryOptions(
@@ -74,18 +74,12 @@ const MergePlayerDrawer: FC<MergePlayerDrawerProps> = ({
     queryClient,
     onSuccess: () => setOpen(false),
   });
-  const projectedPlayer = !selectedPlayer
-    ? null
-    : isSwapped
-      ? sourcePlayer
-      : selectedPlayer;
-  const mergedPlayer = !selectedPlayer
-    ? null
-    : isSwapped
-      ? selectedPlayer
-      : sourcePlayer;
-  const projectedInfo = isSwapped ? sourceInfo.data : selectedInfo.data;
-  const mergedInfo = isSwapped ? selectedInfo.data : sourceInfo.data;
+  const [projectedPlayer, mergedPlayer] = isSwapped
+    ? [sourcePlayer, selectedPlayer]
+    : [selectedPlayer, sourcePlayer];
+  const [projectedInfo, mergedInfo] = isSwapped
+    ? [sourceInfo.data, selectedInfo.data]
+    : [selectedInfo.data, sourceInfo.data];
   const projectedUsername =
     projectedInfo?.user?.username ?? mergedInfo?.user?.username;
 
@@ -99,11 +93,11 @@ const MergePlayerDrawer: FC<MergePlayerDrawerProps> = ({
   };
 
   const merge = () => {
-    if (!selectedPlayer) return;
+    if (!projectedPlayer || !mergedPlayer) return;
     mergeMutation.mutate({
       clubId,
-      basePlayerId: isSwapped ? sourcePlayer.id : selectedPlayer.id,
-      mergedPlayerId: isSwapped ? selectedPlayer.id : sourcePlayer.id,
+      basePlayerId: projectedPlayer.id,
+      mergedPlayerId: mergedPlayer.id,
     });
   };
 
@@ -165,6 +159,7 @@ const MergePlayerDrawer: FC<MergePlayerDrawerProps> = ({
               <span>{t('result')}</span>
               <button
                 type="button"
+                aria-label={t('swap players')}
                 className="hover:text-foreground active:scale-[0.97]"
                 onClick={() => setIsSwapped((value) => !value)}
               >

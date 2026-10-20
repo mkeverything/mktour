@@ -22,6 +22,7 @@ export const clubsToUsersSelectSchema = createSelectSchema(clubs_to_users, {
 export const clubsInsertSchema = createInsertSchema(clubs, {
   name: (s) =>
     s
+      .trim()
       .min(3, { error: 'SHORT_CLUB_NAME' })
       .max(100, { error: 'LONG_CLUB_NAME' }),
   lichessTeam: () => z.string().trim().min(1).nullish(),

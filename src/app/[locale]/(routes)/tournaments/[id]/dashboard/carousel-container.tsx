@@ -33,8 +33,16 @@ const CarouselContainer: FC<CarouselProps> = ({
   useEffect(() => {
     if (!api) return;
     api.on('select', handleSelect);
+
+    return () => {
+      api.off('select', handleSelect);
+    };
+  }, [api, handleSelect]);
+
+  useEffect(() => {
+    if (!api) return;
     if (currentTab) api.scrollTo(indexOfTab);
-  }, [api, currentTab, indexOfTab, handleSelect]);
+  }, [api, currentTab, indexOfTab]);
 
   return (
     <Carousel setApi={setApi} opts={{ loop: false }} className="select-none">

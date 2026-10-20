@@ -10,8 +10,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { type ChangeItem, type ChangelogVersion } from '@/lib/changelog';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { MailIcon } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 interface AboutContentProps {
@@ -20,7 +21,7 @@ interface AboutContentProps {
 
 export default function AboutContent({ changelog }: AboutContentProps) {
   const t = useTranslations('About');
-  const format = useFormatter();
+  const formatDate = useFormatDate();
 
   return (
     <Center className="pt-8">
@@ -54,11 +55,7 @@ export default function AboutContent({ changelog }: AboutContentProps) {
                       {v.version}
                     </h3>
                     <span className="text-muted-foreground text-xs tracking-wider uppercase">
-                      {format.dateTime(new Date(v.date), {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+                      {formatDate(v.date, 'long')}
                     </span>
                   </div>
                   <ul className="space-y-4 text-sm">
@@ -72,8 +69,11 @@ export default function AboutContent({ changelog }: AboutContentProps) {
                               {t(`Changelog.${category}`)}
                             </h4>
                             <ul className="text-muted-foreground/80 space-y-1.5">
-                              {changes.map((change, i) => (
-                                <li key={i} className="flex gap-2">
+                              {changes.map((change) => (
+                                <li
+                                  key={change.commitHash}
+                                  className="flex gap-2"
+                                >
                                   <span className="text-primary/50 pt-1.5 leading-none">
                                     •
                                   </span>

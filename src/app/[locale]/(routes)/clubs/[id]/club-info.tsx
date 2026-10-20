@@ -1,5 +1,6 @@
 import { turboPascal } from '@/app/fonts';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useTRPC } from '@/components/trpc/client';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
@@ -9,7 +10,7 @@ import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, useLayoutEffect, useRef, useState } from 'react';
 
@@ -19,7 +20,7 @@ export const ClubInfo: FC<{
 }> = ({ club, statusInClub }) => {
   const t = useTranslations('Club');
   const tStatus = useTranslations('Status');
-  const locale = useLocale();
+  const formatDate = useFormatDate();
   const trpc = useTRPC();
   const { data: managers } = useQuery(
     trpc.club.managers.all.queryOptions({ clubId: club.id }),
@@ -45,9 +46,7 @@ export const ClubInfo: FC<{
         {club.createdAt && (
           <span>
             {t('Page.createdAt', {
-              date: club.createdAt.toLocaleDateString(locale, {
-                dateStyle: 'long',
-              }),
+              date: formatDate(club.createdAt, 'long'),
             })}
           </span>
         )}

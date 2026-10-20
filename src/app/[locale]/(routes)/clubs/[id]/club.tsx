@@ -17,7 +17,7 @@ const PANEL_CLASS_NAME =
 const ClubPage: FC<{
   club: ClubModel;
   statusInClub: StatusInClub | null;
-  userId: string;
+  userId?: string;
 }> = ({ club, statusInClub, userId }) => {
   const t = useTranslations();
   const { data: stats } = useClubStats(club.id);

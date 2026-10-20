@@ -8,6 +8,7 @@ import MakeTournamentButton from '@/components/button-make-tournament';
 import TeamJoinToaster from '@/components/team-join-toaster';
 import TournamentItemIteratee from '@/components/tournament-item';
 import { Button } from '@/components/ui/button';
+import { COOKIES } from '@/lib/config/constants';
 import { cn } from '@/lib/utils';
 import { publicCaller } from '@/server/api';
 import { TournamentWithClubModel } from '@/server/zod/tournaments';
@@ -40,10 +41,7 @@ export default async function Authorized() {
                 'flex w-full max-w-md shrink-0 flex-col items-center gap-3 md:h-full md:w-1/2 md:max-w-none md:items-stretch md:justify-center md:overflow-hidden md:px-6 md:py-6'
               }
             >
-              <RecentTournamentsSection
-                recentTournaments={recentTournaments}
-                hasAnyTournaments={hasAnyTournaments}
-              />
+              <RecentTournamentsSection recentTournaments={recentTournaments} />
             </div>
             <div className="flex w-full max-w-md shrink-0 justify-center md:h-full md:w-1/2 md:max-w-none md:items-center md:justify-center md:overflow-hidden md:px-6 md:py-6">
               <MakeTournamentButton className="md:max-w-sm" />
@@ -64,13 +62,10 @@ export default async function Authorized() {
 
 async function RecentTournamentsSection({
   recentTournaments,
-  hasAnyTournaments,
 }: {
   recentTournaments: TournamentWithClubModel[];
-  hasAnyTournaments: boolean;
 }) {
   const t = await getTranslations('Home');
-  if (!hasAnyTournaments) return null;
   return (
     <div className="mx-auto w-full max-w-lg">
       <h2 className="text-muted-foreground mb-3 text-sm font-medium">
@@ -97,7 +92,7 @@ async function RecentTournamentsSection({
 
 const TeamJoinToasterServer = async () => {
   const { cookies } = await import('next/headers');
-  const isNew = (await cookies()).get('show_new_user_toast');
+  const isNew = (await cookies()).get(COOKIES.NEW_USER_TOAST);
   if (!isNew) return null;
   return <TeamJoinToaster />;
 };

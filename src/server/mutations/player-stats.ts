@@ -1,5 +1,5 @@
 import { caseWhen } from '@/lib/sql-case-when';
-import type { db } from '@/server/db';
+import type { Database, Transaction } from '@/server/db';
 import { player_stats, players } from '@/server/db/schema/players';
 import {
   games,
@@ -21,12 +21,9 @@ import {
   isNotNull,
   isNull,
   or,
-  sql,
   type SQL,
 } from 'drizzle-orm';
-
-type Database = Pick<typeof db, 'select'>;
-type Tx = Pick<typeof db, 'select' | 'insert'>;
+import { alias } from 'drizzle-orm/sqlite-core';
 
 const { gamesPlayed: _, ...STORED_COLUMNS } = getColumns(player_stats);
 const STORED_KEYS = Object.keys(
@@ -40,9 +37,9 @@ const RATING_ORDER_COLUMNS = {
 };
 
 const UPSERT_SET = Object.fromEntries(
-  Object.entries(STORED_COLUMNS)
-    .filter(([key]) => key !== 'playerId' && key !== 'clubId')
-    .map(([key, column]) => [key, sql.raw(`excluded.${column.name}`)]),
+  Object.entries(getColumns(alias(player_stats, 'excluded'))).filter(
+    ([key]) => key !== 'playerId' && key !== 'clubId' && key !== 'gamesPlayed',
+  ),
 );
 
 // 11 bound parameters per row keeps every statement far below sqlite's variable limit
@@ -215,7 +212,7 @@ export async function buildClubPlayerStats(
  * of the event that changed the source data.
  */
 export async function refreshPlayerStats(
-  tx: Tx,
+  tx: Transaction,
   { clubId, playerIds }: { clubId: string; playerIds: string[] },
 ) {
   const [storedRows, counts] = await Promise.all([
@@ -243,6 +240,8 @@ export async function refreshPlayerStats(
     .map(toPlayerStatsRow);
 
   for (let i = 0; i < changedRows.length; i += UPSERT_CHUNK_SIZE) {
+    // these chunks share one transaction; a failed write must prevent the next chunk from being sent.
+    // react-doctor-disable-next-line react-doctor/async-await-in-loop
     await tx
       .insert(player_stats)
       .values(changedRows.slice(i, i + UPSERT_CHUNK_SIZE))

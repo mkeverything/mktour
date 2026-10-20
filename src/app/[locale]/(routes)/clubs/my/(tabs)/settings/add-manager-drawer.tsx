@@ -20,6 +20,7 @@ const AddManagerDrawer = ({
   const [value, setValue] = useState('');
   const debouncedValue = useDebounce(value, 300);
   const t = useTranslations('Club.Dashboard.Settings');
+  const tCommon = useTranslations('Common');
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleChange = (state: boolean) => {
@@ -64,6 +65,7 @@ const AddManagerDrawer = ({
             />
           </div>
           <Fab
+            aria-label={tCommon('close')}
             className={`${(open || isAnimating) && 'z-60'} ${!open && 'hidden'}`}
             onClick={() => handleChange(false)}
             icon={X}

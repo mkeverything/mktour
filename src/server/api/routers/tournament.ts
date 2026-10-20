@@ -285,7 +285,7 @@ export const tournamentRouter = {
   editTitle: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
-        title: z.string(),
+        title: z.string().trim(),
       }),
     )
     .output(z.void())

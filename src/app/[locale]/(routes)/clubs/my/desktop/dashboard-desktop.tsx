@@ -62,6 +62,7 @@ const DashboardDesktop: FC<{
           variant="outline"
           size="icon"
           className="relative"
+          aria-label={t('Dashboard.notifications')}
           onClick={() => setOpenNotifications((prev) => !prev)}
         >
           <Mail />
@@ -135,12 +136,14 @@ const NotificationsDrawer: FC<{
   open: boolean;
   setOpen: (open: boolean) => void;
 }> = ({ selectedClub, open, setOpen }) => {
+  const t = useTranslations('Common');
   return (
     <SideDrawer open={open} setOpen={setOpen}>
       <div className="flex min-h-0 w-full flex-1 flex-col">
         <ClubInbox selectedClub={selectedClub} />
       </div>
       <Fab
+        aria-label={t('close')}
         className={`${!open && 'hidden'}`}
         onClick={() => setOpen(false)}
         icon={X}

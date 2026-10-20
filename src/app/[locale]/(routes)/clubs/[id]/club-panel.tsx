@@ -1,6 +1,7 @@
 import FormattedMessage, {
   IntlMessageId,
 } from '@/components/formatted-message';
+import { useMediaQuery } from '@/components/providers/media-query-provider';
 import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -13,7 +14,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useMediaQuery } from 'react-responsive';
 
 export const Count: FC<{ value?: number }> = ({ value }) => (
   <span className="text-muted-foreground flex items-baseline gap-1.5 font-normal tabular-nums">
@@ -78,7 +78,7 @@ const PanelSearch: FC<{
 // the scroller is the column itself on desktop and the page on mobile, so pagination looks ahead within it
 export const usePanelScroller = () => {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const isColumnLayout = useMediaQuery({ minWidth: 1024 });
+  const isColumnLayout = useMediaQuery('(min-width: 1024px)', false);
   return {
     scrollerRef,
     paginatorRoot: isColumnLayout ? scrollerRef : undefined,

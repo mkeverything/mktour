@@ -4,6 +4,7 @@ import ClubSettingsForm from '@/app/[locale]/(routes)/clubs/my/(tabs)/settings/s
 import { ClubTabProps } from '@/app/[locale]/(routes)/clubs/my/tabMap';
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { useClubLeaveMutation } from '@/components/hooks/mutation-hooks/use-club-leave';
+import { useClubManagers } from '@/components/hooks/query-hooks/use-club-managers';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { useContext } from 'react';
 export default function ClubSettings({ selectedClub, userId }: ClubTabProps) {
   const t = useTranslations('Club.Dashboard.Settings');
   const { mutate, isPending } = useClubLeaveMutation();
+  const { data: managers } = useClubManagers(selectedClub);
   const { isDesktop } = useContext(MediaQueryContext);
 
   const dangerZone = (
@@ -36,15 +38,17 @@ export default function ClubSettings({ selectedClub, userId }: ClubTabProps) {
               : 'flex flex-col gap-2 max-sm:p-0 sm:py-8'
           }
         >
-          <Button
-            variant="destructive"
-            className={isDesktop ? 'sm:w-48' : 'w-full'}
-            onClick={() => mutate({ clubId: selectedClub })}
-            disabled={isPending}
-          >
-            {isPending ? <LoadingSpinner /> : <DoorOpen />}
-            {t('leave club')}
-          </Button>
+          {managers && managers.length > 1 && (
+            <Button
+              variant="destructive"
+              className={isDesktop ? 'sm:w-48' : 'w-full'}
+              onClick={() => mutate({ clubId: selectedClub })}
+              disabled={isPending}
+            >
+              {isPending ? <LoadingSpinner /> : <DoorOpen />}
+              {t('leave club')}
+            </Button>
+          )}
           <div className={isDesktop ? 'sm:w-48' : 'contents'}>
             <ClubDelete id={selectedClub} userId={userId} />
           </div>

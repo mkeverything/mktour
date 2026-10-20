@@ -81,7 +81,9 @@ describe('list pagination', () => {
         tournamentsPlayed: i % 2 ? 3 : 0,
       })),
     );
-    await refreshPlayerStats(db, { clubId: clubIds[0], playerIds: [] });
+    await db.transaction((tx) =>
+      refreshPlayerStats(tx, { clubId: clubIds[0], playerIds: [] }),
+    );
   });
 
   test('tournament.all returns every tournament exactly once', async () => {

@@ -16,6 +16,7 @@ export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
     path: '/profile',
     title: t('profile.my.title'),
     description: t('profile.my.description'),
+    robots: { index: false, follow: false },
   });
 }
 

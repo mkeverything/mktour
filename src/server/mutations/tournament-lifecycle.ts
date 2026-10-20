@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
@@ -15,7 +15,7 @@ import {
   newid,
   nowTimestamp,
 } from '@/lib/utils';
-import { db } from '@/server/db';
+import { db, type Database, type Transaction } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
   games,
@@ -119,7 +119,7 @@ function getEligibleSwissUnits(
 
 export async function normalizeSwissRoundsNumberInDatabase(
   tournamentId: string,
-  database: Pick<typeof db, 'select' | 'update'>,
+  database: Database,
 ): Promise<{
   roundsNumber: number;
   wasChanged: boolean;
@@ -159,7 +159,7 @@ export async function normalizeSwissRoundsNumberInDatabase(
 
 async function preparePreStartPairings(
   tournamentId: string,
-  database: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
+  database: Transaction,
 ): Promise<GameModel[]> {
   const currentUnits = await getRawTournamentUnits(tournamentId, database);
   if (currentUnits.length < 2) {

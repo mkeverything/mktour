@@ -202,6 +202,7 @@
       "merge": "merge player",
       "rating tooltip": "rating cannot be combined, tournaments of {player} become kinda unrated",
       "result": "result will be:",
+      "swap players": "swap players",
       "title": "merge player"
     },
     "Stats": {
@@ -230,6 +231,7 @@
     "AFFILIATION_NOT_FOUND": "affiliation not found",
     "AFFILIATION_STATUS_NOT_REQUESTED": "affiliation was not requested",
     "ALREADY_AFFILIATED": "this player is already affiliated",
+    "CANNOT_LEAVE_AS_ONLY_MANAGER": "you can not leave a club you are the only manager of",
     "CANNOT_LEAVE_ONLY_CLUB": "you can not leave the only club you are in",
     "CLUB_ID_NOT_MATCHING": "club id does not match",
     "CLUB_MISMATCH": "club does not match",
@@ -519,6 +521,8 @@
       "started at": "started at",
       "ended at": "ended at",
       "number of rounds": "amount of rounds:",
+      "decrease rounds": "decrease number of rounds",
+      "increase rounds": "increase number of rounds",
       "unrated": "unrated",
       "save": "save",
       "fullscreen": "fullscreen mode",
@@ -539,6 +543,7 @@
     "Round": {
       "round": "round {roundInView}",
       "new round button": "next round",
+      "shuffle": "shuffle pairings",
       "add two players": "add at least two players to see generated round",
       "start tournament": {
         "title": "start tournament?",
@@ -630,8 +635,10 @@
     "title": "home",
     "make tournament": "make tournament",
     "sign in with lichess": "sign in with lichess",
+    "learn more": "learn more",
+    "learn more description": "if you don't take our word for it",
     "big text 1": "organize any chess tournament",
-    "big text 2": "organize any chess tournament the easy way",
+    "big text 2": "organize any chess tournament the easiest way",
     "popular clubs": "popular clubs",
     "my clubs": "my clubs",
     "my tournaments": "my tournaments",

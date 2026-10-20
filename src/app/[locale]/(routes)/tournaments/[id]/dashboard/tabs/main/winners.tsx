@@ -1,5 +1,7 @@
 'use client';
 
+import Medal from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/medal';
+import { PLACE_LABEL_KEYS } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/podium';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
 import { playerPublicProfileHref } from '@/lib/utils';
 import { UnitModel } from '@/server/zod/tournaments';
@@ -8,17 +10,19 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
 
-const placeLabelKeys = ['first place', 'second place', 'third place'] as const;
-
 const Winners: FC<{
   closedAt: Date | null;
   tournamentId: string;
 }> = ({ closedAt, tournamentId }) => {
-  const { data: units } = useTournamentUnits(tournamentId);
-  const winners = groupWinnersByPlace(units);
+  const { data: units = [] } = useTournamentUnits(tournamentId);
   const t = useTranslations('Tournament.Main');
+  const podium = PLACE_LABEL_KEYS.map((labelKey, i) => ({
+    place: i + 1,
+    labelKey,
+    units: units.filter(({ place }) => place === i + 1),
+  })).filter(({ units }) => units.length > 0);
 
-  if (!closedAt || Object.keys(winners).length === 0) return null;
+  if (!closedAt || podium.length === 0) return null;
 
   return (
     <div className="gap-mk p-mk flex flex-col md:hidden">
@@ -26,12 +30,12 @@ const Winners: FC<{
         <Trophy className="size-4" />
         {t('winners')}
       </h3>
-      {Object.entries(winners).map(([place, placeUnits]) => (
+      {podium.map(({ place, labelKey, units }) => (
         <WinnerCard
           key={place}
-          place={parseInt(place)}
-          units={placeUnits}
-          label={t(placeLabelKeys[parseInt(place) - 1])}
+          place={place}
+          units={units}
+          label={t(labelKey)}
         />
       ))}
     </div>
@@ -44,7 +48,7 @@ const WinnerCard: FC<{
   label: string;
 }> = ({ place, units, label }) => (
   <div className="bg-primary/5 border-primary/10 flex items-center gap-4 rounded-xl border p-4">
-    <Medal className={`size-6 shrink-0 ${medalColour[place - 1]}`} />
+    <Medal place={place} className="size-6 shrink-0" aria-hidden />
     <div className="flex min-w-0 flex-col gap-1.5">
       <span className="text-muted-foreground text-xs">{label}</span>
       {units.map((unit) => (
@@ -86,28 +90,5 @@ const WinnerUnit: FC<{ unit: UnitModel }> = ({ unit }) => {
 };
 
 const isSoloUnit = (unit: UnitModel) => unit.players.length === 1;
-
-export const Medal: FC<{ className: string }> = ({ className }) => (
-  <div className={`aspect-square rounded-full ${className}`} />
-);
-
-export const medalColour = ['bg-amber-300', 'bg-gray-300', 'bg-amber-700'];
-
-const groupWinnersByPlace = (units: UnitModel[] | undefined) => {
-  const winners = units?.filter(({ place }) => place && place <= 3);
-
-  if (!winners) return {};
-  return winners.reduce(
-    (acc, unit) => {
-      const place = unit.place || 0;
-      if (!acc[place]) {
-        acc[place] = [];
-      }
-      acc[place].push(unit);
-      return acc;
-    },
-    {} as Record<number, UnitModel[]>,
-  );
-};
 
 export default Winners;

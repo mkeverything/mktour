@@ -34,7 +34,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC, useMemo, useState } from 'react';
 
-export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
+export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
   clubId,
   userId,
 }) => {

@@ -11,6 +11,7 @@ import Games from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/games
 import Main from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main';
 import TournamentTable from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/table';
 import FormattedMessage from '@/components/formatted-message';
+import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
 import Overlay from '@/components/overlay';
 import Fades from '@/components/ui-custom/fades';
@@ -27,10 +28,12 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   status,
   unitId,
   userId,
-  currentRound,
 }) => {
   const queryClient = useQueryClient();
-  const [roundInView, setRoundInView] = useState(currentRound || 1);
+  const { data: tournament } = useTournamentInfo(id);
+  const [roundInView, setRoundInView] = useState(
+    tournament?.tournament.ongoingRound || 1,
+  );
   const { sendJsonMessage } = useDashboardWebsocket(
     session,
     id,
@@ -112,7 +115,7 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
                 {isFullscreen && (
                   <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
                     <Button
-                      className="opacity-30 duration-500 hover:opacity-90"
+                      className="opacity-30 transition-[background-color,box-shadow,opacity,scale] duration-500 hover:opacity-90"
                       variant="secondary"
                       onClick={toggleFullscreen}
                     >
@@ -135,7 +138,6 @@ interface DashboardDesktopProps extends TabProps {
   status: TournamentAuthStatus;
   unitId: string | null;
   userId: string | undefined;
-  currentRound: number | null;
 }
 
 export default DashboardDesktop;

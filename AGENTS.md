@@ -59,6 +59,11 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - `bun test:noseed path/to/file` - fast tests without db seed
 - mobile dev setup: `bash .cursor/skills/mobile-dev/scripts/setup-mobile-dev.sh`
 
+## commit messages
+
+- types come from `commitlint.config.js`: use `ref`, not `refactor`; `impr` for improvements to existing features
+- formatting is obligatory
+
 ## development flow
 
 - feature/project prs target `beta`; only `beta` prs into `main`
@@ -66,7 +71,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - if a request can be read more than one way, ask before acting
 - do not push to remote without user approval
 - do not amend commits unless explicitly requested
-- syncing beta to main: `git checkout beta && git reset --hard origin/main && git push --force origin beta`
+- syncing beta to main: run `git fetch origin && git log origin/main..origin/beta`. if it lists commits, beta has unreleased work: stop and ask. otherwise run `git push --force-with-lease origin origin/main:beta` (no checkout needed; the push fails if beta moved since the fetch)
 
 <!-- BEGIN:nextjs-agent-rules -->
 

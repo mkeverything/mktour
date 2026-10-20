@@ -169,7 +169,7 @@ const localDateStringSchema = z.string().superRefine((value, ctx) => {
 });
 
 const newTournamentFormSchemaConfig = {
-  title: z.string().optional(),
+  title: z.string().trim().optional(),
   date: z.date().superRefine((date, ctx) => {
     const error = getLocalDateStringValidationError(
       dateToLocalDateString(date),

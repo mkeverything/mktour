@@ -1,4 +1,7 @@
+import { mock } from 'bun:test';
 import { AsyncLocalStorage } from 'node:async_hooks';
+
+mock.module('server-only', () => ({}));
 
 (process.env as Record<string, string>).NODE_ENV = 'test';
 (process.env as Record<string, string>).MKTOURTEST = 'true';

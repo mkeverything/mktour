@@ -12,7 +12,7 @@ import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import ClubSearchInput from '@/components/ui-custom/club-search-input';
-import ComboModal from '@/components/ui-custom/combo-modal';
+import * as ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { ScrollArea } from '@/components/ui-custom/scroll-area';
 import { Button } from '@/components/ui/button';
