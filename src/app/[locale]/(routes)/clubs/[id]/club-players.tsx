@@ -55,7 +55,7 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
     order: isDesc ? 'desc' : 'asc',
     search: debouncedSearch || undefined,
   });
-  const { data: me } = useQuery(
+  const { data: authPlayer } = useQuery(
     trpc.club.authPlayer.queryOptions({ clubId }, { enabled: Boolean(userId) }),
   );
 
@@ -67,20 +67,29 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
     setShownSorting(sorting);
   }
 
+  const shownSortBy = shownSorting[0].id as ClubPlayersSortModel['sortBy'];
+  // names carry no standing, so the auth player is pinned and sticky only in ranked orders
+  const isRankedOrder = shownSortBy !== 'nickname';
   const isSearching = debouncedSearch.length > 0;
   const playersFromPages = useMemo(
     () => playersInfinite.data?.pages.flatMap((p) => p.players) ?? [],
     [playersInfinite.data],
   );
-  const meLoaded = Boolean(
-    me && playersFromPages.some((player) => player.id === me.id),
+  const isAuthPlayerMissing = Boolean(
+    authPlayer &&
+    !playersFromPages.some((player) => player.id === authPlayer.id),
   );
-  const isMePinned = Boolean(
-    me && !isSearching && playersInfinite.isSuccess && !meLoaded,
-  );
+  const isAuthPlayerPinned =
+    isAuthPlayerMissing &&
+    isRankedOrder &&
+    !isSearching &&
+    playersInfinite.isSuccess;
   const players = useMemo(
-    () => (me && isMePinned ? [...playersFromPages, me] : playersFromPages),
-    [me, isMePinned, playersFromPages],
+    () =>
+      authPlayer && isAuthPlayerPinned
+        ? [...playersFromPages, authPlayer]
+        : playersFromPages,
+    [authPlayer, isAuthPlayerPinned, playersFromPages],
   );
 
   const table = useTable({
@@ -91,21 +100,20 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
     enableSortingRemoval: false,
     onSortingChange: setSorting,
     state: { sorting },
-    meta: {
-      isSortPending: shownSorting !== sorting,
-      sortBy: shownSorting[0].id as ClubPlayersSortModel['sortBy'],
-      pinnedPlayerId: isMePinned ? me?.id : undefined,
-    },
+    meta: { isSortPending: shownSorting !== sorting, sortBy: shownSortBy },
   });
 
   const rows = table.getRowModel().rows;
-  // your own row stays last, below the next page's skeleton, so it never jumps while pages load
+  // the pinned auth player stays last, below the next page's skeleton, so it never jumps while pages load
   const renderRow = (row: (typeof rows)[number]) => (
     <TableRow
       key={row.id}
       className={cn(
-        row.original.id === me?.id &&
-          'bg-muted hover:bg-muted sticky top-[calc(var(--club-sticky-top)+2rem)] -bottom-px z-10 font-medium',
+        row.original.id === authPlayer?.id && [
+          'bg-muted hover:bg-muted font-medium',
+          isRankedOrder &&
+            'sticky top-[calc(var(--club-sticky-top)+2rem)] -bottom-px z-10',
+        ],
       )}
     >
       {row.getAllCells().map((cell) => (
@@ -166,9 +174,9 @@ export const PlayersPanel: FC<{ clubId: string; userId: string }> = ({
             ))}
           </TableHeader>
           <TableBody>
-            {rows.slice(0, isMePinned ? -1 : undefined).map(renderRow)}
+            {rows.slice(0, isAuthPlayerPinned ? -1 : undefined).map(renderRow)}
             {playersInfinite.isFetchingNextPage && <SkeletonRows />}
-            {isMePinned && renderRow(rows[rows.length - 1])}
+            {isAuthPlayerPinned && renderRow(rows[rows.length - 1])}
           </TableBody>
         </Table>
         {playersInfinite.isPending ? (

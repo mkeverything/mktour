@@ -21,7 +21,6 @@ export const leaderboardFeatures = tableFeatures({
   tableMeta: {} as {
     isSortPending: boolean;
     sortBy: ClubPlayersSortModel['sortBy'];
-    pinnedPlayerId?: string;
   },
 });
 
@@ -36,10 +35,8 @@ export const leaderboardColumns = leaderboardColumnHelper.columns([
     header: '#',
     cell: ({ row, table }) => {
       const meta = table.options.meta;
-      // names have no stored ranks, so the list numbers its own rows and your pinned row stays blank
-      if (meta?.sortBy === 'nickname') {
-        return row.original.id === meta.pinnedPlayerId ? null : row.index + 1;
-      }
+      // names have no stored ranks, so the list numbers its own rows
+      if (meta?.sortBy === 'nickname') return row.index + 1;
       const rank =
         meta?.sortBy === 'tournamentsPlayed'
           ? row.original.tournamentsPlayedRank
