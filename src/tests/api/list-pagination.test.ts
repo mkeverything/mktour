@@ -162,18 +162,16 @@ describe('list pagination', () => {
     const byRating = numbered([p0, p1, p2, p3]);
     const byTournaments = numbered([p1, p3, p0, p2]);
 
-    expect(await collectRows({ sortBy: 'rating', order: 'desc' })).toEqual(
-      byRating,
-    );
-    expect(await collectRows({ sortBy: 'rating', order: 'asc' })).toEqual(
-      byRating.toReversed(),
-    );
-    expect(await collectRows({ sortBy: 'nickname', order: 'asc' })).toEqual(
-      byRating,
-    );
-    expect(
-      await collectRows({ sortBy: 'tournamentsPlayed', order: 'desc' }),
-    ).toEqual(byTournaments);
+    for (const [sortBy, order, expected] of [
+      ['rating', 'desc', byRating],
+      ['nickname', 'asc', byRating],
+      ['tournamentsPlayed', 'desc', byTournaments],
+    ] as const) {
+      expect(await collectRows({ sortBy, order })).toEqual(expected);
+      expect(
+        await collectRows({ sortBy, order: order === 'asc' ? 'desc' : 'asc' }),
+      ).toEqual(expected.toReversed());
+    }
     expect(
       await collectRows({
         sortBy: 'tournamentsPlayed',

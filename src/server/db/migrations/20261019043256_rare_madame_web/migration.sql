@@ -1,4 +1,3 @@
-UPDATE `tournament` SET `rounds_number` = CASE WHEN `format` = 'swiss' THEN 1 ELSE 0 END WHERE `rounds_number` IS NULL;--> statement-breakpoint
 PRAGMA foreign_keys=OFF;--> statement-breakpoint
 CREATE TABLE `__new_tournament` (
 	`id` text PRIMARY KEY NOT NULL,

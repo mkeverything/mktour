@@ -30,3 +30,7 @@ export const paginatedInputSchema = z.object({
   limit: z.number().min(1).max(100).optional().default(20),
   cursor: z.number().nullish(),
 });
+
+export const clubPaginatedInputSchema = paginatedInputSchema.extend(
+  clubIdInputSchema.shape,
+);

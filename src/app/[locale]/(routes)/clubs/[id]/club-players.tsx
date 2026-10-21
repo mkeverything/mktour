@@ -2,16 +2,15 @@ import {
   PanelHeader,
   PanelScroller,
 } from '@/app/[locale]/(routes)/clubs/[id]/club-panel';
-import {
-  leaderboardColumns,
-  leaderboardFeatures,
-} from '@/app/[locale]/(routes)/clubs/[id]/club-players-columns';
 import Empty from '@/components/empty';
+import FormattedMessage from '@/components/formatted-message';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useDebounce } from '@/components/hooks/use-debounce';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -24,13 +23,89 @@ import {
 import { cn } from '@/lib/utils';
 import {
   CLUB_PLAYERS_DEFAULT_SORT,
+  ClubPlayerModel,
   ClubPlayersFilterModel,
 } from '@/server/zod/players';
 import { useQuery } from '@tanstack/react-query';
-import { SortingState, useTable } from '@tanstack/react-table';
+import { ArrowDown, ArrowUp, ArrowUpDown, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC, useMemo, useState } from 'react';
+import { FC, PropsWithChildren, ReactNode, useState } from 'react';
+
+type Sort = Pick<ClubPlayersFilterModel, 'sortBy' | 'order'>;
+
+// numbers end where their header's label does: the slot after them is as wide as the
+// sort icon beside the label (gap-1 + size-3), and an unsure rating puts its ? there
+const NumericCell: FC<{ value: number; mark?: string }> = ({ value, mark }) => (
+  <>
+    {value}
+    <span className="inline-block w-4 text-left">{mark}</span>
+  </>
+);
+
+const TournamentsHead: FC = () => {
+  const t = useTranslations('Player.Stats');
+  return (
+    <span title={t('tournaments')}>
+      <Trophy className="size-3.5" />
+      <span className="sr-only">{t('tournaments')}</span>
+    </span>
+  );
+};
+
+const COLUMNS: {
+  head: ReactNode;
+  // sortable columns name the sort their first click applies
+  firstSort?: Sort;
+  className: string;
+  cell: (
+    player: ClubPlayerModel,
+    index: number,
+    sortBy: Sort['sortBy'],
+  ) => ReactNode;
+}[] = [
+  {
+    head: '#',
+    className: 'text-muted-foreground w-[6ch] text-xs tabular-nums',
+    // names have no stored ranks, so the list numbers its own rows
+    cell: (player, index, sortBy) =>
+      sortBy === 'nickname'
+        ? index + 1
+        : ((sortBy === 'tournamentsPlayed'
+            ? player.tournamentsPlayedRank
+            : player.ratingRank) ?? '—'),
+  },
+  {
+    head: <FormattedMessage id="Player.nickname" />,
+    firstSort: { sortBy: 'nickname', order: 'asc' },
+    className: 'w-full max-w-0',
+    cell: (player) => <span className="block truncate">{player.nickname}</span>,
+  },
+  {
+    head: <FormattedMessage id="Player.rating" />,
+    firstSort: { sortBy: 'rating', order: 'desc' },
+    className: 'text-right tabular-nums',
+    cell: (player) => (
+      <span
+        className={cn(
+          'font-semibold',
+          !player.isRatingEstablished && 'text-muted-foreground',
+        )}
+      >
+        <NumericCell
+          value={player.rating}
+          mark={player.isRatingEstablished ? undefined : '?'}
+        />
+      </span>
+    ),
+  },
+  {
+    head: <TournamentsHead />,
+    firstSort: { sortBy: 'tournamentsPlayed', order: 'desc' },
+    className: 'text-muted-foreground text-right text-xs tabular-nums',
+    cell: (player) => <NumericCell value={player.tournamentsPlayed} />,
+  },
+];
 
 export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
   clubId,
@@ -41,16 +116,9 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
   const { data: stats } = useClubStats(clubId);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
-  const [sorting, setSorting] = useState<SortingState>([
-    {
-      id: CLUB_PLAYERS_DEFAULT_SORT.sortBy,
-      desc: CLUB_PLAYERS_DEFAULT_SORT.order === 'desc',
-    },
-  ]);
-  const [{ id: sortBy, desc: isDesc }] = sorting;
+  const [sort, setSort] = useState<Sort>(CLUB_PLAYERS_DEFAULT_SORT);
   const playersInfinite = useClubPlayers(clubId, {
-    sortBy: sortBy as ClubPlayersFilterModel['sortBy'],
-    order: isDesc ? 'desc' : 'asc',
+    ...sort,
     search: debouncedSearch || undefined,
   });
   const { data: authPlayer } = useQuery(
@@ -58,70 +126,45 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
   );
 
   // the table keeps showing the previous order until the new one arrives
-  const [shownSorting, setShownSorting] = useState(sorting);
-  if (!playersInfinite.isPlaceholderData && shownSorting !== sorting) {
-    setShownSorting(sorting);
+  const [shownSort, setShownSort] = useState(sort);
+  if (!playersInfinite.isPlaceholderData && shownSort !== sort) {
+    setShownSort(sort);
   }
 
-  const shownSortBy = shownSorting[0].id as ClubPlayersFilterModel['sortBy'];
   // names carry no standing, so the auth player is pinned and sticky only in ranked orders
-  const isRankedOrder = shownSortBy !== 'nickname';
+  const isRankedOrder = shownSort.sortBy !== 'nickname';
   const isSearching = debouncedSearch.length > 0;
-  const playersFromPages = useMemo(
-    () => playersInfinite.data?.pages.flatMap((p) => p.players) ?? [],
-    [playersInfinite.data],
-  );
-  const isAuthPlayerPinned = Boolean(
+  const players =
+    playersInfinite.data?.pages.flatMap((page) => page.players) ?? [];
+  const pinnedPlayer =
     authPlayer &&
     isRankedOrder &&
     !isSearching &&
     playersInfinite.isSuccess &&
-    !playersFromPages.some((player) => player.id === authPlayer.id),
-  );
-  const players = useMemo(
-    () =>
-      authPlayer && isAuthPlayerPinned
-        ? [...playersFromPages, authPlayer]
-        : playersFromPages,
-    [authPlayer, isAuthPlayerPinned, playersFromPages],
-  );
+    !players.some((player) => player.id === authPlayer.id)
+      ? authPlayer
+      : null;
 
-  const table = useTable({
-    features: leaderboardFeatures,
-    columns: leaderboardColumns,
-    data: players,
-    manualSorting: true,
-    enableSortingRemoval: false,
-    onSortingChange: setSorting,
-    state: { sorting },
-    meta: { isSortPending: shownSorting !== sorting, sortBy: shownSortBy },
-  });
-
-  const rows = table.getRowModel().rows;
-  // the pinned auth player stays last, below the next page's skeleton, so it never jumps while pages load
-  const renderRow = (row: (typeof rows)[number]) => (
+  const renderRow = (player: ClubPlayerModel, index: number) => (
     <TableRow
-      key={row.id}
+      key={player.id}
       className={cn(
-        row.original.id === authPlayer?.id && [
+        player.id === authPlayer?.id && [
           'bg-muted hover:bg-muted font-medium',
           isRankedOrder &&
             'sticky top-[calc(var(--club-sticky-top)+2rem)] -bottom-px z-10',
         ],
       )}
     >
-      {row.getAllCells().map((cell) => (
-        <TableCell
-          key={cell.id}
-          className={cn('p-0', cell.column.columnDef.meta?.className)}
-        >
+      {COLUMNS.map(({ firstSort, className, cell }, columnIndex) => (
+        <TableCell key={columnIndex} className={cn('p-0', className)}>
           {/* every cell links on its own: safari can't stretch one link over a <tr> */}
           <Link
-            href={`/player/${row.original.id}`}
-            tabIndex={cell.column.id === 'nickname' ? undefined : -1}
+            href={`/player/${player.id}`}
+            tabIndex={firstSort?.sortBy === 'nickname' ? undefined : -1}
             className="block p-2"
           >
-            <table.FlexRender cell={cell} />
+            {cell(player, index, shownSort.sortBy)}
           </Link>
         </TableCell>
       ))}
@@ -144,36 +187,49 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
       >
         <Table className="border-separate border-spacing-0 [&_td]:border-b [&_th]:border-b">
           <TableHeader className="bg-background sticky top-(--club-sticky-top) z-20">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                {headerGroup.headers.map((header) => {
-                  const sorted = header.column.getIsSorted();
-                  return (
-                    <TableHead
-                      key={header.id}
-                      aria-sort={
-                        sorted === 'asc'
-                          ? 'ascending'
-                          : sorted === 'desc'
-                            ? 'descending'
-                            : undefined
-                      }
-                      className={cn(
-                        'h-8 text-xs',
-                        header.column.columnDef.meta?.className,
-                      )}
-                    >
-                      <table.FlexRender header={header} />
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
+            <TableRow className="hover:bg-transparent">
+              {COLUMNS.map(({ head, firstSort, className }, columnIndex) => {
+                const order =
+                  firstSort?.sortBy === sort.sortBy ? sort.order : undefined;
+                return (
+                  <TableHead
+                    key={columnIndex}
+                    aria-sort={
+                      order && (order === 'asc' ? 'ascending' : 'descending')
+                    }
+                    className={cn('h-8 text-xs', className)}
+                  >
+                    {firstSort ? (
+                      <SortButton
+                        order={order}
+                        isPending={shownSort !== sort}
+                        onClick={() =>
+                          setSort((current) =>
+                            current.sortBy === firstSort.sortBy
+                              ? {
+                                  ...current,
+                                  order:
+                                    current.order === 'asc' ? 'desc' : 'asc',
+                                }
+                              : firstSort,
+                          )
+                        }
+                      >
+                        {head}
+                      </SortButton>
+                    ) : (
+                      head
+                    )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.slice(0, isAuthPlayerPinned ? -1 : undefined).map(renderRow)}
+            {players.map(renderRow)}
+            {/* the pinned auth player stays last, below the next page's skeleton, so it never jumps while pages load */}
             {playersInfinite.isFetchingNextPage && <SkeletonRows />}
-            {isAuthPlayerPinned && renderRow(rows[rows.length - 1])}
+            {pinnedPlayer && renderRow(pinnedPlayer, players.length)}
           </TableBody>
         </Table>
         {playersInfinite.isPending ? (
@@ -192,10 +248,40 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
   );
 };
 
+const SortButton: FC<
+  PropsWithChildren<{
+    order?: Sort['order'];
+    isPending: boolean;
+    onClick: () => void;
+  }>
+> = ({ order, isPending, onClick, children }) => {
+  const SortIcon =
+    order === 'asc' ? ArrowUp : order === 'desc' ? ArrowDown : ArrowUpDown;
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn(
+        // the chip's padding sits in the cell's, so its label lines up with the values
+        '-mx-2 h-7 gap-1 px-2 text-xs has-[>svg]:px-2',
+        order && 'text-foreground',
+      )}
+      onClick={onClick}
+    >
+      {children}
+      {order && isPending ? (
+        <LoadingSpinner className="size-3" />
+      ) : (
+        <SortIcon className={cn('size-3', !order && 'opacity-40')} />
+      )}
+    </Button>
+  );
+};
+
 const SkeletonRows: FC = () =>
   Array.from({ length: 3 }, (_, i) => (
     <TableRow key={i} className="hover:bg-transparent">
-      <TableCell colSpan={4}>
+      <TableCell colSpan={COLUMNS.length}>
         <Skeleton className="h-5 w-full" />
       </TableCell>
     </TableRow>

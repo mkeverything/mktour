@@ -35,6 +35,7 @@ import {
   GameModel,
   NewTournamentFormModel,
   TournamentModel,
+  TournamentStartInputModel,
   tournamentsInsertSchema,
   UnitModel,
 } from '@/server/zod/tournaments';
@@ -185,9 +186,7 @@ export async function startTournament({
   startedAt,
   format,
   roundsNumber,
-}: Pick<TournamentModel, 'format' | 'roundsNumber' | 'startedAt'> & {
-  tournamentId: string;
-}) {
+}: TournamentStartInputModel) {
   const { user } = await validateRequest();
   if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);

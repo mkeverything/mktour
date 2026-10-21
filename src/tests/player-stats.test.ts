@@ -169,14 +169,7 @@ describe('rankClubPlayers', () => {
   const now = new Date('2026-06-01T12:00:00Z');
   const player = (
     playerId: string,
-    overrides: Partial<{
-      rating: number;
-      ratingDeviation: number;
-      lastSeenAt: Date;
-      tournamentsPlayed: number;
-      tournamentsWon: number;
-      gamesWon: number;
-    }> = {},
+    overrides: Partial<Parameters<typeof rankClubPlayers>[0][number]> = {},
   ) => ({
     playerId,
     rating: 1500,

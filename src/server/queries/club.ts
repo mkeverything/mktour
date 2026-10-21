@@ -6,7 +6,7 @@ import { tournaments } from '@/server/db/schema/tournaments';
 import { ClubModel } from '@/server/zod/clubs';
 import {
   ClubPlayersFilterModel,
-  PlayerRecordModel,
+  ClubPlayersInputModel,
 } from '@/server/zod/players';
 import {
   and,
@@ -57,17 +57,11 @@ const selectClubPlayers = () =>
     .innerJoin(player_stats, eq(player_stats.playerId, players.id));
 
 export const getClubInfo = async (id: ClubModel['id']) => {
-  const data = (await db.select().from(clubs).where(eq(clubs.id, id)))?.at(0);
-  if (!data) return null;
-  return data;
+  return (await db.select().from(clubs).where(eq(clubs.id, id)).get()) ?? null;
 };
 
-export const getClubPlayers = async (
-  clubId: PlayerRecordModel['clubId'],
-  limit: number,
-  cursor: number | null | undefined,
-  { sortBy, order, search }: ClubPlayersFilterModel,
-) => {
+export const getClubPlayers = async (input: ClubPlayersInputModel) => {
+  const { clubId, limit, cursor, sortBy, order, search } = input;
   const pattern = `%${search}%`;
   const offset = cursor ?? 0;
   const ordering = ORDERINGS[sortBy];

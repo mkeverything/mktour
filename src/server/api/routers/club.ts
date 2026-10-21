@@ -42,6 +42,7 @@ import {
 } from '@/server/zod/clubs.server';
 import {
   clubIdInputSchema,
+  clubPaginatedInputSchema,
   notificationIdInputSchema,
   paginatedInputSchema,
   userIdInputSchema,
@@ -50,16 +51,13 @@ import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
 import {
   affiliationExtendedSchema,
   clubPlayerOutputSchema,
-  clubPlayersFilterSchema,
+  clubPlayersInputSchema,
+  clubPlayersOutputSchema,
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
-
-const clubPaginatedInputSchema = clubIdInputSchema.extend({
-  ...paginatedInputSchema.shape,
-});
 
 export const clubRouter = createTRPCRouter({
   all: publicProcedure
@@ -114,21 +112,9 @@ export const clubRouter = createTRPCRouter({
     }),
   players: publicProcedure
     .meta(meta.clubPlayers)
-    .input(clubPaginatedInputSchema.extend(clubPlayersFilterSchema.shape))
-    .output(
-      z.object({
-        players: z.array(clubPlayerOutputSchema),
-        nextCursor: z.number().nullable(),
-      }),
-    )
-    .query(async (opts) => {
-      return await getClubPlayers(
-        opts.input.clubId,
-        opts.input.limit,
-        opts.input.cursor,
-        opts.input,
-      );
-    }),
+    .input(clubPlayersInputSchema)
+    .output(clubPlayersOutputSchema)
+    .query(({ input }) => getClubPlayers(input)),
   tournaments: publicProcedure
     .meta(meta.clubTournaments)
     .input(clubPaginatedInputSchema)

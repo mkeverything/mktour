@@ -142,6 +142,11 @@ export const tournamentInfoSchema = z.object({
     name: true,
   }),
 });
+export const tournamentStartInputSchema = tournamentIdInputSchema.extend({
+  startedAt: z.date(),
+  format: tournamentFormatEnum,
+  roundsNumber: z.number().int().nonnegative(),
+});
 export const tournamentWithClubSchema = z.object({
   tournament: tournamentSchema,
   club: clubsSelectSchema,
@@ -230,6 +235,9 @@ export type WithdrawTournamentUnitResultModel = z.infer<
   typeof withdrawTournamentUnitResultSchema
 >;
 export type TournamentModel = z.infer<typeof tournamentSchema>;
+export type TournamentStartInputModel = z.infer<
+  typeof tournamentStartInputSchema
+>;
 export type TournamentInsertModel = z.infer<typeof tournamentsInsertSchema>;
 export type TournamentUpdateModel = z.infer<typeof tournamentsUpdateSchema>;
 export type NewTournamentFormModel = z.infer<typeof newTournamentFormSchema>;

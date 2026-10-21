@@ -42,7 +42,6 @@ import { getTournamentInfo } from '@/server/queries/get-tournament-info';
 import { getTournamentPossiblePlayers } from '@/server/queries/get-tournament-possible-players';
 import { getTournamentUnits } from '@/server/queries/get-tournament-units';
 import { tournamentIdInputSchema } from '@/server/zod/common';
-import { tournamentFormatEnum } from '@/server/zod/enums';
 import {
   playerFormSchema,
   playersWithUsernameSchema,
@@ -60,6 +59,7 @@ import {
   tournamentCreateInputSchema,
   tournamentFinishOutputSchema,
   tournamentInfoSchema,
+  tournamentStartInputSchema,
   tournamentWithClubSchema,
   unitSchema,
   withdrawTournamentUnitInputSchema,
@@ -222,18 +222,9 @@ export const tournamentRouter = {
       return await saveRound(opts.input);
     }),
   start: tournamentAdminProcedure
-    .input(
-      tournamentIdInputSchema.extend({
-        startedAt: z.date(),
-        format: tournamentFormatEnum,
-        roundsNumber: z.number().int().nonnegative(),
-      }),
-    )
+    .input(tournamentStartInputSchema)
     .output(z.array(gameSchema))
-    .mutation(async (opts) => {
-      const { input } = opts;
-      return await startTournament(input);
-    }),
+    .mutation(({ input }) => startTournament(input)),
   reset: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
     .output(z.void())

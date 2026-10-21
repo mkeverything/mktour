@@ -28,7 +28,6 @@
         "@radix-ui/react-tooltip": "^1.2.16",
         "@scalar/nextjs-api-reference": "^0.11.16",
         "@tanstack/react-query": "^5.102.3",
-        "@tanstack/react-table": "^9.3.1",
         "@trpc/client": "^11.18.0",
         "@trpc/react-query": "^11.18.0",
         "@trpc/server": "^11.18.0",
@@ -1038,14 +1037,6 @@
     "@tanstack/react-query": ["@tanstack/react-query@5.102.3", "", { "dependencies": { "@tanstack/query-core": "5.102.3" }, "peerDependencies": { "react": "^18 || ^19" } }, "sha512-nHazxUEUQSGJOswGgSL2DI77f2K75WRCowDgaiyEi0ACocZTFKewTv+A/rJfq6QkuE35rVPff1QUT3ClbaePGQ=="],
 
     "@tanstack/react-query-devtools": ["@tanstack/react-query-devtools@5.102.3", "", { "dependencies": { "@tanstack/query-devtools": "5.102.3" }, "peerDependencies": { "@tanstack/react-query": "^5.102.3", "react": "^18 || ^19" } }, "sha512-OFxO8PAccjxdf2l1kt0MpcUdrVdSside4lPyucsrSZHssvHc4Vaz1RdtRIuEU0C0Z0P2vMWVIqfF2WlmFtdsng=="],
-
-    "@tanstack/react-store": ["@tanstack/react-store@0.11.2", "", { "dependencies": { "@tanstack/store": "0.11.2", "use-sync-external-store": "^1.6.0" }, "peerDependencies": { "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-oj5O5DmiMWE+ih+SioX2ayC1kbK7d3fpLx0B75fPJr9nY3zU+hoW010yr64qXsY/9fyiLVE2bn5mGNV3owm8RQ=="],
-
-    "@tanstack/react-table": ["@tanstack/react-table@9.3.1", "", { "dependencies": { "@tanstack/react-store": "^0.11.2", "@tanstack/table-core": "9.3.1" }, "peerDependencies": { "react": ">=18" } }, "sha512-E6Ya5TnY6EaGyZYIUqig/29Lr/gJSAubQkLJFqiWkUl5nRCr0Xr9hvJot+NiRTtG+TzGxHTiqUW3bnLtQxlHug=="],
-
-    "@tanstack/store": ["@tanstack/store@0.11.2", "", {}, "sha512-sJ4mjol8uQsHV0gOJzzjwXfh2Fwm+Sz0+8deqiTm4jGbMdjzNSW+xZCFm0kUa870uhd8yi+DpKnZb5Kc4apa0Q=="],
-
-    "@tanstack/table-core": ["@tanstack/table-core@9.3.1", "", { "dependencies": { "@tanstack/store": "^0.11.2" } }, "sha512-zQvlxSNi2qGM3L4jh85Z6hqMfdIR5qOfD9KHOU32nuKFJGN0RlJ7UvV1lsPb1fPVhpFYI0VP3jJGxLdLDpTKjQ=="],
 
     "@textea/json-viewer": ["@textea/json-viewer@3.5.0", "", { "dependencies": { "clsx": "^2.1.1", "copy-to-clipboard": "^3.3.3", "zustand": "^4.5.5" }, "peerDependencies": { "@emotion/react": "^11", "@emotion/styled": "^11", "@mui/material": "^5", "react": "^17 || ^18", "react-dom": "^17 || ^18" } }, "sha512-codh4YXkWPtMjucpn1krGxyJLQA2QhpfM0y3Sur7D/mONOnESoI5ZLmX3ZFo9heXPndDQgzCHsjpErvkN5+hxw=="],
 
