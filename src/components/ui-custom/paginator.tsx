@@ -1,6 +1,6 @@
-import useOnReach from '@/components/hooks/use-on-reach';
 import SkeletonList from '@/components/skeleton-list';
-import { FC, ReactNode, RefObject } from 'react';
+import { useInView } from 'framer-motion';
+import { FC, ReactNode, RefObject, useEffect, useRef } from 'react';
 
 const Paginator: FC<Props> = ({
   hasNextPage,
@@ -10,17 +10,19 @@ const Paginator: FC<Props> = ({
   root,
   skeleton = <SkeletonList length={3} />,
 }) => {
-  const triggerRef = useOnReach(() => {
-    if (hasNextPage && !isFetchingNextPage) {
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(triggerRef, { root, margin: '300px' });
+
+  useEffect(() => {
+    if (!disabled && isInView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, root);
+  }, [disabled, isInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (disabled) return null;
   return (
     <div>
       <div ref={triggerRef} className="h-px w-full" />
-      {isFetchingNextPage && skeleton}
+      {!disabled && isFetchingNextPage && skeleton}
     </div>
   );
 };
