@@ -55,7 +55,6 @@ const TournamentsHead: FC = () => {
 
 const COLUMNS: {
   head: ReactNode;
-  // sortable columns name the sort their first click applies
   firstSort?: Sort;
   className: string;
   cell: (
@@ -68,12 +67,14 @@ const COLUMNS: {
     head: '#',
     className: 'text-muted-foreground w-[6ch] text-xs tabular-nums',
     // names have no stored ranks, so the list numbers its own rows
-    cell: (player, index, sortBy) =>
-      sortBy === 'nickname'
-        ? index + 1
-        : ((sortBy === 'tournamentsPlayed'
-            ? player.tournamentsPlayedRank
-            : player.ratingRank) ?? '—'),
+    cell: (player, index, sortBy) => {
+      if (sortBy === 'nickname') return index + 1;
+      const rank =
+        sortBy === 'tournamentsPlayed'
+          ? player.tournamentsPlayedRank
+          : player.ratingRank;
+      return rank ?? '—';
+    },
   },
   {
     head: <FormattedMessage id="Player.nickname" />,
@@ -145,6 +146,13 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
       ? authPlayer
       : null;
 
+  const toggleSort = (firstSort: Sort) => {
+    setSort((current) => {
+      if (current.sortBy !== firstSort.sortBy) return firstSort;
+      return { ...current, order: current.order === 'asc' ? 'desc' : 'asc' };
+    });
+  };
+
   const renderRow = (player: ClubPlayerModel, index: number) => (
     <TableRow
       key={player.id}
@@ -203,17 +211,7 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
                       <SortButton
                         order={order}
                         isPending={shownSort !== sort}
-                        onClick={() =>
-                          setSort((current) =>
-                            current.sortBy === firstSort.sortBy
-                              ? {
-                                  ...current,
-                                  order:
-                                    current.order === 'asc' ? 'desc' : 'asc',
-                                }
-                              : firstSort,
-                          )
-                        }
+                        onClick={() => toggleSort(firstSort)}
                       >
                         {head}
                       </SortButton>
