@@ -30,7 +30,7 @@
     "@dnd-kit/dom": "^0.5.1",
     "@dnd-kit/react": "^0.5.1",
     "@hookform/resolvers": "^6.0.0",
-    "@libsql/client": "^0.17.4",
+    "@libsql/client": "^0.18.0",
     "@next/bundle-analyzer": "^16.4.2",
     "@next/env": "^16.4.2",
     "@radix-ui/react-checkbox": "^1.4.1",
