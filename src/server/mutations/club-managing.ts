@@ -98,6 +98,7 @@ export const editClub = async ({
     .where(eq(clubs.id, clubId))
     .returning();
   revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
+  revalidateTag(CACHE_TAGS.ALL_TOURNAMENTS, 'max');
   return newClub.at(0);
 };
 

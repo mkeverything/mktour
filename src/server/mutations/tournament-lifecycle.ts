@@ -38,6 +38,7 @@ import {
   TournamentModel,
   tournamentsInsertSchema,
   UnitModel,
+  TournamentEditLocationInputModel,
 } from '@/server/zod/tournaments';
 import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
@@ -458,4 +459,16 @@ export async function editTournamentTitle({
     .set({ title })
     .where(and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)));
   if (!result.rowsAffected) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
+}
+
+export async function editTournamentLocation({
+  tournamentId,
+  latitude,
+  longitude,
+}: TournamentEditLocationInputModel) {
+  const result = await db
+    .update(tournaments)
+    .set({ latitude, longitude })
+    .where(eq(tournaments.id, tournamentId));
+  if (!result.rowsAffected) throw new AppError('TOURNAMENT_NOT_FOUND');
 }

@@ -14,6 +14,8 @@ export async function getUserClubNames({ userId }: { userId: string }) {
     .select({
       id: clubs.id,
       name: clubs.name,
+      latitude: clubs.latitude,
+      longitude: clubs.longitude,
       status: clubs_to_users.status,
       hasFinishedTournaments: exists(
         db

@@ -3,6 +3,7 @@ import { StatusInClub } from '@/server/zod/enums';
 import {
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
 } from 'drizzle-orm/sqlite-core';
@@ -20,6 +21,8 @@ export const clubs = sqliteTable(
     })
       .notNull()
       .default(true),
+    latitude: real('latitude'),
+    longitude: real('longitude'),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );

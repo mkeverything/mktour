@@ -1,5 +1,6 @@
 import { getClubByLichessTeam } from '@/server/queries/get-club-by-lichess-team';
 import { clubsEditSchema, clubsInsertSchema } from '@/server/zod/clubs';
+import { validateCoordinates } from '@/server/zod/location';
 import z from 'zod';
 
 async function validateLichessTeamLink(
@@ -20,13 +21,15 @@ async function validateLichessTeamLink(
 }
 
 export const clubsInsertServerSchema = clubsInsertSchema.superRefine(
-  async ({ lichessTeam }, ctx) => {
+  async ({ lichessTeam, ...location }, ctx) => {
+    validateCoordinates(location, ctx);
     await validateLichessTeamLink(ctx, { lichessTeam });
   },
 );
 
 export const clubsEditServerSchema = clubsEditSchema.superRefine(
-  async ({ clubId, lichessTeam }, ctx) => {
+  async ({ clubId, lichessTeam, ...location }, ctx) => {
+    validateCoordinates(location, ctx);
     if (lichessTeam === undefined) return;
     await validateLichessTeamLink(ctx, {
       lichessTeam,

@@ -1,5 +1,6 @@
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { clubIdInputSchema } from '@/server/zod/common';
+import { coordinatesInputShape } from '@/server/zod/location';
 import { statusInClubEnum } from '@/server/zod/enums';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod';
@@ -27,6 +28,7 @@ export const clubsInsertSchema = createInsertSchema(clubs, {
       .max(100, { error: 'LONG_CLUB_NAME' }),
   lichessTeam: () => z.string().trim().min(1).nullish(),
   description: z.string().nullish(),
+  ...coordinatesInputShape,
 }).omit({ id: true, createdAt: true });
 
 export const clubsEditSchema = clubIdInputSchema.extend(

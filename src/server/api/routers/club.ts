@@ -24,7 +24,9 @@ import {
   getPublicPopularClubs,
   getUserClubPlayer,
 } from '@/server/queries/club';
-import getAllClubsInfinite from '@/server/queries/get-all-clubs-infinite';
+import getAllClubsInfinite, {
+  getClubLocations,
+} from '@/server/queries/get-all-clubs-infinite';
 import getClubNotifications from '@/server/queries/get-club-notifications';
 import { getClubStats } from '@/server/queries/get-club-stats';
 import { getClubTournamentsInfinite } from '@/server/queries/get-club-tournaments-infinite';
@@ -46,6 +48,12 @@ import {
   paginatedInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
+import {
+  clubListItemSchema,
+  clubLocationSchema,
+  clubLocationsInputSchema,
+  clubsListInputSchema,
+} from '@/server/zod/discovery';
 import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
 import {
   affiliationExtendedSchema,
@@ -53,6 +61,7 @@ import {
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
+import { dateToLocalDateString } from '@/lib/local-date';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
@@ -63,18 +72,25 @@ const clubPaginatedInputSchema = clubIdInputSchema.extend({
 export const clubRouter = createTRPCRouter({
   all: publicProcedure
     .meta(meta.clubsAll)
-    .input(paginatedInputSchema)
+    .input(clubsListInputSchema)
     .output(
       z.object({
-        clubs: z.array(clubsSelectSchema),
+        clubs: z.array(clubListItemSchema),
         nextCursor: z.number().nullable(),
       }),
     )
     .query(async ({ input }) => {
       return await getAllClubsInfinite({
-        limit: input.limit,
+        ...input,
         cursor: input.cursor ?? undefined,
+        today: dateToLocalDateString(new Date()),
       });
+    }),
+  locations: publicProcedure
+    .input(clubLocationsInputSchema)
+    .output(z.array(clubLocationSchema))
+    .query(async ({ input }) => {
+      return await getClubLocations(input);
     }),
   publicPopular: publicProcedure // TODO: currently not used + not included in openapi. use or remove
     .input(

@@ -14,6 +14,13 @@ export default function useEditClubMutation(queryClient: QueryClient) {
       onSuccess: () => {
         toast.success(t('club updated'));
         queryClient.invalidateQueries({ queryKey: trpc.club.info.queryKey() });
+        queryClient.invalidateQueries({ queryKey: trpc.club.all.pathKey() });
+        queryClient.invalidateQueries({
+          queryKey: trpc.club.locations.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.tournament.all.pathKey(),
+        });
         queryClient.invalidateQueries({
           queryKey: trpc.auth.clubs.queryKey(),
         });
