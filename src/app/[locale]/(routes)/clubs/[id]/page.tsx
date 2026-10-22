@@ -3,6 +3,7 @@ import { getQueryClient, trpc } from '@/server/api/query-client';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { formatDate } from '@/lib/local-date';
+import { CLUB_PLAYERS_DEFAULT_SORT } from '@/server/zod/players';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -36,7 +37,7 @@ export default async function Page(props: ClubPageProps) {
     ),
     queryClient.prefetchInfiniteQuery(
       trpc.club.players.infiniteQueryOptions(
-        { clubId: club.id, cursor: undefined },
+        { clubId: club.id, cursor: undefined, ...CLUB_PLAYERS_DEFAULT_SORT },
         { getNextPageParam },
       ),
     ),

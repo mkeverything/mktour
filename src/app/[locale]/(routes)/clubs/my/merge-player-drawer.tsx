@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import type { PlayerModel } from '@/server/zod/players';
+import type { PlayerListItemModel } from '@/server/zod/players';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeftRight, Info, Merge } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -30,7 +30,7 @@ type MergePlayerDrawerProps = {
   clubId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  sourcePlayer: PlayerModel;
+  sourcePlayer: PlayerListItemModel;
 };
 
 const MergePlayerDrawer: FC<MergePlayerDrawerProps> = ({
@@ -42,9 +42,8 @@ const MergePlayerDrawer: FC<MergePlayerDrawerProps> = ({
   const t = useTranslations('Player.Merge');
   const queryClient = useQueryClient();
   const trpc = useTRPC();
-  const [selectedPlayer, setSelectedPlayer] = useState<PlayerModel | null>(
-    null,
-  );
+  const [selectedPlayer, setSelectedPlayer] =
+    useState<PlayerListItemModel | null>(null);
   const [isSwapped, setIsSwapped] = useState(false);
   const playersInfinite = useClubPlayers(clubId);
   const {
@@ -201,8 +200,8 @@ const MergePlayerDrawer: FC<MergePlayerDrawerProps> = ({
 };
 
 const ProjectedPlayerCard: FC<{
-  player: PlayerModel;
-  mergedPlayer: PlayerModel;
+  player: PlayerListItemModel;
+  mergedPlayer: PlayerListItemModel;
   username?: string;
 }> = ({ player, mergedPlayer, username }) => {
   const t = useTranslations('Player.Merge');
@@ -247,7 +246,7 @@ const ProjectedPlayerCard: FC<{
 };
 
 const PlayerMergeOption: FC<{
-  player: PlayerModel;
+  player: PlayerListItemModel;
   selected: boolean;
   onClick: () => void;
 }> = ({ player, selected, onClick }) => (
@@ -273,7 +272,7 @@ const PlayerMergeOption: FC<{
   </Card>
 );
 
-const PlayerLabel: FC<{ player: PlayerModel }> = ({ player }) => (
+const PlayerLabel: FC<{ player: PlayerListItemModel }> = ({ player }) => (
   <div className="flex w-full min-w-0 items-center justify-between gap-2">
     <span className="min-w-0 flex-1 truncate">{player.nickname}</span>
     <span className="text-muted-foreground shrink-0 text-xs">

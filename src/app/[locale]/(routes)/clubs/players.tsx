@@ -5,7 +5,6 @@ import MergePlayerDrawer from '@/app/[locale]/(routes)/clubs/my/merge-player-dra
 import { ClubTabProps } from '@/app/[locale]/(routes)/clubs/my/tabMap';
 import EditPlayerForm from '@/app/[locale]/(routes)/player/[id]/player-form';
 import Empty from '@/components/empty';
-import FormattedMessage from '@/components/formatted-message';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useClubScopedSearch } from '@/components/hooks/use-club-scoped-search';
@@ -16,11 +15,11 @@ import * as ComboModal from '@/components/ui-custom/combo-modal';
 import Paginator from '@/components/ui-custom/paginator';
 import { ScrollArea } from '@/components/ui-custom/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { StatusInClub } from '@/server/zod/enums';
-import { PlayerModel } from '@/server/zod/players';
-import { UserRound, Users2 } from 'lucide-react';
+import { PlayerListItemModel } from '@/server/zod/players';
+import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ComponentProps, FC, useState } from 'react';
@@ -28,32 +27,6 @@ import { toast } from 'sonner';
 
 const ClubPlayersList: FC<ClubTabProps> = ({ selectedClub, statusInClub }) => {
   return <ClubPlayers clubId={selectedClub} statusInClub={statusInClub} />;
-};
-
-export const ClubPlayersSection: FC<{
-  clubId: string;
-  statusInClub: StatusInClub | null;
-}> = ({ clubId, statusInClub }) => {
-  const { playersCount } = useClubStats(clubId).data ?? {};
-
-  return (
-    <Card className="flex h-[32rem] min-w-0 flex-col overflow-hidden">
-      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Users2 className="size-4" />
-          <FormattedMessage id="Club.Page.players" />
-          {!!playersCount && (
-            <span className="text-muted-foreground font-normal">
-              ({playersCount})
-            </span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col overflow-hidden pt-3">
-        <ClubPlayers clubId={clubId} statusInClub={statusInClub} />
-      </CardContent>
-    </Card>
-  );
 };
 
 const ClubPlayers: FC<{
@@ -106,6 +79,7 @@ const ClubPlayers: FC<{
           {players.map((player) => (
             <PlayerItem
               key={player.id}
+              clubId={clubId}
               player={player}
               statusInClub={statusInClub}
             />
@@ -131,9 +105,10 @@ const ClubPlayers: FC<{
 };
 
 const PlayerItem: FC<{
-  player: PlayerModel;
+  clubId: string;
+  player: PlayerListItemModel;
   statusInClub?: StatusInClub | null;
-}> = ({ player, statusInClub }) => {
+}> = ({ clubId, player, statusInClub }) => {
   const [open, setOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
 
@@ -166,7 +141,7 @@ const PlayerItem: FC<{
             </ComboModal.Title>
           </ComboModal.Header>
           <EditPlayerForm
-            clubId={player.clubId}
+            clubId={clubId}
             player={{ playerId: player.id, ...player }}
             status={statusInClub}
             setOpen={setOpen}
@@ -179,7 +154,7 @@ const PlayerItem: FC<{
       </ComboModal.Root>
       {mergeOpen && (
         <MergePlayerDrawer
-          clubId={player.clubId}
+          clubId={clubId}
           sourcePlayer={player}
           open={mergeOpen}
           setOpen={setMergeOpen}
@@ -189,11 +164,9 @@ const PlayerItem: FC<{
   );
 };
 
-const PlayerCard: FC<{ player: PlayerModel } & ComponentProps<typeof Card>> = ({
-  player,
-  className,
-  ...props
-}) => (
+const PlayerCard: FC<
+  { player: PlayerListItemModel } & ComponentProps<typeof Card>
+> = ({ player, className, ...props }) => (
   <Card
     {...props}
     className={cn(

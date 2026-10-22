@@ -209,13 +209,12 @@ export const seedComprehensiveTestData = async () => {
       tournamentId: 'concurrent-result-tournament',
     });
 
-    const now = new Date();
     const seededClubs = await db
       .select({ id: schema.clubs.id })
       .from(schema.clubs);
     const rows = (
       await Promise.all(
-        seededClubs.map((club) => buildClubPlayerStats(db, club.id, now)),
+        seededClubs.map((club) => buildClubPlayerStats(db, club.id)),
       )
     ).flat();
     if (rows.length > 0) await db.insert(schema.player_stats).values(rows);

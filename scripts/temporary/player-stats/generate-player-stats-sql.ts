@@ -29,14 +29,14 @@ const COLUMNS = Object.entries(insertableColumns) as [
   (typeof insertableColumns)[keyof typeof insertableColumns],
 ][];
 
-async function buildPlayerStats(database: Database, now: Date) {
+async function buildPlayerStats(database: Database) {
   const clubs = await database
     .select({ clubId: players.clubId })
     .from(players)
     .groupBy(players.clubId);
   const rows: PlayerStatsRowModel[] = [];
   for (const { clubId } of clubs) {
-    rows.push(...(await buildClubPlayerStats(database, clubId, now)));
+    rows.push(...(await buildClubPlayerStats(database, clubId)));
   }
   return rows;
 }
@@ -78,7 +78,7 @@ if (import.meta.main) {
   }
   const client = createClient({ url: `file:${resolve(input)}` });
   try {
-    const rows = await buildPlayerStats(drizzle({ client }), new Date());
+    const rows = await buildPlayerStats(drizzle({ client }));
     await Bun.write(output, playerStatsSql(rows));
     console.log({ players: rows.length, sql: output });
   } finally {

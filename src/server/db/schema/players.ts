@@ -105,7 +105,8 @@ export const rating_events = sqliteTable(
 
 // read projection of finished-tournament history, refreshed in the same
 // transaction as every event that changes it. ranks are unique 1-based positions
-// among eligible club players; null means unranked.
+// of every club player as of the last re-rank (docs/adr/0002); null means the
+// player was created after it.
 export const player_stats = sqliteTable(
   'player_stats',
   {

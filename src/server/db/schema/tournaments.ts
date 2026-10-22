@@ -32,7 +32,7 @@ export const tournaments = sqliteTable(
       .notNull(),
     startedAt: integer('started_at', { mode: 'timestamp' }),
     closedAt: integer('closed_at', { mode: 'timestamp' }),
-    roundsNumber: integer('rounds_number'), // necessary even if playing single elimination (final and match_for_third have same number);
+    roundsNumber: integer('rounds_number').notNull(), // necessary even if playing single elimination (final and match_for_third have same number);
     ongoingRound: integer('ongoing_round')
       .$default(() => 1)
       .notNull(),

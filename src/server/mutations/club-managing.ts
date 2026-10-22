@@ -212,11 +212,7 @@ export const deletePlayer = async ({ playerId }: { playerId: string }) => {
       .get();
     await tx.delete(players).where(eq(players.id, playerId));
     if (stats && stats.ratingRank !== null) {
-      await refreshPlayerStats(tx, {
-        clubId: stats.clubId,
-        playerIds: [],
-        now: new Date(),
-      });
+      await refreshPlayerStats(tx, { clubId: stats.clubId, playerIds: [] });
     }
   });
 };

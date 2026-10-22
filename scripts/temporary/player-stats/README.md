@@ -29,8 +29,7 @@ bun scripts/temporary/player-stats/generate-player-stats-sql.ts \
 ```
 
 the output path must not exist. the file contains one idempotent upsert per player
-inside `BEGIN IMMEDIATE` / `COMMIT`, followed by verification queries. ratings are
-ranked against the generation instant.
+inside `BEGIN IMMEDIATE` / `COMMIT`, followed by verification queries.
 
 ## 3. deploy and migrate
 

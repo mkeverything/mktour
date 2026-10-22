@@ -102,6 +102,18 @@ button {
   }
 }
 
+/* where the club page's list headers stick: under the navbar and the 3.25rem tab bar on mobile,
+   at the top of the column on desktop. the -1px overlap keeps a seam from showing above them */
+@utility club-sticky-top {
+  --club-sticky-top: calc(
+    var(--spacing-mk-navbar-total-height) + 3.25rem - 1px
+  );
+
+  @media screen and (min-width: 1024px) {
+    --club-sticky-top: -1px;
+  }
+}
+
 @utility mk-container {
   height: 100%;
   width: 100%;
@@ -113,6 +125,14 @@ button {
     max-width: 768px;
     margin: auto;
     padding: var(--spacing-mk-2);
+  }
+}
+
+/* pages that fit the viewport on desktop must not rubber-band as a whole */
+@media screen and (min-width: 1024px) {
+  html:has([data-fixed-viewport]),
+  html:has([data-fixed-viewport]) body {
+    overscroll-behavior: none;
   }
 }
 

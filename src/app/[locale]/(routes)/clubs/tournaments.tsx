@@ -10,9 +10,7 @@ import ClubSearchInput from '@/components/ui-custom/club-search-input';
 import Paginator from '@/components/ui-custom/paginator';
 import { ScrollArea } from '@/components/ui-custom/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusInClub } from '@/server/zod/enums';
-import { Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
@@ -22,30 +20,6 @@ const ClubDashboardTournaments: FC<ClubTabProps> = ({
   statusInClub,
 }) => {
   return <ClubTournaments clubId={selectedClub} statusInClub={statusInClub} />;
-};
-
-export const ClubTournamentsSection: FC<{
-  clubId: string;
-  statusInClub: StatusInClub | null;
-}> = ({ clubId, statusInClub }) => {
-  const { data: stats } = useClubStats(clubId);
-
-  return (
-    <Card className="flex h-[32rem] flex-col">
-      <CardHeader className="shadow-card z-10 pb-0 shadow-md">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Trophy className="size-4" />
-          <FormattedMessage id="Menu.tournaments" />
-          <span className="text-muted-foreground font-normal">
-            ({stats?.tournamentsCount ?? 0})
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col pt-3">
-        <ClubTournaments clubId={clubId} statusInClub={statusInClub} />
-      </CardContent>
-    </Card>
-  );
 };
 
 const ClubTournaments: FC<{
@@ -121,7 +95,7 @@ const ClubTournaments: FC<{
   );
 };
 
-const MakeTournament = () => (
+export const MakeTournament = () => (
   <Button size="lg" variant="default" asChild>
     <Link
       href="/tournaments/create"

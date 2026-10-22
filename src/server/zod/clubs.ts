@@ -41,14 +41,6 @@ export const clubManagersSchema = z.object({
 export const clubStatsSchema = z.object({
   playersCount: z.number(),
   tournamentsCount: z.number(),
-  mostActivePlayers: z.array(
-    z.object({
-      id: z.string(),
-      nickname: z.string(),
-      rating: z.number(),
-      tournamentsPlayed: z.number(),
-    }),
-  ),
 });
 
 export type ClubManagerModel = z.infer<typeof clubManagersSchema>;
