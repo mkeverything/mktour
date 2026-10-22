@@ -2,6 +2,8 @@ import {
   InfoItem,
   LoadingElement,
 } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main';
+import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
+import TournamentLocation from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main/tournament-location';
 import Winners from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main/winners';
 import { useTournamentSummaryInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useIntlError } from '@/components/hooks/use-intl-error';
@@ -18,7 +20,7 @@ import {
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FC, memo } from 'react';
+import { FC, memo, useContext } from 'react';
 import { toast } from 'sonner';
 
 const TournamentInfoList = () => {
@@ -28,6 +30,7 @@ const TournamentInfoList = () => {
   const t = useTranslations('Tournament.Main');
   const { translateError } = useIntlError();
   const locale = useLocale();
+  const isOrganizer = useContext(DashboardContext).status === 'organizer';
 
   if (isLoading) return <LoadingElement />;
   if (isError) {
@@ -61,6 +64,10 @@ const TournamentInfoList = () => {
             <CalendarDays className="size-4 shrink-0" />
             {formattedDate}
           </span>
+          <TournamentLocation
+            tournamentId={data.tournamentId}
+            isOrganizer={isOrganizer}
+          />
         </div>
         <div className="gap-mk flex flex-wrap">
           <MetaChip icon={Dices} label={t(String(data.format))} />
@@ -99,6 +106,10 @@ const TournamentInfoList = () => {
           value={data.rated ? t('rated') : t('unrated')}
         />
         <InfoItem icon={CalendarDays} value={formattedDate} />
+        <TournamentLocation
+          tournamentId={data.tournamentId}
+          isOrganizer={isOrganizer}
+        />
       </div>
     </>
   );

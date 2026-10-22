@@ -3,6 +3,7 @@
 import ClubDescription from '@/app/[locale]/(routes)/clubs/create/description';
 import { TeamSelector } from '@/app/[locale]/(routes)/clubs/create/team-selector';
 import { turboPascal } from '@/app/fonts';
+import LocationField from '@/components/discovery/location-field';
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { useClubCreate } from '@/components/hooks/query-hooks/use-club-create';
 import { useIntlError } from '@/components/hooks/use-intl-error';
@@ -25,7 +26,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useTransition } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { useForm, UseFormReturn, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 export default function NewClubForm({ teams }: NewClubFormProps) {
@@ -35,8 +36,15 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
       name: '',
       description: undefined,
       lichessTeam: undefined,
+      latitude: null,
+      longitude: null,
     },
   });
+  const [latitude, longitude] = useWatch({
+    control: form.control,
+    name: ['latitude', 'longitude'],
+  });
+  const tLocation = useTranslations('Discovery.Location');
 
   const t = useTranslations('Club.New');
   const { translateError } = useIntlError();
@@ -112,6 +120,20 @@ export default function NewClubForm({ teams }: NewClubFormProps) {
             />
             <ClubDescription form={form} />
             <TeamSelector teams={teams} form={form} />
+            <LocationField
+              label={tLocation('title')}
+              description={tLocation('description')}
+              value={
+                latitude != null && longitude != null
+                  ? { latitude, longitude }
+                  : null
+              }
+              onChange={(value) => {
+                form.setValue('latitude', value?.latitude ?? null);
+                form.setValue('longitude', value?.longitude ?? null);
+              }}
+              disabled={isPending}
+            />
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? (
                 <>

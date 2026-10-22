@@ -6,13 +6,11 @@ import { join } from 'node:path';
 import { createClient } from '@libsql/client';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { drizzle } from 'drizzle-orm/libsql';
-import { clubs } from '@/server/db/schema/clubs';
 import { player_stats, players } from '@/server/db/schema/players';
 import {
   games,
   players_to_units,
   tournament_units,
-  tournaments,
 } from '@/server/db/schema/tournaments';
 
 test('generates from a turso-style export with a wal file and imports idempotently after migration', async () => {
@@ -34,10 +32,12 @@ test('generates from a turso-style export with a wal file and imports idempotent
 
     const database = drizzle({ client });
     const at = new Date(Math.floor(Date.now() / 1000) * 1000);
-    await database.insert(clubs).values([
-      { id: 'club-a', name: 'a', createdAt: at },
-      { id: 'club-b', name: 'b', createdAt: at },
-    ]);
+    // the schema here predates newer club and tournament columns, so those rows go in as raw sql
+    const atSeconds = at.getTime() / 1000;
+    await client.execute({
+      sql: "INSERT INTO club (id, name, created_at) VALUES ('club-a', 'a', ?), ('club-b', 'b', ?)",
+      args: [atSeconds, atSeconds],
+    });
     const player = (
       id: string,
       clubId: string,
@@ -60,19 +60,9 @@ test('generates from a turso-style export with a wal file and imports idempotent
         player('idle', 'club-a', 1600, 50),
         player('solo', 'club-b'),
       ]);
-    await database.insert(tournaments).values({
-      id: 'closed',
-      title: 'closed',
-      format: 'round robin',
-      type: 'solo',
-      date: '2026-06-01',
-      createdAt: at,
-      clubId: 'club-a',
-      startedAt: at,
-      closedAt: at,
-      roundsNumber: 1,
-      ongoingRound: 1,
-      rated: true,
+    await client.execute({
+      sql: "INSERT INTO tournament (id, name, format, type, date, created_at, club_id, started_at, closed_at, rounds_number, ongoing_round, rated) VALUES ('closed', 'closed', 'round robin', 'solo', '2026-06-01', ?, 'club-a', ?, ?, 1, 1, 1)",
+      args: [atSeconds, atSeconds, atSeconds],
     });
     await database.insert(tournament_units).values([
       {

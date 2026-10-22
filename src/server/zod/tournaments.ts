@@ -12,6 +12,12 @@ import {
 import { clubsSelectSchema } from '@/server/zod/clubs';
 import { tournamentIdInputSchema } from '@/server/zod/common';
 import {
+  coordinatesInputShape,
+  latitudeSchema,
+  longitudeSchema,
+  validateCoordinates,
+} from '@/server/zod/location';
+import {
   gameResultEnum,
   roundNameEnum,
   tournamentFormatEnum,
@@ -140,6 +146,8 @@ export const tournamentInfoSchema = z.object({
     allowPlayersSetResults: true,
     id: true,
     name: true,
+    latitude: true,
+    longitude: true,
   }),
 });
 export const tournamentWithClubSchema = z.object({
@@ -182,13 +190,23 @@ const newTournamentFormSchemaConfig = {
   type: tournamentTypeEnum,
   clubId: z.string(),
   rated: z.boolean(),
+  ...coordinatesInputShape,
 };
 
 export const newTournamentFormSchema = z.object(newTournamentFormSchemaConfig);
-export const tournamentCreateInputSchema = z.object({
-  ...newTournamentFormSchemaConfig,
-  date: localDateStringSchema,
-});
+export const tournamentCreateInputSchema = z
+  .object({
+    ...newTournamentFormSchemaConfig,
+    date: localDateStringSchema,
+  })
+  .superRefine(validateCoordinates);
+
+export const tournamentEditLocationInputSchema = tournamentIdInputSchema
+  .extend({
+    latitude: latitudeSchema.nullable(),
+    longitude: longitudeSchema.nullable(),
+  })
+  .superRefine(validateCoordinates);
 
 export const addDoublesUnitSchema = z
   .object({
@@ -233,6 +251,9 @@ export type TournamentModel = z.infer<typeof tournamentSchema>;
 export type TournamentInsertModel = z.infer<typeof tournamentsInsertSchema>;
 export type TournamentUpdateModel = z.infer<typeof tournamentsUpdateSchema>;
 export type NewTournamentFormModel = z.infer<typeof newTournamentFormSchema>;
+export type TournamentEditLocationInputModel = z.infer<
+  typeof tournamentEditLocationInputSchema
+>;
 export type TournamentCreateInputModel = z.infer<
   typeof tournamentCreateInputSchema
 >;

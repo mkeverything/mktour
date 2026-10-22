@@ -58,10 +58,12 @@ export const userRouter = createTRPCRouter({
     .meta(meta.userClubs)
     .output(
       z.array(
-        clubsSelectSchema.pick({ id: true, name: true }).extend({
-          status: clubsToUsersSelectSchema.shape.status,
-          hasFinishedTournaments: z.boolean(),
-        }),
+        clubsSelectSchema
+          .pick({ id: true, name: true, latitude: true, longitude: true })
+          .extend({
+            status: clubsToUsersSelectSchema.shape.status,
+            hasFinishedTournaments: z.boolean(),
+          }),
       ),
     )
     .input(userIdInputSchema)

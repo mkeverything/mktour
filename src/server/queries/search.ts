@@ -90,6 +90,8 @@ export async function globalSearch(params: SearchParamsModel) {
       createdAt: clubs.createdAt,
       lichessTeam: clubs.lichessTeam,
       allowPlayersSetResults: clubs.allowPlayersSetResults,
+      latitude: clubs.latitude,
+      longitude: clubs.longitude,
     })
     .from(clubs)
     .innerJoin(tournaments, eq(clubs.id, tournaments.clubId))

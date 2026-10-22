@@ -13,6 +13,7 @@ import {
   index,
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
   uniqueIndex,
@@ -39,6 +40,9 @@ export const tournaments = sqliteTable(
     rated: integer('rated', { mode: 'boolean' })
       .notNull()
       .$default(() => true),
+    // venue when it differs from the club's location
+    latitude: real('latitude'),
+    longitude: real('longitude'),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );

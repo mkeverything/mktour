@@ -2,6 +2,7 @@
 
 import { TeamSelector } from '@/app/[locale]/(routes)/clubs/create/team-selector';
 import { ClubTabProps } from '@/app/[locale]/(routes)/clubs/my/tabMap';
+import LocationField from '@/components/discovery/location-field';
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import useEditClubMutation from '@/components/hooks/mutation-hooks/use-club-edit';
 import { useClubInfo } from '@/components/hooks/query-hooks/use-club-info';
@@ -30,7 +31,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC, PropsWithChildren } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   selectedClub,
@@ -49,6 +50,8 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     description: null,
     lichessTeam: null,
     allowPlayersSetResults: true,
+    latitude: null,
+    longitude: null,
   };
   const initialValues = data
     ? {
@@ -56,6 +59,8 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
         description: data.description,
         lichessTeam: data.lichessTeam,
         allowPlayersSetResults: data.allowPlayersSetResults,
+        latitude: data.latitude,
+        longitude: data.longitude,
       }
     : defaultValues;
 
@@ -84,7 +89,13 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     );
   });
 
+  const [latitude, longitude] = useWatch({
+    control: form.control,
+    name: ['latitude', 'longitude'],
+  });
+
   const t = useTranslations('Club.Dashboard.Settings');
+  const tLocation = useTranslations('Discovery.Location');
 
   if (!data && isFetching) return <SkeletonList length={1} />;
   if (!data && children) return children;
@@ -163,6 +174,22 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+              <LocationField
+                label={tLocation('title')}
+                description={tLocation('description')}
+                labelClassName="px-4"
+                value={
+                  latitude != null && longitude != null
+                    ? { latitude, longitude }
+                    : null
+                }
+                onChange={(value) => {
+                  const options = { shouldDirty: true };
+                  form.setValue('latitude', value?.latitude ?? null, options);
+                  form.setValue('longitude', value?.longitude ?? null, options);
+                }}
+                disabled={isFetching}
               />
               <Button
                 type="submit"

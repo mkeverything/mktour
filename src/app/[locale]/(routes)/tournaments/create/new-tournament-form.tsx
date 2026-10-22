@@ -1,6 +1,7 @@
 'use client';
 
 import { turboPascal } from '@/app/fonts';
+import LocationField from '@/components/discovery/location-field';
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import FormDatePicker from '@/app/[locale]/(routes)/tournaments/create/form-date-picker';
 import { useTournamentCreate } from '@/components/hooks/mutation-hooks/use-tournament-create';
@@ -35,6 +36,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { dateToLocalDateString } from '@/lib/local-date';
+import { getClubCoordinates } from '@/lib/location';
 import { ClubModel } from '@/server/zod/clubs';
 import {
   NewTournamentFormModel,
@@ -65,8 +67,18 @@ export default function NewTournamentForm({
       date: new Date(),
       type: 'solo',
       rated: DEFAULT_RATED,
+      latitude: null,
+      longitude: null,
     },
   });
+  const [clubId, latitude, longitude] = useWatch({
+    control: form.control,
+    name: ['clubId', 'latitude', 'longitude'],
+  });
+  const selectedClub = clubs.find(
+    ({ id }) => id === (clubId ?? user.selectedClub),
+  );
+  const tLocation = useTranslations('Discovery.Location');
   const t = useTranslations('MakeTournament');
   const { translateError } = useIntlError();
   const { mutate, isPending: isMutating } = useTournamentCreate();
@@ -295,6 +307,24 @@ export default function NewTournamentForm({
                 </div>
               )}
             />
+            <LocationField
+              label={tLocation('venue')}
+              description={tLocation('venue description')}
+              value={
+                latitude != null && longitude != null
+                  ? { latitude, longitude }
+                  : null
+              }
+              onChange={(value) => {
+                form.setValue('latitude', value?.latitude ?? null);
+                form.setValue('longitude', value?.longitude ?? null);
+              }}
+              fallbackCenter={
+                selectedClub ? getClubCoordinates(selectedClub) : undefined
+              }
+              emptyLabel={tLocation('club location')}
+              disabled={isPending}
+            />
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? (
                 <>
@@ -313,6 +343,6 @@ export default function NewTournamentForm({
 }
 
 interface NewTournamentFormProps {
-  clubs: Array<Pick<ClubModel, 'id' | 'name'>>;
+  clubs: Array<Pick<ClubModel, 'id' | 'name' | 'latitude' | 'longitude'>>;
   user: UserModel;
 }

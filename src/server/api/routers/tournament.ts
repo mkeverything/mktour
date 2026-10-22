@@ -16,6 +16,7 @@ import {
 import {
   createTournament,
   deleteTournament,
+  editTournamentLocation,
   editTournamentTitle,
   finishTournament,
   resetTournament,
@@ -34,7 +35,9 @@ import {
   resetTournamentUnits,
   withdrawUnit,
 } from '@/server/mutations/tournament-units';
-import getAllTournamentsInfinite from '@/server/queries/get-all-tournaments-infinite';
+import getAllTournamentsInfinite, {
+  getTournamentStatusCounts,
+} from '@/server/queries/get-all-tournaments-infinite';
 import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import {
   getTournamentGames,
@@ -44,6 +47,12 @@ import { getTournamentInfo } from '@/server/queries/get-tournament-info';
 import { getTournamentPossiblePlayers } from '@/server/queries/get-tournament-possible-players';
 import { getTournamentUnits } from '@/server/queries/get-tournament-units';
 import { tournamentIdInputSchema } from '@/server/zod/common';
+import {
+  tournamentListItemSchema,
+  tournamentsListFiltersSchema,
+  tournamentsListInputSchema,
+  tournamentStatusCountsSchema,
+} from '@/server/zod/discovery';
 import { tournamentFormatEnum } from '@/server/zod/enums';
 import {
   playerFormSchema,
@@ -60,16 +69,26 @@ import {
   setGameResultInputSchema,
   tournamentAuthStatusSchema,
   tournamentCreateInputSchema,
+  tournamentEditLocationInputSchema,
   tournamentFinishOutputSchema,
   tournamentInfoSchema,
-  tournamentWithClubSchema,
   unitSchema,
   withdrawTournamentUnitInputSchema,
   withdrawTournamentUnitResultSchema,
 } from '@/server/zod/tournaments';
+import { dateToLocalDateString } from '@/lib/local-date';
 import { eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// a day of slack so organisers in any timezone still see today's tournaments as upcoming
+const getUpcomingFromDate = () =>
+  dateToLocalDateString(new Date(Date.now() - DAY_MS));
+
+const revalidateAllTournaments = () =>
+  revalidateTag(CACHE_TAGS.ALL_TOURNAMENTS, 'max');
 
 export const tournamentRouter = {
   create: clubAdminProcedure
@@ -79,28 +98,30 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       const result = await createTournament(input);
-      revalidateTag(CACHE_TAGS.ALL_TOURNAMENTS, 'max');
+      revalidateAllTournaments();
       return result;
     }),
   all: publicProcedure
-    .input(
-      z.object({
-        cursor: z.number().nullish(),
-        limit: z.number().min(1).max(100).optional().default(10),
-      }),
-    )
+    .input(tournamentsListInputSchema)
     .meta(meta.tournamentsAll)
     .output(
       z.object({
-        tournaments: z.array(tournamentWithClubSchema),
+        tournaments: z.array(tournamentListItemSchema),
         nextCursor: z.number().nullable(),
       }),
     )
     .query(async ({ input }) => {
       return await getAllTournamentsInfinite({
-        limit: input.limit,
+        ...input,
         cursor: input.cursor ?? undefined,
+        today: getUpcomingFromDate(),
       });
+    }),
+  statusCounts: publicProcedure
+    .input(tournamentsListFiltersSchema)
+    .output(tournamentStatusCountsSchema)
+    .query(async ({ input }) => {
+      return await getTournamentStatusCounts(input, getUpcomingFromDate());
     }),
   info: publicProcedure
     .meta(meta.tournamentsInfo)
@@ -165,7 +186,9 @@ export const tournamentRouter = {
     .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await addSoloUnit(input);
+      const result = await addSoloUnit(input);
+      revalidateAllTournaments();
+      return result;
     }),
   addNewSoloUnit: tournamentAdminProcedure
     .input(
@@ -178,7 +201,9 @@ export const tournamentRouter = {
     .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await addNewSoloUnit(input);
+      const result = await addNewSoloUnit(input);
+      revalidateAllTournaments();
+      return result;
     }),
   addDoublesUnit: tournamentAdminProcedure
     .input(
@@ -188,7 +213,9 @@ export const tournamentRouter = {
     )
     .output(z.array(unitSchema))
     .mutation(async ({ input }) => {
-      return await addDoublesUnit(input);
+      const result = await addDoublesUnit(input);
+      revalidateAllTournaments();
+      return result;
     }),
   editDoublesUnit: tournamentAdminProcedure
     .input(tournamentIdInputSchema.and(editDoublesUnitSchema))
@@ -207,7 +234,9 @@ export const tournamentRouter = {
     .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await removeUnit(input);
+      const result = await removeUnit(input);
+      revalidateAllTournaments();
+      return result;
     }),
   reorderUnits: tournamentAdminProcedure
     .input(reorderTournamentUnitsInputSchema)
@@ -221,7 +250,9 @@ export const tournamentRouter = {
     .output(withdrawTournamentUnitResultSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await withdrawUnit(input);
+      const result = await withdrawUnit(input);
+      revalidateAllTournaments();
+      return result;
     }),
   setGameResult: protectedProcedure
     .meta(meta.tournamentsSetGameResult)
@@ -247,7 +278,9 @@ export const tournamentRouter = {
     .output(z.array(gameSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await startTournament(input);
+      const result = await startTournament(input);
+      revalidateAllTournaments();
+      return result;
     }),
   reset: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
@@ -255,6 +288,7 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await resetTournament(input);
+      revalidateAllTournaments();
     }),
   resetPlayers: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
@@ -262,13 +296,16 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await resetTournamentUnits(input);
+      revalidateAllTournaments();
     }),
   finish: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
     .output(tournamentFinishOutputSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await finishTournament(input);
+      const result = await finishTournament(input);
+      revalidateAllTournaments();
+      return result;
     }),
   delete: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
@@ -276,7 +313,7 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await deleteTournament(input);
-      revalidateTag(CACHE_TAGS.ALL_TOURNAMENTS, 'max');
+      revalidateAllTournaments();
     }),
   authStatus: publicProcedure
     .input(tournamentIdInputSchema)
@@ -307,5 +344,13 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await editTournamentTitle(input);
+      revalidateAllTournaments();
+    }),
+  editLocation: tournamentAdminProcedure
+    .input(tournamentEditLocationInputSchema)
+    .output(z.void())
+    .mutation(async ({ input }) => {
+      await editTournamentLocation(input);
+      revalidateAllTournaments();
     }),
 };

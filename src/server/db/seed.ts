@@ -41,6 +41,8 @@ export const seedComprehensiveTestData = async () => {
           description: f.loremIpsum({ sentencesCount: 2 }),
           lichessTeam: f.string(),
           createdAt: f.timestamp(),
+          latitude: f.default({ defaultValue: null }),
+          longitude: f.default({ defaultValue: null }),
         },
         with: {
           players: [
