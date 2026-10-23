@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/mkeverything/mktour/compare/v1.15.0...v1.15.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **club-page-ui:** wrapping tournaments-played number shifting the table ([b8039b8](https://github.com/mkeverything/mktour/commit/b8039b8626ddbbac22e80f85c89c29258c3c72ec))
+
 # [1.15.0](https://github.com/mkeverything/mktour/compare/v1.14.0...v1.15.0) (2026-10-23)
 
 
