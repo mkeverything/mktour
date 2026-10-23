@@ -18,14 +18,12 @@ export default function useTournamentFinish({
   const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.finish.mutationOptions({
-      onSuccess: (_error, { closedAt }) => {
-        if (closedAt) {
-          toast.success(t('finished'));
-          sendJsonMessage({
-            event: 'finish-tournament',
-            closedAt,
-          });
-        }
+      onSuccess: ({ closedAt }) => {
+        toast.success(t('finished'));
+        sendJsonMessage({
+          event: 'finish-tournament',
+          closedAt,
+        });
       },
       onSettled: () => settle('finish'),
       onError: (error) => {

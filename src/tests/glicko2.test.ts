@@ -1,7 +1,19 @@
-import { glicko2Calculator, type GlickoGameResult } from '@/lib/glicko2';
+import {
+  getCurrentRatingDeviation,
+  GLICKO2_CONSTANTS,
+  glicko2Calculator,
+  isEstablishedRating,
+  type GlickoGameResult,
+} from '@/lib/glicko2';
 import { describe, expect, it } from 'bun:test';
 
 describe('glicko-2', () => {
+  it('requires rd strictly below 110 for establishment', () => {
+    expect(isEstablishedRating(109.999)).toBe(true);
+    expect(isEstablishedRating(110)).toBe(false);
+    expect(isEstablishedRating(110.001)).toBe(false);
+  });
+
   // test case 1: new player plays 5 games with mixed results
   it('should calculate ratings correctly for a new player', () => {
     const newPlayer = {
@@ -71,26 +83,19 @@ describe('glicko-2', () => {
     expect(update.newVolatility).toBeGreaterThanOrEqual(expectedVolatilityMin);
   });
 
-  // test case 3: player with no games (inactivity)
-  it('should increase RD for inactive players', () => {
+  // test case 3: player with no games leaves the calculation untouched;
+  // inactivity growth is the caller's job via getCurrentRatingDeviation
+  it('should return the player unchanged when there are no results', () => {
     const inactivePlayer = {
       rating: 1600,
       ratingDeviation: 80,
       volatility: 0.06,
     };
 
-    const results: GlickoGameResult[] = []; // No games played
+    const update = glicko2Calculator.calculateNewRatings(inactivePlayer, []);
 
-    const update = glicko2Calculator.calculateNewRatings(
-      inactivePlayer,
-      results,
-    );
-
-    // expected: rating unchanged, RD increased slightly, volatility unchanged
     expect(update.newRating).toBe(inactivePlayer.rating);
-    expect(update.newRatingDeviation).toBeGreaterThan(
-      inactivePlayer.ratingDeviation,
-    );
+    expect(update.newRatingDeviation).toBe(inactivePlayer.ratingDeviation);
     expect(update.newVolatility).toBe(inactivePlayer.volatility);
   });
 
@@ -116,9 +121,8 @@ describe('glicko-2', () => {
       0.001,
     );
     expect(dbFormat.rating).toBe(Math.round(calcPlayer.rating));
-    expect(dbFormat.ratingDeviation).toBe(
-      Math.round(calcPlayer.ratingDeviation),
-    );
+    // rd stays fractional through storage; rounding is for presentation only
+    expect(dbFormat.ratingDeviation).toBe(calcPlayer.ratingDeviation);
   });
 
   // test case 5: extreme opponent ratings
@@ -168,5 +172,84 @@ describe('glicko-2', () => {
 
     expect(update.newRating - player.rating).toBeGreaterThan(50); // significant gain
     expect(update.newVolatility).toBeGreaterThan(0.06); // volatility likely increases due to consistent overperformance
+  });
+});
+
+describe('elapsed-time rating deviation', () => {
+  const WEEK = GLICKO2_CONSTANTS.RATING_PERIOD_MS;
+  const now = new Date('2026-06-01T00:00:00.000Z');
+  const weeksAgo = (weeks: number) => new Date(now.getTime() - weeks * WEEK);
+
+  const rdAfter = (weeks: number, ratingDeviation = 60) =>
+    getCurrentRatingDeviation(
+      {
+        ratingDeviation,
+        ratingVolatility: 0.06,
+        ratingLastUpdateAt: weeksAgo(weeks),
+      },
+      now,
+    );
+
+  it('grows continuously with fractional weeks, capped at the maximum', () => {
+    expect(rdAfter(0)).toBe(60);
+    expect(rdAfter(0.5)).toBeGreaterThan(60);
+    // variance grows linearly with time
+    expect(rdAfter(2) ** 2 - 60 ** 2).toBeCloseTo(
+      2 * (rdAfter(1) ** 2 - 60 ** 2),
+      6,
+    );
+    expect(rdAfter(5000)).toBe(GLICKO2_CONSTANTS.MAX_RD);
+  });
+
+  it('matches the documented calibration: rd 60 -> ~80 after six months, ~110 after eighteen', () => {
+    expect(rdAfter(26)).toBeCloseTo(80.2, 0);
+    expect(rdAfter(78)).toBeCloseTo(109.9, 0);
+  });
+
+  // weekly-schedule oracle: with exactly one period elapsed, elapsed-time growth
+  // followed by result incorporation reproduces standard glicko-2, checked
+  // against the worked example in glickman's glicko-2 paper
+  it('reproduces the glicko-2 paper example when exactly one period has elapsed', () => {
+    const stored = {
+      rating: 1500,
+      ratingDeviation: 200,
+      ratingVolatility: 0.06,
+      ratingLastUpdateAt: weeksAgo(1),
+    };
+    const results: GlickoGameResult[] = [
+      { opponentRating: 1400, opponentRatingDeviation: 30, score: 1 },
+      { opponentRating: 1550, opponentRatingDeviation: 100, score: 0 },
+      { opponentRating: 1700, opponentRatingDeviation: 300, score: 0 },
+    ];
+
+    const update = glicko2Calculator.calculateNewRatings(
+      {
+        rating: stored.rating,
+        ratingDeviation: getCurrentRatingDeviation(stored, now),
+        volatility: stored.ratingVolatility,
+      },
+      results,
+    );
+
+    expect(update.newRating).toBe(1464);
+    expect(update.newRatingDeviation).toBeCloseTo(151.52, 1);
+    expect(update.newVolatility).toBeCloseTo(0.05999, 4);
+  });
+
+  it('does not add a fixed drift per tournament when no time has elapsed', () => {
+    const player = { rating: 1500, ratingDeviation: 200, volatility: 0.06 };
+    const results: GlickoGameResult[] = [
+      { opponentRating: 1500, opponentRatingDeviation: 50, score: 0.5 },
+    ];
+    // three closures at the same instant: variance only shrinks, never grows
+    let rd = player.ratingDeviation;
+    for (let i = 0; i < 3; i++) {
+      const update = glicko2Calculator.calculateNewRatings(
+        { ...player, ratingDeviation: rd },
+        results,
+      );
+      expect(update.newRatingDeviation).toBeLessThan(rd);
+      rd = update.newRatingDeviation;
+    }
   });
 });

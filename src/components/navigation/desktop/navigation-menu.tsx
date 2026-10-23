@@ -1,6 +1,7 @@
 import {
   NAVMENU_ITEMS,
   SubNavItem,
+  useIsActivePath,
 } from '@/components/navigation/nav-menu-items';
 import {
   NavigationMenu,
@@ -13,11 +14,10 @@ import {
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import React from 'react';
 
 export default function NavigationMenuContainer() {
-  const pathname = usePathname();
+  const isActivePath = useIsActivePath();
   const t = useTranslations('Menu');
 
   return (
@@ -28,7 +28,7 @@ export default function NavigationMenuContainer() {
             <NavigationMenuItem key={tab.path}>
               <NavigationMenuTrigger
                 className={
-                  pathname.includes(tab.path.split('/')[1]) ? 'font-bold' : ''
+                  isActivePath(`/${tab.path.split('/')[1]}`) ? 'font-bold' : ''
                 }
               >
                 {t(tab.title)}

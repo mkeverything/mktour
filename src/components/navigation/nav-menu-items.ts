@@ -1,4 +1,11 @@
+import { isUnder, splitLocalePrefix } from '@/lib/locales';
 import { MessageKeys } from 'next-intl';
+import { usePathname } from 'next/navigation';
+
+export function useIsActivePath() {
+  const { pathname } = splitLocalePrefix(usePathname());
+  return (path: string) => isUnder(pathname, path);
+}
 
 export const NAVMENU_ITEMS: NavbarItem[] = [
   {

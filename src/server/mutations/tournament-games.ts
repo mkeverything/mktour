@@ -230,11 +230,18 @@ export async function setTournamentGameResult(
   await db.transaction(async (tx) => {
     const game = (
       await tx
-        .select({ result: games.result })
+        .select({
+          result: games.result,
+          startedAt: tournaments.startedAt,
+          closedAt: tournaments.closedAt,
+        })
         .from(games)
+        .innerJoin(tournaments, eq(games.tournamentId, tournaments.id))
         .where(and(eq(games.id, gameId), eq(games.tournamentId, tournamentId)))
     ).at(0);
     if (!game) throw new AppError('GAME_NOT_FOUND');
+    if (game.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
+    if (!game.startedAt) throw new AppError('TOURNAMENT_NOT_STARTED');
 
     const gameUnits = await tx
       .select({ isOut: tournament_units.isOut })

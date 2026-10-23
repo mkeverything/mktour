@@ -1,5 +1,5 @@
 import { clubsSelectSchema } from '@/server/zod/clubs';
-import { playersSelectSchema } from '@/server/zod/players';
+import { playerOutputSchema } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectPublicSchema } from '@/server/zod/users';
 import z from 'zod';
@@ -29,7 +29,7 @@ export const searchOpenApiSchema = z.object({
 
 export const searchOutputSchema = z.object({
   users: z.array(usersSelectPublicSchema).optional(),
-  players: z.array(playersSelectSchema).optional(),
+  players: z.array(playerOutputSchema).optional(),
   tournaments: z.array(tournamentSchema).optional(),
   clubs: z.array(clubsSelectSchema).optional(),
 });

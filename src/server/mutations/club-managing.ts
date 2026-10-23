@@ -5,14 +5,19 @@ import { AppError } from '@/lib/errors';
 import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
-import { newid } from '@/lib/utils';
+import { newid, nowTimestamp } from '@/lib/utils';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
   club_notifications,
   user_notifications,
 } from '@/server/db/schema/notifications';
-import { affiliations, players } from '@/server/db/schema/players';
+import {
+  affiliations,
+  player_stats,
+  players,
+  rating_events,
+} from '@/server/db/schema/players';
 import {
   games,
   players_to_units,
@@ -20,6 +25,7 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { getEmptyClub } from '@/server/queries/get-empty-club';
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { playerExistsInClub } from '@/server/queries/player-exists-in-club';
@@ -29,9 +35,13 @@ import {
   ClubToUserModel,
 } from '@/server/zod/clubs';
 import { UserNotificationInsertModel } from '@/server/zod/notifications';
-import { PlayerEditModel, PlayerFormModel } from '@/server/zod/players';
+import {
+  PlayerEditModel,
+  PlayerFormModel,
+  playerFormSchema,
+} from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { and, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
@@ -139,22 +149,43 @@ export const createPlayer = async (
     throw new AppError('PLAYER_EXISTS_ERROR');
   }
 
-  const database = options.database ?? db;
-  const newPlayer = (
-    await database
-      .insert(players)
-      .values({
-        ...player,
-        nickname,
-        lastSeenAt: new Date(),
-        id: options.id ?? newid(),
-        ratingPeak: null,
-      })
-      .returning()
-  ).at(0);
+  const insertPlayerWithStartingEvent = async (
+    database: Pick<typeof db, 'insert'>,
+  ) => {
+    const createdAt = nowTimestamp();
+    const newPlayer = (
+      await database
+        .insert(players)
+        .values({
+          ...playerFormSchema.parse(player),
+          nickname,
+          id: options.id ?? newid(),
+          ratingPeak: null,
+          ratingLastUpdateAt: createdAt,
+          lastSeenAt: createdAt,
+        })
+        .returning()
+    ).at(0);
+    if (!newPlayer) throw new AppError('PLAYER_NOT_CREATED');
 
-  if (!newPlayer) throw new AppError('PLAYER_NOT_CREATED');
-  return newPlayer;
+    await database.insert(rating_events).values({
+      id: newid(),
+      playerId: newPlayer.id,
+      sourceTournamentId: null,
+      publishedAt: createdAt,
+      rating: newPlayer.rating,
+      ratingDeviation: newPlayer.ratingDeviation,
+      isStarting: true,
+    });
+    await database
+      .insert(player_stats)
+      .values({ playerId: newPlayer.id, clubId: newPlayer.clubId });
+    return newPlayer;
+  };
+
+  return options.database
+    ? await insertPlayerWithStartingEvent(options.database)
+    : await db.transaction(insertPlayerWithStartingEvent);
 };
 
 export const deletePlayer = async ({ playerId }: { playerId: string }) => {
@@ -173,7 +204,22 @@ export const deletePlayer = async ({ playerId }: { playerId: string }) => {
   }
 
   await db.transaction(async (tx) => {
+    const stats = await tx
+      .select({
+        clubId: player_stats.clubId,
+        ratingRank: player_stats.ratingRank,
+      })
+      .from(player_stats)
+      .where(eq(player_stats.playerId, playerId))
+      .get();
     await tx.delete(players).where(eq(players.id, playerId));
+    if (stats && stats.ratingRank !== null) {
+      await refreshPlayerStats(tx, {
+        clubId: stats.clubId,
+        playerIds: [],
+        now: new Date(),
+      });
+    }
   });
 };
 
@@ -369,7 +415,7 @@ export const addClubManager = async ({
     if (status !== 'admin') return;
 
     const targetUser = await tx.query.users.findFirst({
-      where: eq(users.id, userId),
+      where: { id: userId },
       columns: {
         selectedClub: true,
       },
@@ -378,10 +424,10 @@ export const addClubManager = async ({
 
     const hasFinishedTournamentsInSelectedClub =
       await tx.query.tournaments.findFirst({
-        where: and(
-          eq(tournaments.clubId, targetUser.selectedClub),
-          isNotNull(tournaments.closedAt),
-        ),
+        where: {
+          clubId: targetUser.selectedClub,
+          closedAt: { isNotNull: true },
+        },
         columns: { id: true },
       });
 

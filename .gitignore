@@ -19,6 +19,7 @@
 # misc
 .DS_Store
 *.pem
+/tmp/
 
 # debug
 npm-debug.log*
@@ -36,6 +37,9 @@ CONTEXT.md
 # local env files
 .env*.local
 .env
+
+# local maintenance config
+/maintenance.local.json
 
 # vercel
 .vercel

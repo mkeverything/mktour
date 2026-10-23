@@ -1,7 +1,7 @@
 import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
 import { affiliations, players } from '@/server/db/schema/players';
-import { and, eq, getTableColumns } from 'drizzle-orm';
+import { and, eq, getColumns } from 'drizzle-orm';
 import { User } from 'lucia';
 
 export async function getUserClubAffiliation(
@@ -15,7 +15,7 @@ export async function getUserClubAffiliation(
   const affiliation = await db
     .select({
       player: players,
-      ...getTableColumns(affiliations),
+      ...getColumns(affiliations),
     })
     .from(affiliations)
     .where(

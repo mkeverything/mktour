@@ -1,2 +1,0 @@
-CREATE INDEX `ptt_tournament_player_idx` ON `players_to_tournaments` (`tournament_id`,`player_id`);--> statement-breakpoint
-CREATE INDEX `ptt_tournament_team_idx` ON `players_to_tournaments` (`tournament_id`,`team_nickname`);

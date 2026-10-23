@@ -1,1 +1,0 @@
-ALTER TABLE `players_to_tournaments` ADD `added_at` integer;

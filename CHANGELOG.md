@@ -1,3 +1,63 @@
+# [1.14.0](https://github.com/mkeverything/mktour/compare/v1.13.0...v1.14.0) (2026-10-13)
+
+
+### Features
+
+* **home:** add about us button next to lichess sign-in ([18175ef](https://github.com/mkeverything/mktour/commit/18175ef8d49909530152512174b1dc9adda12813))
+
+# [1.13.0](https://github.com/mkeverything/mktour/compare/v1.12.1...v1.13.0) (2026-10-13)
+
+
+### Bug Fixes
+
+* **i18n:** highlight the current mobile menu item on /ru pages ([011e333](https://github.com/mkeverything/mktour/commit/011e3337374430c5d09df12b9d381a1b3bc7f04e))
+* **i18n:** limit /{locale} urls to our own public pages ([b6a2d99](https://github.com/mkeverything/mktour/commit/b6a2d99e9ed74ff01a756c3f6d890bc11312454e))
+* **i18n:** pluralize profile counts and localize title template ([ccc06d4](https://github.com/mkeverything/mktour/commit/ccc06d489b8b3be633545e76f3bfdeadde24b0a7))
+* **results:** cap buchholz bye contribution at a draw per round ([cbac58e](https://github.com/mkeverything/mktour/commit/cbac58eddfa70c17fe3192b992d8e771a7b07fca))
+* **seo:** add sr-only h1 headings to list, info and tournament pages ([6bae0ca](https://github.com/mkeverything/mktour/commit/6bae0ca08b33b04c80cb8d2fcaf7a33e9e228011))
+* **seo:** fix headings, canonicals, sitemap and ssr list prefetch ([37b7e68](https://github.com/mkeverything/mktour/commit/37b7e685b39c0e093eb0ed464b8c043a1e741ac8))
+* **seo:** fix list pagination ties, batch sitemap and add home h1 ([4125689](https://github.com/mkeverything/mktour/commit/4125689bae675509509601ed4d3580c3b5151f47))
+* **seo:** noindex guest players and empty clubs, rewrite seo copy ([b84f67e](https://github.com/mkeverything/mktour/commit/b84f67e76fd3f3974414565606a68667d293d152)), closes [#160](https://github.com/mkeverything/mktour/issues/160) [#163](https://github.com/mkeverything/mktour/issues/163) [#168](https://github.com/mkeverything/mktour/issues/168)
+* **seo:** render sitemap per request and set base url in ci ([a78920e](https://github.com/mkeverything/mktour/commit/a78920e7f1637d7ea82afe17504557f6aabfbf68))
+* **seo:** use plain page names as tab titles ([b1ab9ac](https://github.com/mkeverything/mktour/commit/b1ab9ac2dceba2d55d0c3dd71ba64b20e99e75a1))
+
+
+### Features
+
+* **i18n:** prerender pages per locale with lichess-style /ru urls ([3adf945](https://github.com/mkeverything/mktour/commit/3adf9457ccd9f6c16f446a61eb1f6ce2ccebcad6))
+* initial implementation of player stats table ([e1d22c3](https://github.com/mkeverything/mktour/commit/e1d22c34c282ec3e0682fd8c3556c6e3b7c8d787))
+* initial implementation of player stats table ([0d97cde](https://github.com/mkeverything/mktour/commit/0d97cde827025341b2c9c94ecd3d5b2125840e00))
+
+## [1.12.1](https://github.com/mkeverything/mktour/compare/v1.12.0...v1.12.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* add Telegram tournament link previews ([af97266](https://github.com/mkeverything/mktour/commit/af972669277271968932ba0c38d6637273fde2ca))
+* preserve browser streaming for link previews ([068468a](https://github.com/mkeverything/mktour/commit/068468a3450ecae10518a8a2b0be5cd1fc78b158))
+* render metadata for all bots ([46e6bfc](https://github.com/mkeverything/mktour/commit/46e6bfc76431209685972a6fb47afd977460bd3e))
+* use default metadata for tournament link previews ([e4e280d](https://github.com/mkeverything/mktour/commit/e4e280d4eb996a380c7067c0b94ad9d4e48f987d))
+
+# [1.12.0](https://github.com/mkeverything/mktour/compare/v1.11.2...v1.12.0) (2026-10-03)
+
+
+### Bug Fixes
+
+* backfill starting events for all players ([8aea7c5](https://github.com/mkeverything/mktour/commit/8aea7c5f79986c1b76d170245bc01ab3e8ad61aa))
+* block form posts during maintenance ([c2a56d1](https://github.com/mkeverything/mktour/commit/c2a56d15b5d86ef4629a82a6a6c80cc45c45ed3e))
+* keep rating publication monotonic and show current player rd ([a3dfb68](https://github.com/mkeverything/mktour/commit/a3dfb68f4a9fd5f8ca671e08f98a20ba66a099be))
+* **pairing:** count penalties in half-points ([19a8d2c](https://github.com/mkeverything/mktour/commit/19a8d2cc7913de4ba051dba8fecded68785b06fc)), closes [#124](https://github.com/mkeverything/mktour/issues/124)
+* refuse writes against closed or unfinished tournaments ([0fcee65](https://github.com/mkeverything/mktour/commit/0fcee65394acea300a784d062d1fb55aa686cf50))
+* set finite staletime for maintenance status query ([6faf419](https://github.com/mkeverything/mktour/commit/6faf4198cc540a8725a6b8a7f7b57d7b78bd91ce))
+* stale maintenance page fixed, inactive visits redirect home ([b6075c5](https://github.com/mkeverything/mktour/commit/b6075c507f83b34f9241f24342f9151cc3ef07af))
+
+
+### Features
+
+* implement maintenance page ([d04226c](https://github.com/mkeverything/mktour/commit/d04226c231feb73538f0380af8a9e2e3dd664b22))
+* maintenance notice ([3b95187](https://github.com/mkeverything/mktour/commit/3b95187d8a227d8ad0f28c62dc440af398e7e9e8))
+* persist rating events and grow rd with elapsed time ([fd695bd](https://github.com/mkeverything/mktour/commit/fd695bd00b682e859e1be60fda0c491d4af91895))
+
 ## [1.11.2](https://github.com/mkeverything/mktour/compare/v1.11.1...v1.11.2) (2026-08-05)
 
 

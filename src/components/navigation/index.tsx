@@ -4,7 +4,7 @@ import Desktop from '@/components/navigation/desktop';
 import Mobile from '@/components/navigation/mobile';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import MktourNavbar from '@/components/ui-custom/mktour-logo-navbar';
-import { FC, useContext, useEffect, useState } from 'react';
+import { FC, Suspense, useContext, useEffect, useState } from 'react';
 
 const Navigation: FC = () => {
   const { isTablet } = useContext(MediaQueryContext);
@@ -20,7 +20,7 @@ const Navigation: FC = () => {
   return (
     <nav className="mk-navbar bg-background fixed top-0 z-50 flex w-full items-center justify-between border-b">
       <MktourNavbar />
-      {showMobile ? <Mobile /> : <Desktop />}
+      <Suspense>{showMobile ? <Mobile /> : <Desktop />}</Suspense>
     </nav>
   );
 };

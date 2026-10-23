@@ -30,7 +30,31 @@ export const GLICKO2_CONSTANTS = {
   EPSILON: 0.000001,
   SCALE_FACTOR: 173.7178,
   STABLE_RD_THRESHOLD: 110,
+  // one glicko rating period of inactivity growth per seven days of real time
+  RATING_PERIOD_MS: 7 * 24 * 60 * 60 * 1000,
 } as const;
+
+export const isEstablishedRating = (ratingDeviation: number) =>
+  ratingDeviation < GLICKO2_CONSTANTS.STABLE_RD_THRESHOLD;
+
+/** rating deviation grown by the real time elapsed since the last rating update */
+export function getCurrentRatingDeviation(
+  player: {
+    ratingDeviation: number;
+    ratingVolatility: number;
+    ratingLastUpdateAt: Date;
+  },
+  now: Date,
+): number {
+  const elapsedPeriods =
+    Math.max(0, now.getTime() - player.ratingLastUpdateAt.getTime()) /
+    GLICKO2_CONSTANTS.RATING_PERIOD_MS;
+  const sigmaScaled = GLICKO2_CONSTANTS.SCALE_FACTOR * player.ratingVolatility;
+  const grown = Math.sqrt(
+    player.ratingDeviation ** 2 + elapsedPeriods * sigmaScaled ** 2,
+  );
+  return Math.min(grown, GLICKO2_CONSTANTS.MAX_RD);
+}
 
 export class Glicko2Calculator {
   private readonly constants = GLICKO2_CONSTANTS;
@@ -146,26 +170,18 @@ export class Glicko2Calculator {
   }
 
   /**
-   * apply rating period calculations for a player
+   * incorporate a batch of results into a player's rating.
+   * the caller is responsible for bringing rating deviation forward by elapsed
+   * time first (see getCurrentRatingDeviation); no fixed drift period is added here.
    */
   public calculateNewRatings(
     player: GlickoPlayer,
     results: GlickoGameResult[],
   ): RatingUpdate {
-    // if no games played, only apply RD increase
     if (results.length === 0) {
-      // apply time-based RD increase (assuming one rating period)
-      const phi = player.ratingDeviation / this.constants.SCALE_FACTOR;
-      const sigma = player.volatility;
-      const phi_new = Math.sqrt(phi * phi + sigma * sigma);
-      const newRD = Math.min(
-        phi_new * this.constants.SCALE_FACTOR,
-        this.constants.MAX_RD,
-      );
-
       return {
         newRating: Math.round(player.rating),
-        newRatingDeviation: Math.round(newRD),
+        newRatingDeviation: player.ratingDeviation,
         newVolatility: player.volatility,
       };
     }
@@ -206,11 +222,11 @@ export class Glicko2Calculator {
     // step: 5: determine new volatility
     const sigma_new = this.computeNewVolatility(phi, v, delta, sigma);
 
-    // step: 6: update phi to phi_star
-    const phi_star = Math.sqrt(phi * phi + sigma_new * sigma_new);
+    // step 6 (phi_star = sqrt(phi² + sigma²)) is intentionally omitted:
+    // elapsed-time growth already brought phi forward to this instant.
 
     // Step 7: Update phi and mu
-    const phi_new = 1 / Math.sqrt(1 / (phi_star * phi_star) + 1 / v);
+    const phi_new = 1 / Math.sqrt(1 / (phi * phi) + 1 / v);
 
     let mu_new = mu;
     for (const result of results) {
@@ -226,13 +242,13 @@ export class Glicko2Calculator {
     // convert back to original scale
     const { rating, rd } = this.fromGlicko2Scale(mu_new, phi_new);
 
-    // apply constraints and round to integers for rating/RD, keep volatility as float
+    // rating points are integers; rd stays fractional and is rounded only for display
     const finalRating = Math.min(
       Math.max(Math.round(rating), this.constants.MIN_RATING),
       this.constants.MAX_RATING,
     );
     const finalRD = Math.max(
-      Math.min(Math.round(rd), this.constants.MAX_RD),
+      Math.min(rd, this.constants.MAX_RD),
       this.constants.MIN_RD,
     );
     const finalVolatility = sigma_new;
@@ -269,7 +285,7 @@ export class Glicko2Calculator {
   } {
     return {
       rating: Math.round(player.rating),
-      ratingDeviation: Math.round(player.ratingDeviation),
+      ratingDeviation: player.ratingDeviation,
       volatility: player.volatility,
     };
   }

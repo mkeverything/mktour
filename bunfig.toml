@@ -1,2 +1,5 @@
+[run]
+bun = true
+
 [test]
 preload = ["./src/tests/setup/preload.ts"]

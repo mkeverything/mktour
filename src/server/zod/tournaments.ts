@@ -21,7 +21,7 @@ import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
-} from 'drizzle-zod';
+} from 'drizzle-orm/zod';
 import z from 'zod';
 
 export const tournamentSchema = createSelectSchema(tournaments, {
@@ -128,6 +128,10 @@ export const withdrawTournamentUnitInputSchema = z.object({
 export const withdrawTournamentUnitResultSchema = z.object({
   roundsNumber: z.number().int().min(1).nullable(),
   roundsNumberAutoDecreased: z.boolean(),
+});
+
+export const tournamentFinishOutputSchema = z.object({
+  closedAt: z.date(),
 });
 
 export const tournamentInfoSchema = z.object({

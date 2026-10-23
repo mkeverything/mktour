@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
   try {
     const client = createClient({ url, authToken });
-    const db = drizzle(client, { logger });
+    const db = drizzle({ client, logger });
 
     console.log('running migrations...');
     const start = Date.now();
