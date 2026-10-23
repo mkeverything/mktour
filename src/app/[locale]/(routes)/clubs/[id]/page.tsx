@@ -60,12 +60,7 @@ export async function generateMetadata(
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });
 
-  let club;
-  try {
-    club = await publicCaller.club.info({ clubId: params.id });
-  } catch {
-    notFound();
-  }
+  const club = await publicCaller.club.info({ clubId: params.id });
 
   if (!club) notFound();
 

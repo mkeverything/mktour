@@ -102,12 +102,7 @@ export async function generateMetadata(
   const params = await props.params;
   const t = await getTranslations('Seo');
 
-  let playerData;
-  try {
-    playerData = await publicCaller.player.info({ playerId: params.id });
-  } catch {
-    notFound();
-  }
+  const playerData = await publicCaller.player.info({ playerId: params.id });
 
   if (!playerData) notFound();
   if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);

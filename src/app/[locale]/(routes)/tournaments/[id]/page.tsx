@@ -3,7 +3,6 @@ import { getQueryClient, trpc } from '@/server/api/query-client';
 import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
-import { TournamentInfoModel } from '@/server/zod/tournaments';
 import { formatDate } from '@/lib/local-date';
 import { dehydrate, HydrationBoundary, noop } from '@tanstack/react-query';
 import { TRPCError } from '@trpc/server';
@@ -60,17 +59,10 @@ export async function generateMetadata(
     namespace: 'Seo.tournaments.format',
   });
 
-  let tournament: TournamentInfoModel;
-  let units;
-
-  try {
-    [tournament, units] = await Promise.all([
-      publicCaller.tournament.info({ tournamentId: params.id }),
-      publicCaller.tournament.units({ tournamentId: params.id }),
-    ]);
-  } catch {
-    notFound();
-  }
+  const [tournament, units] = await Promise.all([
+    publicCaller.tournament.info({ tournamentId: params.id }),
+    publicCaller.tournament.units({ tournamentId: params.id }),
+  ]).catch(notFoundOnMissing);
 
   const format = tTournaments(
     tournament.tournament.format as keyof typeof tTournaments,
