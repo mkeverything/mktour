@@ -73,6 +73,9 @@ export const clubMeta = {
       method: 'POST',
       path: '/clubs/{clubId}/leave',
       summary: 'leave club',
+      description: `rejects the operation if user is the only manager of the
+          club. if user is the only \`co-owner\`, the longest-serving \`admin\`
+          becomes a \`co-owner\`.`,
       tags: ['clubs'],
     },
   },

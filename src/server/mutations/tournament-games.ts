@@ -4,7 +4,7 @@ import { AppError } from '@/lib/errors';
 import { getUnitResultDeltas } from '@/lib/game-result-deltas';
 import { generateTournamentRound } from '@/lib/pairing-generators/utils';
 import { sortUnitsByResults } from '@/lib/tournament-results';
-import { db, type Database } from '@/server/db';
+import { db, type Transaction } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import {
   games,
@@ -31,9 +31,9 @@ export async function replaceRoundGames({
   tournamentId: string;
   roundNumber: number;
   newGames: GameModel[];
-  database?: Pick<typeof db, 'delete' | 'insert' | 'update'>;
+  database?: Transaction;
 }) {
-  const run = async (d: Pick<typeof db, 'delete' | 'insert' | 'update'>) => {
+  const run = async (d: Transaction) => {
     await d
       .delete(games)
       .where(
@@ -129,10 +129,7 @@ export async function saveRound({
     if (roundNumber !== tournament.ongoingRound + 1) {
       throw new AppError('INVALID_ROUND_PROGRESSION');
     }
-    if (
-      tournament.roundsNumber === null ||
-      tournament.ongoingRound >= tournament.roundsNumber
-    ) {
+    if (tournament.ongoingRound >= tournament.roundsNumber) {
       throw new AppError('INVALID_ROUNDS_NUMBER');
     }
 
@@ -301,7 +298,7 @@ export async function applyGameResult({
   prevResult,
   nextResult,
 }: {
-  database: Database;
+  database: Transaction;
   tournamentId: string;
   gameId: string;
   whiteUnitId: string;

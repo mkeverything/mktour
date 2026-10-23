@@ -394,7 +394,7 @@ export async function withdrawUnit({
   unitId: string;
   userId: string;
 }): Promise<{
-  roundsNumber: number | null;
+  roundsNumber: number;
   roundsNumberAutoDecreased: boolean;
 }> {
   const { user } = await validateRequest();

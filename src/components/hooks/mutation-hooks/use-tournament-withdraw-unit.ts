@@ -127,7 +127,7 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
       onSettled: () => settle('withdrawUnit'),
       onSuccess: (data, { unitId }) => {
         sendJsonMessage({ event: 'withdraw-unit', id: unitId });
-        if (data.roundsNumberAutoDecreased && data.roundsNumber !== null) {
+        if (data.roundsNumberAutoDecreased) {
           toast.info(
             tToasts('rounds number decreased automatically', {
               roundsNumber: data.roundsNumber,

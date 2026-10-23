@@ -12,11 +12,10 @@ import {
 import {
   getRoundRobinRoundsNumber,
   getSwissMaxRoundsNumber,
-  getSwissRecommendedRoundsNumber,
   newid,
   nowTimestamp,
 } from '@/lib/utils';
-import { db } from '@/server/db';
+import { db, type Database, type Transaction } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import {
   games,
@@ -36,10 +35,11 @@ import {
   GameModel,
   NewTournamentFormModel,
   TournamentModel,
+  TournamentStartInputModel,
   tournamentsInsertSchema,
   UnitModel,
 } from '@/server/zod/tournaments';
-import { and, eq, inArray, isNotNull, isNull, ne, or } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, ne } from 'drizzle-orm';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { calculateAndApplyGlickoRatings } from './rating-calculation';
 import { replaceRoundGames } from './tournament-games';
@@ -60,7 +60,8 @@ export const createTournament = async (
     createdAt: new Date(),
     closedAt: null,
     startedAt: null,
-    roundsNumber: values.format === 'swiss' ? 1 : null,
+    // round robin gets its rounds number at start, from the final player count
+    roundsNumber: values.format === 'swiss' ? 1 : 0,
     ongoingRound: 1,
   });
 
@@ -75,21 +76,18 @@ async function resolveTournamentRoundsNumber({
 }: {
   tournamentId: string;
   format: TournamentFormat;
-  roundsNumber: number | null;
+  roundsNumber: number;
 }) {
   if (format === 'swiss') {
     const units = await getTournamentUnits(tournamentId);
     if (units.length < 2) throw new AppError('NOT_ENOUGH_TOURNAMENT_UNITS');
 
     const maxRounds = getSwissMaxRoundsNumber(units.length);
-    const resolvedRounds =
-      roundsNumber ?? getSwissRecommendedRoundsNumber(units.length);
-
-    if (resolvedRounds < 1 || resolvedRounds > maxRounds) {
+    if (roundsNumber < 1 || roundsNumber > maxRounds) {
       throw new AppError('INVALID_ROUNDS_NUMBER');
     }
 
-    return resolvedRounds;
+    return roundsNumber;
   }
   if (format === 'round robin') {
     const units = await getTournamentUnits(tournamentId);
@@ -122,7 +120,7 @@ function getEligibleSwissUnits(
 
 export async function normalizeSwissRoundsNumberInDatabase(
   tournamentId: string,
-  database: Pick<typeof db, 'select' | 'update'>,
+  database: Database,
 ): Promise<{
   roundsNumber: number;
   wasChanged: boolean;
@@ -139,7 +137,7 @@ export async function normalizeSwissRoundsNumberInDatabase(
     throw new AppError('WITHDRAWAL_REDUCES_ROUNDS_BELOW_CURRENT');
   }
   const normalizedRounds = Math.min(
-    Math.max(tournament.roundsNumber ?? minRounds, minRounds),
+    Math.max(tournament.roundsNumber, minRounds),
     maxRounds,
   );
 
@@ -150,10 +148,7 @@ export async function normalizeSwissRoundsNumberInDatabase(
       and(
         eq(tournaments.id, tournamentId),
         isNull(tournaments.closedAt),
-        or(
-          isNull(tournaments.roundsNumber),
-          ne(tournaments.roundsNumber, normalizedRounds),
-        ),
+        ne(tournaments.roundsNumber, normalizedRounds),
       ),
     );
 
@@ -165,7 +160,7 @@ export async function normalizeSwissRoundsNumberInDatabase(
 
 async function preparePreStartPairings(
   tournamentId: string,
-  database: Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>,
+  database: Transaction,
 ): Promise<GameModel[]> {
   const currentUnits = await getRawTournamentUnits(tournamentId, database);
   if (currentUnits.length < 2) {
@@ -191,9 +186,7 @@ export async function startTournament({
   startedAt,
   format,
   roundsNumber,
-}: Pick<TournamentModel, 'format' | 'roundsNumber' | 'startedAt'> & {
-  tournamentId: string;
-}) {
+}: TournamentStartInputModel) {
   const { user } = await validateRequest();
   if (!user) throw new AppError('UNAUTHENTICATED');
   const { status } = await getStatusInTournament(user.id, tournamentId);
@@ -356,7 +349,6 @@ export async function finishTournament({
       playerIds: sortedUnits.flatMap((unit) =>
         unit.players.map((player) => player.id),
       ),
-      now: closedAt,
     });
 
     return closedAt;
@@ -414,7 +406,6 @@ export async function deleteTournament({
       await refreshPlayerStats(tx, {
         clubId: tournament.clubId,
         playerIds: participants.map((participant) => participant.playerId),
-        now: new Date(),
       });
     }
   });

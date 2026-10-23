@@ -1,17 +1,14 @@
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
-import { sqlite } from '@/server/db/index';
+import { db } from '@/server/db/index';
 import * as schema from '@/server/db/schema';
 import { buildClubPlayerStats } from '@/server/mutations/player-stats';
 import { and, eq, notInArray } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/libsql';
 import { reset, seed } from 'drizzle-seed';
 
 import { verifyTestDatabase } from '@/lib/config/urls';
 
 export const seedComprehensiveTestData = async () => {
   if (verifyTestDatabase()) {
-    const db = drizzle({ client: sqlite });
-
     await reset(db, schema);
 
     await seed(
@@ -212,13 +209,12 @@ export const seedComprehensiveTestData = async () => {
       tournamentId: 'concurrent-result-tournament',
     });
 
-    const now = new Date();
     const seededClubs = await db
       .select({ id: schema.clubs.id })
       .from(schema.clubs);
     const rows = (
       await Promise.all(
-        seededClubs.map((club) => buildClubPlayerStats(db, club.id, now)),
+        seededClubs.map((club) => buildClubPlayerStats(db, club.id)),
       )
     ).flat();
     if (rows.length > 0) await db.insert(schema.player_stats).values(rows);

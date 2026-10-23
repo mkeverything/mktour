@@ -105,7 +105,9 @@
     "save": "сохранить",
     "settings": "настройки",
     "search": "поиск",
-    "profile": "профиль"
+    "profile": "профиль",
+    "expand": "развернуть",
+    "collapse": "свернуть"
   },
   "Menu": {
     "club": "клубы",
@@ -229,6 +231,7 @@
     "AFFILIATION_NOT_FOUND": "пользователь не привязан к игроку",
     "AFFILIATION_STATUS_NOT_REQUESTED": "пользователь и так не запросил привязку к игроку",
     "ALREADY_AFFILIATED": "пользователь уже привязан к игроку",
+    "CANNOT_LEAVE_AS_ONLY_MANAGER": "нельзя выйти из клуба, в котором вы единственный админ",
     "CANNOT_LEAVE_ONLY_CLUB": "нельзя выйти из своего единственного клуба",
     "CLUB_ID_NOT_MATCHING": "ID клуба не соответствует",
     "CLUB_MISMATCH": "клуб не соответствует",
@@ -336,13 +339,6 @@
     "managers list": "админы",
     "dashboard": "управление клубом",
     "page": "страница клуба",
-    "most active": "самые активные игроки",
-    "tournaments": "турниры",
-    "Stats": {
-      "players": "{count, plural, one {игрок} few {игрока} many {игроков} other {игроки}}",
-      "tournaments": "{count, plural, one {турнир} few {турнира} many {турниров} other {турниры}}",
-      "tournamentsPlayed": "турниров"
-    },
     "Dashboard": {
       "no data": "данные не получены",
       "main": "главная",
@@ -388,15 +384,9 @@
     },
     "Page": {
       "no description": "без описания",
-      "lichess team": "команда в личес",
       "createdAt": "создан: {date}",
-      "tournaments": "турниры",
       "players": "игроки",
-      "most active": "самые активные игроки",
-      "yourPlayer": "ваш игрок в этом клубе",
-      "linkedProfile": "привязанный профиль",
-      "yourStatsInClub": "ваша статистика",
-      "nickname": "никнейм"
+      "roundOf": "тур {round} из {rounds}"
     },
     "New": {
       "new club": "новый клуб",

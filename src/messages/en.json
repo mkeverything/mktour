@@ -105,7 +105,9 @@
     "save": "save",
     "settings": "settings",
     "search": "search",
-    "profile": "profile"
+    "profile": "profile",
+    "expand": "expand",
+    "collapse": "collapse"
   },
   "Menu": {
     "club": "club",
@@ -229,6 +231,7 @@
     "AFFILIATION_NOT_FOUND": "affiliation not found",
     "AFFILIATION_STATUS_NOT_REQUESTED": "affiliation was not requested",
     "ALREADY_AFFILIATED": "this player is already affiliated",
+    "CANNOT_LEAVE_AS_ONLY_MANAGER": "you can not leave a club you are the only manager of",
     "CANNOT_LEAVE_ONLY_CLUB": "you can not leave the only club you are in",
     "CLUB_ID_NOT_MATCHING": "club id does not match",
     "CLUB_MISMATCH": "club does not match",
@@ -336,13 +339,6 @@
     "managers list": "managers",
     "dashboard": "club dashboard",
     "page": "club page",
-    "most active": "most active players",
-    "tournaments": "tournaments",
-    "Stats": {
-      "players": "{count, plural, one {player} other {players}}",
-      "tournaments": "{count, plural, one {tournament} other {tournaments}}",
-      "tournamentsPlayed": "tournaments"
-    },
     "Dashboard": {
       "no data": "no data",
       "main": "main",
@@ -388,15 +384,9 @@
     },
     "Page": {
       "no description": "no description",
-      "lichess team": "lichess team",
       "createdAt": "created: {date}",
-      "tournaments": "tournaments",
       "players": "players",
-      "most active": "most active players",
-      "yourPlayer": "your player in this club",
-      "linkedProfile": "linked profile",
-      "yourStatsInClub": "your own stats",
-      "nickname": "nickname"
+      "roundOf": "round {round} of {rounds}"
     },
     "New": {
       "new club": "new club",

@@ -44,7 +44,7 @@ const MediaQueryProvider: FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-function useMediaQuery(query: string, defaultMatches: boolean) {
+export function useMediaQuery(query: string, defaultMatches: boolean) {
   const mediaQuery = useMemo(
     () => (typeof window === 'undefined' ? null : window.matchMedia(query)),
     [query],
