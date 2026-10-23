@@ -37,10 +37,10 @@ type Sort = Pick<ClubPlayersFilterModel, 'sortBy' | 'order'>;
 // numbers end where their header's label does: the slot after them is as wide as the
 // sort icon beside the label (gap-1 + size-3), and an unsure rating puts its ? there
 const NumericCell: FC<{ value: number; mark?: string }> = ({ value, mark }) => (
-  <>
+  <span className="whitespace-nowrap">
     {value}
     <span className="inline-block w-4 text-left">{mark}</span>
-  </>
+  </span>
 );
 
 const TournamentsHead: FC = () => {
