@@ -1,11 +1,5 @@
-diff --git a/node_modules/trpc-to-openapi/.bun-tag-2f186681d2d14590 b/.bun-tag-2f186681d2d14590
-new file mode 100644
-index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-diff --git a/node_modules/trpc-to-openapi/.bun-tag-a7a2e4ba60c9b6fd b/.bun-tag-a7a2e4ba60c9b6fd
-new file mode 100644
-index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/cjs/adapters/node-http/core.js b/dist/cjs/adapters/node-http/core.js
-index 198f48ecccc6251abe20a7f733a617cd8461fd35..0481dd212250c7c4b091185bdbfbe4ad0401c740 100644
+index 26fe702a94a145e8c2efb6604694e394c90f75e7..85bd25212f37430a58bbe64c8968eaca33c51061 100644
 --- a/dist/cjs/adapters/node-http/core.js
 +++ b/dist/cjs/adapters/node-http/core.js
 @@ -2,7 +2,6 @@
@@ -16,7 +10,7 @@ index 198f48ecccc6251abe20a7f733a617cd8461fd35..0481dd212250c7c4b091185bdbfbe4ad
  const v4_1 = require("zod/v4");
  const generator_1 = require("../../generator");
  const utils_1 = require("../../utils");
-@@ -49,7 +48,7 @@ const createOpenApiNodeHttpHandler = (opts) => {
+@@ -54,7 +53,7 @@ const createOpenApiNodeHttpHandler = (opts) => {
                      return;
                  }
                  throw new server_1.TRPCError({
@@ -25,7 +19,7 @@ index 198f48ecccc6251abe20a7f733a617cd8461fd35..0481dd212250c7c4b091185bdbfbe4ad
                      code: 'NOT_FOUND',
                  });
              }
-@@ -139,22 +138,24 @@ const createOpenApiNodeHttpHandler = (opts) => {
+@@ -144,22 +143,24 @@ const createOpenApiNodeHttpHandler = (opts) => {
                  info,
                  eagerGeneration: true,
              });
@@ -119,7 +113,7 @@ index fc873fec9b998a19150a7cc3173c8abd7f32ddf7..c7ed8ca52f09ca9bca344893f941f13b
                          id: `error.${code}`,
                      }),
 diff --git a/dist/esm/adapters/node-http/core.mjs b/dist/esm/adapters/node-http/core.mjs
-index bc28e259be6deb8165013115f662739dab278a6f..138438ee2210ef2a7d3060eafaac54730b2fd335 100644
+index d783bea40f5ad272b2153f5d3f8ded5e6aa43061..56b6382b2c07823fc5ee1830c8023237ff2e9360 100644
 --- a/dist/esm/adapters/node-http/core.mjs
 +++ b/dist/esm/adapters/node-http/core.mjs
 @@ -1,5 +1,4 @@
@@ -128,7 +122,7 @@ index bc28e259be6deb8165013115f662739dab278a6f..138438ee2210ef2a7d3060eafaac5473
  import { ZodArray } from 'zod/v4';
  import { generateOpenApiDocument } from '../../generator/index.mjs';
  import { acceptsRequestBody, normalizePath, getInputOutputParsers, coerceSchema, instanceofZodTypeLikeVoid, instanceofZodTypeObject, instanceofZodTypeOptional, unwrapZodType, zodSupportsCoerce, getContentType, getRequestSignal, } from '../../utils/index.mjs';
-@@ -45,7 +44,7 @@ export const createOpenApiNodeHttpHandler = (opts) => {
+@@ -50,7 +49,7 @@ export const createOpenApiNodeHttpHandler = (opts) => {
                      return;
                  }
                  throw new TRPCError({
@@ -137,7 +131,7 @@ index bc28e259be6deb8165013115f662739dab278a6f..138438ee2210ef2a7d3060eafaac5473
                      code: 'NOT_FOUND',
                  });
              }
-@@ -138,26 +137,23 @@ export const createOpenApiNodeHttpHandler = (opts) => {
+@@ -143,26 +142,23 @@ export const createOpenApiNodeHttpHandler = (opts) => {
                  info,
                  eagerGeneration: true,
              });

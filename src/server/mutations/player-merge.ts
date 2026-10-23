@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { revalidatePath } from 'next/cache';
 
@@ -217,11 +217,7 @@ export async function mergePlayers({
       },
     });
     await tx.delete(players).where(eq(players.id, mergedPlayerId));
-    await refreshPlayerStats(tx, {
-      clubId,
-      playerIds: [basePlayerId],
-      now,
-    });
+    await refreshPlayerStats(tx, { clubId, playerIds: [basePlayerId] });
 
     return identityInconsistencies;
   });

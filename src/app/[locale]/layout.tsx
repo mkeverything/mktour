@@ -1,6 +1,6 @@
 import AppDocument from '@/app/app-document';
 import JsonLd from '@/components/json-ld';
-import { BASE_URL } from '@/lib/config/urls';
+import { BASE_URL, IS_INDEXABLE } from '@/lib/config/urls';
 import { LOCALES, OPEN_GRAPH_LOCALES } from '@/lib/locales';
 import type { Metadata, Viewport } from 'next';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
@@ -45,17 +45,19 @@ export async function generateMetadata(): Promise<Metadata> {
     ],
     creator: 'mktour',
     publisher: 'mktour',
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-      },
-    },
+    robots: IS_INDEXABLE
+      ? {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+          },
+        }
+      : { index: false, follow: false },
     openGraph: {
       type: 'website',
       locale: OPEN_GRAPH_LOCALES[locale],

@@ -19,21 +19,24 @@ export default function SignInWithLichessButton({
   const [clicked, setClicked] = useState(false);
 
   return (
-    <Button
-      className={cn(
-        `m-auto grid h-28 min-h-28 w-full max-w-md flex-none content-center justify-items-center gap-2 px-1 font-bold`,
-        className,
-      )}
-      disabled={clicked}
-      onClick={() => {
-        setClicked(true);
-        window.location.href = `/login/lichess${from ? '?from=' + from : ''}`;
-      }}
+    <form
+      action={`/login/lichess${from ? '?from=' + encodeURIComponent(from) : ''}`}
+      method="post"
+      onSubmit={() => setClicked(true)}
+      className="contents"
     >
-      <LichessLogo className="size-6 fill-current stroke-current" />
-      <span className="self-baseline-last text-xl leading-none font-light md:px-4 md:text-xl">
-        {t('Home.sign in with lichess')}
-      </span>
-    </Button>
+      <Button
+        className={cn(
+          `m-auto grid h-28 min-h-28 w-full max-w-md flex-none content-center justify-items-center gap-2 px-1 font-bold`,
+          className,
+        )}
+        disabled={clicked}
+      >
+        <LichessLogo className="size-6 fill-current stroke-current" />
+        <span className="self-baseline-last text-xl leading-none font-light md:px-4 md:text-xl">
+          {t('Home.sign in with lichess')}
+        </span>
+      </Button>
+    </form>
   );
 }

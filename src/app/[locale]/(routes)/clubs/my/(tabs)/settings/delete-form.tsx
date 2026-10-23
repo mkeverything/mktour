@@ -66,7 +66,12 @@ export default function DeleteConfirmationForm({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input {...field} disabled={isPending} autoComplete="off" />
+                <Input
+                  {...field}
+                  aria-label={t('name')}
+                  disabled={isPending}
+                  autoComplete="off"
+                />
               </FormControl>
             </FormItem>
           )}

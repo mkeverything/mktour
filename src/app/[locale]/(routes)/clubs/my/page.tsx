@@ -1,6 +1,6 @@
 import Dashboard from '@/app/[locale]/(routes)/clubs/my/dashboard';
 import { clubQueryPrefetch } from '@/app/[locale]/(routes)/clubs/my/prefetch';
-import { HydrateClient } from '@/components/trpc/server';
+import { HydrateClient } from '@/components/trpc/hydrate-client';
 import { publicCaller } from '@/server/api';
 import { getTranslations } from 'next-intl/server';
 import type { ResolvingMetadata } from 'next';
@@ -29,5 +29,6 @@ export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
     path: '/clubs/my',
     title: t('clubs.my.title'),
     description: t('clubs.my.description'),
+    robots: { index: false, follow: false },
   });
 }

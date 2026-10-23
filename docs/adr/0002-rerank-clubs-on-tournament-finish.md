@@ -1,0 +1,3 @@
+# re-rank clubs when tournaments finish, never on a schedule
+
+ranks in `player_stats` are row numbers for every club player, so a pinned or searched row can show its place in the club list. they change only in the transactions that change a club's results: a tournament finishing, deleting a finished tournament, merging players or deleting a player who has ranks; players created since then have none yet. nothing re-ranks clubs on a timer, and the club page reads the stored rd instead of growing it with inactivity, so an abandoned club keeps its last state rather than slowly turning every rating provisional. only player pages show the live rd.

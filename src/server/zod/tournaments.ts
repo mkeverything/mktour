@@ -126,7 +126,7 @@ export const withdrawTournamentUnitInputSchema = z.object({
   userId: z.string(),
 });
 export const withdrawTournamentUnitResultSchema = z.object({
-  roundsNumber: z.number().int().min(1).nullable(),
+  roundsNumber: z.number().int().nonnegative(),
   roundsNumberAutoDecreased: z.boolean(),
 });
 
@@ -141,6 +141,11 @@ export const tournamentInfoSchema = z.object({
     id: true,
     name: true,
   }),
+});
+export const tournamentStartInputSchema = tournamentIdInputSchema.extend({
+  startedAt: z.date(),
+  format: tournamentFormatEnum,
+  roundsNumber: z.number().int().nonnegative(),
 });
 export const tournamentWithClubSchema = z.object({
   tournament: tournamentSchema,
@@ -169,7 +174,7 @@ const localDateStringSchema = z.string().superRefine((value, ctx) => {
 });
 
 const newTournamentFormSchemaConfig = {
-  title: z.string().optional(),
+  title: z.string().trim().optional(),
   date: z.date().superRefine((date, ctx) => {
     const error = getLocalDateStringValidationError(
       dateToLocalDateString(date),
@@ -230,6 +235,9 @@ export type WithdrawTournamentUnitResultModel = z.infer<
   typeof withdrawTournamentUnitResultSchema
 >;
 export type TournamentModel = z.infer<typeof tournamentSchema>;
+export type TournamentStartInputModel = z.infer<
+  typeof tournamentStartInputSchema
+>;
 export type TournamentInsertModel = z.infer<typeof tournamentsInsertSchema>;
 export type TournamentUpdateModel = z.infer<typeof tournamentsUpdateSchema>;
 export type NewTournamentFormModel = z.infer<typeof newTournamentFormSchema>;

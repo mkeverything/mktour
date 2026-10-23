@@ -11,6 +11,7 @@ import {
 import ShuffleButton from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/shuffle-button';
 import TabsContainer from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs-container';
 import AddPlayerDrawer from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/table/add-player';
+import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
 import FabProvider from '@/components/ui-custom/fab-provider';
 import { TournamentAuthStatus } from '@/server/zod/enums';
@@ -23,7 +24,6 @@ interface DashboardMobileProps {
   status: TournamentAuthStatus;
   unitId: string | null;
   userId: string | undefined;
-  currentRound: number | null;
   currentTab: DashboardTab;
   setCurrentTab: Dispatch<SetStateAction<DashboardTab>>;
 }
@@ -40,12 +40,14 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
   status,
   unitId,
   userId,
-  currentRound,
   currentTab,
   setCurrentTab,
 }) => {
   const queryClient = useQueryClient();
-  const [roundInView, setRoundInView] = useState(currentRound || 1);
+  const { data: tournament } = useTournamentInfo(id);
+  const [roundInView, setRoundInView] = useState(
+    tournament?.tournament.ongoingRound || 1,
+  );
   const { sendJsonMessage } = useDashboardWebsocket(
     session,
     id,

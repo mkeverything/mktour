@@ -43,12 +43,12 @@ export default function AuthButton() {
   if (!user) {
     return (
       <div className="flex items-center">
-        <Button className={`flex-row gap-2 p-2`} variant="ghost" asChild>
-          <Link href="/login/lichess" prefetch={false}>
+        <form action="/login/lichess" method="post">
+          <Button className={`flex-row gap-2 p-2`} variant="ghost">
             <LichessLogo />
             <span className="hidden sm:block">{t('Profile.login')}</span>
-          </Link>
-        </Button>
+          </Button>
+        </form>
         <div className="hidden items-center md:flex">
           <LocaleSwitcher />
           <ModeToggler />

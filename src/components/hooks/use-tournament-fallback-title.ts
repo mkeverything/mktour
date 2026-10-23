@@ -1,18 +1,15 @@
 import { TournamentModel } from '@/server/zod/tournaments';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useFormatDate } from '@/components/hooks/use-format-date';
+import { useTranslations } from 'next-intl';
 
 export const useTournamentFallbackTitle = (
   tournament: TournamentModel | null | undefined,
 ) => {
-  const format = useFormatter();
+  const formatDate = useFormatDate();
   const t = useTranslations('MakeTournament');
 
   if (!tournament) return '';
 
   const formatText = t(tournament.format);
-  const localizedDate = format.dateTime(new Date(tournament.date), {
-    dateStyle: 'short',
-  });
-
-  return `${formatText} ${localizedDate}`;
+  return `${formatText} ${formatDate(tournament.date, 'short')}`;
 };

@@ -4,7 +4,6 @@ import 'server-only'; // <-- ensure this file cannot be imported from the client
 import { makeQueryClient } from '@/components/trpc/query-client';
 import { appRouter } from '@/server/api';
 import { createTRPCContext } from '@/server/api/trpc';
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { createTRPCClient } from '@trpc/client';
 import {
   createTRPCOptionsProxy,
@@ -34,14 +33,6 @@ createTRPCOptionsProxy({
   queryClient: getQueryClient,
 });
 
-export function HydrateClient(props: { children: React.ReactNode }) {
-  const queryClient = getQueryClient();
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      {props.children}
-    </HydrationBoundary>
-  );
-}
 export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
   queryOptions: T,
 ) {

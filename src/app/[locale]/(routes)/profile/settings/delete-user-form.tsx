@@ -68,6 +68,7 @@ export default function DeleteUserForm({
               onSuccess: () => {
                 setOpen(false);
                 startNavigation(() => {
+                  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
                   window.location.href = '/sign-in';
                   form.reset();
                 });
@@ -86,6 +87,7 @@ export default function DeleteUserForm({
               <FormControl>
                 <Input
                   {...field}
+                  aria-label={t('username')}
                   disabled={isPending || isNavigating}
                   autoComplete="off"
                   onPaste={(e) => {

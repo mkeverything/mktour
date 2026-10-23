@@ -13,7 +13,10 @@ import { newid } from '@/lib/utils';
 import { publicCaller } from '@/server/api';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
+import { player_stats, players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
+import { ClubPlayersFilterModel } from '@/server/zod/players';
 
 // cacheTag throws outside the next runtime
 mock.module('next/cache', () => ({ ...nextCache, cacheTag: () => {} }));
@@ -22,6 +25,15 @@ setDefaultTimeout(60_000);
 
 // smaller than the tied group below, so a page boundary falls inside it
 const PAGE_SIZE = 2;
+
+const clubIds = [newid(), newid(), newid()];
+const clubPlayers = [1600, 1500, 1500, 1500].map((rating, i) => ({
+  id: newid(),
+  nickname: `${i % 2 ? 'Player' : 'player'} ${i}`,
+  rating,
+  clubId: clubIds[0],
+  lastSeenAt: new Date(2026, 0, i + 1),
+}));
 
 async function collectIds(
   fetchPage: (cursor?: number) => Promise<[string[], number | null]>,
@@ -38,9 +50,8 @@ async function collectIds(
 
 describe('list pagination', () => {
   beforeAll(async () => {
-    // future-dated so they head the lists: 3 clubs and 6 tournaments sharing one createdAt
+    // future-dated so they head the lists: 3 clubs and 9 tournaments sharing one createdAt
     const createdAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-    const clubIds = [newid(), newid(), newid()];
     await db
       .insert(clubs)
       .values(
@@ -48,7 +59,7 @@ describe('list pagination', () => {
       );
     await db.insert(tournaments).values(
       clubIds.flatMap((clubId) =>
-        [0, 1].map(() => ({
+        [0, 1, 2].map(() => ({
           id: newid(),
           title: 'pagination test',
           format: 'round robin' as const,
@@ -58,8 +69,20 @@ describe('list pagination', () => {
           clubId,
           startedAt: createdAt,
           closedAt: createdAt,
+          roundsNumber: 1,
         })),
       ),
+    );
+    await db.insert(players).values(clubPlayers);
+    await db.insert(player_stats).values(
+      clubPlayers.map(({ id, clubId }, i) => ({
+        playerId: id,
+        clubId,
+        tournamentsPlayed: i % 2 ? 3 : 0,
+      })),
+    );
+    await db.transaction((tx) =>
+      refreshPlayerStats(tx, { clubId: clubIds[0], playerIds: [] }),
     );
   });
 
@@ -96,5 +119,65 @@ describe('list pagination', () => {
 
     expect(ids.length).toBe(new Set(ids).size);
     expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
+  });
+
+  test('club.tournaments returns every club tournament exactly once', async () => {
+    const ids = await collectIds(async (cursor) => {
+      const page = await publicCaller.club.tournaments({
+        clubId: clubIds[0],
+        limit: PAGE_SIZE,
+        cursor,
+      });
+      return [page.tournaments.map(({ id }) => id), page.nextCursor];
+    });
+    const expected = await db
+      .select({ id: tournaments.id })
+      .from(tournaments)
+      .where(eq(tournaments.clubId, clubIds[0]));
+
+    expect(ids.length).toBe(new Set(ids).size);
+    expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
+  });
+
+  test('club.players runs every sort along its stored ranks, both ways', async () => {
+    const collectRows = (filter: ClubPlayersFilterModel) =>
+      collectIds(async (cursor) => {
+        const page = await publicCaller.club.players({
+          clubId: clubIds[0],
+          limit: PAGE_SIZE,
+          cursor,
+          ...filter,
+        });
+        return [
+          page.players.map(
+            ({ id, ratingRank, tournamentsPlayedRank }) =>
+              `${filter.sortBy === 'tournamentsPlayed' ? tournamentsPlayedRank : ratingRank} ${id}`,
+          ),
+          page.nextCursor,
+        ];
+      });
+    const numbered = (ids: string[]) => ids.map((id, i) => `${i + 1} ${id}`);
+    const [p0, p1, p2, p3] = clubPlayers.map(({ id }) => id);
+    // rating ties fall back to last seen, so the rating and nickname sorts share one order
+    const byRating = numbered([p0, p1, p2, p3]);
+    const byTournaments = numbered([p1, p3, p0, p2]);
+
+    for (const [sortBy, order, expected] of [
+      ['rating', 'desc', byRating],
+      ['nickname', 'asc', byRating],
+      ['tournamentsPlayed', 'desc', byTournaments],
+    ] as const) {
+      expect(await collectRows({ sortBy, order })).toEqual(expected);
+      expect(
+        await collectRows({ sortBy, order: order === 'asc' ? 'desc' : 'asc' }),
+      ).toEqual(expected.toReversed());
+    }
+    expect(
+      await collectRows({
+        sortBy: 'tournamentsPlayed',
+        order: 'desc',
+        search: 'PLAYER 3',
+      }),
+    ).toEqual([byTournaments[1]]);
   });
 });
