@@ -1,4 +1,5 @@
-import { MotionProps, motion } from 'framer-motion';
+import { MotionProps } from 'framer-motion';
+import * as m from 'framer-motion/m';
 
 const MenuToggle = ({ toggle }: { toggle: () => void }) => (
   <button
@@ -31,7 +32,7 @@ const MenuToggle = ({ toggle }: { toggle: () => void }) => (
 );
 
 const Path = (props: MotionProps) => (
-  <motion.path
+  <m.path
     className="fill-primary stroke-primary"
     strokeWidth="2"
     strokeLinecap="round"

@@ -5,26 +5,15 @@ import {
 } from './seo-json-ld';
 
 export default async function JsonLd() {
-  const [organization, website, software] = await Promise.all([
+  const schemas = await Promise.all([
     getOrganizationSchema(),
     getWebsiteSchema(),
     getSoftwareApplicationSchema(),
   ]);
 
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(software) }}
-      />
-    </>
-  );
+  return schemas.map((schema) => (
+    <script key={schema['@type']} type="application/ld+json">
+      {JSON.stringify(schema)}
+    </script>
+  ));
 }

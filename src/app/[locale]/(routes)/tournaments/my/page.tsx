@@ -84,5 +84,6 @@ export async function generateMetadata(_: unknown, parent: ResolvingMetadata) {
     path: '/tournaments/my',
     title: t('tournaments.my.title'),
     description: t('tournaments.my.description'),
+    robots: { index: false, follow: false },
   });
 }

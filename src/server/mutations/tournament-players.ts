@@ -1,11 +1,11 @@
-'use server';
+import 'server-only';
 
 import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
-import { db } from '@/server/db';
+import { db, type Transaction } from '@/server/db';
 import {
   players_to_units,
   tournament_units,
@@ -18,11 +18,6 @@ import type { UnitModel } from '@/server/zod/tournaments';
 import { and, eq } from 'drizzle-orm';
 import { createPlayer } from './club-managing';
 import { applyPreStartUnitOrder } from './tournament-unit-order';
-
-type SoloUnitDatabase = Pick<
-  typeof db,
-  'delete' | 'insert' | 'select' | 'update'
->;
 
 export async function addNewSoloUnit({
   tournamentId,
@@ -65,7 +60,7 @@ export async function addSoloUnit(
     unitId?: string;
     addedAt?: Date;
   },
-  options: { database?: SoloUnitDatabase; skipAuth?: boolean } = {},
+  options: { database?: Transaction; skipAuth?: boolean } = {},
 ): Promise<UnitModel[]> {
   const now = addedAt ?? new Date();
 
@@ -93,7 +88,7 @@ export async function addSoloUnit(
     numberInUnit: 1,
   });
 
-  const run = async (d: SoloUnitDatabase) => {
+  const run = async (d: Transaction) => {
     const tournament = await getTournamentById(tournamentId, d);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');

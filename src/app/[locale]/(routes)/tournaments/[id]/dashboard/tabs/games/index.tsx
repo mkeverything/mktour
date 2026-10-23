@@ -29,10 +29,7 @@ const Games: FC = () => {
   } = useTournamentUnits(id);
   const t = useTranslations('Tournament.Round');
   const [startTournamentOpen, setStartTournamentOpen] = useState(false);
-  const now = new Date().getTime();
-  const startedAt = data?.startedAt ? data.startedAt.getTime() : 0;
   const isPending = isLoading || isUnitsLoading;
-  const renderDrawer = (!startedAt || now - startedAt <= 5000) && !isPending;
 
   if (isError || isUnitsError) {
     return (
@@ -78,9 +75,9 @@ const Games: FC = () => {
           />
         )}
       </div>
-      {renderDrawer && (
+      {(!data?.startedAt || startTournamentOpen) && (
         <StartTournamentDrawer
-          startedAt={startedAt}
+          startedAt={data?.startedAt?.getTime()}
           open={startTournamentOpen}
           onOpenChange={setStartTournamentOpen}
         />

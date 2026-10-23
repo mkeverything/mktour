@@ -7,7 +7,7 @@ import {
   RatingUpdate,
 } from '@/lib/glicko2';
 import { newid } from '@/lib/utils';
-import { db } from '@/server/db';
+import type { Transaction } from '@/server/db';
 import { players, rating_events } from '@/server/db/schema/players';
 import {
   games,
@@ -21,7 +21,6 @@ import type { GameResult } from '@/server/zod/enums';
 import type { PlayerRecordModel } from '@/server/zod/players';
 import type { GameModel } from '@/server/zod/tournaments';
 
-type Tx = Pick<typeof db, 'select' | 'update' | 'insert'>;
 type PlayerRating = Pick<
   PlayerRecordModel,
   'id' | 'rating' | 'ratingDeviation' | 'ratingVolatility'
@@ -49,7 +48,7 @@ type PlayerRatingUpdate = {
   newPeak: NonNullable<PlayerRecordModel['ratingPeak']> | null;
 };
 
-async function getTournamentGameRows(tournamentId: string, tx: Tx) {
+async function getTournamentGameRows(tournamentId: string, tx: Transaction) {
   return tx
     .select({
       id: games.id,
@@ -63,7 +62,7 @@ async function getTournamentGameRows(tournamentId: string, tx: Tx) {
 
 async function getTournamentPlayerRatings(
   tournamentId: string,
-  tx: Tx,
+  tx: Transaction,
 ): Promise<TournamentPlayerRating[]> {
   return tx
     .select({
@@ -208,7 +207,7 @@ function calculatePlayerRatingUpdate(
 /** publishes rating outcomes for players with at least one completed rated game */
 export async function calculateAndApplyGlickoRatings(
   tournamentId: string,
-  tx: Tx,
+  tx: Transaction,
   publishedAt: Date,
 ): Promise<void> {
   const tournament = await tx

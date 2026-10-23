@@ -4,9 +4,7 @@ import { AppError } from '@/lib/errors';
 import type { GameResult } from '@/server/zod/enums';
 import { GameModel } from '@/server/zod/tournaments';
 import { ClassValue, clsx } from 'clsx';
-import { Clock, icons } from 'lucide-react';
 import { customAlphabet } from 'nanoid';
-import { FC } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -115,30 +113,9 @@ export function debounce<T extends (..._args: any[]) => any>(
   };
 }
 
-export const getClockIcon = (time: Date | null | undefined): FC => {
-  if (!time) return Clock;
-
-  let hour = time.getHours();
-  const minutes = time.getMinutes();
-  if (minutes >= 30) {
-    hour = hour + 1;
-  }
-  hour = hour % 12;
-  const clockIcon = `Clock${hour === 0 ? '12' : hour}` as keyof typeof icons;
-
-  return icons[clockIcon];
-};
-
 export function getRoundRobinRoundsNumber(playerCount: number) {
   if (playerCount < 2) throw new AppError('NOT_ENOUGH_TOURNAMENT_UNITS');
   return playerCount % 2 === 0 ? playerCount - 1 : playerCount;
-}
-
-export function getSwissRecommendedRoundsNumber(players: number): number {
-  if (players < 2) return 1;
-  if (players === 2) return 1;
-  if (players < 7) return Math.floor(Math.log2(players - 1)) + 2;
-  return Math.floor(Math.log2(players - 1)) + 3;
 }
 
 export function getSwissMaxRoundsNumber(players: number): number {

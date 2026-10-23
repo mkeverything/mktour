@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+
 @plugin 'tailwindcss-animate';
 @config '../../tailwind.config.js';
 
@@ -101,6 +102,18 @@ button {
   }
 }
 
+/* where the club page's list headers stick: under the navbar and the 3.25rem tab bar on mobile,
+   at the top of the column on desktop. the -1px overlap keeps a seam from showing above them */
+@utility club-sticky-top {
+  --club-sticky-top: calc(
+    var(--spacing-mk-navbar-total-height) + 3.25rem - 1px
+  );
+
+  @media screen and (min-width: 1024px) {
+    --club-sticky-top: -1px;
+  }
+}
+
 @utility mk-container {
   height: 100%;
   width: 100%;
@@ -112,6 +125,14 @@ button {
     max-width: 768px;
     margin: auto;
     padding: var(--spacing-mk-2);
+  }
+}
+
+/* pages that fit the viewport on desktop must not rubber-band as a whole */
+@media screen and (min-width: 1024px) {
+  html:has([data-fixed-viewport]),
+  html:has([data-fixed-viewport]) body {
+    overscroll-behavior: none;
   }
 }
 
@@ -312,5 +333,38 @@ button {
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/*
+  reduced motion removes movement, not every animation: fades, colour changes
+  and spinners stay, while zooms, slides and spins of tailwindcss-animate
+  become plain fades, drawers fade instead of sliding in from the edge,
+  and view transitions cross-fade without moving elements
+*/
+@media (prefers-reduced-motion: reduce) {
+  * {
+    --tw-enter-opacity: 0;
+    --tw-enter-scale: 1;
+    --tw-enter-rotate: 0;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-exit-opacity: 0;
+    --tw-exit-scale: 1;
+    --tw-exit-rotate: 0;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+  }
+
+  [data-vaul-drawer][data-state='open'] {
+    animation-name: enter !important;
+  }
+
+  [data-vaul-drawer][data-state='closed'] {
+    animation-name: exit !important;
+  }
+
+  ::view-transition-group(*) {
+    animation-duration: 0s;
   }
 }

@@ -41,6 +41,8 @@ CONTEXT.md
 # local maintenance config
 /maintenance.local.json
 
+/docs/dependency-upgrades.md
+
 # vercel
 .vercel
 

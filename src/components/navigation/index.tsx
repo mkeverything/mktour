@@ -4,23 +4,15 @@ import Desktop from '@/components/navigation/desktop';
 import Mobile from '@/components/navigation/mobile';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import MktourNavbar from '@/components/ui-custom/mktour-logo-navbar';
-import { FC, Suspense, useContext, useEffect, useState } from 'react';
+import { FC, Suspense, useContext } from 'react';
 
 const Navigation: FC = () => {
   const { isTablet } = useContext(MediaQueryContext);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // eslint-disable-next-line
-    setMounted(true);
-  }, []);
-
-  const showMobile = mounted ? isTablet : true;
 
   return (
     <nav className="mk-navbar bg-background fixed top-0 z-50 flex w-full items-center justify-between border-b">
       <MktourNavbar />
-      <Suspense>{showMobile ? <Mobile /> : <Desktop />}</Suspense>
+      <Suspense>{isTablet ? <Mobile /> : <Desktop />}</Suspense>
     </nav>
   );
 };

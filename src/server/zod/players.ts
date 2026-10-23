@@ -10,6 +10,7 @@ import {
   rating_events,
 } from '@/server/db/schema/players';
 import { clubsSelectSchema } from '@/server/zod/clubs';
+import { clubPaginatedInputSchema } from '@/server/zod/common';
 import { affiliationStatusEnum } from '@/server/zod/enums';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { tournamentSchema } from '@/server/zod/tournaments';
@@ -148,9 +149,54 @@ export const playerMergeInputSchema = z.object({
   mergedPlayerId: z.string(),
 });
 
+const clubPlayersFilterSchema = z.object({
+  sortBy: z.enum(['rating', 'nickname', 'tournamentsPlayed']).default('rating'),
+  order: z.enum(['asc', 'desc']).default('desc'),
+  search: z.string().optional(),
+});
+
+export const CLUB_PLAYERS_DEFAULT_SORT = clubPlayersFilterSchema.parse({});
+
+export const clubPlayersInputSchema = clubPaginatedInputSchema.extend(
+  clubPlayersFilterSchema.shape,
+);
+
 export const playerStatsSchema = createSelectSchema(player_stats).omit({
   playerId: true,
   clubId: true,
+});
+
+const playerListItemSchema = playerPublicSchema.pick({
+  id: true,
+  nickname: true,
+  realname: true,
+  rating: true,
+});
+
+const clubPlayerSchema = playerListItemSchema.extend({
+  ...playerStatsSchema.pick({
+    tournamentsPlayed: true,
+    ratingRank: true,
+    tournamentsPlayedRank: true,
+  }).shape,
+  isRatingEstablished: z.boolean(),
+});
+
+// unlike isEstablished, isRatingEstablished reads the stored rd, which doesn't grow while a club is idle (docs/adr/0002)
+export const clubPlayerOutputSchema = clubPlayerSchema
+  .omit({ isRatingEstablished: true })
+  .extend({
+    ratingDeviation: playersSelectSchema.shape.ratingDeviation,
+  })
+  .transform(({ ratingDeviation, ...player }) => ({
+    ...player,
+    isRatingEstablished: isEstablishedRating(ratingDeviation),
+  }))
+  .pipe(clubPlayerSchema);
+
+export const clubPlayersOutputSchema = z.object({
+  players: z.array(clubPlayerOutputSchema),
+  nextCursor: z.number().nullable(),
 });
 
 export const playerStatsRowSchema = createSelectSchema(player_stats).omit({
@@ -173,6 +219,7 @@ export type AffiliationExtendedModel = z.infer<
 export type AffiliationMinimalModel = z.infer<typeof affiliationMinimalSchema>;
 export type PlayerRecordModel = z.infer<typeof playersSelectSchema>;
 export type PlayerModel = z.infer<typeof playerPublicSchema>;
+export type PlayerListItemModel = z.infer<typeof playerListItemSchema>;
 export type PlayerWithUsernameModel = z.infer<typeof playersWithUsernameSchema>;
 export type PlayerMinimalModel = z.infer<typeof playersMinimalSchema>;
 export type PlayerFormModel = z.infer<typeof playerFormSchema>;
@@ -180,6 +227,9 @@ export type PlayerInsertModel = z.infer<typeof playersInsertSchema>;
 export type PlayerUpdateModel = z.infer<typeof playersUpdateSchema>;
 export type PlayerEditModel = z.infer<typeof playerEditSchema>;
 export type PlayerMergeInputModel = z.infer<typeof playerMergeInputSchema>;
+export type ClubPlayersFilterModel = z.infer<typeof clubPlayersFilterSchema>;
+export type ClubPlayersInputModel = z.infer<typeof clubPlayersInputSchema>;
+export type ClubPlayerModel = z.infer<typeof clubPlayerOutputSchema>;
 
 export const userPlayerClubSchema = z.object({
   club: z.object({ id: z.string(), name: z.string() }),

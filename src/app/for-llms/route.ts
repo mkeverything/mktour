@@ -1,13 +1,15 @@
+import { cacheLife } from 'next/cache';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-export async function GET() {
-  const content = await readFile(
-    join(process.cwd(), 'public/llms.txt'),
-    'utf8',
-  );
+async function getLlmsContent() {
+  'use cache';
+  cacheLife('max');
+  return readFile(join(process.cwd(), 'public/llms.txt'), 'utf8');
+}
 
-  return new Response(content, {
+export async function GET() {
+  return new Response(await getLlmsContent(), {
     headers: {
       'Content-Type': 'text/markdown; charset=utf-8',
     },

@@ -7,8 +7,6 @@ import {
   publicProcedure,
   tournamentAdminProcedure,
 } from '@/server/api/trpc';
-import { db } from '@/server/db';
-import { tournaments } from '@/server/db/schema/tournaments';
 import {
   saveRound,
   setTournamentGameResult,
@@ -44,7 +42,6 @@ import { getTournamentInfo } from '@/server/queries/get-tournament-info';
 import { getTournamentPossiblePlayers } from '@/server/queries/get-tournament-possible-players';
 import { getTournamentUnits } from '@/server/queries/get-tournament-units';
 import { tournamentIdInputSchema } from '@/server/zod/common';
-import { tournamentFormatEnum } from '@/server/zod/enums';
 import {
   playerFormSchema,
   playersWithUsernameSchema,
@@ -62,12 +59,12 @@ import {
   tournamentCreateInputSchema,
   tournamentFinishOutputSchema,
   tournamentInfoSchema,
+  tournamentStartInputSchema,
   tournamentWithClubSchema,
   unitSchema,
   withdrawTournamentUnitInputSchema,
   withdrawTournamentUnitResultSchema,
 } from '@/server/zod/tournaments';
-import { eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 
@@ -107,19 +104,7 @@ export const tournamentRouter = {
     .input(tournamentIdInputSchema)
     .output(tournamentInfoSchema)
     .query(async (opts) => {
-      const { input } = opts;
-      const tournamentInfo = await getTournamentInfo(input.tournamentId);
-      if (
-        tournamentInfo.tournament.format === 'swiss' &&
-        tournamentInfo.tournament.roundsNumber === null
-      ) {
-        await db
-          .update(tournaments)
-          .set({ roundsNumber: 1 })
-          .where(eq(tournaments.id, input.tournamentId));
-        tournamentInfo.tournament.roundsNumber = 1;
-      }
-      return tournamentInfo;
+      return await getTournamentInfo(opts.input.tournamentId);
     }),
   units: publicProcedure
     .input(tournamentIdInputSchema)
@@ -237,18 +222,9 @@ export const tournamentRouter = {
       return await saveRound(opts.input);
     }),
   start: tournamentAdminProcedure
-    .input(
-      tournamentIdInputSchema.extend({
-        startedAt: z.date(),
-        format: tournamentFormatEnum,
-        roundsNumber: z.number().int().min(1).nullable(),
-      }),
-    )
+    .input(tournamentStartInputSchema)
     .output(z.array(gameSchema))
-    .mutation(async (opts) => {
-      const { input } = opts;
-      return await startTournament(input);
-    }),
+    .mutation(({ input }) => startTournament(input)),
   reset: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
     .output(z.void())
@@ -300,7 +276,7 @@ export const tournamentRouter = {
   editTitle: tournamentAdminProcedure
     .input(
       tournamentIdInputSchema.extend({
-        title: z.string(),
+        title: z.string().trim(),
       }),
     )
     .output(z.void())

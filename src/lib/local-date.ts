@@ -57,22 +57,38 @@ export const getLocalDateStringValidationError = (
   return null;
 };
 
-export const formatTournamentDisplayDate = (
-  date: Date,
-  locale: string,
-  referenceDate: Date = new Date(),
-): string => {
-  const showYear = date.getFullYear() !== referenceDate.getFullYear();
-  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(
-    date,
-  );
-  const dayMonth = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'long',
-    ...(showYear ? { year: 'numeric' } : {}),
-  }).format(date);
-  const decapitalizedWeekday =
-    weekday.charAt(0).toLocaleLowerCase(locale) + weekday.slice(1);
+// a 'yyyy-mm-dd' string is read as local midnight. without the time it would be
+// read as utc midnight and show the previous day west of utc
+export const toDate = (date: Date | string): Date =>
+  typeof date === 'string' ? new Date(`${date}T00:00`) : date;
 
-  return `${decapitalizedWeekday}, ${dayMonth}`;
+// 'sep 21' / '21 сент.' with a short month, 'september 21' / '21 сентября' with a long one.
+// the year is shown when it isn't the current one, or always with `withYear`
+export const formatDate = (
+  date: Date | string,
+  locale: string,
+  month: 'short' | 'long',
+  { withYear = false } = {},
+): string => {
+  const value = toDate(date);
+  const showYear = withYear || value.getFullYear() !== new Date().getFullYear();
+  const formatted = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month,
+    year: showYear ? 'numeric' : undefined,
+  }).format(value);
+
+  // russian appends ' г.' to the year
+  return formatted.replace(/ г\.$/, '').toLocaleLowerCase(locale);
+};
+
+export const formatTournamentDisplayDate = (
+  date: Date | string,
+  locale: string,
+): string => {
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(
+    toDate(date),
+  );
+
+  return `${weekday.toLocaleLowerCase(locale)}, ${formatDate(date, locale, 'long')}`;
 };

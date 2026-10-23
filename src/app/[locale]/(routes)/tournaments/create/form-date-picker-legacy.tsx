@@ -53,7 +53,7 @@ export default function FormDatePicker({ field }: FormDatePickerProps) {
                 mode="single"
                 selected={field.value}
                 onSelect={field.onChange}
-                initialFocus
+                autoFocus
                 locale={localeMap[locale]}
               />
             </PopoverContent>

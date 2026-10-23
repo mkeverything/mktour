@@ -7,14 +7,15 @@ import { useClubInfo } from '@/components/hooks/query-hooks/use-club-info';
 import HalfCard from '@/components/ui-custom/half-card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { BriefcaseBusiness, CalendarDays, Info } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { FC } from 'react';
 
 const ClubMain: FC<ClubTabProps> = ({ selectedClub }) => {
   const { data: club, isPending } = useClubInfo(selectedClub);
-  const locale = useLocale();
+  const formatDate = useFormatDate();
   const t = useTranslations('Club');
 
   if (isPending) return <Skeleton className="h-24 w-full" />;
@@ -31,9 +32,7 @@ const ClubMain: FC<ClubTabProps> = ({ selectedClub }) => {
             <CalendarDays className="size-4" />
             {club.createdAt &&
               t('Page.createdAt', {
-                date: club.createdAt.toLocaleDateString(locale, {
-                  dateStyle: 'long',
-                }),
+                date: formatDate(club.createdAt, 'long'),
               })}
           </div>
         </div>

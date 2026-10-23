@@ -2,6 +2,7 @@
 
 import { turboPascal } from '@/app/fonts';
 import { Button } from '@/components/ui/button';
+import { COOKIES } from '@/lib/config/constants';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect } from 'react';
@@ -64,10 +65,7 @@ export default function TeamJoinToaster() {
   }, 500);
 
   useEffect(() => {
-    fetch('/api/auth/delete-new-user-cookie', {
-      method: 'GET',
-      credentials: 'same-origin',
-    });
+    document.cookie = `${COOKIES.NEW_USER_TOAST}=; path=/; max-age=0`;
   }, []);
 
   return <></>;

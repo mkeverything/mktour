@@ -40,6 +40,17 @@ const SECOND_ONGOING_ROUND = INITIAL_ONGOING_ROUND + 1;
 /** Per FIDE C.04.3 §C.5, at most one PAB per round per bracket — and exactly one when the active count is odd. */
 const EXPECTED_PAB_COUNT_FOR_ODD_ACTIVE = 1;
 
+/** colour index after one game: +1 as white, −1 as black, as production applies it. */
+const WHITE_COLOUR_INDEX_AFTER_ONE_GAME = 1;
+const BLACK_COLOUR_INDEX_AFTER_ONE_GAME = -1;
+
+/** two boards and no bye, so every unit plays in round 1. */
+const TWO_BOARD_PLAYER_COUNT = 4;
+const GAMES_AFTER_ONE_ROUND = 1;
+
+/** round 1 has no history to pass. */
+const NO_RECORDED_GAMES: GameModel[] = [];
+
 /**
  * Generates a complete Swiss tournament with the given seed
  * @param seed - Random seed for deterministic generation
@@ -117,6 +128,73 @@ function generateTournamentWithSeed(
     roundsToTest,
     optimalRounds: SWISS_OPTIMAL_ROUNDS,
   };
+}
+
+/**
+ * builds units with pairing numbers set, which the engine requires.
+ *
+ * @param count - how many units to build
+ * @returns units numbered from 0 in creation order
+ */
+function numberedPlayers(count: number): UnitModel[] {
+  const players: UnitModel[] = [];
+  for (let index = 0; index < count; index++) {
+    const player = generatePlayerModel();
+    player.number = index;
+    players.push(player);
+  }
+  return players;
+}
+
+/**
+ * plays round 1 with random results.
+ *
+ * @param players - units entering the tournament
+ * @returns round 1's games, every result filled in
+ */
+function playFirstRound(players: UnitModel[]): GameModel[] {
+  const tournament = generateRandomDatabaseTournament();
+  const firstRound = generateWeightedSwissRound({
+    players,
+    games: NO_RECORDED_GAMES,
+    roundNumber: INITIAL_ONGOING_ROUND,
+    tournamentId: tournament.id,
+  });
+  firstRound.forEach(fillRandomResult);
+  return firstRound;
+}
+
+/** units under their ids, so a game's unit ids lead straight to its units. */
+type UnitLookupMap = ReadonlyMap<UnitModel['id'], UnitModel>;
+
+/**
+ * indexes units by id.
+ *
+ * @param players - units to index
+ * @returns each unit under its id
+ */
+function indexById(players: UnitModel[]): UnitLookupMap {
+  const playerById = new Map<UnitModel['id'], UnitModel>();
+  for (const player of players) {
+    playerById.set(player.id, player);
+  }
+  return playerById;
+}
+
+/**
+ * looks up a unit by id, failing loudly on an unknown id.
+ *
+ * a game naming a unit outside the field is a generator bug, not a missing value.
+ */
+function lookUpUnit(
+  unitId: UnitModel['id'],
+  unitById: UnitLookupMap,
+): UnitModel {
+  const unit = unitById.get(unitId);
+  if (unit === undefined) {
+    throw new Error(`game references a unit outside the field: ${unitId}`);
+  }
+  return unit;
 }
 
 describe('Swiss Generator Black-Box Tests', () => {
@@ -280,5 +358,37 @@ describe('Swiss Generator Black-Box Tests', () => {
     // test('40 players, 37 rounds', () => runFailureEstimation(40, 37));
 
     // test('128 players, 125 rounds', () => runFailureEstimation(50, 48));
+  });
+});
+
+describe('updatePlayerScores', () => {
+  test('carries the colour each unit played into its colour index', () => {
+    // every seeded unit used to stay at colour index 0, so colour rules never fired
+    const players = numberedPlayers(TWO_BOARD_PLAYER_COUNT);
+    const firstRound = playFirstRound(players);
+
+    const updatedPlayers = updatePlayerScores(players, firstRound);
+    const updatedPlayerById = indexById(updatedPlayers);
+
+    for (const game of firstRound) {
+      const whitePlayer = lookUpUnit(game.whiteUnitId, updatedPlayerById);
+      const blackPlayer = lookUpUnit(game.blackUnitId, updatedPlayerById);
+
+      expect(whitePlayer.colorIndex).toBe(WHITE_COLOUR_INDEX_AFTER_ONE_GAME);
+      expect(blackPlayer.colorIndex).toBe(BLACK_COLOUR_INDEX_AFTER_ONE_GAME);
+    }
+  });
+
+  test('counts exactly one game for every unit after round 1', () => {
+    // guards the rewrite: results now come from the same deltas production applies
+    const players = numberedPlayers(TWO_BOARD_PLAYER_COUNT);
+    const firstRound = playFirstRound(players);
+
+    const updatedPlayers = updatePlayerScores(players, firstRound);
+
+    for (const player of updatedPlayers) {
+      const gamesPlayed = player.wins + player.draws + player.losses;
+      expect(gamesPlayed).toBe(GAMES_AFTER_ONE_ROUND);
+    }
   });
 });
