@@ -57,7 +57,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - `bun check` - typecheck + lint + tests
 - `bun test path/to/file` - run one test file with db seed
 - `bun test:noseed path/to/file` - fast tests without db seed
-- mobile dev setup: `bash .cursor/skills/mobile-dev/scripts/setup-mobile-dev.sh`
+- mobile dev setup: `bash .agents/skills/mobile-dev/scripts/setup-mobile-dev.sh`
 
 ## commit messages
 
