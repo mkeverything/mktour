@@ -158,9 +158,10 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
       key={player.id}
       className={cn(
         player.id === authPlayer?.id && [
-          'bg-muted hover:bg-muted font-medium',
+          '*:bg-muted font-medium',
+          // the cells stick, not the row: firefox stops painting a sticky <tr>
           isRankedOrder &&
-            'sticky top-[calc(var(--club-sticky-top)+2rem)] -bottom-px z-10',
+            '*:sticky *:top-[calc(var(--club-sticky-top)+2rem)] *:-bottom-px *:z-10',
         ],
       )}
     >
