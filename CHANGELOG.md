@@ -1,3 +1,10 @@
+## [1.15.2](https://github.com/mkeverything/mktour/compare/v1.15.1...v1.15.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **club-page-ui:** keep the pinned player painted in firefox ([0079a97](https://github.com/mkeverything/mktour/commit/0079a974087d1fdddaa76d8931ffb343d5bd6847))
+
 ## [1.15.1](https://github.com/mkeverything/mktour/compare/v1.15.0...v1.15.1) (2026-10-23)
 
 
