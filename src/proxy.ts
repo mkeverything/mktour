@@ -14,6 +14,7 @@ import { NextRequest, NextResponse, type ProxyConfig } from 'next/server';
 const OPERATIONAL_PATHS = new Set([
   '/api/db/migrate',
   '/api/auth/delete-expired-sessions',
+  '/api/health',
 ]);
 
 // route handlers that live outside app/[locale]
