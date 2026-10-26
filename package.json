@@ -55,9 +55,6 @@
     "@trpc/server": "^11.19.0",
     "@trpc/tanstack-react-query": "^11.19.0",
     "@upstash/redis": "^1.39.0",
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/global-config": "^1.5.1",
-    "@vercel/speed-insights": "^2.0.0",
     "arctic": "^3.7.0",
     "autoprefixer": "^10.6.1",
     "babel-plugin-react-compiler": "^1.0.0",
@@ -142,7 +139,6 @@
   },
   "trustedDependencies": [
     "@tailwindcss/oxide",
-    "@vercel/speed-insights",
     "esbuild",
     "sharp",
     "unrs-resolver"

@@ -15,7 +15,6 @@ export declare global {
       NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT: string;
       LICHESS_CLIENT_ID: string;
       REDIS_URL: string;
-      VERCEL_URL: string;
       // add more environment variables and their types here
     }
   }

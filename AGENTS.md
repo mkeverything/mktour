@@ -9,7 +9,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - tRPC `.input()` and `.output()` contracts must use canonical schemas from `src/server/zod/`
 - client-side domain types must be inferred/imported from canonical server zod schemas; do not redeclare domain shapes manually
 - zod schemas should be derived from drizzle db schemas where possible
-- allowed non-domain route exceptions: oauth, cron/migration, websocket transport
+- allowed non-domain route exceptions: oauth, cron/migration, health check, websocket transport
 
 ## domain rules that are easy to get wrong
 
@@ -58,6 +58,13 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - `bun test path/to/file` - run one test file with db seed
 - `bun test:noseed path/to/file` - fast tests without db seed
 - mobile dev setup: `bash .agents/skills/mobile-dev/scripts/setup-mobile-dev.sh`
+
+## deployment
+
+- ci builds a docker image per environment from `Dockerfile`: `main` deploys to prod, `beta` to beta
+- `NEXT_PUBLIC_*` values and `DEPLOY_ENV` are fixed at build time; a new one needs an `ARG` in `Dockerfile`, a build arg in `.github/workflows/ci.yml` and a variable in both github environments
+- server-only env vars are read at runtime from the server's env files, not from the image
+- maintenance mode is the json file at `MAINTENANCE_FILE` (`maintenance.local.json` in development), read on every request
 
 ## commit messages
 
