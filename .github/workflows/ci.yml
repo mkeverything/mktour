@@ -161,7 +161,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: docker push "$IMAGE_REF"
+      # runs can reach this job out of commit order, and semantic-release pushes a commit of its
+      # own: only the branch head rolls out, so an older run never replaces a newer version
+      - name: commit is still the branch head
+        id: head
+        run: |
+          head=$(git ls-remote "https://github.com/$GITHUB_REPOSITORY" "refs/heads/$GITHUB_REF_NAME" | cut -f1)
+          if [ "$head" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$GITHUB_REF_NAME has moved on to $head, whose run deploys it"
+          fi
       - name: roll out on the server
+        if: steps.head.outputs.current == 'true'
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
