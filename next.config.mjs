@@ -10,6 +10,10 @@ const bundleAnalyzer = withBundleAnalyzer({
 });
 
 const nextConfig = {
+  output: 'standalone',
+  outputFileTracingIncludes: {
+    '/api/db/migrate': ['./src/server/db/migrations/**/*'],
+  },
   cacheComponents: true,
   htmlLimitedBots: getPattern(),
   experimental: {
