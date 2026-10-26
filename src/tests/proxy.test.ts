@@ -3,7 +3,6 @@ import {
   beforeEach,
   describe,
   expect,
-  mock,
   setSystemTime,
   test,
 } from 'bun:test';
@@ -12,9 +11,6 @@ import { NextRequest } from 'next/server';
 import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-
-const getMock = mock<(key: string) => Promise<unknown>>();
-mock.module('@vercel/global-config', () => ({ get: getMock }));
 
 const { getMaintenance } = await import('@/lib/maintenance');
 const { config, proxy } = await import('@/proxy');
@@ -33,29 +29,35 @@ const isPassedThrough = (response: Response) =>
 const rewriteOf = (response: Response) =>
   response.headers.get('x-middleware-rewrite');
 
-describe('maintenance proxy', () => {
-  const originalGlobalConfig = process.env.GLOBAL_CONFIG;
+const maintenanceDirectory = await mkdtemp(
+  join(tmpdir(), 'mktour-maintenance-'),
+);
+const maintenanceFile = join(maintenanceDirectory, 'maintenance.json');
 
-  beforeEach(() => {
-    process.env.GLOBAL_CONFIG =
-      'https://global-config.vercel.com/ecfg_test?token=test';
+const setMaintenance = (value: unknown) =>
+  writeFile(maintenanceFile, JSON.stringify(value));
+
+describe('maintenance proxy', () => {
+  beforeEach(async () => {
+    process.env.MAINTENANCE_FILE = maintenanceFile;
     setSystemTime(NOW);
-    getMock.mockReset();
+    await rm(maintenanceFile, { force: true });
   });
 
-  afterAll(() => {
-    process.env.GLOBAL_CONFIG = originalGlobalConfig;
+  afterAll(async () => {
+    delete process.env.MAINTENANCE_FILE;
     setSystemTime();
+    await rm(maintenanceDirectory, { recursive: true });
   });
 
   test('passes through when maintenance is disabled', async () => {
-    getMock.mockResolvedValue({ enabled: false });
+    await setMaintenance({ enabled: false });
     expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
     expect(await publicCaller.maintenanceStartsAt()).toBeNull();
   });
 
   test('rewrites pages to the maintenance route with 503', async () => {
-    getMock.mockResolvedValue({ enabled: true, startsAt: null, endsAt: null });
+    await setMaintenance({ enabled: true, startsAt: null, endsAt: null });
     const response = await request('/clubs/all');
 
     expect(response.status).toBe(503);
@@ -67,7 +69,7 @@ describe('maintenance proxy', () => {
   });
 
   test('returns 503 json without rewriting api and post requests', async () => {
-    getMock.mockResolvedValue({ enabled: true });
+    await setMaintenance({ enabled: true });
 
     for (const response of [
       await request('/api/trpc/auth.info'),
@@ -90,7 +92,7 @@ describe('maintenance proxy', () => {
 
   test('applies the scheduled window with retry-after', async () => {
     const endsAt = '2026-08-10T21:30:00Z';
-    getMock.mockResolvedValue({
+    await setMaintenance({
       enabled: true,
       startsAt: '2026-08-10T21:00:00Z',
       endsAt,
@@ -118,15 +120,15 @@ describe('maintenance proxy', () => {
   });
 
   test('never blocks operational routes', async () => {
-    getMock.mockResolvedValue({ enabled: true });
+    await setMaintenance({ enabled: true });
 
     for (const response of [
       await request('/api/db/migrate', { method: 'POST' }),
       await request('/api/auth/delete-expired-sessions'),
+      await request('/api/health'),
     ]) {
       expect(isPassedThrough(response)).toBe(true);
     }
-    expect(getMock).not.toHaveBeenCalled();
   });
 
   test('redirects direct maintenance reads home when maintenance is inactive', async () => {
@@ -135,7 +137,7 @@ describe('maintenance proxy', () => {
       { enabled: true, startsAt: '2026-08-10T21:30:00Z' },
       { enabled: true, endsAt: NOW.toISOString() },
     ]) {
-      getMock.mockResolvedValue(maintenance);
+      await setMaintenance(maintenance);
       for (const method of ['GET', 'HEAD']) {
         const response = await request('/maintenance?endsAt=stale', {
           method,
@@ -149,7 +151,7 @@ describe('maintenance proxy', () => {
 
   test('returns 503 for direct maintenance reads with the configured end time', async () => {
     const endsAt = '2026-08-10T21:30:00Z';
-    getMock.mockResolvedValue({ enabled: true, endsAt });
+    await setMaintenance({ enabled: true, endsAt });
 
     for (const method of ['GET', 'HEAD']) {
       const response = await request('/maintenance?endsAt=stale', { method });
@@ -162,8 +164,10 @@ describe('maintenance proxy', () => {
     }
   });
 
-  test('fails open when global config is unavailable or invalid', async () => {
-    getMock.mockRejectedValue(new Error('unavailable'));
+  test('fails open when the maintenance file is missing or invalid', async () => {
+    expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
+
+    await writeFile(maintenanceFile, '{');
     expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
 
     for (const value of [
@@ -176,18 +180,18 @@ describe('maintenance proxy', () => {
         endsAt: '2026-08-10T21:00:00Z',
       },
     ]) {
-      getMock.mockResolvedValue(value);
+      await setMaintenance(value);
       expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
       expect(await publicCaller.maintenanceStartsAt()).toBeNull();
     }
 
-    delete process.env.GLOBAL_CONFIG;
-    getMock.mockResolvedValue({ enabled: true });
+    delete process.env.MAINTENANCE_FILE;
+    await setMaintenance({ enabled: true });
     expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
   });
 
   test('keeps the url locale on the maintenance page', async () => {
-    getMock.mockResolvedValue({ enabled: true });
+    await setMaintenance({ enabled: true });
     expect(rewriteOf(await request('/ru/info/about'))).toBe(
       'https://mktour.org/ru/maintenance',
     );
@@ -198,24 +202,16 @@ describe('maintenance proxy', () => {
     ).toBe('https://mktour.org/ru/maintenance');
   });
 
-  test('fails open when global config read stalls', async () => {
-    getMock.mockReturnValue(new Promise(() => {}));
-    expect(rewriteOf(await request('/'))).toBe('https://mktour.org/en');
-  });
-
-  test('uses fresh local config only in development, with remote fallback', async () => {
+  test('falls back to fresh local config only in development', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'mktour-maintenance-'));
     const cwd = process.cwd();
     const nodeEnv = process.env.NODE_ENV;
-    const connection = process.env.GLOBAL_CONFIG;
     try {
       process.chdir(directory);
       Object.assign(process.env, { NODE_ENV: 'development' });
-      getMock.mockResolvedValue({ enabled: true });
+      await setMaintenance({ enabled: true });
       expect(await getMaintenance()).toEqual({ startsAt: null, endsAt: null });
-      expect(getMock).toHaveBeenCalledWith('maintenance');
-      getMock.mockClear();
-      delete process.env.GLOBAL_CONFIG;
+      delete process.env.MAINTENANCE_FILE;
 
       const startsAt = '2026-08-10T21:30:00Z';
       await writeFile(
@@ -231,16 +227,13 @@ describe('maintenance proxy', () => {
         await writeFile('maintenance.local.json', value);
         expect(await getMaintenance()).toBeUndefined();
       }
-      expect(getMock).not.toHaveBeenCalled();
 
-      process.env.GLOBAL_CONFIG = connection;
+      await writeFile('maintenance.local.json', '{"enabled":true}');
       Object.assign(process.env, { NODE_ENV: 'production' });
-      expect(await getMaintenance()).toEqual({ startsAt: null, endsAt: null });
-      expect(getMock).toHaveBeenCalledWith('maintenance');
+      expect(await getMaintenance()).toBeUndefined();
     } finally {
       process.chdir(cwd);
       Object.assign(process.env, { NODE_ENV: nodeEnv });
-      process.env.GLOBAL_CONFIG = connection;
       await rm(directory, { recursive: true });
     }
   });
@@ -251,11 +244,6 @@ describe('locale proxy', () => {
     'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
   const read = (path: string, headers?: Record<string, string>) =>
     request(path, { headers });
-
-  beforeEach(() => {
-    getMock.mockReset();
-    getMock.mockResolvedValue({ enabled: false });
-  });
 
   test('rewrites unprefixed pages to the saved or accepted locale', async () => {
     expect(rewriteOf(await read('/clubs/all?page=2'))).toBe(
