@@ -10,7 +10,9 @@ export declare global {
       UPSTASH_REDIS_REST_TOKEN: string;
       UPSTASH_REDIS_REST_URL: string;
       NEXT_PUBLIC_BASE_URL: string;
-      NEXT_PUBLIC_SOCKET_URL: string;
+      NEXT_PUBLIC_SOCKET_URL?: string;
+      NEXT_PUBLIC_POSTHOG_API_HOST?: string;
+      MIRROR_HOSTS?: string;
       CRON_SECRET: string;
       NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT: string;
       LICHESS_CLIENT_ID: string;

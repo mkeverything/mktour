@@ -2,7 +2,7 @@
 
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
-import { SOCKET_URL } from '@/lib/config/urls';
+import { getSocketUrl } from '@/lib/config/urls';
 import { handleGlobalSocketMessage } from '@/lib/handle-global-socket-messages';
 import { GlobalMessage } from '@/types/notifications';
 import { useQueryClient } from '@tanstack/react-query';
@@ -36,7 +36,8 @@ export const useGlobalWebsocket = (encryptedAuthSession: string | null) => {
     });
   }, [translateMessage]);
 
-  return useWebSocket<GlobalMessage>(`${SOCKET_URL}/global`, {
+  const socketUrl = getSocketUrl();
+  return useWebSocket<GlobalMessage>(socketUrl && `${socketUrl}/global`, {
     protocols:
       encryptedAuthSession && encryptedAuthSession !== ''
         ? encryptedAuthSession

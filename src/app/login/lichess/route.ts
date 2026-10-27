@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { lichess } from '@/lib/auth/lucia';
+import { getLichess } from '@/lib/auth/lucia';
 import { COOKIES } from '@/lib/config/constants';
 import { generateCodeVerifier, generateState } from 'arctic';
 import { cookies } from 'next/headers';
@@ -10,6 +10,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   const from = request.nextUrl.searchParams.get('from');
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
+  const lichess = getLichess(request.headers.get('host'));
   const url = lichess.createAuthorizationURL(state, codeVerifier, [
     'email:read',
     'team:read',

@@ -86,7 +86,6 @@ jobs:
           load: true
           build-args: |
             NEXT_PUBLIC_BASE_URL=https://beta.mktour.org
-            NEXT_PUBLIC_SOCKET_URL=wss://ws-beta.mktour.org
             DEPLOY_ENV=beta
             NEXT_DEPLOYMENT_ID=${{ github.sha }}
           cache-from: type=gha,scope=beta
@@ -128,10 +127,9 @@ jobs:
       - name: environment has its build values
         env:
           NEXT_PUBLIC_BASE_URL: ${{ vars.NEXT_PUBLIC_BASE_URL }}
-          NEXT_PUBLIC_SOCKET_URL: ${{ vars.NEXT_PUBLIC_SOCKET_URL }}
         run: |
-          [ -n "$NEXT_PUBLIC_BASE_URL" ] && [ -n "$NEXT_PUBLIC_SOCKET_URL" ] && exit 0
-          echo "set NEXT_PUBLIC_* variables in the $DEPLOY_ENV environment"
+          [ -n "$NEXT_PUBLIC_BASE_URL" ] && exit 0
+          echo "set NEXT_PUBLIC_BASE_URL in the $DEPLOY_ENV environment"
           exit 1
       - uses: actions/checkout@v7
         with:
