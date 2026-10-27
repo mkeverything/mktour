@@ -1,0 +1,7 @@
+# next copies .env files into the standalone output, so local ones must never reach the build
+.env*
+maintenance.local.json
+.git
+.next
+node_modules
+*.tsbuildinfo

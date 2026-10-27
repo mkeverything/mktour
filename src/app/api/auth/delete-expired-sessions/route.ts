@@ -7,4 +7,5 @@ export async function GET(req: Request) {
     return new Response('Unauthorized', { status: 401 });
   }
   await lucia.deleteExpiredSessions();
+  return new Response(null, { status: 204 });
 }

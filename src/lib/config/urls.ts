@@ -8,7 +8,7 @@ export const BASE_URL =
     : 'http://localhost:3000';
 
 // only production is indexed; beta and other previews duplicate it
-export const IS_INDEXABLE = process.env.VERCEL_ENV === 'production';
+export const IS_INDEXABLE = process.env.DEPLOY_ENV === 'prod';
 
 export const SOCKET_URL =
   process.env.NODE_ENV === 'production'
