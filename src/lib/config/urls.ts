@@ -13,6 +13,7 @@ export const IS_INDEXABLE = process.env.DEPLOY_ENV === 'prod';
 // hostnames that serve this deployment besides the base url's, like ru.mktour.org for
 // visitors who cannot reach cloudflare. a request to any other host gets the base url
 export const getRequestOrigin = (host: string | null) => {
+  // react-doctor-disable-next-line react-doctor/no-unguarded-throwing-parse-call
   const base = new URL(BASE_URL);
   const mirrors = process.env.MIRROR_HOSTS?.split(',').map((h) => h.trim());
   return host && mirrors?.includes(host)

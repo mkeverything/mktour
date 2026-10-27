@@ -10,6 +10,7 @@
     "build": "bun run --bun next build",
     "start": "bun run --bun next start",
     "lint": "bun run --bun eslint src/",
+    "doctor": "react-doctor --no-score --blocking warning",
     "opt": "OPT=true bun run --bun next dev",
     "analyze": "ANALYZE=true bun run --bun next build",
     "format": "bun run --bun prettier . --write",
@@ -24,7 +25,7 @@
     "prepare": "husky",
     "generate-openapi": "bun run --conditions=react-server src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
     "test:noseed": "SKIP_SEED=1 bun test",
-    "check": "bun run --bun tsc --noEmit && bun run --bun lint && bun test"
+    "check": "bun run --bun tsc --noEmit && bun run --bun lint && bun run doctor && bun test"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",
@@ -124,6 +125,7 @@
     "husky": "^9.1.7",
     "knip": "^6.42.1",
     "next-compose-plugins": "^2.2.1",
+    "react-doctor": "0.9.18",
     "semantic-release": "^25.0.9",
     "tailwindcss": "^4.3.3",
     "ts-graphviz": "^3.0.7",
