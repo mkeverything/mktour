@@ -5,7 +5,7 @@ import { handleSocketMessage } from '@/lib/handle-dashboard-socket-message';
 
 import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient } from '@tanstack/react-query';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 import useWebSocket from 'react-use-websocket';
 import { toast } from 'sonner';
 
@@ -18,8 +18,8 @@ export const useDashboardWebsocket = (
   const { translateMessage } = useIntlError();
   const trpc = useTRPC();
   const protocols = session ? session : 'guest';
-  const socketUrl = getSocketUrl();
-  return useWebSocket(socketUrl && `${socketUrl}/tournament/${id}`, {
+  const getUrl = useCallback(() => `${getSocketUrl()}/tournament/${id}`, [id]);
+  return useWebSocket(getUrl, {
     protocols,
     onOpen: () => {
       setTimeout(() => toast.dismiss('wsError'));
