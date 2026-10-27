@@ -10,10 +10,27 @@ export const BASE_URL =
 // only production is indexed; beta and other previews duplicate it
 export const IS_INDEXABLE = process.env.DEPLOY_ENV === 'prod';
 
-export const SOCKET_URL =
-  process.env.NODE_ENV === 'production'
-    ? process.env.NEXT_PUBLIC_SOCKET_URL
-    : 'ws://localhost:7070';
+// hostnames that serve this deployment besides the base url's, like ru.mktour.org for
+// visitors who cannot reach cloudflare. a request to any other host gets the base url
+export const getRequestOrigin = (host: string | null) => {
+  // react-doctor-disable-next-line react-doctor/no-unguarded-throwing-parse-call
+  const base = new URL(BASE_URL);
+  const mirrors = process.env.MIRROR_HOSTS?.split(',').map((h) => h.trim());
+  return host && mirrors?.includes(host)
+    ? `${base.protocol}//${host}`
+    : base.origin;
+};
+
+// the ws server is behind /ws of whichever host served the page, so one image serves
+// every hostname. NEXT_PUBLIC_SOCKET_URL overrides it where nothing proxies /ws, like vercel.
+// browser only: useWebSocket calls it when connecting, never during render
+export const getSocketUrl = () => {
+  if (process.env.NODE_ENV !== 'production') return 'ws://localhost:7070';
+  if (process.env.NEXT_PUBLIC_SOCKET_URL) {
+    return process.env.NEXT_PUBLIC_SOCKET_URL;
+  }
+  return `wss://${window.location.host}/ws`;
+};
 
 export const getDatabaseUrl = () =>
   process.env.OFFLINE === 'true'

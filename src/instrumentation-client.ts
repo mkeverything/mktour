@@ -4,7 +4,9 @@ const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
 if (process.env.NODE_ENV === 'production' && posthogKey) {
   posthog.init(posthogKey, {
-    api_host: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    // nginx passes /ingest on to posthog on every host; the variable overrides it where
+    // nothing does, like vercel
+    api_host: process.env.NEXT_PUBLIC_POSTHOG_API_HOST || '/ingest',
     ui_host: process.env.NEXT_PUBLIC_POSTHOG_UI_HOST,
     defaults: '2026-01-30',
     capture_exceptions: true,

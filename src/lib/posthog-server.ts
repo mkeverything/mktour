@@ -1,7 +1,7 @@
 import { PostHog } from 'posthog-node';
 
 function getPostHogIngestHost(): string {
-  return process.env.NEXT_PUBLIC_POSTHOG_API_HOST ?? 'https://eu.i.posthog.com';
+  return process.env.NEXT_PUBLIC_POSTHOG_API_HOST || 'https://eu.i.posthog.com';
 }
 
 /** runs capture/identify then flushes; safe for serverless (vercel) */

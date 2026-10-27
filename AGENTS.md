@@ -54,7 +54,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 ## commands
 
 - runtime/package manager: bun
-- `bun check` - typecheck + lint + tests
+- `bun check` - typecheck + lint + react doctor + tests
 - `bun test path/to/file` - run one test file with db seed
 - `bun test:noseed path/to/file` - fast tests without db seed
 - mobile dev setup: `bash .agents/skills/mobile-dev/scripts/setup-mobile-dev.sh`
@@ -64,6 +64,8 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - ci builds a docker image per environment from `Dockerfile`: `main` deploys to prod, `beta` to beta
 - `NEXT_PUBLIC_*` values and `DEPLOY_ENV` are fixed at build time; a new one needs an `ARG` in `Dockerfile`, a build arg in `.github/workflows/ci.yml` and a variable in both github environments
 - server-only env vars are read at runtime from the server's env files, not from the image
+- the browser reaches the ws server at `/ws` and posthog at `/ingest` of the host that served the page, and nginx proxies both, so one image serves every hostname of its environment, mirrors like `ru.mktour.org` included. `NEXT_PUBLIC_SOCKET_URL` and `NEXT_PUBLIC_POSTHOG_API_HOST` replace those paths where nothing proxies them, like vercel
+- lichess login returns to the host it started on if that is the base url's or listed in `MIRROR_HOSTS` (runtime, comma separated); any other host returns to `NEXT_PUBLIC_BASE_URL`
 - maintenance mode is the json file at `MAINTENANCE_FILE` (`maintenance.local.json` in development), read on every request
 
 ## commit messages
@@ -82,7 +84,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

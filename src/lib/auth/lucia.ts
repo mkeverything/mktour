@@ -1,6 +1,6 @@
 import { COOKIES } from '@/lib/config/constants';
 import { CACHE_TAGS } from '@/lib/cache-tags';
-import { BASE_URL } from '@/lib/config/urls';
+import { getRequestOrigin } from '@/lib/config/urls';
 import { AppError } from '@/lib/errors';
 import { adapter } from '@/server/db/lucia-adapter';
 
@@ -157,7 +157,9 @@ const cachedValidateSession = async (sessionId: string) => {
   return await lucia.validateSession(sessionId);
 };
 
-export const lichess = new Lichess(
-  process.env.LICHESS_CLIENT_ID ?? '',
-  `${BASE_URL}/login/lichess/callback`,
-);
+/** the lichess client of the host a request came to, so that its callback returns there */
+export const getLichess = (host: string | null) =>
+  new Lichess(
+    process.env.LICHESS_CLIENT_ID ?? '',
+    `${getRequestOrigin(host)}/login/lichess/callback`,
+  );

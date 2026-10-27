@@ -1,12 +1,9 @@
-import 'server-only';
-
-import { AppError } from '@/lib/errors';
-
 import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
+import { AppError } from '@/lib/errors';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid, nowTimestamp } from '@/lib/utils';
-import { db, type Transaction } from '@/server/db';
+import { db, Transaction } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
   club_notifications,
@@ -44,6 +41,8 @@ import { UserModel } from '@/server/zod/users';
 import { and, asc, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
+
+import 'server-only';
 
 export const createClub = async (user: User, values: ClubFormModel) => {
   const emptyClub = await getEmptyClub({ userId: user.id });
@@ -288,7 +287,12 @@ export const editPlayer = async ({
 
 export default async function getAllClubManagers(clubId: string) {
   return await db
-    .select()
+    .select({
+      userId: clubs_to_users.userId,
+      username: users.username,
+      status: clubs_to_users.status,
+      promotedAt: clubs_to_users.promotedAt,
+    })
     .from(clubs_to_users)
     .where(eq(clubs_to_users.clubId, clubId))
     .innerJoin(users, eq(clubs_to_users.userId, users.id));
