@@ -1,7 +1,7 @@
 import { turboPascal } from '@/app/fonts';
 import { useAuthSelectClub } from '@/components/hooks/mutation-hooks/use-auth-select-club';
-import { useFormatDate } from '@/components/hooks/use-format-date';
 import { useAuth } from '@/components/hooks/query-hooks/use-user';
+import { useFormatDate } from '@/components/hooks/use-format-date';
 import { useTRPC } from '@/components/trpc/client';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ export const ClubInfo: FC<{
         <div className="flex flex-wrap items-center gap-x-2 max-sm:basis-full lg:flex-col lg:items-start lg:gap-1">
           <span className="max-lg:hidden">{t('managers list')}</span>
           {managers?.map((manager, i) => (
-            <span key={manager.user.id} className="flex items-center gap-2">
+            <span key={manager.userId} className="flex items-center gap-2">
               <span
                 aria-hidden
                 className={cn('lg:hidden', i === 0 && 'max-sm:hidden')}
@@ -57,12 +57,12 @@ export const ClubInfo: FC<{
                 ·
               </span>
               <Link
-                href={`/user/${manager.user.username}`}
+                href={`/user/${manager.username}`}
                 className="hover:text-foreground lg:text-foreground transition-colors lg:text-sm"
               >
-                {manager.user.username}
+                {manager.username}
                 <span className="text-muted-foreground ml-1.5 text-xs opacity-70">
-                  {tStatus(manager.clubs_to_users.status)}
+                  {tStatus(manager.status)}
                 </span>
               </Link>
             </span>

@@ -22,7 +22,7 @@ export default function useDeleteClubManagerMutation() {
         queryClient.setQueryData(
           trpc.club.managers.all.queryKey(),
           (cache) =>
-            cache && cache.filter((manager) => manager.user.id !== userId),
+            cache && cache.filter((manager) => manager.userId !== userId),
         );
         return { previousState };
       },

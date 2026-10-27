@@ -1,17 +1,17 @@
 'use client';
 
 import DeleteConfirmationForm from '@/app/[locale]/(routes)/clubs/my/(tabs)/settings/delete-form';
-import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { useClubManagers } from '@/components/hooks/query-hooks/use-club-managers';
 import { useTRPC } from '@/components/trpc/client';
 import * as ComboModal from '@/components/ui-custom/combo-modal';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { useIsMutating } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
-export default function ClubDelete({ id }: ClubDeleteProps) {
+export default function ClubDelete({ id, userId }: ClubDeleteProps) {
   const [open, setOpen] = React.useState(false);
   const t = useTranslations('Club.Dashboard.Settings');
   const trpc = useTRPC();
@@ -19,22 +19,20 @@ export default function ClubDelete({ id }: ClubDeleteProps) {
   const deleting = useIsMutating({
     mutationKey: trpc.club.delete.mutationKey(),
   });
-  const { data } = useClubManagers(id);
-
-  if (
-    data?.some(
-      ({ clubs_to_users: { userId, status } }) =>
-        userId === userId && status !== 'co-owner',
-    )
-  )
-    return null;
+  const { data: managers } = useClubManagers(id);
+  const authStatus = managers?.find((admin) => admin.userId === userId)?.status;
+  if (!authStatus || authStatus !== 'co-owner') return null;
+  const isThereOtherCoOwner = managers?.some(
+    (admin) => admin.status === 'co-owner' && admin.userId !== userId,
+  );
+  if (isThereOtherCoOwner) return null;
 
   return (
     <ComboModal.Root open={open} onOpenChange={setOpen}>
       <ComboModal.Trigger asChild>
         <Button
           variant="destructive"
-          className="w-full"
+          className="w-full md:w-48"
           disabled={mutating !== 0}
         >
           {deleting !== 0 ? <LoadingSpinner /> : <Trash2 />}

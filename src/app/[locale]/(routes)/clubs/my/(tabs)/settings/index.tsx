@@ -41,7 +41,7 @@ export default function ClubSettings({ selectedClub, userId }: ClubTabProps) {
           {managers && managers.length > 1 && (
             <Button
               variant="destructive"
-              className={isDesktop ? 'sm:w-48' : 'w-full'}
+              className="w-full md:w-48"
               onClick={() => mutate({ clubId: selectedClub })}
               disabled={isPending}
             >
@@ -49,9 +49,7 @@ export default function ClubSettings({ selectedClub, userId }: ClubTabProps) {
               {t('leave club')}
             </Button>
           )}
-          <div className={isDesktop ? 'sm:w-48' : 'contents'}>
-            <ClubDelete id={selectedClub} userId={userId} />
-          </div>
+          <ClubDelete id={selectedClub} userId={userId} />
         </CardContent>
       </Card>
     </div>
