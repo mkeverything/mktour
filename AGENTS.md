@@ -9,7 +9,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - tRPC `.input()` and `.output()` contracts must use canonical schemas from `src/server/zod/`
 - client-side domain types must be inferred/imported from canonical server zod schemas; do not redeclare domain shapes manually
 - zod schemas should be derived from drizzle db schemas where possible
-- allowed non-domain route exceptions: oauth, cron/migration, health check, websocket transport
+- allowed non-domain route exceptions: oauth, cron/migration, health check
 
 ## domain rules that are easy to get wrong
 
@@ -64,7 +64,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - ci builds a docker image per environment from `Dockerfile`: `main` deploys to prod, `beta` to beta
 - `NEXT_PUBLIC_*` values and `DEPLOY_ENV` are fixed at build time; a new one needs an `ARG` in `Dockerfile`, a build arg in `.github/workflows/ci.yml` and a variable in both github environments
 - server-only env vars are read at runtime from the server's env files, not from the image
-- the browser reaches the ws server at `/ws` and posthog at `/ingest` of the host that served the page, and nginx proxies both, so one image serves every hostname of its environment, mirrors like `ru.mktour.org` included. `NEXT_PUBLIC_SOCKET_URL` and `NEXT_PUBLIC_POSTHOG_API_HOST` replace those paths where nothing proxies them, like vercel
+- the browser reaches posthog at `/ingest` of the host that served the page, and nginx proxies it, so one image serves every hostname of its environment, mirrors like `ru.mktour.org` included
 - lichess login returns to the host it started on if that is the base url's or listed in `MIRROR_HOSTS` (runtime, comma separated); any other host returns to `NEXT_PUBLIC_BASE_URL`
 - maintenance mode is the json file at `MAINTENANCE_FILE` (`maintenance.local.json` in development), read on every request
 
