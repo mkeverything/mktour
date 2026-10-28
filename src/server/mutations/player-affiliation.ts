@@ -11,6 +11,10 @@ import {
 } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
 import {
+  publishClubNotification,
+  publishUserNotification,
+} from '@/server/events';
+import {
   ClubNotificationInsertModel,
   UserNotificationInsertModel,
 } from '@/server/zod/notifications';
@@ -72,6 +76,7 @@ export async function requestAffiliation({
     db.insert(affiliations).values(newAffiliation),
     db.insert(club_notifications).values(newNotification),
   ]);
+  await publishClubNotification(clubId);
   revalidatePath(`/player/${playerId}`);
 }
 
@@ -119,6 +124,7 @@ export async function acceptAffiliationByClub({
       .where(eq(club_notifications.id, notificationId)),
     db.insert(user_notifications).values(newNotification),
   ]);
+  publishUserNotification(affiliation.userId);
   revalidatePath(`/player/${affiliation.playerId}`);
 
   return affiliation;
@@ -160,6 +166,7 @@ export async function rejectAffiliation({
       .where(eq(club_notifications.id, notificationId)),
     db.insert(user_notifications).values(newNotification),
   ]);
+  publishUserNotification(affiliation.userId);
   revalidatePath(`/player/${affiliation.playerId}`);
 
   return affiliation;
@@ -278,6 +285,7 @@ export async function cancelAffiliationByUser({
       metadata: { playerId: playerId, userId: userId },
     }),
   ]);
+  await publishClubNotification(player.clubId);
 
   return player;
 }
@@ -326,6 +334,7 @@ export async function cancelAffiliationByClub({
   }
 
   await Promise.all(promises);
+  if (!skipNotification) publishUserNotification(userId);
 
   return player;
 }

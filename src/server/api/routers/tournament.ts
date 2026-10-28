@@ -7,6 +7,7 @@ import {
   publicProcedure,
   tournamentAdminProcedure,
 } from '@/server/api/trpc';
+import { listen, publishTournamentEvent } from '@/server/events';
 import {
   saveRound,
   setTournamentGameResult,
@@ -150,7 +151,12 @@ export const tournamentRouter = {
     .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await addSoloUnit(input);
+      const units = await addSoloUnit(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'prestart-units-updated',
+        units,
+      });
+      return units;
     }),
   addNewSoloUnit: tournamentAdminProcedure
     .input(
@@ -163,7 +169,12 @@ export const tournamentRouter = {
     .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await addNewSoloUnit(input);
+      const units = await addNewSoloUnit(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'prestart-units-updated',
+        units,
+      });
+      return units;
     }),
   addDoublesUnit: tournamentAdminProcedure
     .input(
@@ -173,14 +184,24 @@ export const tournamentRouter = {
     )
     .output(z.array(unitSchema))
     .mutation(async ({ input }) => {
-      return await addDoublesUnit(input);
+      const units = await addDoublesUnit(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'prestart-units-updated',
+        units,
+      });
+      return units;
     }),
   editDoublesUnit: tournamentAdminProcedure
     .input(tournamentIdInputSchema.and(editDoublesUnitSchema))
     .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await editDoublesUnit(input);
+      const units = await editDoublesUnit(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'prestart-units-updated',
+        units,
+      });
+      return units;
     }),
   removeUnit: tournamentAdminProcedure
     .input(
@@ -192,45 +213,89 @@ export const tournamentRouter = {
     .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await removeUnit(input);
+      const units = await removeUnit(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'prestart-units-updated',
+        units,
+      });
+      return units;
     }),
   reorderUnits: tournamentAdminProcedure
     .input(reorderTournamentUnitsInputSchema)
     .output(z.array(unitSchema))
     .mutation(async (opts) => {
       const { input } = opts;
-      return await reorderTournamentUnits(input);
+      const units = await reorderTournamentUnits(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'prestart-units-updated',
+        units,
+      });
+      return units;
     }),
   withdrawUnit: tournamentAdminProcedure
     .input(withdrawTournamentUnitInputSchema)
     .output(withdrawTournamentUnitResultSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await withdrawUnit(input);
+      const result = await withdrawUnit(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'withdraw-unit',
+        id: input.unitId,
+      });
+      if (result.roundsNumberAutoDecreased) {
+        publishTournamentEvent(input.tournamentId, {
+          event: 'swiss-new-rounds-number',
+          roundsNumber: result.roundsNumber,
+        });
+      }
+      return result;
     }),
   setGameResult: protectedProcedure
     .meta(meta.tournamentsSetGameResult)
     .input(setGameResultInputSchema)
     .output(z.void())
     .mutation(async ({ ctx, input }) => {
-      await setTournamentGameResult(input, ctx.user.id);
+      const { tournamentId, roundNumber } = await setTournamentGameResult(
+        input,
+        ctx.user.id,
+      );
+      publishTournamentEvent(tournamentId, {
+        event: 'set-game-result',
+        ...input,
+        roundNumber,
+      });
     }),
   saveRound: tournamentAdminProcedure
     .input(saveRoundInputSchema)
     .output(saveRoundOutputSchema)
-    .mutation(async (opts) => {
-      return await saveRound(opts.input);
+    .mutation(async ({ input }) => {
+      const games = await saveRound(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'new-round',
+        roundNumber: input.roundNumber,
+        newGames: games,
+      });
+      return games;
     }),
   start: tournamentAdminProcedure
     .input(tournamentStartInputSchema)
     .output(z.array(gameSchema))
-    .mutation(({ input }) => startTournament(input)),
+    .mutation(async ({ input }) => {
+      const games = await startTournament(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'start-tournament',
+        startedAt: input.startedAt,
+        games,
+      });
+      return games;
+    }),
   reset: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
     .output(z.void())
     .mutation(async (opts) => {
       const { input } = opts;
       await resetTournament(input);
+      publishTournamentEvent(input.tournamentId, { event: 'reset-tournament' });
     }),
   resetPlayers: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
@@ -238,13 +303,21 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await resetTournamentUnits(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'reset-tournament-players',
+      });
     }),
   finish: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
     .output(tournamentFinishOutputSchema)
     .mutation(async (opts) => {
       const { input } = opts;
-      return await finishTournament(input);
+      const result = await finishTournament(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'finish-tournament',
+        ...result,
+      });
+      return result;
     }),
   delete: tournamentAdminProcedure
     .input(tournamentIdInputSchema)
@@ -272,6 +345,10 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await updateSwissRoundsNumber(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'swiss-new-rounds-number',
+        roundsNumber: input.roundsNumber,
+      });
     }),
   editTitle: tournamentAdminProcedure
     .input(
@@ -283,5 +360,14 @@ export const tournamentRouter = {
     .mutation(async (opts) => {
       const { input } = opts;
       await editTournamentTitle(input);
+      publishTournamentEvent(input.tournamentId, {
+        event: 'tournament-title-changed',
+        title: input.title,
+      });
     }),
+  events: publicProcedure
+    .input(tournamentIdInputSchema)
+    .subscription(({ input, signal }) =>
+      listen(`tournament:${input.tournamentId}`, signal),
+    ),
 };

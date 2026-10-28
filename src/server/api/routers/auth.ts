@@ -11,6 +11,7 @@ import {
   publicProcedure,
 } from '@/server/api/trpc';
 import { apiTokens } from '@/server/db/schema/users';
+import { listen } from '@/server/events';
 import selectClub from '@/server/mutations/club-select';
 import { logout } from '@/server/mutations/logout';
 import {
@@ -63,6 +64,9 @@ export const authRouter = {
   encryptedSession: publicProcedure.query(async () => {
     return await getEncryptedAuthSession();
   }),
+  events: protectedProcedure.subscription(({ ctx, signal }) =>
+    listen(`user:${ctx.user.id}`, signal),
+  ),
   signOut: publicProcedure.mutation(async () => {
     await logout();
     revalidateTag(CACHE_TAGS.AUTH, 'max');

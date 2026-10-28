@@ -22,6 +22,10 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
+import {
+  publishClubNotification,
+  publishUserNotification,
+} from '@/server/events';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { getEmptyClub } from '@/server/queries/get-empty-club';
 import getStatusInClub from '@/server/queries/get-status-in-club';
@@ -437,6 +441,7 @@ export const addClubManager = async ({
         .where(eq(users.id, userId));
     }
   });
+  publishUserNotification(userId);
 };
 
 export const deleteClubManager = async ({
@@ -492,7 +497,7 @@ export const promoteSuccessorCoOwners = async (
   const successors = [...adminsByClub.values()].map(
     ([oldestAdmin]) => oldestAdmin,
   );
-  if (successors.length === 0) return;
+  if (successors.length === 0) return [];
 
   const promotedAt = new Date();
   await tx
@@ -514,6 +519,7 @@ export const promoteSuccessorCoOwners = async (
       metadata: { clubId, role: 'co-owner' },
     })),
   );
+  return successors.map(({ userId }) => userId);
 };
 
 export const leaveClub = async ({
@@ -538,13 +544,16 @@ export const leaveClub = async ({
   ).at(0)?.clubId;
   if (!otherClubId) throw new AppError('NO_OTHER_CLUB_CO_OWNER');
 
-  await db.transaction(async (tx) => {
+  const promotedUserIds = await db.transaction(async (tx) => {
     const otherManager = await tx.query.clubs_to_users.findFirst({
       where: { clubId, userId: { ne: userId } },
       columns: { id: true },
     });
     if (!otherManager) throw new AppError('CANNOT_LEAVE_AS_ONLY_MANAGER');
-    await promoteSuccessorCoOwners(tx, { userId, clubIds: [clubId] });
+    const successorIds = await promoteSuccessorCoOwners(tx, {
+      userId,
+      clubIds: [clubId],
+    });
 
     await tx
       .update(users)
@@ -566,7 +575,12 @@ export const leaveClub = async ({
       createdAt: new Date(),
       metadata: { userId },
     });
+    return successorIds;
   });
+  for (const promotedUserId of promotedUserIds) {
+    publishUserNotification(promotedUserId);
+  }
+  await publishClubNotification(clubId);
 };
 
 export const changeClubNotificationStatus = async ({
