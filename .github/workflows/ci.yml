@@ -143,7 +143,6 @@ jobs:
           load: true
           build-args: |
             NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL }}
-            NEXT_PUBLIC_SOCKET_URL=${{ vars.NEXT_PUBLIC_SOCKET_URL }}
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
             NEXT_PUBLIC_POSTHOG_API_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_API_HOST }}
             NEXT_PUBLIC_POSTHOG_UI_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_UI_HOST }}
