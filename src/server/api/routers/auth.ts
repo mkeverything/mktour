@@ -1,7 +1,6 @@
 import { getUserLichessTeams } from '@/lib/api/lichess';
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
-import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
 import { AppError } from '@/lib/errors';
 import { newid, timeout } from '@/lib/utils';
 import meta from '@/server/api/meta';
@@ -61,9 +60,6 @@ export const authRouter = {
       }
       return user || null;
     }),
-  encryptedSession: publicProcedure.query(async () => {
-    return await getEncryptedAuthSession();
-  }),
   events: protectedProcedure.subscription(({ ctx, signal }) =>
     listen(`user:${ctx.user.id}`, signal),
   ),

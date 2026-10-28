@@ -1,11 +1,10 @@
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
 import { gameSchema } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { Dispatch, SetStateAction, useContext } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
 
 export default function useSaveRound(
@@ -15,7 +14,6 @@ export default function useSaveRound(
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
   const { settle } = useTournamentCache(tournamentId);
 
   return useMutation(
@@ -53,12 +51,6 @@ export default function useSaveRound(
           trpc.tournament.roundGames.queryKey({ tournamentId, roundNumber }),
           canonicalGames,
         );
-        sendJsonMessage({
-          event: 'new-round',
-          roundNumber,
-          newGames: canonicalGames,
-          isTournamentGoing: props.isTournamentGoing,
-        });
       },
       onSettled: () => settle('saveRound'),
       onError: (error, { tournamentId, roundNumber }) => {

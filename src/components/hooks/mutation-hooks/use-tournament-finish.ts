@@ -3,27 +3,19 @@
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
-import { DashboardMessage } from '@/types/tournament-ws-events';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
-export default function useTournamentFinish({
-  tournamentId,
-  sendJsonMessage,
-}: SetStatusProps) {
+export default function useTournamentFinish(tournamentId: string) {
   const t = useTranslations('Toasts');
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   const { settle } = useTournamentCache(tournamentId);
   return useMutation(
     trpc.tournament.finish.mutationOptions({
-      onSuccess: ({ closedAt }) => {
+      onSuccess: () => {
         toast.success(t('finished'));
-        sendJsonMessage({
-          event: 'finish-tournament',
-          closedAt,
-        });
       },
       onSettled: () => settle('finish'),
       onError: (error) => {
@@ -33,8 +25,3 @@ export default function useTournamentFinish({
     }),
   );
 }
-
-type SetStatusProps = {
-  tournamentId: string;
-  sendJsonMessage: (_message: DashboardMessage) => void;
-};

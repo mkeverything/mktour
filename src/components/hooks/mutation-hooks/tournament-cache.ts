@@ -21,8 +21,15 @@ type TournamentScopedProcedure = {
     : never;
 }[keyof TournamentInputs];
 
-type TournamentQuery =
-  'info' | 'units' | 'playersOut' | 'roundGames' | 'allGames';
+export const TOURNAMENT_QUERIES = [
+  'info',
+  'units',
+  'playersOut',
+  'roundGames',
+  'allGames',
+] as const;
+
+export type TournamentQuery = (typeof TOURNAMENT_QUERIES)[number];
 
 // single source of truth: which cached queries each mutation can dirty, on the
 // server and/or optimistically. side-effects count too — e.g. removing a unit
@@ -123,5 +130,20 @@ export const useTournamentCache = (tournamentId: string) => {
     [pendingWriters, queryClient, trpc, tournamentId],
   );
 
-  return { pendingWriters, settle };
+  // called for changes made elsewhere: a query this client is still writing is
+  // left alone, because its last writer invalidates it when it settles.
+  const refresh = useCallback(
+    (queries: readonly TournamentQuery[]) => {
+      for (const query of queries) {
+        if (pendingWriters(query) !== 0) continue;
+        const queryKey: QueryKey = trpc.tournament[query].queryKey({
+          tournamentId,
+        });
+        queryClient.invalidateQueries({ queryKey });
+      }
+    },
+    [pendingWriters, queryClient, trpc, tournamentId],
+  );
+
+  return { pendingWriters, settle, refresh };
 };
