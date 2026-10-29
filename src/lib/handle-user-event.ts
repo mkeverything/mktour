@@ -1,19 +1,16 @@
 'use client';
-// ws-handler global-ws
 
 import { useTRPC } from '@/components/trpc/client';
-import { GlobalMessage } from '@/types/notifications';
+import type { UserEventModel } from '@/server/zod/events';
 import { QueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
-export const handleGlobalSocketMessage = (
-  message: GlobalMessage,
+export const handleUserEvent = (
+  event: UserEventModel,
   queryClient: QueryClient,
   trpc: ReturnType<typeof useTRPC>,
-  errorMessage: string,
 ) => {
-  switch (message.type) {
-    case 'user':
+  switch (event.event) {
+    case 'user-notification':
       queryClient.setQueryData(
         trpc.auth.notifications.counter.queryKey(),
         (cache) => cache && cache + 1,
@@ -22,9 +19,12 @@ export const handleGlobalSocketMessage = (
         queryKey: trpc.auth.notifications.pathKey(),
       });
       break;
-    case 'error':
-      toast.error(errorMessage, { id: 'wsErrorMessage' });
-    default:
+    case 'club-notification':
+      queryClient.invalidateQueries({
+        queryKey: trpc.club.notifications.all.infiniteQueryKey({
+          clubId: event.clubId,
+        }),
+      });
       break;
   }
 };

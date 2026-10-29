@@ -1,17 +1,14 @@
 'use client';
 
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useOptimisticPreStartRound } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-optimistic-pre-start-round';
 import { useTRPC } from '@/components/trpc/client';
 import type { UnitModel } from '@/server/zod/tournaments';
 import { useQueryClient } from '@tanstack/react-query';
-import { useContext } from 'react';
 
 export const useSharedPreStart = (tournamentId: string) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
   const optimisticPreStartRound = useOptimisticPreStartRound(tournamentId);
   const { settle } = useTournamentCache(tournamentId);
 
@@ -33,10 +30,6 @@ export const useSharedPreStart = (tournamentId: string) => {
     );
     queryClient.setQueryData(keys.units, nextState.units);
     queryClient.setQueryData(keys.roundGames, nextState.games);
-    sendJsonMessage({
-      event: 'prestart-units-updated',
-      units: nextState.units,
-    });
   };
 
   const applyServerPreStartUnitsIfLatest = (units: UnitModel[]) => {

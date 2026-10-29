@@ -2,18 +2,14 @@
 import { publicCaller } from '@/server/api/index';
 import { clubsSelectSchema } from '@/server/zod/clubs';
 import { playerPublicSchema } from '@/server/zod/players';
+import { fixtures } from '@/server/db/seed';
 import { usersSelectPublicSchema, usersSelectSchema } from '@/server/zod/users';
-import { beforeAll, describe, expect, it } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 
-import { getSeededTestData } from '../setup/utils';
+// the member has a club of their own and players in two others
+const { member } = fixtures;
 
 describe('user router', () => {
-  let testData: Awaited<ReturnType<typeof getSeededTestData>>;
-
-  beforeAll(async () => {
-    testData = await getSeededTestData();
-  });
-
   describe('user.all', () => {
     it('validates output schema', async () => {
       const result = await publicCaller.user.all();
@@ -44,7 +40,7 @@ describe('user router', () => {
   describe('user.info', () => {
     it('validates output schema', async () => {
       const result = await publicCaller.user.info({
-        userId: testData.firstUser.id,
+        userId: member.id,
       });
 
       expect(result).toBeDefined();
@@ -73,7 +69,7 @@ describe('user router', () => {
   describe('user.infoByUsername', () => {
     it('validates output schema', async () => {
       const result = await publicCaller.user.infoByUsername({
-        username: testData.firstUser.username,
+        username: member.username,
       });
 
       expect(result).toBeDefined();
@@ -92,7 +88,7 @@ describe('user router', () => {
     });
 
     it('is case sensitive', async () => {
-      const username = testData.firstUser.username;
+      const username = member.username;
 
       const exactResult = await publicCaller.user.infoByUsername({
         username: username,
@@ -110,7 +106,7 @@ describe('user router', () => {
   describe('user.clubs', () => {
     it('validates output schema', async () => {
       const result = await publicCaller.user.clubs({
-        userId: testData.firstUser.id,
+        userId: member.id,
       });
 
       expect(result).toBeDefined();
@@ -137,15 +133,8 @@ describe('user router', () => {
 
   describe('user.playerClubs', () => {
     it('validates output schema', async () => {
-      const userWithPlayers = testData.players.find((p) => p.userId);
-
-      if (!userWithPlayers?.userId) {
-        console.log('no players with userId found, skipping test');
-        return;
-      }
-
       const result = await publicCaller.user.playerClubs({
-        userId: userWithPlayers.userId,
+        userId: member.id,
       });
 
       expect(result).toBeDefined();
@@ -173,17 +162,8 @@ describe('user router', () => {
     });
 
     it('returns empty array for user with no players', async () => {
-      const userWithoutPlayers = testData.users.find(
-        (u) => !testData.players.some((p) => p.userId === u.id),
-      );
-
-      if (!userWithoutPlayers) {
-        console.log('all users have players, skipping test');
-        return;
-      }
-
       const result = await publicCaller.user.playerClubs({
-        userId: userWithoutPlayers.id,
+        userId: fixtures.organizer.id,
       });
 
       expect(result).toBeDefined();
@@ -202,15 +182,8 @@ describe('user router', () => {
     });
 
     it('returns distinct clubs when user has multiple players in same club', async () => {
-      const userWithPlayers = testData.players.find((p) => p.userId);
-
-      if (!userWithPlayers?.userId) {
-        console.log('no players with userId found, skipping test');
-        return;
-      }
-
       const result = await publicCaller.user.playerClubs({
-        userId: userWithPlayers.userId,
+        userId: member.id,
       });
 
       expect(result).toBeDefined();
@@ -222,15 +195,8 @@ describe('user router', () => {
     });
 
     it('includes correct player data', async () => {
-      const userWithPlayers = testData.players.find((p) => p.userId);
-
-      if (!userWithPlayers?.userId) {
-        console.log('no players with userId found, skipping test');
-        return;
-      }
-
       const result = await publicCaller.user.playerClubs({
-        userId: userWithPlayers.userId,
+        userId: member.id,
       });
 
       if (result.length > 0) {
@@ -266,25 +232,19 @@ describe('user router', () => {
     });
 
     it('handles special characters in username', async () => {
-      const specialUser = testData.users.find(
-        (u) => u.username && /[^\w]/.test(u.username),
-      );
-
-      if (specialUser) {
-        const result = await publicCaller.user.infoByUsername({
-          username: specialUser.username,
-        });
-        expect(result).toBeDefined();
-        expect(result?.username).toBe(specialUser.username);
-      }
+      const result = await publicCaller.user.infoByUsername({
+        username: member.username,
+      });
+      expect(result).toBeDefined();
+      expect(result?.username).toBe(member.username);
     });
 
     it('handles concurrent requests', async () => {
       const promises = [
         publicCaller.user.all(),
-        publicCaller.user.info({ userId: testData.firstUser.id }),
-        publicCaller.user.clubs({ userId: testData.firstUser.id }),
-        publicCaller.user.playerClubs({ userId: testData.firstUser.id }),
+        publicCaller.user.info({ userId: member.id }),
+        publicCaller.user.clubs({ userId: member.id }),
+        publicCaller.user.playerClubs({ userId: member.id }),
       ];
 
       const results = await Promise.all(promises);
@@ -295,7 +255,7 @@ describe('user router', () => {
     });
 
     it('maintains data consistency between endpoints', async () => {
-      const userId = testData.firstUser.id;
+      const userId = member.id;
 
       const infoResult = await publicCaller.user.info({ userId });
       const allUsersResult = await publicCaller.user.all();

@@ -3,7 +3,6 @@
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
-import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -11,7 +10,6 @@ import { toast } from 'sonner';
 export default function useSaveRoundsNumberMutation(
   tournamentId: string,
   queryClient: QueryClient,
-  sendJsonMessage: (_message: DashboardMessage) => void,
 ) {
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
@@ -37,9 +35,6 @@ export default function useSaveRoundsNumberMutation(
           },
         );
         return { previousData };
-      },
-      onSuccess: (_, { roundsNumber }) => {
-        sendJsonMessage({ event: 'swiss-new-rounds-number', roundsNumber });
       },
       onError: (error, { tournamentId }, context) => {
         toast.error(tErrors(getAppErrorMessage(error)));

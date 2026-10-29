@@ -16,7 +16,6 @@ these are infra-only and are not part of product/domain contract:
 
 - oauth callback/login route handlers
 - cron and migration endpoints
-- websocket transport channels
 
 ## implementation guidelines
 

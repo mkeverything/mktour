@@ -55,13 +55,14 @@ const Games: FC = () => {
   if (!isPending && !data) return 'no data'; // FIXME Intl
 
   const currentRound = data?.ongoingRound ?? 1;
+  const round = Math.min(roundInView, currentRound);
 
   return (
     <div>
       {!isPending ? <Overlay open={!!selectedGameId} /> : null}
       <div className="@container w-full">
         <RoundControls
-          roundInView={roundInView}
+          roundInView={round}
           setRoundInView={setRoundInView}
           currentRound={currentRound}
           currentTab={currentTab}
@@ -70,7 +71,7 @@ const Games: FC = () => {
           <GamesGridLoadingSkeleton />
         ) : (
           <RoundItem
-            roundNumber={roundInView}
+            roundNumber={round}
             onOpenStartTournamentDrawer={() => setStartTournamentOpen(true)}
           />
         )}

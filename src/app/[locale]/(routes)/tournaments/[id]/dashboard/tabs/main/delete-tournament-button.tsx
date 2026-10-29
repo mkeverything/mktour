@@ -1,7 +1,6 @@
 'use client';
 
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentDelete from '@/components/hooks/mutation-hooks/use-tournament-delete';
 import {
   Close,
@@ -18,18 +17,13 @@ import { CircleX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 
 export default function DeleteTournamentButton() {
   const { id: tournamentId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const { sendJsonMessage } = useContext(DashboardContext);
   const [open, setOpen] = useState(false);
-  const { mutate, isPending } = useTournamentDelete(
-    queryClient,
-    sendJsonMessage,
-    setOpen,
-  );
+  const { mutate, isPending } = useTournamentDelete(queryClient, setOpen);
   const t = useTranslations('Tournament.Main');
 
   return (

@@ -15,7 +15,6 @@ COPY . .
 # NEXT_PUBLIC_* values are inlined and DEPLOY_ENV decides prerendered pages like robots.txt,
 # so every environment gets its own image
 ARG NEXT_PUBLIC_BASE_URL
-ARG NEXT_PUBLIC_SOCKET_URL
 ARG NEXT_PUBLIC_POSTHOG_KEY
 ARG NEXT_PUBLIC_POSTHOG_API_HOST
 ARG NEXT_PUBLIC_POSTHOG_UI_HOST

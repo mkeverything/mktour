@@ -13,6 +13,7 @@ import {
   players_to_units,
   tournament_units,
 } from '@/server/db/schema/tournaments';
+import { publishClubNotification } from '@/server/events';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import type { PlayerMergeInputModel } from '@/server/zod/players';
 import { countDistinct, eq, inArray, sql } from 'drizzle-orm';
@@ -221,6 +222,7 @@ export async function mergePlayers({
 
     return identityInconsistencies;
   });
+  publishClubNotification(clubId);
 
   if (identityInconsistencies.length > 0) {
     await withPostHogServer(async (posthog) => {

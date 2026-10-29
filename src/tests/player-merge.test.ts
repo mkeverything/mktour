@@ -1,42 +1,30 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
-import { and, eq, isNull } from 'drizzle-orm';
+import { describe, expect, test } from 'bun:test';
 
 import { db } from '@/server/db';
-import { players } from '@/server/db/schema/players';
+import { fixtures } from '@/server/db/seed';
 import { mergePlayers } from '@/server/mutations/player-merge';
-import { getSeededTestData } from '@/tests/setup/utils';
 
 describe('player merge', () => {
-  let clubId: string;
-
-  beforeAll(async () => {
-    const { firstClub } = await getSeededTestData();
-    clubId = firstClub.id;
-  });
+  const {
+    clubId,
+    playerIds: [base, merged, player],
+  } = fixtures.clubs.next().value!;
+  const otherClub = fixtures.clubs.next().value!;
 
   test('merges two unlinked club players and deletes the merged player', async () => {
-    const [base, merged] = await db
-      .select()
-      .from(players)
-      .where(and(eq(players.clubId, clubId), isNull(players.userId)))
-      .limit(2);
-
-    expect(base).toBeDefined();
-    expect(merged).toBeDefined();
-
     const result = await mergePlayers({
       clubId,
-      basePlayerId: base.id,
-      mergedPlayerId: merged.id,
+      basePlayerId: base,
+      mergedPlayerId: merged,
     });
 
     expect(result).toBeUndefined();
 
     const surviving = await db.query.players.findFirst({
-      where: { id: base.id },
+      where: { id: base },
     });
     const deleted = await db.query.players.findFirst({
-      where: { id: merged.id },
+      where: { id: merged },
     });
 
     expect(surviving).toBeDefined();
@@ -44,42 +32,21 @@ describe('player merge', () => {
   });
 
   test('rejects merge when players belong to different clubs', async () => {
-    const [base] = await db
-      .select()
-      .from(players)
-      .where(eq(players.clubId, clubId))
-      .limit(1);
-
-    const differentClubPlayer = (
-      await db.select().from(players).limit(20)
-    ).find((player) => player.clubId !== clubId);
-
-    expect(base).toBeDefined();
-    expect(differentClubPlayer).toBeDefined();
-
     await expect(
       mergePlayers({
         clubId,
-        basePlayerId: base.id,
-        mergedPlayerId: differentClubPlayer!.id,
+        basePlayerId: base,
+        mergedPlayerId: otherClub.playerIds[0],
       }),
     ).rejects.toMatchObject({ message: 'PLAYER_NOT_IN_CLUB' });
   });
 
   test('rejects merging a player with itself', async () => {
-    const [player] = await db
-      .select()
-      .from(players)
-      .where(eq(players.clubId, clubId))
-      .limit(1);
-
-    expect(player).toBeDefined();
-
     await expect(
       mergePlayers({
         clubId,
-        basePlayerId: player.id,
-        mergedPlayerId: player.id,
+        basePlayerId: player,
+        mergedPlayerId: player,
       }),
     ).rejects.toMatchObject({ message: 'PLAYER_MERGE_SAME_PLAYER' });
   });

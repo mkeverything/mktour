@@ -14,6 +14,7 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { sessions, user_preferences, users } from '@/server/db/schema/users';
+import { publishUserNotification } from '@/server/events';
 import {
   deleteClubFunction,
   promoteSuccessorCoOwners,
@@ -80,12 +81,12 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
 
   const clubId = user.selectedClub;
 
-  await db.transaction(async (tx) => {
+  const promotedUserIds = await db.transaction(async (tx) => {
     const managedClubs = await tx
       .select({ clubId: clubs_to_users.clubId })
       .from(clubs_to_users)
       .where(eq(clubs_to_users.userId, userId));
-    await promoteSuccessorCoOwners(tx, {
+    const successorIds = await promoteSuccessorCoOwners(tx, {
       userId,
       clubIds: managedClubs.map(({ clubId }) => clubId),
     });
@@ -137,5 +138,9 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
     await tx.delete(users).where(eq(users.id, userId));
     if (userClubs.includes(clubId))
       await tx.delete(clubs).where(eq(clubs.id, clubId));
+    return successorIds;
   });
+  for (const promotedUserId of promotedUserIds) {
+    publishUserNotification(promotedUserId);
+  }
 };

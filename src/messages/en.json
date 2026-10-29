@@ -296,6 +296,7 @@
     "PLAYER_NOT_IN_CLUB": "player is not in this club",
     "PLAYER_RESULT_SETTING_DISABLED": "club admins disabled player result submissions",
     "RATING_CALCULATION_ERROR": "sorry! rating calculation failed",
+    "REALTIME_FAILED": "live-server error. sorry! no realtime updates this time",
     "RELATION_EXISTS": "this user is already a club manager",
     "ROUND_ALREADY_HAS_RESULTS": "this round already has results",
     "ROUND_PROJECTION_MISMATCH": "the generated round is out of date. try reloading the page",
@@ -331,8 +332,6 @@
     "UNIT_NOT_REMOVED": "sorry! couldn't remove {player}",
     "UNIT_NOT_WITHDRAWN": "sorry! couldn't withdraw {player}",
     "USERS_NOT_LOADED": "an error happened while searching",
-    "WEBSOCKET_FAILED": "live-server error. sorry! no realtime updates this time",
-    "WEBSOCKET_MESSAGE_NOT_SENT": "sorry! realtime server couldn't forward this event to other viewers",
     "PASTE_DISABLED": "you have to do it yourself"
   },
   "Club": {
@@ -435,6 +434,8 @@
     "player has tournaments": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
     "club updated": "club updated",
     "tournament renamed": "tournament title has been updated",
+    "tournament deleted": "the tournament was deleted",
+    "reconnecting": "connection lost. reconnecting…",
     "player result setting disabled": "club admins disabled player result submissions",
     "rounds number decreased automatically": "number of rounds was automatically decreased to {roundsNumber}"
   },

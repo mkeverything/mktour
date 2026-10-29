@@ -1,12 +1,11 @@
 import Dashboard from '@/app/[locale]/(routes)/tournaments/[id]/dashboard';
-import { getQueryClient, trpc } from '@/server/api/query-client';
-import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
+import { formatDate } from '@/lib/local-date';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
-import { formatDate } from '@/lib/local-date';
+import { getQueryClient, trpc } from '@/server/api/query-client';
 import { dehydrate, HydrationBoundary, noop } from '@tanstack/react-query';
 import { TRPCError } from '@trpc/server';
-import type { ResolvingMetadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
@@ -18,8 +17,7 @@ const notFoundOnMissing = (e: unknown): never => {
 export default async function TournamentPage(props: TournamentPageProps) {
   const { id: tournamentId } = await props.params;
   const queryClient = getQueryClient();
-  const [session, user, authStatus] = await Promise.all([
-    getEncryptedAuthSession(),
+  const [user, authStatus] = await Promise.all([
     publicCaller.auth.info(),
     publicCaller.tournament.authStatus({ tournamentId }),
     queryClient.query(trpc.tournament.info.queryOptions({ tournamentId })),
@@ -35,7 +33,6 @@ export default async function TournamentPage(props: TournamentPageProps) {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Dashboard
-        session={session}
         id={tournamentId}
         status={authStatus.status}
         unitId={unitId}
@@ -50,7 +47,7 @@ export async function generateMetadata(
     params: Promise<{ id: string }>;
   },
   parent: ResolvingMetadata,
-) {
+): Promise<Metadata> {
   const params = await props.params;
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'Seo' });

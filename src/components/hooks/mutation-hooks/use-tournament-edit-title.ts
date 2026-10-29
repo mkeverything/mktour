@@ -1,16 +1,13 @@
 'use client';
 
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useContext } from 'react';
 import { toast } from 'sonner';
 
 export default function useTournamentEditTitle(tournamentId: string) {
-  const { sendJsonMessage } = useContext(DashboardContext);
   const queryClient = useQueryClient();
   const t = useTranslations('Toasts');
   const tErrors = useTranslations('Errors');
@@ -37,8 +34,7 @@ export default function useTournamentEditTitle(tournamentId: string) {
         );
         return { previousData };
       },
-      onSuccess: (_, { title }) => {
-        sendJsonMessage({ event: 'tournament-title-changed', title });
+      onSuccess: () => {
         toast.success(t('tournament renamed'));
       },
       onError: (error, { tournamentId }, context) => {

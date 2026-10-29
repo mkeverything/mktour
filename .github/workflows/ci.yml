@@ -24,8 +24,15 @@ jobs:
       - name: install dependencies
         run: bun install --frozen-lockfile
 
-      - name: run checks (lint, tsc, test)
-        run: bun run check
+      # `bun check` without react doctor, which has a workflow of its own
+      - name: type check
+        run: bun run --bun tsc --noEmit
+
+      - name: lint
+        run: bun run --bun lint
+
+      - name: test
+        run: bun test
         env:
           MKTOURTEST: 'true'
           NODE_ENV: test
@@ -143,7 +150,6 @@ jobs:
           load: true
           build-args: |
             NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL }}
-            NEXT_PUBLIC_SOCKET_URL=${{ vars.NEXT_PUBLIC_SOCKET_URL }}
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
             NEXT_PUBLIC_POSTHOG_API_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_API_HOST }}
             NEXT_PUBLIC_POSTHOG_UI_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_UI_HOST }}

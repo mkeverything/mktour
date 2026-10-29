@@ -184,6 +184,7 @@ export async function setTournamentGameResult(
     await db
       .select({
         tournamentId: games.tournamentId,
+        roundNumber: games.roundNumber,
         whiteUnitId: games.whiteUnitId,
         blackUnitId: games.blackUnitId,
         startedAt: tournaments.startedAt,
@@ -271,6 +272,8 @@ export async function setTournamentGameResult(
       nextResult: result,
     });
   });
+
+  return { tournamentId, roundNumber: gameContext.roundNumber };
 }
 
 /**

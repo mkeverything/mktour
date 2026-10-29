@@ -12,14 +12,12 @@ import ShuffleButton from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/sh
 import TabsContainer from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs-container';
 import AddPlayerDrawer from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
+import { useTournamentEvents } from '@/components/hooks/use-tournament-events';
 import FabProvider from '@/components/ui-custom/fab-provider';
 import { TournamentAuthStatus } from '@/server/zod/enums';
-import { useQueryClient } from '@tanstack/react-query';
 import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from 'react';
 
 interface DashboardMobileProps {
-  session: string | null;
   id: string;
   status: TournamentAuthStatus;
   unitId: string | null;
@@ -35,7 +33,6 @@ const fabTabMap: Record<DashboardTab, ReactNode> = {
 };
 
 const DashboardMobile: React.FC<DashboardMobileProps> = ({
-  session,
   id,
   status,
   unitId,
@@ -43,29 +40,22 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
   currentTab,
   setCurrentTab,
 }) => {
-  const queryClient = useQueryClient();
   const { data: tournament } = useTournamentInfo(id);
   const [roundInView, setRoundInView] = useState(
     tournament?.tournament.ongoingRound || 1,
   );
-  const { sendJsonMessage } = useDashboardWebsocket(
-    session,
-    id,
-    queryClient,
-    setRoundInView,
-  );
+  useTournamentEvents(id, setRoundInView);
   const fabContent = fabTabMap[currentTab];
   const [scrolling, setScrolling] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
 
   const dashboardValue = useMemo(
     () => ({
-      sendJsonMessage,
       status,
       unitId,
       userId,
     }),
-    [unitId, sendJsonMessage, status, userId],
+    [unitId, status, userId],
   );
   const tabValue = useMemo(() => ({ currentTab }), [currentTab]);
   const roundValue = useMemo(

@@ -1,4 +1,3 @@
-import { useGlobalWebSocketContext } from '@/components/providers/websocket-provider';
 import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,19 +11,13 @@ export const useClubAddManagerMutation = ({
 }) => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
-  const { sendJsonMessage } = useGlobalWebSocketContext();
   const tErrors = useTranslations('Errors');
   return useMutation(
     trpc.club.managers.add.mutationOptions({
-      onSuccess: (_data, { userId }) => {
+      onSuccess: () => {
         toast.success('manager added');
         queryClient.invalidateQueries({
           queryKey: trpc.club.managers.all.queryKey(),
-        });
-        sendJsonMessage({
-          type: 'user',
-          event: 'became_club_manager',
-          recipientId: userId,
         });
         onSuccess();
       },

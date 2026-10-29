@@ -21,17 +21,6 @@ export const getRequestOrigin = (host: string | null) => {
     : base.origin;
 };
 
-// the ws server is behind /ws of whichever host served the page, so one image serves
-// every hostname. NEXT_PUBLIC_SOCKET_URL overrides it where nothing proxies /ws, like vercel.
-// browser only: useWebSocket calls it when connecting, never during render
-export const getSocketUrl = () => {
-  if (process.env.NODE_ENV !== 'production') return 'ws://localhost:7070';
-  if (process.env.NEXT_PUBLIC_SOCKET_URL) {
-    return process.env.NEXT_PUBLIC_SOCKET_URL;
-  }
-  return `wss://${window.location.host}/ws`;
-};
-
 export const getDatabaseUrl = () =>
   process.env.OFFLINE === 'true'
     ? 'http://localhost:8080'

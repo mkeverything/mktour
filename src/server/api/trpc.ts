@@ -105,6 +105,11 @@ const t = initTRPC
   .context<Awaited<ReturnType<typeof createTRPCContext>>>()
   .create({
     transformer: superjson,
+    // pings keep idle streams under nginx's 60s and cloudflare's ~100s timeouts
+    sse: {
+      ping: { enabled: true, intervalMs: 20_000 },
+      client: { reconnectAfterInactivityMs: 45_000 },
+    },
   });
 
 /**

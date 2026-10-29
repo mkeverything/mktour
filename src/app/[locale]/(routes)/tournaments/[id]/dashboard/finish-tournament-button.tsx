@@ -1,5 +1,4 @@
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentFinish from '@/components/hooks/mutation-hooks/use-tournament-finish';
 import { useTournamentGames } from '@/components/hooks/query-hooks/use-tournament-games';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -9,7 +8,6 @@ import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useContext } from 'react';
 
 export default function FinishTournamentButton({
   className,
@@ -17,7 +15,6 @@ export default function FinishTournamentButton({
   className?: string;
 }) {
   const { id: tournamentId } = useParams<{ id: string }>();
-  const { sendJsonMessage } = useContext(DashboardContext);
   const t = useTranslations('Tournament.Main');
   const { data: allGames } = useTournamentGames(tournamentId);
   const { data: info } = useTournamentInfo(tournamentId);
@@ -26,10 +23,7 @@ export default function FinishTournamentButton({
     roundNumber: info?.tournament.ongoingRound ?? 1,
   });
 
-  const { mutate, isPending } = useTournamentFinish({
-    tournamentId,
-    sendJsonMessage,
-  });
+  const { mutate, isPending } = useTournamentFinish(tournamentId);
 
   if (
     !allGames ||

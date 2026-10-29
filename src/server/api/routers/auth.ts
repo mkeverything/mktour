@@ -1,7 +1,6 @@
 import { getUserLichessTeams } from '@/lib/api/lichess';
 import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
-import { getEncryptedAuthSession } from '@/lib/get-encrypted-auth-session';
 import { AppError } from '@/lib/errors';
 import { newid, timeout } from '@/lib/utils';
 import meta from '@/server/api/meta';
@@ -11,6 +10,7 @@ import {
   publicProcedure,
 } from '@/server/api/trpc';
 import { apiTokens } from '@/server/db/schema/users';
+import { listen } from '@/server/events';
 import selectClub from '@/server/mutations/club-select';
 import { logout } from '@/server/mutations/logout';
 import {
@@ -60,9 +60,9 @@ export const authRouter = {
       }
       return user || null;
     }),
-  encryptedSession: publicProcedure.query(async () => {
-    return await getEncryptedAuthSession();
-  }),
+  events: protectedProcedure.subscription(({ ctx, signal }) =>
+    listen(`user:${ctx.user.id}`, signal),
+  ),
   signOut: publicProcedure.mutation(async () => {
     await logout();
     revalidateTag(CACHE_TAGS.AUTH, 'max');

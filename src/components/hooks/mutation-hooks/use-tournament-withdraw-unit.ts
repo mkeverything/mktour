@@ -1,6 +1,5 @@
 'use client';
 
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import { useTRPC } from '@/components/trpc/client';
@@ -8,7 +7,6 @@ import { settlePendingGamesAsForfeit } from '@/lib/utils';
 import type { GameModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useContext } from 'react';
 import { toast } from 'sonner';
 
 export const useTournamentWithdrawUnit = (tournamentId: string) => {
@@ -16,7 +14,6 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
   const { translateError } = useIntlError();
   const tToasts = useTranslations('Toasts');
   const trpc = useTRPC();
-  const { sendJsonMessage } = useContext(DashboardContext);
   const { settle } = useTournamentCache(tournamentId);
 
   return useMutation(
@@ -125,18 +122,13 @@ export const useTournamentWithdrawUnit = (tournamentId: string) => {
         );
       },
       onSettled: () => settle('withdrawUnit'),
-      onSuccess: (data, { unitId }) => {
-        sendJsonMessage({ event: 'withdraw-unit', id: unitId });
+      onSuccess: (data) => {
         if (data.roundsNumberAutoDecreased) {
           toast.info(
             tToasts('rounds number decreased automatically', {
               roundsNumber: data.roundsNumber,
             }),
           );
-          sendJsonMessage({
-            event: 'swiss-new-rounds-number',
-            roundsNumber: data.roundsNumber,
-          });
         }
       },
     }),
