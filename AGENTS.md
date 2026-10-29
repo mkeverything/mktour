@@ -56,7 +56,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - runtime/package manager: bun
 - `bun check` - typecheck + lint + react doctor + tests
 - `bun test path/to/file` - run one test file with db seed
-- `bun test:noseed path/to/file` - fast tests without db seed
+- `bun test:noseed path/to/file` - tests that don't touch the db, without seeding it; a test that uses the db fails here, as expected
 - mobile dev setup: `bash .agents/skills/mobile-dev/scripts/setup-mobile-dev.sh`
 
 ## deployment
