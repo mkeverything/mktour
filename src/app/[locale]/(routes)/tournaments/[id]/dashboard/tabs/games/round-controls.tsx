@@ -18,8 +18,7 @@ const RoundControls: FC<RoundControlProps> = ({
   const { isDesktop } = useContext(MediaQueryContext);
   const shouldHandleArrows = isDesktop || currentTab === 'games';
 
-  const changeRound = (delta: number) =>
-    setRoundInView(Math.min(Math.max(roundInView + delta, 1), currentRound));
+  const changeRound = (delta: number) => setRoundInView(roundInView + delta);
 
   useHotkeys(
     'left',
