@@ -24,8 +24,15 @@ jobs:
       - name: install dependencies
         run: bun install --frozen-lockfile
 
-      - name: run checks (lint, tsc, test)
-        run: bun run check
+      # `bun check` without react doctor, which has a workflow of its own
+      - name: type check
+        run: bun run --bun tsc --noEmit
+
+      - name: lint
+        run: bun run --bun lint
+
+      - name: test
+        run: bun test
         env:
           MKTOURTEST: 'true'
           NODE_ENV: test
