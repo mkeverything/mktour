@@ -9,6 +9,25 @@ mock.module('server-only', () => ({}));
 // next internals patch console and expect the global that the next runtime normally sets
 Object.assign(globalThis, { AsyncLocalStorage });
 
+// next's cache and lucia's session need a request, which tests don't have:
+// cache calls do nothing, and every test acts as the fixture organizer
+const nextCache = await import('next/cache');
+mock.module('next/cache', () => ({
+  ...nextCache,
+  cacheTag: () => {},
+  revalidateTag: () => {},
+}));
+const lucia = await import('@/lib/auth/lucia');
+const { fixtures, seedComprehensiveTestData } =
+  await import('@/server/db/seed');
+mock.module('@/lib/auth/lucia', () => ({
+  ...lucia,
+  validateRequest: async () => ({
+    user: fixtures.organizer,
+    session: { id: 'test', userId: fixtures.organizer.id },
+  }),
+}));
+
 // Verification of test database URL to prevent accidental operations on wrong database
 try {
   const { verifyTestDatabase } = await import('@/lib/config/urls');
@@ -24,8 +43,6 @@ const skipSeed =
   process.env.SKIP_SEED === '1' || process.env.SKIP_SEED === 'true';
 
 if (!skipSeed) {
-  const { seedComprehensiveTestData } = await import('../../server/db/seed');
-
   console.log('seeding test database...');
   await seedComprehensiveTestData();
   console.log('🌱 test database seeded');

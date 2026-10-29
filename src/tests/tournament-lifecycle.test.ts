@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { asc, eq } from 'drizzle-orm';
 
 import { newid } from '@/lib/utils';
@@ -23,16 +23,6 @@ import {
   reorderTournamentUnits,
   resetTournamentUnits,
 } from '@/server/mutations/tournament-units';
-
-// lifecycle mutations authenticate from request cookies; in tests we stand in
-// as the fixture organizer. module mocks stay for the rest of the run,
-// which is fine: no other test relies on real request validation.
-mock.module('@/lib/auth/lucia', () => ({
-  validateRequest: async () => ({
-    user: { id: fixtures.organizer.id },
-    session: { id: 'test', userId: fixtures.organizer.id },
-  }),
-}));
 
 const eventsOf = (playerId: string) =>
   db

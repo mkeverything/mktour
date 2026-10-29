@@ -1,6 +1,5 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { eq, isNotNull } from 'drizzle-orm';
-import * as nextCache from 'next/cache';
 
 import { publicCaller } from '@/server/api';
 import { db } from '@/server/db';
@@ -8,9 +7,6 @@ import { clubs } from '@/server/db/schema/clubs';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { fixtures } from '@/server/db/seed';
 import { ClubPlayersFilterModel } from '@/server/zod/players';
-
-// cacheTag throws outside the next runtime
-mock.module('next/cache', () => ({ ...nextCache, cacheTag: () => {} }));
 
 // smaller than the seeded history's tied groups, so page boundaries fall
 // inside them

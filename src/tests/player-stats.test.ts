@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { eq, inArray } from 'drizzle-orm';
 
 import { newid } from '@/lib/utils';
@@ -17,13 +17,6 @@ import {
   finishTournament,
 } from '@/server/mutations/tournament-lifecycle';
 import { getPlayerStats } from '@/server/queries/player';
-
-mock.module('@/lib/auth/lucia', () => ({
-  validateRequest: async () => ({
-    user: { id: fixtures.organizer.id },
-    session: { id: 'test', userId: fixtures.organizer.id },
-  }),
-}));
 
 const statsOf = async (playerId: string) =>
   (
