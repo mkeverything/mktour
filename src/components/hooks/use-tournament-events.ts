@@ -25,7 +25,7 @@ export const useTournamentEvents = (
   const router = useRouter();
   const { pendingWriters, refresh } = useTournamentCache(tournamentId);
 
-  const { status, error } = useSubscription(
+  const { status } = useSubscription(
     trpc.tournament.events.subscriptionOptions(
       { tournamentId },
       {
@@ -55,7 +55,7 @@ export const useTournamentEvents = (
     ),
   );
 
-  const reconnecting = status === 'connecting' && error !== null;
+  const reconnecting = status === 'connecting';
   useEffect(() => {
     if (!reconnecting) return;
     const timeout = setTimeout(
