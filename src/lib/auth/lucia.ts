@@ -1,5 +1,4 @@
 import { COOKIES } from '@/lib/config/constants';
-import { CACHE_TAGS } from '@/lib/cache-tags';
 import { getRequestOrigin } from '@/lib/config/urls';
 import { AppError } from '@/lib/errors';
 import { adapter } from '@/server/db/lucia-adapter';
@@ -8,7 +7,6 @@ import { UserModel } from '@/server/zod/users';
 import { Lichess } from 'arctic';
 import type { Session, User } from 'lucia';
 import { Lucia } from 'lucia';
-import { cacheLife, cacheTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 
@@ -38,124 +36,61 @@ declare module 'lucia' {
   }
 }
 
-export const uncachedValidateRequest = async (): Promise<
-  { user: User; session: Session } | { user: null; session: null }
-> => {
-  const cooks = await cookies();
-  const sessionId = cooks.get(lucia.sessionCookieName)?.value ?? null;
-  if (!sessionId) {
-    return {
-      user: null,
-      session: null,
-    };
-  }
+export const validateRequest = cache(
+  async (): Promise<
+    { user: User; session: Session } | { user: null; session: null }
+  > => {
+    const cooks = await cookies();
+    const sessionId = cooks.get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return {
+        user: null,
+        session: null,
+      };
+    }
 
-  try {
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new AppError('SESSION_VALIDATION_TIMEOUT')),
-        4000,
-      ),
-    );
-
-    const result = await Promise.race([
-      lucia.validateSession(sessionId),
-      timeoutPromise,
-    ]);
-
-    // next.js throws when you attempt to set cookie when rendering page
     try {
-      if (result.session && result.session.fresh) {
-        const sessionCookie = lucia.createSessionCookie(result.session.id);
-        cooks.set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes,
-        );
-      }
-      if (!result.session) {
-        const sessionCookie = lucia.createBlankSessionCookie();
-        cooks.set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes,
-        );
-      }
-    } catch {}
-    return result;
-  } catch (e) {
-    console.error('session validation failed:', e);
-    return {
-      user: null,
-      session: null,
-    };
-  }
-};
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new AppError('SESSION_VALIDATION_TIMEOUT')),
+          4000,
+        ),
+      );
 
-export const reactCachedValidateRequest = cache(uncachedValidateRequest);
+      const result = await Promise.race([
+        lucia.validateSession(sessionId),
+        timeoutPromise,
+      ]);
 
-export const validateRequest = cache(async () => {
-  const cooks = await cookies();
-  const sessionId = cooks.get(lucia.sessionCookieName)?.value ?? null;
-  if (!sessionId) {
-    return {
-      user: null,
-      session: null,
-    };
-  }
-
-  try {
-    // timeout prevents hanging on Vercel
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new AppError('SESSION_VALIDATION_TIMEOUT')),
-        4000,
-      ),
-    );
-
-    const result = await Promise.race([
-      cachedValidateSession(sessionId),
-      timeoutPromise,
-    ]);
-
-    // next.js throws when you attempt to set cookie when rendering page
-    try {
-      if (result.session && result.session.fresh) {
-        const sessionCookie = lucia.createSessionCookie(result.session.id);
-        cooks.set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes,
-        );
-      }
-      if (!result.session) {
-        const sessionCookie = lucia.createBlankSessionCookie();
-        cooks.set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes,
-        );
-      }
-    } catch {}
-    return result;
-  } catch (e) {
-    console.error('Cached session validation failed:', e);
-    return {
-      user: null,
-      session: null,
-    };
-  }
-});
-
-const cachedValidateSession = async (sessionId: string) => {
-  'use cache';
-  cacheLife({
-    stale: 1000 * 60 * 60,
-    revalidate: 1000 * 60 * 60,
-  });
-  cacheTag(CACHE_TAGS.AUTH);
-  return await lucia.validateSession(sessionId);
-};
+      // next.js throws when you attempt to set cookie when rendering page
+      try {
+        if (result.session && result.session.fresh) {
+          const sessionCookie = lucia.createSessionCookie(result.session.id);
+          cooks.set(
+            sessionCookie.name,
+            sessionCookie.value,
+            sessionCookie.attributes,
+          );
+        }
+        if (!result.session) {
+          const sessionCookie = lucia.createBlankSessionCookie();
+          cooks.set(
+            sessionCookie.name,
+            sessionCookie.value,
+            sessionCookie.attributes,
+          );
+        }
+      } catch {}
+      return result;
+    } catch (e) {
+      console.error('session validation failed:', e);
+      return {
+        user: null,
+        session: null,
+      };
+    }
+  },
+);
 
 /** the lichess client of the host a request came to, so that its callback returns there */
 export const getLichess = (host: string | null) =>

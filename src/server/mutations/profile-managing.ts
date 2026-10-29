@@ -2,7 +2,6 @@ import 'server-only';
 
 import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
-import { CACHE_TAGS } from '@/lib/cache-tags';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { user_notifications } from '@/server/db/schema/notifications';
@@ -21,7 +20,6 @@ import {
 } from '@/server/mutations/club-managing';
 import { EditProfileFormModel } from '@/server/zod/users';
 import { count, eq, inArray, sql } from 'drizzle-orm';
-import { revalidateTag } from 'next/cache';
 
 export const editUser = async (
   userId: string,
@@ -32,7 +30,6 @@ export const editUser = async (
     .set(values)
     .where(eq(users.id, userId))
     .returning();
-  revalidateTag(CACHE_TAGS.AUTH, 'max');
   return user;
 };
 
