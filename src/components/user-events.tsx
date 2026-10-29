@@ -13,6 +13,14 @@ export default function UserEvents() {
 
   useSubscription(
     trpc.auth.events.subscriptionOptions(user ? undefined : skipToken, {
+      onStarted: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.auth.notifications.pathKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.club.notifications.pathKey(),
+        });
+      },
       onData: (event) => handleUserEvent(event, queryClient, trpc),
     }),
   );
