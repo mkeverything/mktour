@@ -65,7 +65,6 @@ export const authRouter = {
   ),
   signOut: publicProcedure.mutation(async () => {
     await logout();
-    revalidateTag(CACHE_TAGS.AUTH, 'max');
   }),
   notifications: {
     infinite: protectedProcedure
@@ -143,13 +142,11 @@ export const authRouter = {
       const { input } = opts;
       const { selectedClub } = await selectClub(input);
       await timeout(1000);
-      revalidateTag(CACHE_TAGS.AUTH, 'max');
       return selectedClub;
     }),
   delete: protectedProcedure.input(userIdInputSchema).mutation(async (opts) => {
     const { input } = opts;
     await deleteUser(input);
-    revalidateTag(CACHE_TAGS.AUTH, 'max');
     revalidateTag(CACHE_TAGS.USER_CLUBS, 'max');
   }),
   edit: protectedProcedure
