@@ -9,8 +9,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSubscription } from '@trpc/tanstack-react-query';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import { toast } from 'sonner';
+
+const RECONNECTING_TOAST_DELAY_MS = 5_000;
 
 export const useTournamentEvents = (
   tournamentId: string,
@@ -23,7 +25,7 @@ export const useTournamentEvents = (
   const router = useRouter();
   const { pendingWriters, refresh } = useTournamentCache(tournamentId);
 
-  useSubscription(
+  const { status, error } = useSubscription(
     trpc.tournament.events.subscriptionOptions(
       { tournamentId },
       {
@@ -52,4 +54,17 @@ export const useTournamentEvents = (
       },
     ),
   );
+
+  const reconnecting = status === 'connecting' && error !== null;
+  useEffect(() => {
+    if (!reconnecting) return;
+    const timeout = setTimeout(
+      () => toast.loading(t('reconnecting'), { id: 'realtimeReconnecting' }),
+      RECONNECTING_TOAST_DELAY_MS,
+    );
+    return () => {
+      clearTimeout(timeout);
+      toast.dismiss('realtimeReconnecting');
+    };
+  }, [reconnecting, t]);
 };

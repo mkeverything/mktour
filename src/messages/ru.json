@@ -435,6 +435,7 @@
     "club updated": "клуб обновлён",
     "tournament renamed": "название турнира сохранено",
     "tournament deleted": "турнир удалён",
+    "reconnecting": "соединение потеряно. переподключаемся…",
     "player result setting disabled": "админы клуба отключили возможность игрокам заносить результаты",
     "rounds number decreased automatically": "пришлось автоматически уменьшить количество туров до {roundsNumber}"
   },
