@@ -4,7 +4,8 @@ import { db } from '@/server/db/index';
 import * as schema from '@/server/db/schema';
 import { buildClubPlayerStats } from '@/server/mutations/player-stats';
 import type { GameResult } from '@/server/zod/enums';
-import { reset } from 'drizzle-seed';
+import { is, sql } from 'drizzle-orm';
+import { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { User } from 'lucia';
 
 import { verifyTestDatabase } from '@/lib/config/urls';
@@ -269,7 +270,13 @@ const tournamentRows = (tournament: SeedTournament, createdAt: Date) => {
 
 export const seedComprehensiveTestData = async () => {
   if (verifyTestDatabase()) {
-    await reset(db, schema);
+    // one transaction: the foreign key checks wait until every table is empty
+    await db.batch([
+      db.run(sql`PRAGMA defer_foreign_keys = ON`),
+      ...Object.values(schema)
+        .filter((table) => is(table, SQLiteTable))
+        .map((table) => db.delete(table)),
+    ]);
 
     const users = [ORGANIZER, MEMBER, ...USERS];
     const managed = [...CLUBS, ...READY, ...ONGOING, ...HISTORY, DOUBLES];
