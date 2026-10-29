@@ -42,6 +42,7 @@ export const tournamentEventSchema = z.discriminatedUnion('event', [
     event: z.literal('tournament-title-changed'),
     title: tournamentSchema.shape.title,
   }),
+  z.object({ event: z.literal('delete-tournament') }),
 ]);
 
 export const userEventSchema = z.discriminatedUnion('event', [

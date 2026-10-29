@@ -21,6 +21,7 @@ export const handleTournamentEvent = (
     pendingWriters,
     refresh,
     setRoundInView,
+    onDeleted,
   }: TournamentEventContext,
 ) => {
   const idle = (query: TournamentQuery) => pendingWriters(query) === 0;
@@ -177,6 +178,15 @@ export const handleTournamentEvent = (
         );
       }
       break;
+    case 'delete-tournament':
+      // the client that deleted it leaves through its own mutation
+      if (
+        !queryClient.isMutating({
+          mutationKey: trpc.tournament.delete.mutationKey(),
+        })
+      )
+        onDeleted();
+      break;
   }
 };
 
@@ -187,4 +197,5 @@ type TournamentEventContext = {
   pendingWriters: (query: TournamentQuery) => number;
   refresh: (queries: readonly TournamentQuery[]) => void;
   setRoundInView: Dispatch<SetStateAction<number>>;
+  onDeleted: () => void;
 };

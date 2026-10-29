@@ -434,6 +434,7 @@
     "player has tournaments": "простите! нельзя удалять игрока, который участвовал в турнире. для этого придётся удалить турнир тоже",
     "club updated": "клуб обновлён",
     "tournament renamed": "название турнира сохранено",
+    "tournament deleted": "турнир удалён",
     "player result setting disabled": "админы клуба отключили возможность игрокам заносить результаты",
     "rounds number decreased automatically": "пришлось автоматически уменьшить количество туров до {roundsNumber}"
   },

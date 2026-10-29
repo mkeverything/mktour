@@ -10,6 +10,7 @@ const {
   clubId,
   gameIds: [, gameId],
 } = fixtures.ongoing.next().value!;
+
 describe('tournament events', () => {
   test('a mutation publishes its change to the tournament stream', async () => {
     const caller = await createAuthenticatedCaller(fixtures.organizer);
@@ -31,6 +32,22 @@ describe('tournament events', () => {
     expect(
       globalThis.eventBus?.listenerCount(`tournament:${tournamentId}`),
     ).toBe(0);
+  });
+});
+
+describe('tournament deletion', () => {
+  test('deleting a tournament tells its viewers', async () => {
+    const { tournamentId } = fixtures.ready.next().value!;
+    const caller = await createAuthenticatedCaller(fixtures.organizer);
+    const stream = (await caller.tournament.events({ tournamentId }))[
+      Symbol.asyncIterator
+    ]();
+    const next = stream.next();
+
+    await caller.tournament.delete({ tournamentId });
+
+    expect((await next).value).toEqual({ event: 'delete-tournament' });
+    await stream.return?.(undefined);
   });
 });
 

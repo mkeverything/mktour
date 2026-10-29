@@ -326,6 +326,9 @@ export const tournamentRouter = {
       const { input } = opts;
       await deleteTournament(input);
       revalidateTag(CACHE_TAGS.ALL_TOURNAMENTS, 'max');
+      publishTournamentEvent(input.tournamentId, {
+        event: 'delete-tournament',
+      });
     }),
   authStatus: publicProcedure
     .input(tournamentIdInputSchema)
