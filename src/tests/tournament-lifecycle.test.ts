@@ -1,24 +1,15 @@
-import {
-  beforeAll,
-  describe,
-  expect,
-  mock,
-  setDefaultTimeout,
-  test,
-} from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import { asc, eq } from 'drizzle-orm';
 
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
-import { clubs_to_users } from '@/server/db/schema/clubs';
 import { players, rating_events } from '@/server/db/schema/players';
 import {
   games,
-  players_to_units,
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import { createPlayer } from '@/server/mutations/club-managing';
+import { fixtures } from '@/server/db/seed';
 import {
   deleteTournament,
   finishTournament,
@@ -34,19 +25,14 @@ import {
 } from '@/server/mutations/tournament-units';
 
 // lifecycle mutations authenticate from request cookies; in tests we stand in
-// as the seeded club organizer. module mocks stay for the rest of the run,
+// as the fixture organizer. module mocks stay for the rest of the run,
 // which is fine: no other test relies on real request validation.
-let organizerId: string;
 mock.module('@/lib/auth/lucia', () => ({
   validateRequest: async () => ({
-    user: { id: organizerId },
-    session: { id: 'test', userId: organizerId },
+    user: { id: fixtures.organizer.id },
+    session: { id: 'test', userId: fixtures.organizer.id },
   }),
 }));
-
-setDefaultTimeout(60_000);
-
-let clubId: string;
 
 const eventsOf = (playerId: string) =>
   db
@@ -60,65 +46,9 @@ const tournamentRow = async (tournamentId: string) =>
     await db.select().from(tournaments).where(eq(tournaments.id, tournamentId))
   )[0];
 
-/** started rated solo tournament, one round, one decided game */
-async function makeRunningTournament() {
-  const a = await createPlayer({
-    nickname: `lc a ${newid()}`,
-    rating: 1500,
-    clubId,
-  });
-  const b = await createPlayer({
-    nickname: `lc b ${newid()}`,
-    rating: 1500,
-    clubId,
-  });
-  const tournamentId = newid();
-  await db.insert(tournaments).values({
-    id: tournamentId,
-    title: 'lifecycle test',
-    format: 'round robin',
-    type: 'solo',
-    date: '2026-01-01',
-    createdAt: new Date(),
-    clubId,
-    startedAt: new Date(),
-    roundsNumber: 1,
-    ongoingRound: 1,
-    rated: true,
-  });
-  const [ua, ub] = [newid(), newid()];
-  await db.insert(tournament_units).values([
-    { id: ua, size: 1, tournamentId, nickname: a.nickname },
-    { id: ub, size: 1, tournamentId, nickname: b.nickname },
-  ]);
-  await db.insert(players_to_units).values([
-    { id: `${a.id}_${ua}`, playerId: a.id, unitId: ua, numberInUnit: 1 },
-    { id: `${b.id}_${ub}`, playerId: b.id, unitId: ub, numberInUnit: 1 },
-  ]);
-  await db.insert(games).values({
-    id: newid(),
-    gameNumber: 1,
-    roundNumber: 1,
-    whiteUnitId: ua,
-    blackUnitId: ub,
-    whitePlayerId: a.id,
-    blackPlayerId: b.id,
-    result: '1-0',
-    finishedAt: new Date(),
-    tournamentId,
-  });
-  return { tournamentId, playerIds: [a.id, b.id] };
-}
-
-beforeAll(async () => {
-  const organizer = (await db.select().from(clubs_to_users).limit(1))[0];
-  organizerId = organizer.userId;
-  clubId = organizer.clubId;
-});
-
 describe('finishing a tournament', () => {
   test('requires a start and all persisted games to be decided', async () => {
-    const { tournamentId } = await makeRunningTournament();
+    const { tournamentId } = fixtures.ready.next().value!;
     await db
       .update(tournaments)
       .set({ startedAt: null })
@@ -141,7 +71,7 @@ describe('finishing a tournament', () => {
   });
 
   test('requires the configured final round; shortening a swiss is explicit', async () => {
-    const { tournamentId } = await makeRunningTournament();
+    const { tournamentId } = fixtures.ready.next().value!;
     await db
       .update(tournaments)
       .set({ format: 'swiss', roundsNumber: 2 })
@@ -155,7 +85,7 @@ describe('finishing a tournament', () => {
   });
 
   test('cannot start or reset units on a closed legacy pre-start tournament', async () => {
-    const { tournamentId } = await makeRunningTournament();
+    const { tournamentId } = fixtures.ready.next().value!;
     await db
       .update(tournaments)
       .set({ startedAt: null, closedAt: new Date() })
@@ -174,7 +104,7 @@ describe('finishing a tournament', () => {
   });
 
   test('transactional checks block removing and reordering started or finished units', async () => {
-    const { tournamentId } = await makeRunningTournament();
+    const { tournamentId } = fixtures.ready.next().value!;
     const units = await db
       .select()
       .from(tournament_units)
@@ -190,7 +120,11 @@ describe('finishing a tournament', () => {
         ? 'TOURNAMENT_ALREADY_FINISHED'
         : 'TOURNAMENT_ALREADY_STARTED';
       await expect(
-        removeUnit({ tournamentId, unitId: unitIds[0], userId: organizerId }),
+        removeUnit({
+          tournamentId,
+          unitId: unitIds[0],
+          userId: fixtures.organizer.id,
+        }),
       ).rejects.toMatchObject({ message });
       await expect(
         reorderTournamentUnits({ tournamentId, unitIds }),
@@ -205,10 +139,11 @@ describe('finishing a tournament', () => {
   });
 
   test('rejects a result request paused before its transaction when closure wins', async () => {
-    const { tournamentId, playerIds } = await makeRunningTournament();
-    const game = (
-      await db.select().from(games).where(eq(games.tournamentId, tournamentId))
-    )[0];
+    const {
+      tournamentId,
+      playerIds,
+      gameIds: [gameId],
+    } = fixtures.ready.next().value!;
     const reached = Promise.withResolvers<void>();
     const resume = Promise.withResolvers<void>();
     const original = db.transaction.bind(db);
@@ -222,8 +157,8 @@ describe('finishing a tournament', () => {
       return original(...args);
     }) as typeof db.transaction;
     const pending = setTournamentGameResult(
-      { gameId: game.id, result: '0-1' },
-      organizerId,
+      { gameId, result: '0-1' },
+      fixtures.organizer.id,
     );
     try {
       await reached.promise;
@@ -234,7 +169,7 @@ describe('finishing a tournament', () => {
         message: 'TOURNAMENT_ALREADY_FINISHED',
       });
       expect(
-        (await db.select().from(games).where(eq(games.id, game.id)))[0].result,
+        (await db.select().from(games).where(eq(games.id, gameId)))[0].result,
       ).toBe('1-0');
       expect(await eventsOf(playerIds[0])).toEqual(published);
     } finally {
@@ -245,7 +180,7 @@ describe('finishing a tournament', () => {
   });
 
   test('rolls closure and player writes back if publication fails', async () => {
-    const { tournamentId, playerIds } = await makeRunningTournament();
+    const { tournamentId, playerIds } = fixtures.ready.next().value!;
     const before = await db
       .select()
       .from(players)
@@ -275,7 +210,7 @@ describe('finishing a tournament', () => {
   });
 
   test('unrated closure leaves ratings and the starting-only timeline unchanged', async () => {
-    const { tournamentId, playerIds } = await makeRunningTournament();
+    const { tournamentId, playerIds } = fixtures.ready.next().value!;
     await db
       .update(tournaments)
       .set({ rated: false })
@@ -285,7 +220,7 @@ describe('finishing a tournament', () => {
     expect(await eventsOf(playerIds[0])).toEqual(before);
   });
   test('uses one server instant for closedAt, rating publication and lastSeenAt', async () => {
-    const { tournamentId, playerIds } = await makeRunningTournament();
+    const { tournamentId, playerIds } = fixtures.ready.next().value!;
     const before = Date.now();
 
     const { closedAt } = await finishTournament({ tournamentId });
@@ -297,7 +232,8 @@ describe('finishing a tournament', () => {
     const tournament = await tournamentRow(tournamentId);
     expect(tournament.closedAt?.getTime()).toBe(closedAt.getTime());
 
-    for (const playerId of playerIds) {
+    // the fifth player sat out on a bye and the sixth never entered
+    for (const playerId of playerIds.slice(0, 4)) {
       const player = (
         await db.select().from(players).where(eq(players.id, playerId))
       )[0];
@@ -312,7 +248,7 @@ describe('finishing a tournament', () => {
   });
 
   test('is irreversible: no second finish, no reset, only deletion', async () => {
-    const { tournamentId, playerIds } = await makeRunningTournament();
+    const { tournamentId, playerIds } = fixtures.ready.next().value!;
     await finishTournament({ tournamentId });
     const eventsBefore = await eventsOf(playerIds[0]);
 

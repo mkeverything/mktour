@@ -1,41 +1,33 @@
 import { getUnitResultDeltas } from '@/lib/game-result-deltas';
 import { db } from '@/server/db';
+import { fixtures } from '@/server/db/seed';
 import { setTournamentGameResult } from '@/server/mutations/tournament-games';
 import { describe, expect, it } from 'bun:test';
 
 describe('concurrent game result updates', () => {
   it('keeps unit statistics consistent with the final result', async () => {
-    const tournament = await db.query.tournaments.findFirst({
-      where: { id: 'concurrent-result-tournament' },
-    });
-    const organizer = await db.query.clubs_to_users.findFirst({
-      where: { clubId: tournament!.clubId },
-    });
+    const {
+      tournamentId,
+      gameIds: [, gameId],
+      unitIds: [, , whiteUnitId, blackUnitId],
+    } = fixtures.ongoing.next().value!;
 
     await Promise.all([
-      setTournamentGameResult(
-        { gameId: 'concurrent-result-game', result: '1-0' },
-        organizer!.userId,
-      ),
-      setTournamentGameResult(
-        { gameId: 'concurrent-result-game', result: '0-1' },
-        organizer!.userId,
-      ),
+      setTournamentGameResult({ gameId, result: '1-0' }, fixtures.organizer.id),
+      setTournamentGameResult({ gameId, result: '0-1' }, fixtures.organizer.id),
     ]);
 
-    const game = await db.query.games.findFirst({
-      where: { id: 'concurrent-result-game' },
-    });
+    const game = await db.query.games.findFirst({ where: { id: gameId } });
     const units = await db.query.tournament_units.findMany({
-      where: { tournamentId: 'concurrent-result-tournament' },
+      where: { tournamentId },
     });
     const deltas = getUnitResultDeltas(null, game!.result);
 
-    expect(
-      units.find((unit) => unit.id === 'concurrent-result-white-unit'),
-    ).toMatchObject(deltas.white);
-    expect(
-      units.find((unit) => unit.id === 'concurrent-result-black-unit'),
-    ).toMatchObject(deltas.black);
+    expect(units.find((unit) => unit.id === whiteUnitId)).toMatchObject(
+      deltas.white,
+    );
+    expect(units.find((unit) => unit.id === blackUnitId)).toMatchObject(
+      deltas.black,
+    );
   });
 });
