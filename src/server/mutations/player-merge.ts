@@ -222,7 +222,7 @@ export async function mergePlayers({
 
     return identityInconsistencies;
   });
-  await publishClubNotification(clubId);
+  publishClubNotification(clubId);
 
   if (identityInconsistencies.length > 0) {
     await withPostHogServer(async (posthog) => {

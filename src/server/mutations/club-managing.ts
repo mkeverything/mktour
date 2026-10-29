@@ -580,7 +580,7 @@ export const leaveClub = async ({
   for (const promotedUserId of promotedUserIds) {
     publishUserNotification(promotedUserId);
   }
-  await publishClubNotification(clubId);
+  publishClubNotification(clubId);
 };
 
 export const changeClubNotificationStatus = async ({

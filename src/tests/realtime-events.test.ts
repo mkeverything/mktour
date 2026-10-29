@@ -57,7 +57,7 @@ describe('user events', () => {
     const stream = (await caller.auth.events())[Symbol.asyncIterator]();
     const next = stream.next();
 
-    await publishClubNotification(clubId);
+    publishClubNotification(clubId);
 
     expect((await next).value).toEqual({ event: 'club-notification', clubId });
     await stream.return?.(undefined);

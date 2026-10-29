@@ -76,7 +76,7 @@ export async function requestAffiliation({
     db.insert(affiliations).values(newAffiliation),
     db.insert(club_notifications).values(newNotification),
   ]);
-  await publishClubNotification(clubId);
+  publishClubNotification(clubId);
   revalidatePath(`/player/${playerId}`);
 }
 
@@ -285,7 +285,7 @@ export async function cancelAffiliationByUser({
       metadata: { playerId: playerId, userId: userId },
     }),
   ]);
-  await publishClubNotification(player.clubId);
+  publishClubNotification(player.clubId);
 
   return player;
 }

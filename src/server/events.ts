@@ -32,14 +32,18 @@ export const publishUserNotification = (userId: string) => {
   bus.emit(`user:${userId}`, { event: 'user-notification' });
 };
 
-export const publishClubNotification = async (clubId: string) => {
-  const managers = await db
-    .select({ userId: clubs_to_users.userId })
+// best effort like every publish: a failed lookup must not fail the mutation
+// whose writes already committed
+export const publishClubNotification = (clubId: string) => {
+  db.select({ userId: clubs_to_users.userId })
     .from(clubs_to_users)
-    .where(eq(clubs_to_users.clubId, clubId));
-  for (const { userId } of managers) {
-    bus.emit(`user:${userId}`, { event: 'club-notification', clubId });
-  }
+    .where(eq(clubs_to_users.clubId, clubId))
+    .then((managers) => {
+      for (const { userId } of managers) {
+        bus.emit(`user:${userId}`, { event: 'club-notification', clubId });
+      }
+    })
+    .catch((error) => console.error('club notification not published', error));
 };
 
 export async function* listen<T extends keyof Topics>(
