@@ -1,6 +1,9 @@
 'use client';
 
-import type { TournamentQuery } from '@/components/hooks/mutation-hooks/tournament-cache';
+import {
+  TOURNAMENT_CACHE_GRAPH,
+  type TournamentQuery,
+} from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import { applyManualUnitOrder } from '@/lib/reorder-tournament-units';
@@ -41,7 +44,7 @@ export const handleTournamentEvent = (
           generatePreStartRoundGames({ units, tournamentId }),
         );
       }
-      refresh(['units', 'roundGames', 'allGames', 'playersOut', 'info']);
+      refresh(TOURNAMENT_CACHE_GRAPH.addSoloUnit);
       break;
     }
     case 'withdraw-unit': {
@@ -66,7 +69,7 @@ export const handleTournamentEvent = (
           (cache) => cache && settlePendingGamesAsForfeit(cache, event.id),
         );
       }
-      refresh(['units', 'roundGames', 'allGames', 'playersOut', 'info']);
+      refresh(TOURNAMENT_CACHE_GRAPH.withdrawUnit);
       break;
     }
     case 'set-game-result':
@@ -77,7 +80,7 @@ export const handleTournamentEvent = (
           ),
         );
       }
-      refresh(['roundGames', 'units', 'allGames']);
+      refresh(TOURNAMENT_CACHE_GRAPH.setGameResult);
       break;
     case 'start-tournament':
       if (idle('info')) {
@@ -94,7 +97,7 @@ export const handleTournamentEvent = (
         queryClient.setQueryData(roundGamesKey(1), event.games);
       }
       if (idle('allGames')) queryClient.setQueryData(allGamesKey, event.games);
-      refresh(['info', 'allGames']);
+      refresh(TOURNAMENT_CACHE_GRAPH.start);
       break;
     case 'reset-tournament': {
       if (idle('info')) {
@@ -118,7 +121,7 @@ export const handleTournamentEvent = (
           generatePreStartRoundGames({ units, tournamentId }),
         );
       }
-      refresh(['info', 'allGames', 'roundGames', 'units']);
+      refresh(TOURNAMENT_CACHE_GRAPH.reset);
       setRoundInView(1);
       break;
     }
@@ -126,6 +129,7 @@ export const handleTournamentEvent = (
       if (idle('units')) queryClient.setQueryData(unitsKey, []);
       if (idle('allGames')) queryClient.setQueryData(allGamesKey, []);
       if (idle('roundGames')) queryClient.setQueryData(roundGamesKey(1), []);
+      refresh(TOURNAMENT_CACHE_GRAPH.resetPlayers);
       break;
     case 'new-round':
       if (idle('roundGames')) {
@@ -134,7 +138,7 @@ export const handleTournamentEvent = (
           event.newGames,
         );
       }
-      refresh(['allGames', 'info']);
+      refresh(TOURNAMENT_CACHE_GRAPH.saveRound);
       setRoundInView(event.roundNumber);
       break;
     case 'finish-tournament':
@@ -148,7 +152,7 @@ export const handleTournamentEvent = (
             },
         );
       }
-      refresh(['info']);
+      refresh(TOURNAMENT_CACHE_GRAPH.finish);
       break;
     case 'swiss-new-rounds-number':
       if (idle('info')) {
@@ -164,7 +168,7 @@ export const handleTournamentEvent = (
             },
         );
       }
-      refresh(['info']);
+      refresh(TOURNAMENT_CACHE_GRAPH.updateSwissRoundsNumber);
       break;
     case 'tournament-title-changed':
       if (idle('info')) {
@@ -177,6 +181,7 @@ export const handleTournamentEvent = (
             },
         );
       }
+      refresh(TOURNAMENT_CACHE_GRAPH.editTitle);
       break;
     case 'delete-tournament':
       // the client that deleted it leaves through its own mutation

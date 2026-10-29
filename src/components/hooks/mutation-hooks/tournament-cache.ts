@@ -34,7 +34,7 @@ export type TournamentQuery = (typeof TOURNAMENT_QUERIES)[number];
 // single source of truth: which cached queries each mutation can dirty, on the
 // server and/or optimistically. side-effects count too — e.g. removing a unit
 // clamps roundsNumber, so it writes `info`.
-const TOURNAMENT_CACHE_GRAPH = {
+export const TOURNAMENT_CACHE_GRAPH = {
   addSoloUnit: ['units', 'roundGames', 'allGames', 'playersOut', 'info'],
   addNewSoloUnit: ['units', 'roundGames', 'allGames', 'info'],
   addDoublesUnit: ['units', 'roundGames', 'allGames', 'playersOut', 'info'],
