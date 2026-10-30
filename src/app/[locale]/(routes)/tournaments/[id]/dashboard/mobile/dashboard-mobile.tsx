@@ -44,10 +44,10 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({
   const [roundInView, setRoundInView] = useState(
     tournament?.tournament.ongoingRound || 1,
   );
-  useTournamentEvents(id, setRoundInView);
   const fabContent = fabTabMap[currentTab];
   const [scrolling, setScrolling] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  useTournamentEvents(id, setRoundInView, setSelectedGameId);
 
   const dashboardValue = useMemo(
     () => ({

@@ -31,10 +31,10 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   const [roundInView, setRoundInView] = useState(
     tournament?.tournament.ongoingRound || 1,
   );
-  useTournamentEvents(id, setRoundInView);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  useTournamentEvents(id, setRoundInView, setSelectedGameId);
 
   const dashboardValue = useMemo(
     () => ({
