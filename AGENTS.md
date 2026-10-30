@@ -9,7 +9,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - tRPC `.input()` and `.output()` contracts must use canonical schemas from `src/server/zod/`
 - client-side domain types must be inferred/imported from canonical server zod schemas; do not redeclare domain shapes manually
 - zod schemas should be derived from drizzle db schemas where possible
-- allowed non-domain route exceptions: oauth, cron/migration, websocket transport
+- allowed non-domain route exceptions: oauth, cron/migration, health check
 
 ## domain rules that are easy to get wrong
 
@@ -54,10 +54,19 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 ## commands
 
 - runtime/package manager: bun
-- `bun check` - typecheck + lint + tests
+- `bun check` - typecheck + lint + react doctor + tests
 - `bun test path/to/file` - run one test file with db seed
-- `bun test:noseed path/to/file` - fast tests without db seed
+- `bun test:noseed path/to/file` - tests that don't touch the db, without seeding it; a test that uses the db fails here, as expected
 - mobile dev setup: `bash .agents/skills/mobile-dev/scripts/setup-mobile-dev.sh`
+
+## deployment
+
+- ci builds a docker image per environment from `Dockerfile`: `main` deploys to prod, `beta` to beta
+- `NEXT_PUBLIC_*` values and `DEPLOY_ENV` are fixed at build time; a new one needs an `ARG` in `Dockerfile`, a build arg in `.github/workflows/ci.yml` and a variable in both github environments
+- server-only env vars are read at runtime from the server's env files, not from the image
+- the browser reaches posthog at `/ingest` of the host that served the page, and nginx proxies it, so one image serves every hostname of its environment, mirrors like `ru.mktour.org` included
+- lichess login returns to the host it started on if that is the base url's or listed in `MIRROR_HOSTS` (runtime, comma separated); any other host returns to `NEXT_PUBLIC_BASE_URL`
+- maintenance mode is the json file at `MAINTENANCE_FILE` (`maintenance.local.json` in development), read on every request
 
 ## commit messages
 
@@ -75,7 +84,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

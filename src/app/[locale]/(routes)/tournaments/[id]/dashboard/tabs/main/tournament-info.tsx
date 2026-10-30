@@ -6,6 +6,7 @@ import Winners from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/mai
 import { useTournamentSummaryInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useIntlError } from '@/components/hooks/use-intl-error';
 import SwissRoundsNumber from '@/components/swiss-rounds-number';
+import { getAppErrorMessage } from '@/lib/errors';
 import { formatTournamentDisplayDate } from '@/lib/local-date';
 import {
   CalendarDays,
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { FC, memo } from 'react';
 import { toast } from 'sonner';
 
@@ -31,6 +32,7 @@ const TournamentInfoList = () => {
 
   if (isLoading) return <LoadingElement />;
   if (isError) {
+    if (getAppErrorMessage(error) === 'TOURNAMENT_NOT_FOUND') notFound();
     toast.error(
       translateError(error, { fallback: 'TOURNAMENT_INFO_NOT_LOADED' }),
       {

@@ -1,13 +1,11 @@
 'use client';
 
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
 import { getUnitResultDeltas } from '@/lib/game-result-deltas';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useContext } from 'react';
 import { toast } from 'sonner';
 
 export default function useTournamentSetGameResult({
@@ -18,7 +16,6 @@ export default function useTournamentSetGameResult({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { settle } = useTournamentCache(tournamentId);
-  const { sendJsonMessage } = useContext(DashboardContext);
   return useMutation(
     trpc.tournament.setGameResult.mutationOptions({
       meta: { tournamentId },
@@ -78,12 +75,6 @@ export default function useTournamentSetGameResult({
           return cache.map((game) =>
             game.id === gameId ? { ...game, result } : game,
           );
-        });
-        sendJsonMessage({
-          event: 'set-game-result',
-          gameId,
-          result,
-          roundNumber,
         });
       },
       onSettled: () => settle('setGameResult'),

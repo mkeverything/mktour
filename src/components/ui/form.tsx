@@ -13,7 +13,6 @@ import {
 } from 'react-hook-form';
 
 import { Label } from '@/components/ui/label';
-import { BASE_URL } from '@/lib/config/urls';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 
@@ -161,7 +160,7 @@ const FormMessage = React.forwardRef<
       <span>
         {t('LINK_TEAM_ERROR')}&nbsp;
         <a
-          href={`${BASE_URL}/clubs/${teamData[1]}`}
+          href={`/clubs/${teamData[1]}`}
           className="font-semibold underline underline-offset-2"
         >
           {teamData[2]}

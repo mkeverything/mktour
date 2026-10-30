@@ -11,40 +11,33 @@ import RoundItem from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/g
 import StartTournamentDrawer from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/games/start-tournament-drawer';
 import { useTournamentGamesOverviewInfo } from '@/components/hooks/query-hooks/use-tournament-info';
 import { useTournamentUnits } from '@/components/hooks/query-hooks/use-tournament-units';
+import { useIntlError } from '@/components/hooks/use-intl-error';
 import Overlay from '@/components/overlay';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { FC, useContext, useState } from 'react';
+import { FC, useContext, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const Games: FC = () => {
   const { currentTab } = useContext(DashboardTabContext);
   const { roundInView, setRoundInView } = useContext(DashboardRoundContext);
   const { selectedGameId } = useContext(SelectedGameContext);
   const { id } = useParams<{ id: string }>();
-  const { data, isError, isLoading } = useTournamentGamesOverviewInfo(id);
-  const {
-    data: units,
-    isLoading: isUnitsLoading,
-    isError: isUnitsError,
-  } = useTournamentUnits(id);
+  const { data, error: infoError } = useTournamentGamesOverviewInfo(id);
+  const { data: units, error: unitsError } = useTournamentUnits(id);
   const t = useTranslations('Tournament.Round');
+  const { translateError } = useIntlError();
   const [startTournamentOpen, setStartTournamentOpen] = useState(false);
-  const isPending = isLoading || isUnitsLoading;
+  const isReady = !!data && !!units;
+  const currentRound = data?.ongoingRound ?? 1;
+  const round = Math.min(roundInView, currentRound);
+  const error = infoError ?? unitsError;
 
-  if (isError || isUnitsError) {
-    return (
-      <div>
-        <RoundControls
-          roundInView={roundInView}
-          setRoundInView={setRoundInView}
-          currentRound={1}
-          currentTab={currentTab}
-        />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (error) toast.error(translateError(error));
+  }, [error, translateError]);
 
-  if (!isPending && (!units || units.length < 2)) {
+  if (units && units.length < 2) {
     return (
       <p className="text-muted-foreground p-4 text-center text-sm text-balance">
         {t('add two players')}
@@ -52,27 +45,23 @@ const Games: FC = () => {
     );
   }
 
-  if (!isPending && !data) return 'no data'; // FIXME Intl
-
-  const currentRound = data?.ongoingRound ?? 1;
-
   return (
     <div>
-      {!isPending ? <Overlay open={!!selectedGameId} /> : null}
+      {isReady ? <Overlay open={!!selectedGameId} /> : null}
       <div className="@container w-full">
         <RoundControls
-          roundInView={roundInView}
+          roundInView={round}
           setRoundInView={setRoundInView}
           currentRound={currentRound}
           currentTab={currentTab}
         />
-        {isPending ? (
-          <GamesGridLoadingSkeleton />
-        ) : (
+        {isReady ? (
           <RoundItem
-            roundNumber={roundInView}
+            roundNumber={round}
             onOpenStartTournamentDrawer={() => setStartTournamentOpen(true)}
           />
+        ) : (
+          <GamesGridLoadingSkeleton />
         )}
       </div>
       {(!data?.startedAt || startTournamentOpen) && (

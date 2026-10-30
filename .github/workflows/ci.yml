@@ -1,36 +1,49 @@
-name: CI
+name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, beta]
   pull_request:
     types: [opened, synchronize]
+  # redeploy the current main or beta by hand from the actions tab
+  workflow_dispatch:
+
+# jobs get a read-only token unless they ask for more
+permissions:
+  contents: read
 
 jobs:
   lint-and-check:
-    name: Lint, Type Check, Test & Build
+    name: lint, type check, test & build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v7
 
-      - name: Setup Bun
+      - name: setup bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.2'
 
-      - name: Install dependencies
+      - name: install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run Checks (Lint, TSC, Test)
-        run: bun run check
+      # `bun check` without react doctor, which has a workflow of its own
+      - name: type check
+        run: bun run --bun tsc --noEmit
+
+      - name: lint
+        run: bun run --bun lint
+
+      - name: test
+        run: bun test
         env:
           MKTOURTEST: 'true'
           NODE_ENV: test
           TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
           TEST_DATABASE_AUTH_TOKEN: ${{ secrets.TEST_DATABASE_AUTH_TOKEN }}
 
-      - name: Build
+      - name: build
         run: bun run build
         env:
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
@@ -38,17 +51,22 @@ jobs:
           NEXT_PUBLIC_BASE_URL: https://mktour.org
 
   release:
-    name: Release
+    name: release
     needs: lint-and-check
-    if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    # semantic-release publishes the github release and comments on released issues and prs
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
           persist-credentials: true
-      - name: Configure git identity
+      - name: configure git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -56,7 +74,7 @@ jobs:
         with:
           bun-version: '1.4.2'
       - run: bun install --frozen-lockfile
-      - name: Debug branch
+      - name: debug branch
         run: |
           echo "GITHUB_REF=$GITHUB_REF"
           echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
@@ -64,3 +82,125 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HUSKY: 0
+
+  image:
+    name: build & smoke test image
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REF: mktour:ci
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          tags: ${{ env.IMAGE_REF }}
+          load: true
+          build-args: |
+            NEXT_PUBLIC_BASE_URL=https://beta.mktour.org
+            DEPLOY_ENV=beta
+            NEXT_DEPLOYMENT_ID=${{ github.sha }}
+          cache-from: type=gha,scope=beta
+      - &smoke-test
+        name: container becomes healthy
+        run: |
+          docker run --detach --name app -e DATABASE_URL=libsql://ci.invalid "$IMAGE_REF"
+          for _ in $(seq 30); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' app)
+            [ "$status" = healthy ] && exit 0
+            [ "$(docker inspect --format '{{.State.Running}}' app)" = true ] || break
+            sleep 2
+          done
+          echo "container did not become healthy (status: $status)"
+          docker logs app
+          exit 1
+
+  # main deploys to prod and beta to beta. each github environment holds the public build values
+  # as variables and the ssh secrets of its own ci key, which the server binds to that environment
+  deploy:
+    name: build, push & deploy image
+    needs: [lint-and-check, release]
+    if: >-
+      !cancelled() && github.event_name != 'pull_request'
+      && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
+      && needs.lint-and-check.result == 'success' && needs.release.result != 'failure'
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'beta' }}
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: deploy-${{ github.ref_name }}
+      cancel-in-progress: false
+    env:
+      DEPLOY_ENV: ${{ github.ref_name == 'main' && 'prod' || 'beta' }}
+      IMAGE_REF: ghcr.io/mkeverything/mktour:${{ github.ref_name == 'main' && 'prod' || 'beta' }}-sha-${{ github.sha }}
+    steps:
+      - name: environment has its build values
+        env:
+          NEXT_PUBLIC_BASE_URL: ${{ vars.NEXT_PUBLIC_BASE_URL }}
+        run: |
+          [ -n "$NEXT_PUBLIC_BASE_URL" ] && exit 0
+          echo "set NEXT_PUBLIC_BASE_URL in the $DEPLOY_ENV environment"
+          exit 1
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          tags: ${{ env.IMAGE_REF }}
+          load: true
+          build-args: |
+            NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL }}
+            NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
+            NEXT_PUBLIC_POSTHOG_API_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_API_HOST }}
+            NEXT_PUBLIC_POSTHOG_UI_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_UI_HOST }}
+            NEXT_PUBLIC_CONTACT_EMAIL=${{ vars.NEXT_PUBLIC_CONTACT_EMAIL }}
+            DEPLOY_ENV=${{ env.DEPLOY_ENV }}
+            NEXT_DEPLOYMENT_ID=${{ github.sha }}
+            RUNTIME_UID=${{ env.DEPLOY_ENV == 'prod' && '10002' || '10001' }}
+            RUNTIME_GID=${{ env.DEPLOY_ENV == 'prod' && '10002' || '10001' }}
+          cache-from: type=gha,scope=${{ env.DEPLOY_ENV }}
+          cache-to: type=gha,mode=max,scope=${{ env.DEPLOY_ENV }}
+      - *smoke-test
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker push "$IMAGE_REF"
+      # runs can reach this job out of commit order, and semantic-release pushes a commit of its
+      # own: only the branch head rolls out, so an older run never replaces a newer version
+      - name: commit is still the branch head
+        id: head
+        run: |
+          head=$(git ls-remote "https://github.com/$GITHUB_REPOSITORY" "refs/heads/$GITHUB_REF_NAME" | cut -f1)
+          if [ "$head" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$GITHUB_REF_NAME has moved on to $head, whose run deploys it"
+          fi
+      - name: roll out on the server
+        if: steps.head.outputs.current == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          (umask 077 && printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key)
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -p "${SSH_PORT:-22}" \
+            -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "$SSH_USER@$SSH_HOST" "deploy sha-$GITHUB_SHA"
+      - if: always()
+        run: rm -f ~/.ssh/deploy_key

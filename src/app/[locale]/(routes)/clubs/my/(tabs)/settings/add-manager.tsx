@@ -75,9 +75,7 @@ const AddManager = ({
             {users
               ?.filter(
                 (user) =>
-                  !managers.data?.some(
-                    (manager) => manager.user.id === user.id,
-                  ),
+                  !managers.data?.some((manager) => manager.userId === user.id),
               )
               .map((user) => (
                 <TableRow

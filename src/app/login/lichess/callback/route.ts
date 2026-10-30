@@ -3,8 +3,8 @@ import { eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 
-import { lichess, lucia } from '@/lib/auth/lucia';
-import { CACHE_TAGS, userPublicProfileTag } from '@/lib/cache-tags';
+import { getLichess, lucia } from '@/lib/auth/lucia';
+import { userPublicProfileTag } from '@/lib/cache-tags';
 import { COOKIES } from '@/lib/config/constants';
 import { AppError } from '@/lib/errors';
 import { withPostHogServer } from '@/lib/posthog-server';
@@ -44,7 +44,9 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
-    const tokens = await lichess.validateAuthorizationCode(code, codeVerifier);
+    const tokens = await getLichess(
+      request.headers.get('host'),
+    ).validateAuthorizationCode(code, codeVerifier);
     const lichessUserResponse = await fetch('https://lichess.org/api/account', {
       headers: {
         Authorization: `Bearer ${tokens.accessToken()}`,
@@ -84,7 +86,6 @@ export async function GET(request: Request): Promise<Response> {
           .update(users)
           .set({ rating: lichessUser.perfs.blitz.rating })
           .where(eq(users.id, existingUser.id));
-        revalidateTag(CACHE_TAGS.AUTH, 'max');
         revalidateTag(userPublicProfileTag(existingUser.username), 'max');
       } catch (e) {
         console.error('error updating user rating', e);

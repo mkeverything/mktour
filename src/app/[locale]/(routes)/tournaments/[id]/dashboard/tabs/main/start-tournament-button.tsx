@@ -1,4 +1,3 @@
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { useTournamentPreStartLocked } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-pre-start-locked';
 import useTournamentStart from '@/components/hooks/mutation-hooks/use-tournament-start';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
@@ -9,19 +8,13 @@ import { CirclePlay, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useContext } from 'react';
 
 export default function StartTournamentButton() {
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const { data } = useTournamentInfo(id);
-  const { sendJsonMessage } = useContext(DashboardContext);
   const { data: units } = useTournamentUnits(id);
-  const startTournamentMutation = useTournamentStart(
-    queryClient,
-    id,
-    sendJsonMessage,
-  );
+  const startTournamentMutation = useTournamentStart(queryClient, id);
   const preStartLocked = useTournamentPreStartLocked(id);
   const t = useTranslations('Tournament.Main');
 

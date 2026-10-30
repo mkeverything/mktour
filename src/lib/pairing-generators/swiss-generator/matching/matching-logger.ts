@@ -33,6 +33,9 @@ const LOG_LEVEL_INFO = 'info';
 /** Environment variable keyword for enabling verbose trace logs */
 const DEBUG_KEYWORD_VERBOSE = 'matching-verbose';
 
+/** value of MATCHING_VERIFY that turns the duality certificate on */
+const VERIFY_ENABLED_VALUE = '1';
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -117,6 +120,15 @@ export const IS_MATCHING_DEBUG_ENABLED =
  */
 export const IS_MATCHING_TRACE_ENABLED =
   loggerConfig.logLevel === LOG_LEVEL_TRACE;
+
+/**
+ * whether the duality certificate runs after each weighted matching
+ *
+ * it costs a pass over every edge, so it is opt-in via MATCHING_VERIFY=1 and
+ * meant for test runs rather than live pairing.
+ */
+export const IS_MATCHING_VERIFY_ENABLED =
+  process.env.MATCHING_VERIFY === VERIFY_ENABLED_VALUE;
 
 // ============================================================================
 // Debug Logging Interfaces

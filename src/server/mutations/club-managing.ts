@@ -1,12 +1,9 @@
-import 'server-only';
-
-import { AppError } from '@/lib/errors';
-
 import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
+import { AppError } from '@/lib/errors';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid, nowTimestamp } from '@/lib/utils';
-import { db, type Transaction } from '@/server/db';
+import { db, Transaction } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
   club_notifications,
@@ -25,6 +22,10 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
+import {
+  publishClubNotification,
+  publishUserNotification,
+} from '@/server/events';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { getEmptyClub } from '@/server/queries/get-empty-club';
 import getStatusInClub from '@/server/queries/get-status-in-club';
@@ -44,6 +45,8 @@ import { UserModel } from '@/server/zod/users';
 import { and, asc, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
+
+import 'server-only';
 
 export const createClub = async (user: User, values: ClubFormModel) => {
   const emptyClub = await getEmptyClub({ userId: user.id });
@@ -288,7 +291,12 @@ export const editPlayer = async ({
 
 export default async function getAllClubManagers(clubId: string) {
   return await db
-    .select()
+    .select({
+      userId: clubs_to_users.userId,
+      username: users.username,
+      status: clubs_to_users.status,
+      promotedAt: clubs_to_users.promotedAt,
+    })
     .from(clubs_to_users)
     .where(eq(clubs_to_users.clubId, clubId))
     .innerJoin(users, eq(clubs_to_users.userId, users.id));
@@ -433,6 +441,7 @@ export const addClubManager = async ({
         .where(eq(users.id, userId));
     }
   });
+  publishUserNotification(userId);
 };
 
 export const deleteClubManager = async ({
@@ -488,7 +497,7 @@ export const promoteSuccessorCoOwners = async (
   const successors = [...adminsByClub.values()].map(
     ([oldestAdmin]) => oldestAdmin,
   );
-  if (successors.length === 0) return;
+  if (successors.length === 0) return [];
 
   const promotedAt = new Date();
   await tx
@@ -510,6 +519,7 @@ export const promoteSuccessorCoOwners = async (
       metadata: { clubId, role: 'co-owner' },
     })),
   );
+  return successors.map(({ userId }) => userId);
 };
 
 export const leaveClub = async ({
@@ -534,13 +544,16 @@ export const leaveClub = async ({
   ).at(0)?.clubId;
   if (!otherClubId) throw new AppError('NO_OTHER_CLUB_CO_OWNER');
 
-  await db.transaction(async (tx) => {
+  const promotedUserIds = await db.transaction(async (tx) => {
     const otherManager = await tx.query.clubs_to_users.findFirst({
       where: { clubId, userId: { ne: userId } },
       columns: { id: true },
     });
     if (!otherManager) throw new AppError('CANNOT_LEAVE_AS_ONLY_MANAGER');
-    await promoteSuccessorCoOwners(tx, { userId, clubIds: [clubId] });
+    const successorIds = await promoteSuccessorCoOwners(tx, {
+      userId,
+      clubIds: [clubId],
+    });
 
     await tx
       .update(users)
@@ -562,7 +575,12 @@ export const leaveClub = async ({
       createdAt: new Date(),
       metadata: { userId },
     });
+    return successorIds;
   });
+  for (const promotedUserId of promotedUserIds) {
+    publishUserNotification(promotedUserId);
+  }
+  publishClubNotification(clubId);
 };
 
 export const changeClubNotificationStatus = async ({

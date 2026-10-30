@@ -3,7 +3,6 @@
 import { useTournamentCache } from '@/components/hooks/mutation-hooks/tournament-cache';
 import { useTRPC } from '@/components/trpc/client';
 import { getAppErrorMessage } from '@/lib/errors';
-import { DashboardMessage } from '@/types/tournament-ws-events';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -11,7 +10,6 @@ import { toast } from 'sonner';
 export default function useTournamentStart(
   queryClient: QueryClient,
   tournamentId: string,
-  sendJsonMessage: (_message: DashboardMessage) => void,
 ) {
   const t = useTranslations('Toasts');
   const tErrors = useTranslations('Errors');
@@ -47,11 +45,6 @@ export default function useTournamentStart(
             trpc.tournament.allGames.queryKey({ tournamentId }),
             games,
           );
-          sendJsonMessage({
-            event: 'start-tournament',
-            startedAt,
-            games,
-          });
         }
       },
       onSettled: () => settle('start'),

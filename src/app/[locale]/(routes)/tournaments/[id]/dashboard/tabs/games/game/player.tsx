@@ -19,7 +19,7 @@ const Player: FC<PlayerProps> = ({
     )}
     onClick={handleMutate}
   >
-    <span className="truncate">{nickname}</span>
+    <span className="truncate py-1">{nickname}</span>
   </Button>
 );
 

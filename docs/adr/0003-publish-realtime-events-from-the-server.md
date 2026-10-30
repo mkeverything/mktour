@@ -1,0 +1,3 @@
+# publish realtime events from the server over sse
+
+the app publishes tournament and notification events itself, after the transaction that caused them commits; the browser no longer relays changes to a separate ws server. events are trpc subscriptions over sse: `tournament.events` is public, `auth.events` is private to the signed-in user, and club notifications go to each manager's user stream. sse is enough because mutations already travel over http, and it runs inside next without a custom server. an in-process bus connects publishers and streams while each environment runs one app process. nothing is replayed: a reconnecting client invalidates its queries, and an event skips any query the client is still writing, because that mutation refetches it when it settles.

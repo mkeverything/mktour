@@ -8,12 +8,18 @@ export const BASE_URL =
     : 'http://localhost:3000';
 
 // only production is indexed; beta and other previews duplicate it
-export const IS_INDEXABLE = process.env.VERCEL_ENV === 'production';
+export const IS_INDEXABLE = process.env.DEPLOY_ENV === 'prod';
 
-export const SOCKET_URL =
-  process.env.NODE_ENV === 'production'
-    ? process.env.NEXT_PUBLIC_SOCKET_URL
-    : 'ws://localhost:7070';
+// hostnames that serve this deployment besides the base url's, like ru.mktour.org for
+// visitors who cannot reach cloudflare. a request to any other host gets the base url
+export const getRequestOrigin = (host: string | null) => {
+  // react-doctor-disable-next-line react-doctor/no-unguarded-throwing-parse-call
+  const base = new URL(BASE_URL);
+  const mirrors = process.env.MIRROR_HOSTS?.split(',').map((h) => h.trim());
+  return host && mirrors?.includes(host)
+    ? `${base.protocol}//${host}`
+    : base.origin;
+};
 
 export const getDatabaseUrl = () =>
   process.env.OFFLINE === 'true'

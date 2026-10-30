@@ -1,10 +1,7 @@
 'use client';
 
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
-import {
-  DashboardContext,
-  DashboardRoundContext,
-} from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
+import { DashboardRoundContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import useTournamentReset from '@/components/hooks/mutation-hooks/use-tournament-reset';
 import {
   Close,
@@ -27,11 +24,9 @@ export default function ResetTournamentButton({
   className?: string;
 }) {
   const { id: tournamentId } = useParams<{ id: string }>();
-  const { sendJsonMessage } = useContext(DashboardContext);
   const { setRoundInView } = useContext(DashboardRoundContext);
   const { mutate, isPending } = useTournamentReset(
     tournamentId,
-    sendJsonMessage,
     setRoundInView,
   );
   const [open, setOpen] = useState(false);
