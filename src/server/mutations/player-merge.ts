@@ -17,7 +17,7 @@ import {
 import { publishClubNotification } from '@/server/events';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import type { PlayerMergeInputModel } from '@/server/zod/players';
-import { countDistinct, eq, inArray, sql } from 'drizzle-orm';
+import { asc, countDistinct, eq, inArray, sql } from 'drizzle-orm';
 
 const pendingStatuses = ['requested_by_user', 'requested_by_club'];
 
@@ -36,7 +36,9 @@ export async function mergePlayers({
     const playerRows = await tx
       .select()
       .from(players)
-      .where(inArray(players.id, playerIds));
+      .where(inArray(players.id, playerIds))
+      .orderBy(asc(players.id))
+      .for('update');
     const basePlayer = playerRows.find(({ id }) => id === basePlayerId);
     const mergedPlayer = playerRows.find(({ id }) => id === mergedPlayerId);
     const affiliationRows = await tx

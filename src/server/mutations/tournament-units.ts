@@ -7,8 +7,7 @@ import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
-import { lockTournament } from '@/server/db/locks';
-import { players } from '@/server/db/schema/players';
+import { lockPlayers, lockTournament } from '@/server/db/locks';
 import {
   games,
   players_to_units,
@@ -147,20 +146,14 @@ export async function addDoublesUnit({
     if (tournament.type !== 'doubles')
       throw new AppError('NOT_DOUBLES_TOURNAMENT');
 
-    const selectedPlayers = await tx
-      .select({
-        id: players.id,
-        nickname: players.nickname,
-        rating: players.rating,
-      })
-      .from(players)
-      .where(
-        and(
-          eq(players.clubId, tournament.clubId),
-          or(eq(players.id, firstPlayerId), eq(players.id, secondPlayerId)),
-        ),
-      );
-    if (selectedPlayers.length !== 2) {
+    const selectedPlayers = await lockPlayers(tx, [
+      firstPlayerId,
+      secondPlayerId,
+    ]);
+    if (
+      selectedPlayers.length !== 2 ||
+      selectedPlayers.some((player) => player.clubId !== tournament.clubId)
+    ) {
       throw new AppError('PAIR_PLAYERS_NOT_FOUND');
     }
 
@@ -246,70 +239,64 @@ export async function editDoublesUnit({
   }
   const preservedAddedAt = unit.addedAt ?? new Date();
   const preservedNumber = unit.number ?? 0;
-  const selectedPlayers = await db
-    .select({
-      id: players.id,
-      nickname: players.nickname,
-      rating: players.rating,
-    })
-    .from(players)
-    .where(
-      and(
-        eq(players.clubId, tournament.clubId),
-        or(eq(players.id, firstPlayerId), eq(players.id, secondPlayerId)),
-      ),
-    );
-  if (selectedPlayers.length !== 2) {
-    throw new AppError('PAIR_PLAYERS_NOT_FOUND');
-  }
-  const currentUnitMembers = await db
-    .select({ playerId: players_to_units.playerId })
-    .from(players_to_units)
-    .where(eq(players_to_units.unitId, unitId));
-  const currentUnitMemberIds = new Set(
-    currentUnitMembers.map((member) => member.playerId),
-  );
-  const occupiedPlayers = await db
-    .select({
-      playerId: players_to_units.playerId,
-      unitId: players_to_units.unitId,
-    })
-    .from(players_to_units)
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
-    .where(
-      and(
-        eq(tournament_units.tournamentId, tournamentId),
-        inArray(players_to_units.playerId, [firstPlayerId, secondPlayerId]),
-      ),
-    );
-  const hasOtherUnitMember = occupiedPlayers.some(
-    (row) => !currentUnitMemberIds.has(row.playerId) && row.unitId !== unitId,
-  );
-  if (hasOtherUnitMember) {
-    throw new AppError('PLAYER_ALREADY_IN_PAIR');
-  }
-  const existingNickname = await db
-    .select({ id: tournament_units.id })
-    .from(tournament_units)
-    .where(
-      and(
-        eq(tournament_units.tournamentId, tournamentId),
-        lowerEq(tournament_units.nickname, nickname),
-        ne(tournament_units.id, unitId),
-      ),
-    )
-    .limit(1);
-  if (existingNickname.length > 0) {
-    throw new AppError('UNIT_NICKNAME_TAKEN');
-  }
   return await db.transaction(async (tx) => {
     const current = await lockTournament(tx, tournamentId);
     if (!current) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (current.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (current.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
+    const selectedPlayers = await lockPlayers(tx, [
+      firstPlayerId,
+      secondPlayerId,
+    ]);
+    if (
+      selectedPlayers.length !== 2 ||
+      selectedPlayers.some((player) => player.clubId !== current.clubId)
+    ) {
+      throw new AppError('PAIR_PLAYERS_NOT_FOUND');
+    }
+    const currentUnitMembers = await tx
+      .select({ playerId: players_to_units.playerId })
+      .from(players_to_units)
+      .where(eq(players_to_units.unitId, unitId));
+    const currentUnitMemberIds = new Set(
+      currentUnitMembers.map((member) => member.playerId),
+    );
+    const occupiedPlayers = await tx
+      .select({
+        playerId: players_to_units.playerId,
+        unitId: players_to_units.unitId,
+      })
+      .from(players_to_units)
+      .innerJoin(
+        tournament_units,
+        eq(players_to_units.unitId, tournament_units.id),
+      )
+      .where(
+        and(
+          eq(tournament_units.tournamentId, tournamentId),
+          inArray(players_to_units.playerId, [firstPlayerId, secondPlayerId]),
+        ),
+      );
+    const hasOtherUnitMember = occupiedPlayers.some(
+      (row) => !currentUnitMemberIds.has(row.playerId) && row.unitId !== unitId,
+    );
+    if (hasOtherUnitMember) {
+      throw new AppError('PLAYER_ALREADY_IN_PAIR');
+    }
+    const existingNickname = await tx
+      .select({ id: tournament_units.id })
+      .from(tournament_units)
+      .where(
+        and(
+          eq(tournament_units.tournamentId, tournamentId),
+          lowerEq(tournament_units.nickname, nickname),
+          ne(tournament_units.id, unitId),
+        ),
+      )
+      .limit(1);
+    if (existingNickname.length > 0) {
+      throw new AppError('UNIT_NICKNAME_TAKEN');
+    }
     await tx
       .delete(players_to_units)
       .where(eq(players_to_units.unitId, unitId));

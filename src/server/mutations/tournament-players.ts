@@ -6,7 +6,7 @@ import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db, type Transaction } from '@/server/db';
-import { lockTournament } from '@/server/db/locks';
+import { lockPlayers, lockTournament } from '@/server/db/locks';
 import {
   players_to_units,
   tournament_units,
@@ -95,6 +95,8 @@ export async function addSoloUnit(
     if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
     if (tournament.type !== 'solo') throw new AppError('NOT_SOLO_TOURNAMENT');
+    const [lockedPlayer] = await lockPlayers(d, [player.id]);
+    if (!lockedPlayer) throw new AppError('PLAYER_NOT_FOUND');
     const existingMembership = await d
       .select({ id: players_to_units.id })
       .from(players_to_units)
