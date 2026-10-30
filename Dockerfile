@@ -29,15 +29,17 @@ RUN DATABASE_URL=libsql://build.invalid bun run build
 # only the traced server, its static assets and public files: no sources, secrets or dev tooling
 FROM base AS release
 LABEL org.opencontainers.image.source=https://github.com/mkeverything/mktour
+ARG RUNTIME_UID=10001
+ARG RUNTIME_GID=10001
 ARG DEPLOY_ENV
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 DEPLOY_ENV=$DEPLOY_ENV HOSTNAME=0.0.0.0 PORT=3000
 # next writes regenerated pages and its cache under .next at runtime
-COPY --from=build --chown=10001:10001 /app/.next/standalone ./
+COPY --from=build --chown=${RUNTIME_UID}:${RUNTIME_GID} /app/.next/standalone ./
 COPY --from=build /app/.next/static .next/static
 COPY --from=build /app/public public
 
 # a uid no host account has, so host users can neither read the environment nor signal the server
-USER 10001:10001
+USER ${RUNTIME_UID}:${RUNTIME_GID}
 EXPOSE 3000/tcp
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --start-interval=1s --retries=3 \

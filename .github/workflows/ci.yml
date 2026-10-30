@@ -165,6 +165,8 @@ jobs:
             NEXT_PUBLIC_CONTACT_EMAIL=${{ vars.NEXT_PUBLIC_CONTACT_EMAIL }}
             DEPLOY_ENV=${{ env.DEPLOY_ENV }}
             NEXT_DEPLOYMENT_ID=${{ github.sha }}
+            RUNTIME_UID=${{ env.DEPLOY_ENV == 'prod' && '10002' || '10001' }}
+            RUNTIME_GID=${{ env.DEPLOY_ENV == 'prod' && '10002' || '10001' }}
           cache-from: type=gha,scope=${{ env.DEPLOY_ENV }}
           cache-to: type=gha,mode=max,scope=${{ env.DEPLOY_ENV }}
       - *smoke-test
