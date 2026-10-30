@@ -9,7 +9,6 @@ import { Dispatch, FC, SetStateAction, useContext, useState } from 'react';
 
 const Dashboard: FC<TournamentPageContentProps> = ({
   userId,
-  session,
   id,
   status,
   unitId,
@@ -22,7 +21,6 @@ const Dashboard: FC<TournamentPageContentProps> = ({
     <Component
       currentTab={currentTab}
       setCurrentTab={setCurrentTab}
-      session={session}
       id={id}
       status={status}
       unitId={unitId}
@@ -43,7 +41,6 @@ export type TabType = {
 };
 
 interface TournamentPageContentProps {
-  session: string | null;
   id: string;
   status: TournamentAuthStatus;
   unitId: string | null;

@@ -10,6 +10,7 @@
     "build": "bun run --bun next build",
     "start": "bun run --bun next start",
     "lint": "bun run --bun eslint src/",
+    "doctor": "react-doctor --no-score --blocking warning",
     "opt": "OPT=true bun run --bun next dev",
     "analyze": "ANALYZE=true bun run --bun next build",
     "format": "bun run --bun prettier . --write",
@@ -24,7 +25,7 @@
     "prepare": "husky",
     "generate-openapi": "bun run --conditions=react-server src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
     "test:noseed": "SKIP_SEED=1 bun test",
-    "check": "bun run --bun tsc --noEmit && bun run --bun lint && bun test"
+    "check": "bun run --bun tsc --noEmit && bun run --bun lint && bun run doctor && bun test"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",
@@ -55,9 +56,6 @@
     "@trpc/server": "^11.19.0",
     "@trpc/tanstack-react-query": "^11.19.0",
     "@upstash/redis": "^1.39.0",
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/global-config": "^1.5.1",
-    "@vercel/speed-insights": "^2.0.0",
     "arctic": "^3.7.0",
     "autoprefixer": "^10.6.1",
     "babel-plugin-react-compiler": "^1.0.0",
@@ -68,7 +66,6 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
     "drizzle-orm": "1.0.0-rc.4",
-    "drizzle-seed": "1.0.0-rc.4",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^14.6.0",
     "graphology": "^0.26.0",
@@ -79,7 +76,6 @@
     "nanoid": "^6.0.2",
     "next": "^16.4.2",
     "next-intl": "^4.14.9",
-    "next-pwa": "^5.6.0",
     "next-themes": "^0.4.6",
     "postcss": "^8.5.31",
     "posthog-js": "^1.438.19",
@@ -93,7 +89,6 @@
     "react-hook-form": "^7.90.0",
     "react-hotkeys-hook": "^5.3.3",
     "react-type-animation": "^3.2.0",
-    "react-use-websocket": "^4.13.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.8",
     "superjson": "^2.2.6",
@@ -127,6 +122,7 @@
     "husky": "^9.1.7",
     "knip": "^6.42.1",
     "next-compose-plugins": "^2.2.1",
+    "react-doctor": "0.9.18",
     "semantic-release": "^25.0.9",
     "tailwindcss": "^4.3.3",
     "ts-graphviz": "^3.0.7",
@@ -142,7 +138,6 @@
   },
   "trustedDependencies": [
     "@tailwindcss/oxide",
-    "@vercel/speed-insights",
     "esbuild",
     "sharp",
     "unrs-resolver"

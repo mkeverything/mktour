@@ -1,7 +1,7 @@
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { clubIdInputSchema } from '@/server/zod/common';
 import { statusInClubEnum } from '@/server/zod/enums';
-import { usersSelectMinimalSchema } from '@/server/zod/users';
+import { usersSelectSchema } from '@/server/zod/users';
 import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod';
 import z from 'zod';
 
@@ -33,17 +33,20 @@ export const clubsEditSchema = clubIdInputSchema.extend(
   clubsInsertSchema.partial().shape,
 );
 
-export const clubManagersSchema = z.object({
-  user: usersSelectMinimalSchema,
-  clubs_to_users: clubsToUsersSelectSchema,
-});
+export const clubManagerSchema = clubsToUsersSelectSchema
+  .pick({
+    userId: true,
+    status: true,
+    promotedAt: true,
+  })
+  .extend({ username: usersSelectSchema.shape.username });
 
 export const clubStatsSchema = z.object({
   playersCount: z.number(),
   tournamentsCount: z.number(),
 });
 
-export type ClubManagerModel = z.infer<typeof clubManagersSchema>;
+export type ClubManagerModel = z.infer<typeof clubManagerSchema>;
 export type ClubEditModel = z.infer<typeof clubsEditSchema>;
 export type ClubFormModel = z.infer<typeof clubsInsertSchema>;
 export type ClubStatsModel = z.infer<typeof clubStatsSchema>;

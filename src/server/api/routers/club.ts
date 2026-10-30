@@ -31,7 +31,7 @@ import { getClubTournamentsInfinite } from '@/server/queries/get-club-tournament
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { getUserClubAffiliation } from '@/server/queries/get-user-club-affiliation';
 import {
-  clubManagersSchema,
+  clubManagerSchema,
   clubsSelectSchema,
   clubStatsSchema,
   publicPopularClubSchema,
@@ -92,7 +92,6 @@ export const clubRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const { input } = opts;
       const newClub = await createClub(opts.ctx.user, input);
-      revalidateTag(CACHE_TAGS.AUTH, 'max');
       revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
       revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${opts.ctx.user.id}`, 'max');
       return newClub;
@@ -174,7 +173,7 @@ export const clubRouter = createTRPCRouter({
     all: publicProcedure
       .meta(meta.clubManagers)
       .input(clubIdInputSchema)
-      .output(z.array(clubManagersSchema))
+      .output(z.array(clubManagerSchema))
       .query(async (opts) => {
         return await getAllClubManagers(opts.input.clubId);
       }),
@@ -252,7 +251,6 @@ export const clubRouter = createTRPCRouter({
       const { input, ctx } = opts;
       await deleteClub({ ...input, userId: ctx.user.id });
       revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
-      revalidateTag(CACHE_TAGS.AUTH, 'max');
       revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${opts.ctx.user.id}`, 'max');
     }),
   edit: clubAdminProcedure
@@ -277,7 +275,6 @@ export const clubRouter = createTRPCRouter({
         throw new AppError('CANNOT_LEAVE_ONLY_CLUB');
       await leaveClub({ clubId: input.clubId, userId: ctx.user.id });
 
-      revalidateTag(CACHE_TAGS.AUTH, 'max');
       revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${ctx.user.id}`, 'max');
       const updatedClubs = Object.keys(ctx.clubs).filter(
         (id) => id !== input.clubId,

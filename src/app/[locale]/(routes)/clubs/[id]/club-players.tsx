@@ -37,10 +37,10 @@ type Sort = Pick<ClubPlayersFilterModel, 'sortBy' | 'order'>;
 // numbers end where their header's label does: the slot after them is as wide as the
 // sort icon beside the label (gap-1 + size-3), and an unsure rating puts its ? there
 const NumericCell: FC<{ value: number; mark?: string }> = ({ value, mark }) => (
-  <>
+  <span className="whitespace-nowrap">
     {value}
     <span className="inline-block w-4 text-left">{mark}</span>
-  </>
+  </span>
 );
 
 const TournamentsHead: FC = () => {
@@ -158,9 +158,10 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
       key={player.id}
       className={cn(
         player.id === authPlayer?.id && [
-          'bg-muted hover:bg-muted font-medium',
+          '*:bg-muted font-medium',
+          // the cells stick, not the row: firefox stops painting a sticky <tr>
           isRankedOrder &&
-            'sticky top-[calc(var(--club-sticky-top)+2rem)] -bottom-px z-10',
+            '*:sticky *:top-[calc(var(--club-sticky-top)+2rem)] *:-bottom-px *:z-10',
         ],
       )}
     >

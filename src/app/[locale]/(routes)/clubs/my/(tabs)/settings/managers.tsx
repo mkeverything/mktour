@@ -1,7 +1,6 @@
 'use client';
 
 import AddManagerDrawer from '@/app/[locale]/(routes)/clubs/my/(tabs)/settings/add-manager-drawer';
-import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import FormattedMessage from '@/components/formatted-message';
 import useDeleteClubManagerMutation from '@/components/hooks/mutation-hooks/use-club-delete-manager';
 import { useClubManagers } from '@/components/hooks/query-hooks/use-club-managers';
@@ -14,6 +13,7 @@ import {
   Title,
   Trigger,
 } from '@/components/ui-custom/combo-modal';
+import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -38,9 +38,7 @@ const ClubManagersList: FC<{ clubId: string; userId: string }> = ({
 }) => {
   const { data, status, error } = useClubManagers(clubId);
   const { translateError } = useIntlError();
-  const user = data?.find(
-    ({ clubs_to_users: { userId } }) => userId === userId,
-  );
+  const user = data?.find((amdin) => amdin.userId === userId);
 
   if (status === 'error') {
     toast.error(translateError(error, { fallback: 'USERS_NOT_LOADED' }));
@@ -61,11 +59,12 @@ const ClubManagersList: FC<{ clubId: string; userId: string }> = ({
                 <>
                   {data.map((manager, index) => (
                     <ManagerItem
-                      key={manager.user.username}
+                      key={manager.userId}
                       manager={manager}
                       index={index}
                       length={data.length}
                       user={user ?? null}
+                      clubId={clubId}
                     />
                   ))}
                 </>
@@ -85,22 +84,23 @@ const ManagerItem: FC<{
   index: number;
   length: number;
   user: ClubManagerModel | null;
-}> = ({ manager, index, length, user }) => {
+  clubId: string;
+}> = ({ manager, index, length, user, clubId }) => {
   const canDelete =
-    user?.clubs_to_users.status === 'co-owner' &&
-    manager.user.id !== user.user.id &&
-    manager.clubs_to_users.status === 'admin';
+    user?.status === 'co-owner' &&
+    manager.userId !== user.userId &&
+    manager.status === 'admin';
 
   return (
-    <React.Fragment key={manager.user.username}>
+    <React.Fragment key={manager.username}>
       <Item>
         <ItemContent className="gap-1">
-          <ItemTitle>{manager.user.username}</ItemTitle>
-          <ItemDescription>{manager.clubs_to_users.status}</ItemDescription>
+          <ItemTitle>{manager.username}</ItemTitle>
+          <ItemDescription>{manager.status}</ItemDescription>
         </ItemContent>
         <ItemActions>
           <Button variant="outline" size="sm" asChild>
-            <a href={`/user/${manager.user.username}`} className="flex gap-2">
+            <a href={`/user/${manager.username}`} className="flex gap-2">
               <User2 />
               <div className="hidden sm:block">
                 <FormattedMessage id="Tournament.Table.Player.profile" />
@@ -108,10 +108,7 @@ const ManagerItem: FC<{
             </a>
           </Button>
           {canDelete && (
-            <DeleteManagerButton
-              clubId={user.clubs_to_users.clubId}
-              userId={manager.user.id}
-            />
+            <DeleteManagerButton clubId={clubId} userId={manager.userId} />
           )}
         </ItemActions>
       </Item>

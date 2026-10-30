@@ -2,7 +2,6 @@ import 'server-only';
 
 import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
-import { CACHE_TAGS } from '@/lib/cache-tags';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { user_notifications } from '@/server/db/schema/notifications';
@@ -14,13 +13,13 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { sessions, user_preferences, users } from '@/server/db/schema/users';
+import { publishUserNotification } from '@/server/events';
 import {
   deleteClubFunction,
   promoteSuccessorCoOwners,
 } from '@/server/mutations/club-managing';
 import { EditProfileFormModel } from '@/server/zod/users';
 import { count, eq, inArray, sql } from 'drizzle-orm';
-import { revalidateTag } from 'next/cache';
 
 export const editUser = async (
   userId: string,
@@ -31,7 +30,6 @@ export const editUser = async (
     .set(values)
     .where(eq(users.id, userId))
     .returning();
-  revalidateTag(CACHE_TAGS.AUTH, 'max');
   return user;
 };
 
@@ -80,12 +78,12 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
 
   const clubId = user.selectedClub;
 
-  await db.transaction(async (tx) => {
+  const promotedUserIds = await db.transaction(async (tx) => {
     const managedClubs = await tx
       .select({ clubId: clubs_to_users.clubId })
       .from(clubs_to_users)
       .where(eq(clubs_to_users.userId, userId));
-    await promoteSuccessorCoOwners(tx, {
+    const successorIds = await promoteSuccessorCoOwners(tx, {
       userId,
       clubIds: managedClubs.map(({ clubId }) => clubId),
     });
@@ -137,5 +135,9 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
     await tx.delete(users).where(eq(users.id, userId));
     if (userClubs.includes(clubId))
       await tx.delete(clubs).where(eq(clubs.id, clubId));
+    return successorIds;
   });
+  for (const promotedUserId of promotedUserIds) {
+    publishUserNotification(promotedUserId);
+  }
 };

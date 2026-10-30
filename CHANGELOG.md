@@ -1,3 +1,58 @@
+## [1.15.2](https://github.com/mkeverything/mktour/compare/v1.15.1...v1.15.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **club-page-ui:** keep the pinned player painted in firefox ([0079a97](https://github.com/mkeverything/mktour/commit/0079a974087d1fdddaa76d8931ffb343d5bd6847))
+
+## [1.15.1](https://github.com/mkeverything/mktour/compare/v1.15.0...v1.15.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **club-page-ui:** wrapping tournaments-played number shifting the table ([b8039b8](https://github.com/mkeverything/mktour/commit/b8039b8626ddbbac22e80f85c89c29258c3c72ec))
+
+# [1.15.0](https://github.com/mkeverything/mktour/compare/v1.14.0...v1.15.0) (2026-10-23)
+
+
+### Bug Fixes
+
+* **a11y:** add aria-labels to buttons that missed it (mainly fab) ([c332d65](https://github.com/mkeverything/mktour/commit/c332d652496eac1bed08767f07cdd57af1ae4b07))
+* **a11y:** add reest of missing aria-labels: swiss-rounds-number and merge-player-drawer ([4e00c66](https://github.com/mkeverything/mktour/commit/4e00c664821ccf0e1e5e29c88fb85bbfacd0d484))
+* **a11y:** label player and deletion form inputs ([0f4b903](https://github.com/mkeverything/mktour/commit/0f4b903ba504d4fdbce63675845a2aaf3a0367db))
+* **a11y:** respect reduced-motion preferences ([0d8db8a](https://github.com/mkeverything/mktour/commit/0d8db8ac01230d656abeced1731f4978e4a7f434))
+* **auth:** check lichess responses before completing login ([8c3e3c2](https://github.com/mkeverything/mktour/commit/8c3e3c23450a22f8424e59ec35505ad99eac71be))
+* **auth:** start lichess sign-in with a post instead of a get ([29e795b](https://github.com/mkeverything/mktour/commit/29e795b383b615e52f9c654c320b56351bf71145))
+* **changelog:** parse commit hashes for stable release note keys ([7d384a4](https://github.com/mkeverything/mktour/commit/7d384a4d7c91e376ad248ac2a8588124287c20e3))
+* **clubs:** prevent the only manager from leaving a club ([a829042](https://github.com/mkeverything/mktour/commit/a829042836dfb23e89a2f7f73c7d996a20cc3b73)), closes [#105](https://github.com/mkeverything/mktour/issues/105)
+* **dashboard:** prevent duplicate carousel select listeners ([3ef4d3c](https://github.com/mkeverything/mktour/commit/3ef4d3cfa6d1c5fa1bfe7cb62e3c2d514e506d82))
+* **dashboard:** prevent start tournament drawer crash during server rendering ([c354a40](https://github.com/mkeverything/mktour/commit/c354a40c1a587341c7d59cda8499079a9b9e251a))
+* keep paginator fetching while the trigger stays in view ([373f7e7](https://github.com/mkeverything/mktour/commit/373f7e7555c75ddb55460dcfb04782d3d5d5bce2))
+* **seo:** stop masking metadata failures as not found ([08ca462](https://github.com/mkeverything/mktour/commit/08ca4622df0abcf397d2a2f94aa9c23f81c2352a))
+* **server:** stop exposing internal helpers as server actions ([f41885c](https://github.com/mkeverything/mktour/commit/f41885ca02f963605099b41bbadd061e30f0a6a9))
+* **theme:** ignore blocked storage when syncing the saved theme ([f0943c2](https://github.com/mkeverything/mktour/commit/f0943c2ba35dd9bfb2ae76ff80a9d2616d0ccec6))
+* **theme:** keep theme script and state correct across locale switches ([c772bce](https://github.com/mkeverything/mktour/commit/c772bce70159b526d2469bd776994c7fc141648c))
+* **theme:** render the toggle before hydration ([4aa8052](https://github.com/mkeverything/mktour/commit/4aa80527b3c1d39a3c0e96234347e29d83de7f3c))
+* **tournaments:** create the page query client per request ([c4afc28](https://github.com/mkeverything/mktour/commit/c4afc28f6670c81511f3d014b9f9f290023c11bf))
+* **tournaments:** show tournament dates as local dates ([99f7495](https://github.com/mkeverything/mktour/commit/99f749560ed9df736cc84ca918b7072184d98d8a))
+
+
+### Features
+
+* **club:** draft sortable players table ([1271159](https://github.com/mkeverything/mktour/commit/12711596780b331ae3147b22342a6f3259eff7b8))
+* **club:** redesign club page with tournaments and players columns ([bc995e9](https://github.com/mkeverything/mktour/commit/bc995e9d9adac13c1581ec1d1a47c9a5fdd50077))
+* new design for clbu public page prototype. UNREVIEWED FABLE DEMO ([a61b249](https://github.com/mkeverything/mktour/commit/a61b2495f8570eb3c87a3b255f20d00ac9e0bad0))
+
+
+### Performance Improvements
+
+* **clubs:** read club page data in parallel ([6ef9792](https://github.com/mkeverything/mktour/commit/6ef9792cd63acd401a4c417c723b8012ee0fa4f5))
+* **db:** parallelise club statistics seeding ([61dc666](https://github.com/mkeverything/mktour/commit/61dc666037595c0da64f1c5384058f7652247519))
+* **motion:** use the lightweight animation feature bundle ([d0a5a14](https://github.com/mkeverything/mktour/commit/d0a5a149db0bd80105127595ddf71d5058ba276d))
+* **profile:** start independent profile reads together ([2e05bc9](https://github.com/mkeverything/mktour/commit/2e05bc9be6b9a092bdbb2e09c927efc03c9a8623))
+* **server:** start independent reads together ([2a81a29](https://github.com/mkeverything/mktour/commit/2a81a290ecdbf285aaf8a12a4110335183c47811))
+* **websocket:** stabilise provider context values ([595c630](https://github.com/mkeverything/mktour/commit/595c6302a26dd2ef33637303adc725bbf94b687f))
+
 # [1.14.0](https://github.com/mkeverything/mktour/compare/v1.13.0...v1.14.0) (2026-10-13)
 
 ### Features

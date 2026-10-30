@@ -12,46 +12,37 @@ import Main from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/main';
 import TournamentTable from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/table';
 import FormattedMessage from '@/components/formatted-message';
 import { useTournamentInfo } from '@/components/hooks/query-hooks/use-tournament-info';
-import { useDashboardWebsocket } from '@/components/hooks/use-dashboard-websocket';
+import { useTournamentEvents } from '@/components/hooks/use-tournament-events';
 import Overlay from '@/components/overlay';
 import Fades from '@/components/ui-custom/fades';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TournamentAuthStatus } from '@/server/zod/enums';
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
   currentTab,
-  session,
   id,
   status,
   unitId,
   userId,
 }) => {
-  const queryClient = useQueryClient();
   const { data: tournament } = useTournamentInfo(id);
   const [roundInView, setRoundInView] = useState(
     tournament?.tournament.ongoingRound || 1,
   );
-  const { sendJsonMessage } = useDashboardWebsocket(
-    session,
-    id,
-    queryClient,
-    setRoundInView,
-  );
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  useTournamentEvents(id, setRoundInView, setSelectedGameId);
 
   const dashboardValue = useMemo(
     () => ({
-      sendJsonMessage,
       status,
       unitId,
       userId,
     }),
-    [unitId, sendJsonMessage, status, userId],
+    [unitId, status, userId],
   );
   const tabValue = useMemo(() => ({ currentTab }), [currentTab]);
   const roundValue = useMemo(
@@ -133,7 +124,6 @@ const DashboardDesktop: React.FC<DashboardDesktopProps> = ({
 };
 
 interface DashboardDesktopProps extends TabProps {
-  session: string | null;
   id: string;
   status: TournamentAuthStatus;
   unitId: string | null;

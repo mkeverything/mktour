@@ -1,25 +1,15 @@
 import { appRouter } from '@/server/api/index';
 import { createTRPCContext } from '@/server/api/trpc';
-import { db } from '@/server/db';
-import { beforeAll, describe, expect, it } from 'bun:test';
+import { fixtures } from '@/server/db/seed';
+import { describe, expect, it } from 'bun:test';
 import { NextRequest } from 'next/server';
 
 describe('API Token Auth', () => {
-  let userId: string;
+  const userId = fixtures.users.next().value!.id;
   let token: string;
   let tokenId: string;
 
-  beforeAll(async () => {
-    const existingUser = await db.query.users.findFirst();
-    if (existingUser) {
-      userId = existingUser.id;
-    } else {
-      console.warn('No user found in DB, skipping test setup');
-    }
-  });
-
   it('should generate a token', async () => {
-    if (!userId) return;
     const ctx = await createTRPCContext({
       headers: new Headers(),
       req: new NextRequest('http://localhost:3000'),
@@ -60,8 +50,6 @@ describe('API Token Auth', () => {
   });
 
   it('should list tokens', async () => {
-    if (!userId) return;
-
     const headers = new Headers();
     headers.set('Authorization', `Bearer ${token}`);
     const ctx = await createTRPCContext({
@@ -78,8 +66,6 @@ describe('API Token Auth', () => {
   });
 
   it('should revoke the token', async () => {
-    if (!userId) return;
-
     const headers = new Headers();
     headers.set('Authorization', `Bearer ${token}`);
     const ctx = await createTRPCContext({
