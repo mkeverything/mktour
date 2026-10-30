@@ -32,6 +32,8 @@ LABEL org.opencontainers.image.source=https://github.com/mkeverything/mktour
 ARG RUNTIME_UID=10001
 ARG RUNTIME_GID=10001
 ARG DEPLOY_ENV
+ARG NEXT_DEPLOYMENT_ID
+ENV MKTOUR_COMMIT=$NEXT_DEPLOYMENT_ID
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 DEPLOY_ENV=$DEPLOY_ENV HOSTNAME=0.0.0.0 PORT=3000
 # next writes regenerated pages and its cache under .next at runtime
 COPY --from=build --chown=${RUNTIME_UID}:${RUNTIME_GID} /app/.next/standalone ./
