@@ -8,6 +8,10 @@ on:
   # redeploy the current main or beta by hand from the actions tab
   workflow_dispatch:
 
+# jobs get a read-only token unless they ask for more
+permissions:
+  contents: read
+
 jobs:
   lint-and-check:
     name: lint, type check, test & build
@@ -51,6 +55,11 @@ jobs:
     needs: lint-and-check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    # semantic-release publishes the github release and comments on released issues and prs
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
