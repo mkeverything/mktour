@@ -8,42 +8,48 @@ import {
 } from '@/server/zod/enums';
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
+  date,
   foreignKey,
   index,
   integer,
+  pgTable,
   primaryKey,
-  sqliteTable,
   text,
+  timestamp,
   uniqueIndex,
-} from 'drizzle-orm/sqlite-core';
+} from 'drizzle-orm/pg-core';
 
-export const tournaments = sqliteTable(
+export const tournaments = pgTable(
   'tournament',
   {
     id: text('id').notNull(),
     title: text('name'),
     format: text('format').$type<TournamentFormat>().notNull(),
     type: text('type').$type<TournamentType>().notNull(),
-    date: text('date').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    date: date('date', { mode: 'string' }).notNull(),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
     clubId: text('club_id')
       .references(() => clubs.id)
       .notNull(),
-    startedAt: integer('started_at', { mode: 'timestamp' }),
-    closedAt: integer('closed_at', { mode: 'timestamp' }),
+    startedAt: timestamp('started_at', { withTimezone: true, precision: 3 }),
+    closedAt: timestamp('closed_at', { withTimezone: true, precision: 3 }),
     roundsNumber: integer('rounds_number').notNull(), // necessary even if playing single elimination (final and match_for_third have same number);
     ongoingRound: integer('ongoing_round')
       .$default(() => 1)
       .notNull(),
-    rated: integer('rated', { mode: 'boolean' })
+    rated: boolean('rated')
       .notNull()
       .$default(() => true),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );
 
-export const players_to_units = sqliteTable(
+export const players_to_units = pgTable(
   // ex players_to_tournaments
   'players_to_units',
   {
@@ -63,7 +69,7 @@ export const players_to_units = sqliteTable(
   ],
 );
 
-export const tournament_units = sqliteTable(
+export const tournament_units = pgTable(
   // ex players_to_tournaments
   'tournament_units',
   {
@@ -86,9 +92,9 @@ export const tournament_units = sqliteTable(
       .$default(() => 0)
       .notNull(),
     place: integer('place'),
-    isOut: integer('is_out', { mode: 'boolean' }),
+    isOut: boolean('is_out'),
     number: integer('number'),
-    addedAt: integer('added_at', { mode: 'timestamp_ms' }),
+    addedAt: timestamp('added_at', { withTimezone: true, precision: 3 }),
     nickname: text('nickname').notNull(), // team nickname or solo player nickname
   },
   (table) => [
@@ -99,7 +105,7 @@ export const tournament_units = sqliteTable(
   ],
 );
 
-export const games = sqliteTable(
+export const games = pgTable(
   'game',
   {
     id: text('id').notNull(),
@@ -117,7 +123,7 @@ export const games = sqliteTable(
     whitePrevGameId: text('white_prev_game_id'),
     blackPrevGameId: text('black_prev_game_id'),
     result: text('result').$type<GameResult>(),
-    finishedAt: integer('finished_at', { mode: 'timestamp' }),
+    finishedAt: timestamp('finished_at', { withTimezone: true, precision: 3 }),
     tournamentId: text('tournament_id')
       .references(() => tournaments.id)
       .notNull(),

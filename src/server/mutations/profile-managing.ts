@@ -3,6 +3,7 @@ import 'server-only';
 import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { db } from '@/server/db';
+import { lockClubs } from '@/server/db/locks';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { user_notifications } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
@@ -79,13 +80,16 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
   const clubId = user.selectedClub;
 
   const promotedUserIds = await db.transaction(async (tx) => {
-    const managedClubs = await tx
-      .select({ clubId: clubs_to_users.clubId })
-      .from(clubs_to_users)
-      .where(eq(clubs_to_users.userId, userId));
+    const managedClubIds = (
+      await tx
+        .select({ clubId: clubs_to_users.clubId })
+        .from(clubs_to_users)
+        .where(eq(clubs_to_users.userId, userId))
+    ).map(({ clubId }) => clubId);
+    await lockClubs(tx, managedClubIds);
     const successorIds = await promoteSuccessorCoOwners(tx, {
       userId,
-      clubIds: managedClubs.map(({ clubId }) => clubId),
+      clubIds: managedClubIds,
     });
 
     if (userClubs.includes(clubId)) {

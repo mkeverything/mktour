@@ -1,11 +1,10 @@
-import { lowerLike } from '@/lib/sql-sqlite-string';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import { SearchParamsModel } from '@/server/zod/search';
-import { and, desc, eq, isNotNull, or } from 'drizzle-orm';
+import { and, desc, eq, ilike, isNotNull, or } from 'drizzle-orm';
 
 export async function globalSearch(params: SearchParamsModel) {
   const { query, filter } = params;
@@ -15,12 +14,7 @@ export async function globalSearch(params: SearchParamsModel) {
     const usersResult = await db
       .select()
       .from(users)
-      .where(
-        or(
-          lowerLike(users.name, queryStr),
-          lowerLike(users.username, queryStr),
-        ),
-      )
+      .where(or(ilike(users.name, queryStr), ilike(users.username, queryStr)))
       .limit(15);
     return { users: usersResult };
   }
@@ -32,8 +26,8 @@ export async function globalSearch(params: SearchParamsModel) {
       .where(
         and(
           or(
-            lowerLike(players.nickname, queryStr),
-            lowerLike(players.realname, queryStr),
+            ilike(players.nickname, queryStr),
+            ilike(players.realname, queryStr),
           ),
           eq(players.clubId, clubId),
         ),
@@ -56,10 +50,7 @@ export async function globalSearch(params: SearchParamsModel) {
       .select()
       .from(tournaments)
       .where(
-        and(
-          lowerLike(tournaments.title, queryStr),
-          eq(tournaments.clubId, clubId),
-        ),
+        and(ilike(tournaments.title, queryStr), eq(tournaments.clubId, clubId)),
       )
       .limit(15);
     return { tournaments: tournamentsResult };
@@ -67,20 +58,18 @@ export async function globalSearch(params: SearchParamsModel) {
   const playersDb = db
     .select()
     .from(players)
-    .where(lowerLike(players.nickname, queryStr))
+    .where(ilike(players.nickname, queryStr))
     .orderBy(desc(players.lastSeenAt))
     .limit(5);
   const usersDb = db
     .select()
     .from(users)
-    .where(
-      or(lowerLike(users.name, queryStr), lowerLike(users.username, queryStr)),
-    )
+    .where(or(ilike(users.name, queryStr), ilike(users.username, queryStr)))
     .limit(5);
   const tournamentsDb = db
     .select()
     .from(tournaments)
-    .where(lowerLike(tournaments.title, queryStr))
+    .where(ilike(tournaments.title, queryStr))
     .limit(5);
   const clubsDb = db
     .selectDistinct({
@@ -93,9 +82,7 @@ export async function globalSearch(params: SearchParamsModel) {
     })
     .from(clubs)
     .innerJoin(tournaments, eq(clubs.id, tournaments.clubId))
-    .where(
-      and(lowerLike(clubs.name, queryStr), isNotNull(tournaments.closedAt)),
-    )
+    .where(and(ilike(clubs.name, queryStr), isNotNull(tournaments.closedAt)))
     .limit(5);
 
   const [playersResult, usersResult, tournamentsResult, clubsResult] =

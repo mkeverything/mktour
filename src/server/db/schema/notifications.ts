@@ -5,29 +5,29 @@ import {
   UserNotificationEvent,
 } from '@/server/zod/enums';
 import {
-  integer,
+  boolean,
+  jsonb,
+  pgTable,
   primaryKey,
-  sqliteTable,
   text,
-} from 'drizzle-orm/sqlite-core';
+  timestamp,
+} from 'drizzle-orm/pg-core';
 
-export const user_notifications = sqliteTable(
+export const user_notifications = pgTable(
   'user_notification',
   {
     id: text('id').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' })
+    createdAt: timestamp('created_at', { withTimezone: true, precision: 3 })
       .$default(() => new Date())
       .notNull(),
     userId: text('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
     event: text('event').$type<UserNotificationEvent>().notNull(),
-    isSeen: integer('is_seen', { mode: 'boolean' })
+    isSeen: boolean('is_seen')
       .$default(() => false)
       .notNull(),
-    metadata: text('metadata', {
-      mode: 'json',
-    })
+    metadata: jsonb('metadata')
       .$type<Record<string, unknown>>()
       .notNull()
       .$default(() => ({ test: 'test' })),
@@ -35,23 +35,21 @@ export const user_notifications = sqliteTable(
   (table) => [primaryKey({ columns: [table.id] })],
 );
 
-export const club_notifications = sqliteTable(
+export const club_notifications = pgTable(
   'club_notification',
   {
     id: text('id').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' })
+    createdAt: timestamp('created_at', { withTimezone: true, precision: 3 })
       .$default(() => new Date())
       .notNull(),
     clubId: text('club_id')
       .references(() => clubs.id, { onDelete: 'cascade' })
       .notNull(),
     event: text('event').$type<ClubNotificationEvent>().notNull(),
-    isSeen: integer('is_seen', { mode: 'boolean' })
+    isSeen: boolean('is_seen')
       .$default(() => false)
       .notNull(),
-    metadata: text('metadata', {
-      mode: 'json',
-    })
+    metadata: jsonb('metadata')
       .$type<Record<string, unknown>>()
       .notNull()
       .$default(() => ({ test: 'test' })),

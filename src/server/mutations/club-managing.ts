@@ -2,8 +2,9 @@ import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { AppError } from '@/lib/errors';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
-import { newid, nowTimestamp } from '@/lib/utils';
-import { db, Transaction } from '@/server/db';
+import { newid } from '@/lib/utils';
+import { db, type Transaction } from '@/server/db';
+import { lockClubs } from '@/server/db/locks';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
   club_notifications,
@@ -153,7 +154,7 @@ export const createPlayer = async (
   }
 
   const insertPlayerWithStartingEvent = async (database: Transaction) => {
-    const createdAt = nowTimestamp();
+    const createdAt = new Date();
     const newPlayer = (
       await database
         .insert(players)
@@ -212,7 +213,7 @@ export const deletePlayer = async ({ playerId }: { playerId: string }) => {
       })
       .from(player_stats)
       .where(eq(player_stats.playerId, playerId))
-      .get();
+      .then((rows) => rows.at(0));
     await tx.delete(players).where(eq(players.id, playerId));
     if (stats && stats.ratingRank !== null) {
       await refreshPlayerStats(tx, { clubId: stats.clubId, playerIds: [] });
@@ -341,23 +342,27 @@ export const deleteClubFunction = async ({
     .from(tournament_units)
     .where(inArray(tournament_units.tournamentId, clubTournamentIds));
 
-  await db.batch([
-    db.delete(games).where(inArray(games.tournamentId, clubTournamentIds)),
-    db
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(games)
+      .where(inArray(games.tournamentId, clubTournamentIds));
+    await tx
       .delete(players_to_units)
-      .where(inArray(players_to_units.unitId, clubUnitIds)),
-    db
+      .where(inArray(players_to_units.unitId, clubUnitIds));
+    await tx
       .delete(tournament_units)
-      .where(inArray(tournament_units.tournamentId, clubTournamentIds)),
+      .where(inArray(tournament_units.tournamentId, clubTournamentIds));
 
-    db.delete(affiliations).where(eq(affiliations.clubId, clubId)),
-    db.delete(club_notifications).where(eq(club_notifications.clubId, clubId)),
-    db.delete(players).where(eq(players.clubId, clubId)),
-    db.delete(tournaments).where(eq(tournaments.clubId, clubId)),
-    db.delete(clubs_to_users).where(eq(clubs_to_users.clubId, clubId)),
+    await tx.delete(affiliations).where(eq(affiliations.clubId, clubId));
+    await tx
+      .delete(club_notifications)
+      .where(eq(club_notifications.clubId, clubId));
+    await tx.delete(players).where(eq(players.clubId, clubId));
+    await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));
+    await tx.delete(clubs_to_users).where(eq(clubs_to_users.clubId, clubId));
 
-    db.delete(clubs).where(eq(clubs.id, clubId)),
-  ]);
+    await tx.delete(clubs).where(eq(clubs.id, clubId));
+  });
 };
 
 export const getClubAffiliatedUsers = async (clubId: string) => {
@@ -545,6 +550,7 @@ export const leaveClub = async ({
   if (!otherClubId) throw new AppError('NO_OTHER_CLUB_CO_OWNER');
 
   const promotedUserIds = await db.transaction(async (tx) => {
+    await lockClubs(tx, [clubId]);
     const otherManager = await tx.query.clubs_to_users.findFirst({
       where: { clubId, userId: { ne: userId } },
       columns: { id: true },

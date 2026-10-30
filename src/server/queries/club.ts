@@ -1,4 +1,4 @@
-import { lower, lowerLike } from '@/lib/sql-sqlite-string';
+import { lower } from '@/lib/sql-lower';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { player_stats, players } from '@/server/db/schema/players';
@@ -14,7 +14,9 @@ import {
   countDistinct,
   desc,
   eq,
+  ilike,
   or,
+  sql,
   type AnyColumn,
   type SQL,
 } from 'drizzle-orm';
@@ -24,12 +26,13 @@ type Ordering = [
   direction: ClubPlayersFilterModel['order'],
 ][];
 
-// rankClubPlayers numbers players in this order, so stored ranks count along the list
+// rankClubPlayers numbers players in this order, so stored ranks count along the list.
+// ids compare bytewise there, so they skip the database's case-insensitive collation
 const BY_RATING: Ordering = [
   [players.rating, 'desc'],
   [players.ratingDeviation, 'asc'],
   [players.lastSeenAt, 'asc'],
-  [players.id, 'asc'],
+  [sql`${players.id} collate "C"`, 'asc'],
 ];
 
 const ORDERINGS: Record<ClubPlayersFilterModel['sortBy'], Ordering> = {
@@ -57,7 +60,11 @@ const selectClubPlayers = () =>
     .innerJoin(player_stats, eq(player_stats.playerId, players.id));
 
 export const getClubInfo = async (id: ClubModel['id']) => {
-  return (await db.select().from(clubs).where(eq(clubs.id, id)).get()) ?? null;
+  return await db
+    .select()
+    .from(clubs)
+    .where(eq(clubs.id, id))
+    .then((rows) => rows.at(0) ?? null);
 };
 
 export const getClubPlayers = async (input: ClubPlayersInputModel) => {
@@ -74,8 +81,8 @@ export const getClubPlayers = async (input: ClubPlayersInputModel) => {
         eq(players.clubId, clubId),
         search
           ? or(
-              lowerLike(players.nickname, pattern),
-              lowerLike(players.realname, pattern),
+              ilike(players.nickname, pattern),
+              ilike(players.realname, pattern),
             )
           : undefined,
       ),
@@ -101,7 +108,7 @@ export const getUserClubPlayer = async ({
 }) => {
   const player = await selectClubPlayers()
     .where(and(eq(players.clubId, clubId), eq(players.userId, userId)))
-    .get();
+    .then((rows) => rows.at(0));
 
   return player ?? null;
 };

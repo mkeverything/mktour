@@ -13,9 +13,9 @@ import {
   getRoundRobinRoundsNumber,
   getSwissMaxRoundsNumber,
   newid,
-  nowTimestamp,
 } from '@/lib/utils';
 import { db, type Database, type Transaction } from '@/server/db';
+import { lockClubs, lockTournament } from '@/server/db/locks';
 import { players } from '@/server/db/schema/players';
 import {
   games,
@@ -154,7 +154,7 @@ export async function normalizeSwissRoundsNumberInDatabase(
 
   return {
     roundsNumber: normalizedRounds,
-    wasChanged: updateResult.rowsAffected > 0,
+    wasChanged: !!updateResult.rowCount,
   };
 }
 
@@ -199,7 +199,7 @@ export async function startTournament({
   });
 
   return await db.transaction(async (tx) => {
-    const tournament = await getTournamentById(tournamentId, tx);
+    const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     const roundGames = await preparePreStartPairings(tournamentId, tx);
@@ -209,7 +209,7 @@ export async function startTournament({
       .where(
         and(eq(tournaments.id, tournamentId), isNull(tournaments.startedAt)),
       );
-    if (!value.rowsAffected) throw new AppError('TOURNAMENT_ALREADY_STARTED');
+    if (!value.rowCount) throw new AppError('TOURNAMENT_ALREADY_STARTED');
     return roundGames;
   });
 }
@@ -224,7 +224,7 @@ export async function resetTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   await db.transaction(async (tx) => {
-    const tournament = await getTournamentById(tournamentId, tx);
+    const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (tournament.closedAt) throw new AppError('FINISHED_TOURNAMENT_IS_FINAL');
     const tournamentUpdate = await tx
@@ -240,7 +240,7 @@ export async function resetTournament({
           isNull(tournaments.closedAt),
         ),
       );
-    if (!tournamentUpdate.rowsAffected)
+    if (!tournamentUpdate.rowCount)
       throw new AppError('TOURNAMENT_ALREADY_RESET');
 
     await tx.delete(games).where(eq(games.tournamentId, tournamentId));
@@ -271,13 +271,12 @@ export async function finishTournament({
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
 
   const closedAt = await db.transaction(async (tx) => {
-    const [tournament, allGames, unitsUnsorted] = await Promise.all([
-      getTournamentById(tournamentId, tx),
-      getTournamentGames(tournamentId, tx),
-      getRawTournamentUnits(tournamentId, tx),
-    ]);
-
+    const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+    await lockClubs(tx, [tournament.clubId]);
+    const allGames = await getTournamentGames(tournamentId, tx);
+    const unitsUnsorted = await getRawTournamentUnits(tournamentId, tx);
+
     if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (!tournament.startedAt) throw new AppError('TOURNAMENT_NOT_STARTED');
     if (
@@ -290,15 +289,14 @@ export async function finishTournament({
       throw new AppError('INCOMPLETE_GAMES');
     }
 
-    // the first read has acquired libsql's write transaction, including over http.
-    const closedAt = nowTimestamp();
+    const closedAt = new Date();
     const result = await tx
       .update(tournaments)
       .set({ closedAt })
       .where(
         and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)),
       );
-    if (!result.rowsAffected) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
+    if (!result.rowCount) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
 
     const sortedUnits = sortUnitsByResults(unitsUnsorted, tournament, allGames);
     const { unitScoresMap, tiebreakScoresMap } = buildScoreMaps(
@@ -323,22 +321,22 @@ export async function finishTournament({
       }
     });
 
-    await Promise.all(
-      sortedUnits.flatMap((unit) => {
-        const playerIds = unit.players.map((player) => player.id);
+    for (const unit of sortedUnits) {
+      // statements on one transaction connection run one at a time anyway.
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await tx
+        .update(tournament_units)
+        .set({ place: unit.place })
+        .where(eq(tournament_units.id, unit.id));
+    }
 
-        return [
-          tx
-            .update(tournament_units)
-            .set({ place: unit.place })
-            .where(eq(tournament_units.id, unit.id)),
-          tx
-            .update(players)
-            .set({ lastSeenAt: closedAt })
-            .where(inArray(players.id, playerIds)),
-        ];
-      }),
+    const playerIds = sortedUnits.flatMap((unit) =>
+      unit.players.map((player) => player.id),
     );
+    await tx
+      .update(players)
+      .set({ lastSeenAt: closedAt })
+      .where(inArray(players.id, playerIds));
 
     if (tournament.rated) {
       await calculateAndApplyGlickoRatings(tournamentId, tx, closedAt);
@@ -346,9 +344,7 @@ export async function finishTournament({
 
     await refreshPlayerStats(tx, {
       clubId: tournament.clubId,
-      playerIds: sortedUnits.flatMap((unit) =>
-        unit.players.map((player) => player.id),
-      ),
+      playerIds,
     });
 
     return closedAt;
@@ -366,34 +362,28 @@ export async function deleteTournament({
   const { status } = await getStatusInTournament(user.id, tournamentId);
   if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   await db.transaction(async (tx) => {
-    const [tournament, units, participants] = await Promise.all([
-      tx
-        .select({ clubId: tournaments.clubId, closedAt: tournaments.closedAt })
-        .from(tournaments)
-        .where(eq(tournaments.id, tournamentId))
-        .get(),
-      tx
-        .select({ id: tournament_units.id })
-        .from(tournament_units)
-        .where(eq(tournament_units.tournamentId, tournamentId)),
-      tx
-        .select({ playerId: players_to_units.playerId })
-        .from(players_to_units)
-        .innerJoin(
-          tournament_units,
-          eq(players_to_units.unitId, tournament_units.id),
-        )
-        .where(eq(tournament_units.tournamentId, tournamentId)),
-    ]);
+    const tournament = await lockTournament(tx, tournamentId);
+    if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+    await lockClubs(tx, [tournament.clubId]);
+    const units = await tx
+      .select({ id: tournament_units.id })
+      .from(tournament_units)
+      .where(eq(tournament_units.tournamentId, tournamentId));
+    const participants = await tx
+      .select({ playerId: players_to_units.playerId })
+      .from(players_to_units)
+      .innerJoin(
+        tournament_units,
+        eq(players_to_units.unitId, tournament_units.id),
+      )
+      .where(eq(tournament_units.tournamentId, tournamentId));
     if (units.length > 0) {
       const unitIds = units.map((unit) => unit.id);
 
-      await Promise.all([
-        tx.delete(games).where(eq(games.tournamentId, tournamentId)),
-        tx
-          .delete(players_to_units)
-          .where(inArray(players_to_units.unitId, unitIds)),
-      ]);
+      await tx.delete(games).where(eq(games.tournamentId, tournamentId));
+      await tx
+        .delete(players_to_units)
+        .where(inArray(players_to_units.unitId, unitIds));
 
       await tx
         .delete(tournament_units)
@@ -402,7 +392,7 @@ export async function deleteTournament({
 
     await tx.delete(tournaments).where(eq(tournaments.id, tournamentId));
 
-    if (tournament?.closedAt) {
+    if (tournament.closedAt) {
       await refreshPlayerStats(tx, {
         clubId: tournament.clubId,
         playerIds: participants.map((participant) => participant.playerId),
@@ -434,7 +424,7 @@ export async function updateSwissRoundsNumber({
     .update(tournaments)
     .set({ roundsNumber })
     .where(and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)));
-  if (!result.rowsAffected) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
+  if (!result.rowCount) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
 }
 
 export async function editTournamentTitle({
@@ -448,5 +438,5 @@ export async function editTournamentTitle({
     .update(tournaments)
     .set({ title })
     .where(and(eq(tournaments.id, tournamentId), isNull(tournaments.closedAt)));
-  if (!result.rowsAffected) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
+  if (!result.rowCount) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
 }

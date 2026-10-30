@@ -1,5 +1,6 @@
 import '@/lib/config/env';
 
+import { getDatabaseUrl } from '@/lib/config/non-next-urls';
 import { AppError } from '@/lib/errors';
 
 export const BASE_URL =
@@ -21,20 +22,6 @@ export const getRequestOrigin = (host: string | null) => {
     : base.origin;
 };
 
-export const getDatabaseUrl = () =>
-  process.env.OFFLINE === 'true'
-    ? 'http://localhost:8080'
-    : process.env.MKTOURTEST === 'true' || process.env.NODE_ENV === 'test'
-      ? process.env.TEST_DATABASE_URL
-      : process.env.DATABASE_URL;
-
-export const getDatabaseAuthToken = () =>
-  process.env.OFFLINE === 'true'
-    ? ' '
-    : process.env.MKTOURTEST === 'true' || process.env.NODE_ENV === 'test'
-      ? process.env.TEST_DATABASE_AUTH_TOKEN
-      : process.env.DATABASE_AUTH_TOKEN;
-
 export const verifyTestDatabase = () => {
   const isTestEnv = process.env.NODE_ENV === 'test';
 
@@ -44,12 +31,11 @@ export const verifyTestDatabase = () => {
     });
   }
 
-  const dbUrl = getDatabaseUrl() ?? '';
-  const isTestUrl = dbUrl.toLowerCase().includes('test');
+  const databaseName = URL.parse(getDatabaseUrl())?.pathname.slice(1);
 
-  if (!isTestUrl) {
+  if (!databaseName?.toLowerCase().includes('test')) {
     throw new AppError('CONFIG_ERROR', {
-      cause: `database url does not appear to be a test database: ${dbUrl.substring(0, 50)}...`,
+      cause: `database name does not appear to be a test database: ${databaseName}`,
     });
   }
 

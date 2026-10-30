@@ -221,10 +221,8 @@ export async function calculateAndApplyGlickoRatings(
   }
   if (!tournament.rated) return;
 
-  const [gameRows, storedPlayers] = await Promise.all([
-    getTournamentGameRows(tournamentId, tx),
-    getTournamentPlayerRatings(tournamentId, tx),
-  ]);
+  const gameRows = await getTournamentGameRows(tournamentId, tx);
+  const storedPlayers = await getTournamentPlayerRatings(tournamentId, tx);
   if (storedPlayers.some((p) => p.ratingLastUpdateAt > publishedAt)) {
     throw new AppError('RATING_CALCULATION_ERROR', {
       cause: 'rating timeline cannot move backwards',
@@ -246,20 +244,20 @@ export async function calculateAndApplyGlickoRatings(
   });
   if (ratingUpdates.length === 0) return;
 
-  await Promise.all(
-    ratingUpdates.map(async ({ player, update, newPeak }) => {
-      await tx
-        .update(players)
-        .set({
-          rating: update.newRating,
-          ratingPeak: newPeak,
-          ratingDeviation: update.newRatingDeviation,
-          ratingVolatility: update.newVolatility,
-          ratingLastUpdateAt: publishedAt,
-        })
-        .where(eq(players.id, player.id));
-    }),
-  );
+  for (const { player, update, newPeak } of ratingUpdates) {
+    // statements on one transaction connection run one at a time anyway.
+    // react-doctor-disable-next-line react-doctor/async-await-in-loop
+    await tx
+      .update(players)
+      .set({
+        rating: update.newRating,
+        ratingPeak: newPeak,
+        ratingDeviation: update.newRatingDeviation,
+        ratingVolatility: update.newVolatility,
+        ratingLastUpdateAt: publishedAt,
+      })
+      .where(eq(players.id, player.id));
+  }
 
   await tx.insert(rating_events).values(
     ratingUpdates.map(({ player, update }) => ({

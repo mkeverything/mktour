@@ -6,6 +6,7 @@ import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db, type Transaction } from '@/server/db';
+import { lockTournament } from '@/server/db/locks';
 import {
   players_to_units,
   tournament_units,
@@ -89,7 +90,7 @@ export async function addSoloUnit(
   });
 
   const run = async (d: Transaction) => {
-    const tournament = await getTournamentById(tournamentId, d);
+    const tournament = await lockTournament(d, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');

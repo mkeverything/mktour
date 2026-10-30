@@ -1,5 +1,6 @@
 import { caseWhen } from '@/lib/sql-case-when';
 import type { Database, Transaction } from '@/server/db';
+import { lockClubs } from '@/server/db/locks';
 import { player_stats, players } from '@/server/db/schema/players';
 import {
   games,
@@ -23,7 +24,7 @@ import {
   or,
   type SQL,
 } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/sqlite-core';
+import { alias } from 'drizzle-orm/pg-core';
 
 const { gamesPlayed: _, ...STORED_COLUMNS } = getColumns(player_stats);
 const STORED_KEYS = Object.keys(
@@ -42,7 +43,7 @@ const UPSERT_SET = Object.fromEntries(
   ),
 );
 
-// 11 bound parameters per row keeps every statement far below sqlite's variable limit
+// 11 bound parameters per row keeps every statement far below postgres's 65535 parameter limit
 const UPSERT_CHUNK_SIZE = 500;
 
 type PlayerStatsCounts = Pick<
@@ -143,27 +144,25 @@ function getResultCounts(
 /** finished-tournament counts for the players matched by `where`; players without history are absent */
 async function getPlayerStatsCounts(database: Database, where: SQL) {
   const closed = and(where, isNotNull(tournaments.closedAt));
-  const [participationRows, whiteRows, blackRows] = await Promise.all([
-    database
-      .select({
-        playerId: players_to_units.playerId,
-        tournamentsPlayed: countDistinct(tournaments.id),
-        tournamentsWon: countDistinct(
-          caseWhen(eq(tournament_units.place, 1), tournaments.id).elseNull(),
-        ),
-      })
-      .from(players_to_units)
-      .innerJoin(players, eq(players.id, players_to_units.playerId))
-      .innerJoin(
-        tournament_units,
-        eq(players_to_units.unitId, tournament_units.id),
-      )
-      .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
-      .where(closed)
-      .groupBy(players_to_units.playerId),
-    getResultCounts(database, closed, 'white'),
-    getResultCounts(database, closed, 'black'),
-  ]);
+  const participationRows = await database
+    .select({
+      playerId: players_to_units.playerId,
+      tournamentsPlayed: countDistinct(tournaments.id),
+      tournamentsWon: countDistinct(
+        caseWhen(eq(tournament_units.place, 1), tournaments.id).elseNull(),
+      ),
+    })
+    .from(players_to_units)
+    .innerJoin(players, eq(players.id, players_to_units.playerId))
+    .innerJoin(
+      tournament_units,
+      eq(players_to_units.unitId, tournament_units.id),
+    )
+    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
+    .where(closed)
+    .groupBy(players_to_units.playerId);
+  const whiteRows = await getResultCounts(database, closed, 'white');
+  const blackRows = await getResultCounts(database, closed, 'black');
 
   const counts = new Map<string, PlayerStatsCounts>(
     participationRows.map(({ playerId, ...participation }) => [
@@ -186,17 +185,18 @@ export async function buildClubPlayerStats(
   database: Database,
   clubId: string,
 ): Promise<PlayerStatsRowModel[]> {
-  const [clubPlayers, counts] = await Promise.all([
-    database
-      .select({
-        playerId: players.id,
-        clubId: players.clubId,
-        ...RATING_ORDER_COLUMNS,
-      })
-      .from(players)
-      .where(eq(players.clubId, clubId)),
-    getPlayerStatsCounts(database, eq(players.clubId, clubId)),
-  ]);
+  const clubPlayers = await database
+    .select({
+      playerId: players.id,
+      clubId: players.clubId,
+      ...RATING_ORDER_COLUMNS,
+    })
+    .from(players)
+    .where(eq(players.clubId, clubId));
+  const counts = await getPlayerStatsCounts(
+    database,
+    eq(players.clubId, clubId),
+  );
 
   return rankClubPlayers(
     clubPlayers.map((player) => ({
@@ -215,16 +215,19 @@ export async function refreshPlayerStats(
   tx: Transaction,
   { clubId, playerIds }: { clubId: string; playerIds: string[] },
 ) {
-  const [storedRows, counts] = await Promise.all([
-    tx
-      .select({ ...STORED_COLUMNS, ...RATING_ORDER_COLUMNS })
-      .from(player_stats)
-      .innerJoin(players, eq(players.id, player_stats.playerId))
-      .where(eq(player_stats.clubId, clubId)),
+  await lockClubs(tx, [clubId]);
+  const storedRows = await tx
+    .select({ ...STORED_COLUMNS, ...RATING_ORDER_COLUMNS })
+    .from(player_stats)
+    .innerJoin(players, eq(players.id, player_stats.playerId))
+    .where(eq(player_stats.clubId, clubId));
+  const counts =
     playerIds.length > 0
-      ? getPlayerStatsCounts(tx, inArray(players_to_units.playerId, playerIds))
-      : new Map<string, PlayerStatsCounts>(),
-  ]);
+      ? await getPlayerStatsCounts(
+          tx,
+          inArray(players_to_units.playerId, playerIds),
+        )
+      : new Map<string, PlayerStatsCounts>();
 
   const affected = new Set(playerIds);
   const changedRows = rankClubPlayers(

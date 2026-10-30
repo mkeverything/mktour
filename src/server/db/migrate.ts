@@ -1,24 +1,11 @@
 import { AppError } from '@/lib/errors';
-import {
-  getDatabaseAuthToken,
-  getDatabaseUrl,
-  TEST_DATABASE_AUTH_TOKEN,
-  TEST_DATABASE_URL,
-} from '@/lib/config/non-next-urls';
-import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
-import { migrate } from 'drizzle-orm/libsql/migrator';
+import { getDatabaseUrl, TEST_DATABASE_URL } from '@/lib/config/non-next-urls';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
 const runMigrate = async () => {
   (process.env as Record<string, string>).NODE_ENV = 'development';
   const DATABASE_URL = getDatabaseUrl();
-  const DATABASE_AUTH_TOKEN = getDatabaseAuthToken();
-
-  if (!DATABASE_URL) {
-    throw new AppError('CONFIG_ERROR', {
-      cause: 'DATABASE_URL is not defined',
-    });
-  }
 
   if (!TEST_DATABASE_URL) {
     throw new AppError('CONFIG_ERROR', {
@@ -26,23 +13,14 @@ const runMigrate = async () => {
     });
   }
 
-  if (DATABASE_AUTH_TOKEN == TEST_DATABASE_AUTH_TOKEN) {
+  if (DATABASE_URL === TEST_DATABASE_URL) {
     throw new AppError('CONFIG_ERROR', {
-      cause: 'DATABASE_AUTH_TOKEN and TEST_DATABASE_AUTH_TOKEN are the same',
+      cause: 'DATABASE_URL and TEST_DATABASE_URL are the same',
     });
   }
 
-  const client = createClient({
-    url: DATABASE_URL,
-    authToken: DATABASE_AUTH_TOKEN,
-  });
-  const db = drizzle({ client });
-
-  const clientTest = createClient({
-    url: TEST_DATABASE_URL,
-    authToken: TEST_DATABASE_AUTH_TOKEN,
-  });
-  const dbTest = drizzle({ client: clientTest });
+  const db = drizzle(DATABASE_URL);
+  const dbTest = drizzle(TEST_DATABASE_URL);
 
   console.log('running migrations for development db...');
   const start = Date.now();

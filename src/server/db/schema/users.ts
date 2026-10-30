@@ -1,29 +1,32 @@
 import { clubs } from '@/server/db/schema/clubs';
 import {
-  int,
   integer,
+  pgTable,
   primaryKey,
-  sqliteTable,
   text,
-} from 'drizzle-orm/sqlite-core';
+  timestamp,
+} from 'drizzle-orm/pg-core';
 
-export const users = sqliteTable(
+export const users = pgTable(
   'user',
   {
     id: text('id').notNull(),
     name: text('name'),
     email: text('email').notNull().unique(),
     username: text('username').notNull().unique(),
-    rating: int('rating'),
+    rating: integer('rating'),
     selectedClub: text('selected_club')
       .references(() => clubs.id)
       .notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );
 
-export const user_preferences = sqliteTable(
+export const user_preferences = pgTable(
   'user_preferences',
   {
     userId: text('user_id')
@@ -34,19 +37,22 @@ export const user_preferences = sqliteTable(
   (table) => [primaryKey({ columns: [table.userId] })],
 );
 
-export const sessions = sqliteTable(
+export const sessions = pgTable(
   'user_session',
   {
     id: text('id').notNull(),
     userId: text('user_id')
       .notNull()
       .references(() => users.id),
-    expiresAt: integer('expires_at').notNull(),
+    expiresAt: timestamp('expires_at', {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );
 
-export const apiTokens = sqliteTable(
+export const apiTokens = pgTable(
   'api_token',
   {
     id: text('id').notNull(),
@@ -55,8 +61,11 @@ export const apiTokens = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-    lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true, precision: 3 }),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );

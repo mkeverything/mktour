@@ -4,17 +4,19 @@ import { users } from '@/server/db/schema/users';
 import { AffiliationStatus } from '@/server/zod/enums';
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
+  doublePrecision,
   index,
   integer,
+  pgTable,
   primaryKey,
-  real,
-  sqliteTable,
   text,
+  timestamp,
   uniqueIndex,
-} from 'drizzle-orm/sqlite-core';
+} from 'drizzle-orm/pg-core';
 
-export const players = sqliteTable(
+export const players = pgTable(
   'player',
   {
     id: text('id').notNull(),
@@ -23,17 +25,20 @@ export const players = sqliteTable(
     userId: text('user_id').references(() => users.id),
     rating: integer('rating').notNull().default(1500),
     ratingPeak: integer('rating_peak'),
-    ratingDeviation: real('rating_deviation').notNull().default(350),
-    ratingVolatility: real('rating_volatility').notNull().default(0.06),
-    ratingLastUpdateAt: integer('rating_last_update_at', {
-      mode: 'timestamp',
+    ratingDeviation: doublePrecision('rating_deviation').notNull().default(350),
+    ratingVolatility: doublePrecision('rating_volatility')
+      .notNull()
+      .default(0.06),
+    ratingLastUpdateAt: timestamp('rating_last_update_at', {
+      withTimezone: true,
+      precision: 3,
     })
       .notNull()
       .$default(() => new Date()),
     clubId: text('club_id')
       .references(() => clubs.id)
       .notNull(),
-    lastSeenAt: integer('last_seen_at', { mode: 'timestamp' })
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true, precision: 3 })
       .$default(() => new Date())
       .notNull(), // equals closed_at() last tournament they participated
   },
@@ -47,7 +52,7 @@ export const players = sqliteTable(
     index('player_club_last_seen_idx').on(table.clubId, table.lastSeenAt),
     index('player_club_rating_idx').on(
       table.clubId,
-      sql`${table.rating} desc`,
+      table.rating.desc(),
       table.ratingDeviation,
       table.id,
     ),
@@ -62,7 +67,7 @@ export const players = sqliteTable(
 // a player's published rating history: one starting row, then one row per
 // rated tournament closure. rows are never recalculated; deleting the source
 // tournament only detaches the reference.
-export const rating_events = sqliteTable(
+export const rating_events = pgTable(
   'rating_event',
   {
     id: text('id').notNull(),
@@ -73,10 +78,13 @@ export const rating_events = sqliteTable(
       () => tournaments.id,
       { onDelete: 'set null' },
     ),
-    publishedAt: integer('published_at', { mode: 'timestamp' }).notNull(),
+    publishedAt: timestamp('published_at', {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
     rating: integer('rating').notNull(),
-    ratingDeviation: real('rating_deviation').notNull(),
-    isStarting: integer('is_starting', { mode: 'boolean' }).notNull(),
+    ratingDeviation: doublePrecision('rating_deviation').notNull(),
+    isStarting: boolean('is_starting').notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.id] }),
@@ -91,14 +99,14 @@ export const rating_events = sqliteTable(
     ),
     uniqueIndex('rating_event_player_starting_unique_idx')
       .on(table.playerId)
-      .where(sql`${table.isStarting} = 1`),
+      .where(sql`${table.isStarting}`),
     check(
       'rating_event_rating_bounds',
       sql`${table.rating} between 400 and 3400`,
     ),
     check(
       'rating_event_starting_has_no_source',
-      sql`${table.isStarting} = 0 or ${table.sourceTournamentId} is null`,
+      sql`not ${table.isStarting} or ${table.sourceTournamentId} is null`,
     ),
   ],
 );
@@ -107,7 +115,7 @@ export const rating_events = sqliteTable(
 // transaction as every event that changes it. ranks are unique 1-based positions
 // of every club player as of the last re-rank (docs/adr/0002); null means the
 // player was created after it.
-export const player_stats = sqliteTable(
+export const player_stats = pgTable(
   'player_stats',
   {
     playerId: text('player_id')
@@ -121,9 +129,7 @@ export const player_stats = sqliteTable(
     gamesLost: integer('games_lost').notNull().default(0),
     gamesPlayed: integer('games_played')
       .notNull()
-      .generatedAlwaysAs(sql`games_won + games_drawn + games_lost`, {
-        mode: 'stored',
-      }),
+      .generatedAlwaysAs(sql`games_won + games_drawn + games_lost`),
     ratingRank: integer('rating_rank'),
     tournamentsPlayedRank: integer('tournaments_played_rank'),
     tournamentsWonRank: integer('tournaments_won_rank'),
@@ -156,7 +162,7 @@ export const player_stats = sqliteTable(
 
 // user_id: the user of mktour used with lichess account who initiated the affiliation
 // player_id: the actual player being affiliated
-export const affiliations = sqliteTable(
+export const affiliations = pgTable(
   'affiliation',
   {
     id: text('id').notNull(),
@@ -170,10 +176,10 @@ export const affiliations = sqliteTable(
       .references(() => players.id, { onDelete: 'cascade' })
       .notNull(),
     status: text('status').$type<AffiliationStatus>().notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' })
+    createdAt: timestamp('created_at', { withTimezone: true, precision: 3 })
       .$default(() => new Date())
       .notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp' })
+    updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 })
       .$default(() => new Date())
       .notNull(),
   },

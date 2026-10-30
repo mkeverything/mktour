@@ -2,17 +2,17 @@ import 'server-only';
 
 import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
-import { lowerEq } from '@/lib/sql-sqlite-string';
+import { lowerEq } from '@/lib/sql-lower';
 import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
+import { lockTournament } from '@/server/db/locks';
 import { players } from '@/server/db/schema/players';
 import {
   games,
   players_to_units,
   tournament_units,
-  tournaments,
 } from '@/server/db/schema/tournaments';
 import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
@@ -52,7 +52,7 @@ export async function removeUnit({
     .then((rows) => rows.at(0));
   if (!unit) throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
   return await db.transaction(async (tx) => {
-    const current = await getTournamentById(tournamentId, tx);
+    const current = await lockTournament(tx, tournamentId);
     if (!current) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (current.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (current.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
@@ -81,7 +81,7 @@ export async function reorderTournamentUnits({
   unitIds,
 }: ReorderTournamentUnitsInputModel): Promise<UnitModel[]> {
   return await db.transaction(async (tx) => {
-    const current = await getTournamentById(tournamentId, tx);
+    const current = await lockTournament(tx, tournamentId);
     if (!current) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (current.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (current.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
@@ -140,7 +140,7 @@ export async function addDoublesUnit({
   ];
 
   return await db.transaction(async (tx) => {
-    const tournament = await getTournamentById(tournamentId, tx);
+    const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (tournament.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
@@ -306,7 +306,7 @@ export async function editDoublesUnit({
     throw new AppError('UNIT_NICKNAME_TAKEN');
   }
   return await db.transaction(async (tx) => {
-    const current = await getTournamentById(tournamentId, tx);
+    const current = await lockTournament(tx, tournamentId);
     if (!current) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (current.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (current.startedAt) throw new AppError('TOURNAMENT_ALREADY_STARTED');
@@ -357,14 +357,7 @@ export async function resetTournamentUnits({
   tournamentId: string;
 }) {
   await db.transaction(async (tx) => {
-    const tournament = await tx
-      .select({
-        startedAt: tournaments.startedAt,
-        closedAt: tournaments.closedAt,
-      })
-      .from(tournaments)
-      .where(eq(tournaments.id, tournamentId))
-      .get();
+    const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
     if (!!tournament.startedAt)
@@ -401,7 +394,7 @@ export async function withdrawUnit({
   if (!user) throw new AppError('UNAUTHENTICATED');
   if (user.id !== userId) throw new AppError('USER_MISMATCH');
   const result = await db.transaction(async (tx) => {
-    const tournament = await getTournamentById(tournamentId, tx);
+    const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (tournament.format !== 'swiss')
       throw new AppError('NOT_SWISS_TOURNAMENT');
@@ -429,7 +422,7 @@ export async function withdrawUnit({
           or(isNull(tournament_units.isOut), eq(tournament_units.isOut, false)),
         ),
       );
-    if (!updateResult.rowsAffected) {
+    if (!updateResult.rowCount) {
       throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
     }
     const pendingGames = await tx

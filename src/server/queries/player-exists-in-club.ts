@@ -1,5 +1,5 @@
 import { normalizePlayerNickname } from '@/lib/player-nickname';
-import { lowerEq } from '@/lib/sql-sqlite-string';
+import { lowerEq } from '@/lib/sql-lower';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import { and, eq, ne } from 'drizzle-orm';
@@ -25,5 +25,5 @@ export async function playerExistsInClub({
     .select({ id: players.id })
     .from(players)
     .where(and(...conditions))
-    .get();
+    .then((rows) => rows.at(0));
 }

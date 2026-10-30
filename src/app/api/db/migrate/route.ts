@@ -1,9 +1,8 @@
 import { isCronAuthorised } from '@/lib/auth/cron';
-import { getDatabaseAuthToken, getDatabaseUrl } from '@/lib/config/urls';
-import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
-import { migrate } from 'drizzle-orm/libsql/migrator';
+import { getDatabaseUrl } from '@/lib/config/non-next-urls';
 import { Logger } from 'drizzle-orm/logger';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import path from 'path';
 
 class QueryLogger implements Logger {
@@ -22,19 +21,10 @@ export async function POST(req: Request) {
     return Response.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
-  const url = getDatabaseUrl();
-  const authToken = getDatabaseAuthToken();
-
-  if (!url) {
-    return Response.json({ error: 'CONFIG_ERROR' }, { status: 500 });
-  }
-
   const logger = new QueryLogger();
+  const db = drizzle({ connection: getDatabaseUrl(), logger });
 
   try {
-    const client = createClient({ url, authToken });
-    const db = drizzle({ client, logger });
-
     console.log('running migrations...');
     const start = Date.now();
     const migrationsFolder = path.join(
@@ -63,5 +53,7 @@ export async function POST(req: Request) {
       },
       { status: 500 },
     );
+  } finally {
+    await db.$client.end();
   }
 }
