@@ -1,3 +1,31 @@
+# [1.16.0](https://github.com/mkeverything/mktour/compare/v1.15.2...v1.16.0) (2026-10-30)
+
+
+### Bug Fixes
+
+* **auth:** answer the expired sessions cron with 204 ([6d3943e](https://github.com/mkeverything/mktour/commit/6d3943e35ceacae66bb5c0cc4972b2840388279d))
+* build the socket url in the browser only ([03df407](https://github.com/mkeverything/mktour/commit/03df4072449fb45513c5305ad52bfca1e5159164))
+* catch up on notifications when the user stream reconnects ([dfb7c73](https://github.com/mkeverything/mktour/commit/dfb7c73151357e54c8fd111356a973ff0e41e5ed))
+* close selected game when its result changes ([c50a3ce](https://github.com/mkeverything/mktour/commit/c50a3cebee90d3d8abf6c3bcda522215ead6bc68))
+* keep the round in view within the tournament's rounds ([4db142a](https://github.com/mkeverything/mktour/commit/4db142a37b7bd6a295aef35315bb3d744d7704f0))
+* never fail a mutation over its club notification ([331cd54](https://github.com/mkeverything/mktour/commit/331cd544e5aac3c969fd9b6a1786e2c738007d61))
+* prevent winner underline from being clipped ([2197c2b](https://github.com/mkeverything/mktour/commit/2197c2beafc765c07739c9d32288e081352d4604))
+* refresh what each event's mutation changes, from the cache graph ([27cb9ea](https://github.com/mkeverything/mktour/commit/27cb9ea8479d063302261925f21b7c4f98fd8886))
+* reject missing cron secrets ([bd7c114](https://github.com/mkeverything/mktour/commit/bd7c11402a861b77252af5760c0a132178328641))
+* show the 404 when an open tournament no longer exists ([b44895f](https://github.com/mkeverything/mktour/commit/b44895fa53863882fe0ec42ed556d06f5c2a8c2a))
+* step rounds from the round on screen ([c794b5b](https://github.com/mkeverything/mktour/commit/c794b5ba76bc1814cda1a8f478d5b7a161866f52))
+* validate the session on every request instead of caching it ([d9de415](https://github.com/mkeverything/mktour/commit/d9de41563f497066007ac02f8a8d51d410de3045))
+
+
+### Features
+
+* **api:** add a health route for container checks ([c48d856](https://github.com/mkeverything/mktour/commit/c48d856f0cd67b2c51597e0c7edb6e01a080a545))
+* **matching:** duality certificate for weighted matching ([1d4d040](https://github.com/mkeverything/mktour/commit/1d4d040c5f4875696d0735ce539cd7a2334e5806)), closes [#115](https://github.com/mkeverything/mktour/issues/115) [#142](https://github.com/mkeverything/mktour/issues/142)
+* publish tournament and user events over trpc subscriptions ([83c4ec1](https://github.com/mkeverything/mktour/commit/83c4ec1f57063abec9bcf994e692c1f7690cefc4))
+* send viewers of a deleted tournament to all tournaments ([d8a0208](https://github.com/mkeverything/mktour/commit/d8a020821f85937fe7221b0a04988128cc37f7b3))
+* serve mirror hostnames like ru.mktour.org from the same image ([2b3f09b](https://github.com/mkeverything/mktour/commit/2b3f09b5a3c40194a12bf22af5f152170adcb665))
+* tell viewers when the live stream takes a while to reconnect ([135b07c](https://github.com/mkeverything/mktour/commit/135b07c32e60a0812d938359bc22980f00aa839e))
+
 ## [1.15.2](https://github.com/mkeverything/mktour/compare/v1.15.1...v1.15.2) (2026-10-24)
 
 
