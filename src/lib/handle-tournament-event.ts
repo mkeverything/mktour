@@ -24,6 +24,7 @@ export const handleTournamentEvent = (
     pendingWriters,
     refresh,
     setRoundInView,
+    setSelectedGameId,
     onDeleted,
   }: TournamentEventContext,
 ) => {
@@ -72,7 +73,15 @@ export const handleTournamentEvent = (
       refresh(TOURNAMENT_CACHE_GRAPH.withdrawUnit);
       break;
     }
-    case 'set-game-result':
+    case 'set-game-result': {
+      const game = queryClient
+        .getQueryData(roundGamesKey(event.roundNumber))
+        ?.find((game) => game.id === event.gameId);
+      if (game && game.result !== event.result) {
+        setSelectedGameId((selectedGameId) =>
+          selectedGameId === event.gameId ? null : selectedGameId,
+        );
+      }
       if (idle('roundGames')) {
         queryClient.setQueryData(roundGamesKey(event.roundNumber), (cache) =>
           cache?.map((game) =>
@@ -82,6 +91,7 @@ export const handleTournamentEvent = (
       }
       refresh(TOURNAMENT_CACHE_GRAPH.setGameResult);
       break;
+    }
     case 'start-tournament':
       if (idle('info')) {
         queryClient.setQueryData(
@@ -202,5 +212,6 @@ type TournamentEventContext = {
   pendingWriters: (query: TournamentQuery) => number;
   refresh: (queries: readonly TournamentQuery[]) => void;
   setRoundInView: Dispatch<SetStateAction<number>>;
+  setSelectedGameId: Dispatch<SetStateAction<string | null>>;
   onDeleted: () => void;
 };

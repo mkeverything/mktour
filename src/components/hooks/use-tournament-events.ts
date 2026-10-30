@@ -17,6 +17,7 @@ const RECONNECTING_TOAST_DELAY_MS = 5_000;
 export const useTournamentEvents = (
   tournamentId: string,
   setRoundInView: Dispatch<SetStateAction<number>>,
+  setSelectedGameId: Dispatch<SetStateAction<string | null>>,
 ) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -42,6 +43,7 @@ export const useTournamentEvents = (
             pendingWriters,
             refresh,
             setRoundInView,
+            setSelectedGameId,
             onDeleted: () => {
               toast.info(t('tournament deleted'));
               router.push('/tournaments/all');
