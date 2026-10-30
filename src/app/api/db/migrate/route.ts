@@ -1,3 +1,4 @@
+import { isCronAuthorised } from '@/lib/auth/cron';
 import { getDatabaseAuthToken, getDatabaseUrl } from '@/lib/config/urls';
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
@@ -17,9 +18,7 @@ class QueryLogger implements Logger {
 }
 
 export async function POST(req: Request) {
-  if (
-    req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!isCronAuthorised(req)) {
     return Response.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
   }
 
