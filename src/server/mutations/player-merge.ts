@@ -9,11 +9,7 @@ import { db } from '@/server/db';
 import { lockClubs } from '@/server/db/locks';
 import { club_notifications } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
-import {
-  games,
-  players_to_units,
-  tournament_units,
-} from '@/server/db/schema/tournaments';
+import { games, players_to_units } from '@/server/db/schema/tournaments';
 import { publishClubNotification } from '@/server/events';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import type { PlayerMergeInputModel } from '@/server/zod/players';
@@ -46,14 +42,10 @@ export async function mergePlayers({
       .from(affiliations)
       .where(inArray(affiliations.playerId, playerIds));
     const sharedTournament = await tx
-      .select({ tournamentId: tournament_units.tournamentId })
+      .select({ tournamentId: players_to_units.tournamentId })
       .from(players_to_units)
-      .innerJoin(
-        tournament_units,
-        eq(players_to_units.unitId, tournament_units.id),
-      )
       .where(inArray(players_to_units.playerId, playerIds))
-      .groupBy(tournament_units.tournamentId)
+      .groupBy(players_to_units.tournamentId)
       .having(eq(countDistinct(players_to_units.playerId), 2))
       .limit(1)
       .then((rows) => rows.at(0));

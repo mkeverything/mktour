@@ -4,23 +4,16 @@ import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
 import { db } from '@/server/db';
 import { lockClubs } from '@/server/db/locks';
-import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
-import { user_notifications } from '@/server/db/schema/notifications';
-import { affiliations, players } from '@/server/db/schema/players';
-import {
-  games,
-  players_to_units,
-  tournament_units,
-  tournaments,
-} from '@/server/db/schema/tournaments';
-import { sessions, user_preferences, users } from '@/server/db/schema/users';
+import { clubs_to_users } from '@/server/db/schema/clubs';
+import { users } from '@/server/db/schema/users';
 import { publishUserNotification } from '@/server/events';
 import {
   deleteClubFunction,
+  deleteClubRows,
   promoteSuccessorCoOwners,
 } from '@/server/mutations/club-managing';
 import { EditProfileFormModel } from '@/server/zod/users';
-import { count, eq, inArray, sql } from 'drizzle-orm';
+import { count, eq, sql } from 'drizzle-orm';
 
 export const editUser = async (
   userId: string,
@@ -92,53 +85,8 @@ export const deleteUser = async ({ userId }: { userId: string }) => {
       clubIds: managedClubIds,
     });
 
-    if (userClubs.includes(clubId)) {
-      const selectedClubTournamentIds = tx
-        .select({ id: tournaments.id })
-        .from(tournaments)
-        .where(eq(tournaments.clubId, clubId));
-
-      await tx
-        .delete(games)
-        .where(inArray(games.tournamentId, selectedClubTournamentIds));
-      const selectedClubUnitIds = tx
-        .select({ id: tournament_units.id })
-        .from(tournament_units)
-        .where(
-          inArray(tournament_units.tournamentId, selectedClubTournamentIds),
-        );
-
-      await tx
-        .delete(players_to_units)
-        .where(inArray(players_to_units.unitId, selectedClubUnitIds));
-      await tx
-        .delete(tournament_units)
-        .where(
-          inArray(tournament_units.tournamentId, selectedClubTournamentIds),
-        );
-      await tx.delete(players).where(eq(players.clubId, clubId));
-      await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));
-    }
-
-    await tx
-      .update(players)
-      .set({ userId: null })
-      .where(eq(players.userId, userId));
-
-    await tx
-      .delete(user_notifications)
-      .where(eq(user_notifications.userId, userId));
-
-    await tx.delete(affiliations).where(eq(affiliations.userId, userId));
-
-    await tx.delete(clubs_to_users).where(eq(clubs_to_users.userId, userId));
-    await tx
-      .delete(user_preferences)
-      .where(eq(user_preferences.userId, userId));
-    await tx.delete(sessions).where(eq(sessions.userId, userId));
     await tx.delete(users).where(eq(users.id, userId));
-    if (userClubs.includes(clubId))
-      await tx.delete(clubs).where(eq(clubs.id, clubId));
+    if (userClubs.includes(clubId)) await deleteClubRows(tx, clubId);
     return successorIds;
   });
   for (const promotedUserId of promotedUserIds) {

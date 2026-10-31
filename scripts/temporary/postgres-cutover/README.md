@@ -16,8 +16,12 @@ DATABASE_URL='<postgres url>' bunx drizzle-kit migrate
 
 ## 2. rehearse
 
-run steps 4 and 5 with an export of beta into a scratch postgres database, then point a
-local dev server at it and open a few player, club and tournament pages.
+run steps 4 and 5 with an export of beta, then of prod, each into a scratch postgres
+database, then point a local dev server at it and open a few player, club and tournament
+pages. exporting needs no maintenance. postgres enforces rules turso didn't: nicknames
+unique per club regardless of case, one manager row per club and user, one entry per
+player per tournament, and enum values. an import that breaks one stops and names the
+key; fix those rows in turso before the real window.
 
 ## 3. maintenance on
 

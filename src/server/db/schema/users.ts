@@ -26,24 +26,13 @@ export const users = pgTable(
   (table) => [primaryKey({ columns: [table.id] })],
 );
 
-export const user_preferences = pgTable(
-  'user_preferences',
-  {
-    userId: text('user_id')
-      .notNull()
-      .references(() => users.id),
-    language: text('language').$default(() => 'en'),
-  },
-  (table) => [primaryKey({ columns: [table.userId] })],
-);
-
 export const sessions = pgTable(
   'user_session',
   {
     id: text('id').notNull(),
     userId: text('user_id')
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: 'cascade' }),
     expiresAt: timestamp('expires_at', {
       withTimezone: true,
       precision: 3,

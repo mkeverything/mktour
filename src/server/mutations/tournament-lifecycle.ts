@@ -253,7 +253,7 @@ export async function resetTournament({
         losses: 0,
         colorIndex: 0,
         place: null,
-        isOut: null,
+        isOut: false,
       })
       .where(eq(tournament_units.tournamentId, tournamentId));
   });
@@ -365,31 +365,10 @@ export async function deleteTournament({
     const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     await lockClubs(tx, [tournament.clubId]);
-    const units = await tx
-      .select({ id: tournament_units.id })
-      .from(tournament_units)
-      .where(eq(tournament_units.tournamentId, tournamentId));
     const participants = await tx
       .select({ playerId: players_to_units.playerId })
       .from(players_to_units)
-      .innerJoin(
-        tournament_units,
-        eq(players_to_units.unitId, tournament_units.id),
-      )
-      .where(eq(tournament_units.tournamentId, tournamentId));
-    if (units.length > 0) {
-      const unitIds = units.map((unit) => unit.id);
-
-      await tx.delete(games).where(eq(games.tournamentId, tournamentId));
-      await tx
-        .delete(players_to_units)
-        .where(inArray(players_to_units.unitId, unitIds));
-
-      await tx
-        .delete(tournament_units)
-        .where(eq(tournament_units.tournamentId, tournamentId));
-    }
-
+      .where(eq(players_to_units.tournamentId, tournamentId));
     await tx.delete(tournaments).where(eq(tournaments.id, tournamentId));
 
     if (tournament.closedAt) {

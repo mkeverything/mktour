@@ -11,7 +11,6 @@ import {
 } from '@/server/db/schema/players';
 import { clubsSelectSchema } from '@/server/zod/clubs';
 import { clubPaginatedInputSchema } from '@/server/zod/common';
-import { affiliationStatusEnum } from '@/server/zod/enums';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import {
@@ -100,12 +99,8 @@ export const playersInsertSchema = createInsertSchema(players, {
       }),
 });
 export const playersUpdateSchema = createUpdateSchema(players);
-export const affiliationsSelectSchema = createSelectSchema(affiliations, {
-  status: affiliationStatusEnum,
-});
-export const affiliationsInsertSchema = createInsertSchema(affiliations, {
-  status: affiliationStatusEnum,
-});
+export const affiliationsSelectSchema = createSelectSchema(affiliations);
+export const affiliationsInsertSchema = createInsertSchema(affiliations);
 export const affiliationsUpdateSchema = createUpdateSchema(affiliations);
 
 export const affiliationExtendedSchema = affiliationsSelectSchema

@@ -11,17 +11,11 @@ import {
   user_notifications,
 } from '@/server/db/schema/notifications';
 import {
-  affiliations,
   player_stats,
   players,
   rating_events,
 } from '@/server/db/schema/players';
-import {
-  games,
-  players_to_units,
-  tournament_units,
-  tournaments,
-} from '@/server/db/schema/tournaments';
+import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import {
   publishClubNotification,
@@ -43,7 +37,7 @@ import {
   playerFormSchema,
 } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { and, asc, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
@@ -65,7 +59,6 @@ export const createClub = async (user: User, values: ClubFormModel) => {
     createdAt,
   };
   const newRelation: ClubToUserModel = {
-    id: `${user.id}_${id}`,
     clubId: id,
     userId: user.id,
     status: 'co-owner',
@@ -207,7 +200,7 @@ export const deletePlayer = async ({
     if (!player) return;
     const unitMember = await tx.query.players_to_units.findFirst({
       where: { playerId },
-      columns: { id: true },
+      columns: { unitId: true },
     });
     if (unitMember) throw new AppError('PLAYER_HAS_TOURNAMENTS');
 
@@ -334,36 +327,14 @@ export const deleteClubFunction = async ({
       .where(eq(users.id, userId));
   }
 
-  const clubTournamentIds = db
-    .select({ id: tournaments.id })
-    .from(tournaments)
-    .where(eq(tournaments.clubId, clubId));
-  const clubUnitIds = db
-    .select({ id: tournament_units.id })
-    .from(tournament_units)
-    .where(inArray(tournament_units.tournamentId, clubTournamentIds));
+  await db.transaction((tx) => deleteClubRows(tx, clubId));
+};
 
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(games)
-      .where(inArray(games.tournamentId, clubTournamentIds));
-    await tx
-      .delete(players_to_units)
-      .where(inArray(players_to_units.unitId, clubUnitIds));
-    await tx
-      .delete(tournament_units)
-      .where(inArray(tournament_units.tournamentId, clubTournamentIds));
-
-    await tx.delete(affiliations).where(eq(affiliations.clubId, clubId));
-    await tx
-      .delete(club_notifications)
-      .where(eq(club_notifications.clubId, clubId));
-    await tx.delete(players).where(eq(players.clubId, clubId));
-    await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));
-    await tx.delete(clubs_to_users).where(eq(clubs_to_users.clubId, clubId));
-
-    await tx.delete(clubs).where(eq(clubs.id, clubId));
-  });
+// memberships and games keep a player who played from being deleted, and the
+// club reaches them through both its players and its tournaments: tournaments go first
+export const deleteClubRows = async (tx: Transaction, clubId: string) => {
+  await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));
+  await tx.delete(clubs).where(eq(clubs.id, clubId));
 };
 
 export const getClubAffiliatedUsers = async (clubId: string) => {
@@ -402,7 +373,6 @@ export const addClubManager = async ({
     );
   if (existingRelation.length > 0) throw new AppError('RELATION_EXISTS');
   const newRelation: ClubToUserModel = {
-    id: `${clubId}_${userId}`,
     clubId: clubId,
     userId: userId,
     status,
@@ -510,9 +480,13 @@ export const promoteSuccessorCoOwners = async (
     .update(clubs_to_users)
     .set({ status: 'co-owner', promotedAt })
     .where(
-      inArray(
-        clubs_to_users.id,
-        successors.map(({ id }) => id),
+      or(
+        ...successors.map(({ clubId, userId }) =>
+          and(
+            eq(clubs_to_users.clubId, clubId),
+            eq(clubs_to_users.userId, userId),
+          ),
+        ),
       ),
     );
   await tx.insert(user_notifications).values(
@@ -554,7 +528,7 @@ export const leaveClub = async ({
     await lockClubs(tx, [clubId]);
     const otherManager = await tx.query.clubs_to_users.findFirst({
       where: { clubId, userId: { ne: userId } },
-      columns: { id: true },
+      columns: { userId: true },
     });
     if (!otherManager) throw new AppError('CANNOT_LEAVE_AS_ONLY_MANAGER');
     const successorIds = await promoteSuccessorCoOwners(tx, {

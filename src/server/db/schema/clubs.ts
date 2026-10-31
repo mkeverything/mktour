@@ -1,7 +1,8 @@
+import { statusInClub } from '@/server/db/schema/enums';
 import { users } from '@/server/db/schema/users';
-import { StatusInClub } from '@/server/zod/enums';
 import {
   boolean,
+  index,
   pgTable,
   primaryKey,
   text,
@@ -29,17 +30,19 @@ export const clubs = pgTable(
 export const clubs_to_users = pgTable(
   'clubs_to_users',
   {
-    id: text('id').notNull(),
     clubId: text('club_id')
       .notNull()
-      .references(() => clubs.id),
+      .references(() => clubs.id, { onDelete: 'cascade' }),
     userId: text('user_id')
       .notNull()
-      .references(() => users.id),
-    status: text('status').notNull().$type<StatusInClub>(),
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: statusInClub('status').notNull(),
     promotedAt: timestamp('promoted_at', { withTimezone: true, precision: 3 })
-      .$default(() => new Date())
+      .defaultNow()
       .notNull(),
   },
-  (table) => [primaryKey({ columns: [table.id] })],
+  (table) => [
+    primaryKey({ columns: [table.clubId, table.userId] }),
+    index('clubs_to_users_user_idx').on(table.userId),
+  ],
 );

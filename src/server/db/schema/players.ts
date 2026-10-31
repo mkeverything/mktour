@@ -1,7 +1,8 @@
+import { lower } from '@/lib/sql-lower';
 import { clubs } from '@/server/db/schema/clubs';
+import { affiliationStatus } from '@/server/db/schema/enums';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
-import { AffiliationStatus } from '@/server/zod/enums';
 import { sql } from 'drizzle-orm';
 import {
   boolean,
@@ -22,7 +23,9 @@ export const players = pgTable(
     id: text('id').notNull(),
     nickname: text('nickname').notNull(),
     realname: text('realname'),
-    userId: text('user_id').references(() => users.id),
+    userId: text('user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     rating: integer('rating').notNull().default(1500),
     ratingPeak: integer('rating_peak'),
     ratingDeviation: doublePrecision('rating_deviation').notNull().default(350),
@@ -34,19 +37,19 @@ export const players = pgTable(
       precision: 3,
     })
       .notNull()
-      .$default(() => new Date()),
+      .defaultNow(),
     clubId: text('club_id')
-      .references(() => clubs.id)
+      .references(() => clubs.id, { onDelete: 'cascade' })
       .notNull(),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true, precision: 3 })
-      .$default(() => new Date())
+      .defaultNow()
       .notNull(), // equals closed_at() last tournament they participated
   },
   (table) => [
     primaryKey({ columns: [table.id] }),
-    uniqueIndex('player_nickname_club_unique_idx').on(
-      table.nickname,
+    uniqueIndex('player_club_nickname_unique_idx').on(
       table.clubId,
+      lower(table.nickname),
     ),
     uniqueIndex('player_user_club_unique_idx').on(table.userId, table.clubId),
     index('player_club_last_seen_idx').on(table.clubId, table.lastSeenAt),
@@ -175,12 +178,12 @@ export const affiliations = pgTable(
     playerId: text('player_id')
       .references(() => players.id, { onDelete: 'cascade' })
       .notNull(),
-    status: text('status').$type<AffiliationStatus>().notNull(),
+    status: affiliationStatus('status').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, precision: 3 })
-      .$default(() => new Date())
+      .defaultNow()
       .notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 })
-      .$default(() => new Date())
+      .defaultNow()
       .notNull(),
   },
   (table) => [

@@ -90,8 +90,6 @@ const hasSameRoundProjection = (
       submitted.blackUnitId === generated.blackUnitId &&
       submitted.whitePlayerId === generated.whitePlayerId &&
       submitted.blackPlayerId === generated.blackPlayerId &&
-      submitted.whitePrevGameId === generated.whitePrevGameId &&
-      submitted.blackPrevGameId === generated.blackPrevGameId &&
       submitted.result === generated.result &&
       submitted.finishedAt === generated.finishedAt &&
       submitted.tournamentId === generated.tournamentId

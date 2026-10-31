@@ -13,7 +13,6 @@ import { clubsSelectSchema } from '@/server/zod/clubs';
 import { tournamentIdInputSchema } from '@/server/zod/common';
 import {
   gameResultEnum,
-  roundNameEnum,
   tournamentFormatEnum,
   tournamentTypeEnum,
 } from '@/server/zod/enums';
@@ -24,10 +23,7 @@ import {
 } from 'drizzle-orm/zod';
 import z from 'zod';
 
-export const tournamentSchema = createSelectSchema(tournaments, {
-  format: tournamentFormatEnum,
-  type: tournamentTypeEnum,
-});
+export const tournamentSchema = createSelectSchema(tournaments);
 export const playerInUnitSchema = createSelectSchema(players)
   .pick({
     id: true,
@@ -50,8 +46,6 @@ export const gamePairMembersSchema = z.object({
 export const gameSchema = createSelectSchema(games).extend({
   whiteNickname: z.string(),
   blackNickname: z.string(),
-  roundName: roundNameEnum.nullable(),
-  result: gameResultEnum.nullable(),
 });
 
 export const saveRoundGameInputSchema = gameSchema.omit({
@@ -81,10 +75,7 @@ export const setGameResultInputSchema = z.object({
   result: gameResultEnum.nullable(),
 });
 
-export const tournamentsInsertSchema = createInsertSchema(tournaments, {
-  format: tournamentFormatEnum,
-  type: tournamentTypeEnum,
-});
+export const tournamentsInsertSchema = createInsertSchema(tournaments);
 export const gamesInsertSchema = createInsertSchema(games);
 export const tournamentsUpdateSchema = createUpdateSchema(tournaments);
 export const gamesUpdateSchema = createUpdateSchema(games);

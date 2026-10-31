@@ -12,7 +12,6 @@ import { players, rating_events } from '@/server/db/schema/players';
 import {
   games,
   players_to_units,
-  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { eq } from 'drizzle-orm';
@@ -75,11 +74,7 @@ async function getTournamentPlayerRatings(
     })
     .from(players)
     .innerJoin(players_to_units, eq(players.id, players_to_units.playerId))
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
-    .where(eq(tournament_units.tournamentId, tournamentId));
+    .where(eq(players_to_units.tournamentId, tournamentId));
 }
 
 function mapPlayerRatings(playerRows: PlayerRating[]) {

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { AppError } from '@/lib/errors';
 import { validateRequest } from '@/lib/auth/lucia';
-import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
+import { createUnit } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db, type Transaction } from '@/server/db';
@@ -16,7 +16,6 @@ import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
 import type { UnitModel } from '@/server/zod/tournaments';
-import { and, eq } from 'drizzle-orm';
 import { createPlayer } from './club-managing';
 import { applyPreStartUnitOrder } from './tournament-unit-order';
 
@@ -83,11 +82,6 @@ export async function addSoloUnit(
     addedAt: now,
     nickname: player.nickname,
   });
-  const playerUnit = createUnitMember({
-    playerId: player.id,
-    unitId: unit.id,
-    numberInUnit: 1,
-  });
 
   const run = async (d: Transaction) => {
     const tournament = await lockTournament(d, tournamentId);
@@ -97,26 +91,19 @@ export async function addSoloUnit(
     if (tournament.type !== 'solo') throw new AppError('NOT_SOLO_TOURNAMENT');
     const [lockedPlayer] = await lockPlayers(d, [player.id]);
     if (!lockedPlayer) throw new AppError('PLAYER_NOT_FOUND');
-    const existingMembership = await d
-      .select({ id: players_to_units.id })
-      .from(players_to_units)
-      .innerJoin(
-        tournament_units,
-        eq(players_to_units.unitId, tournament_units.id),
-      )
-      .where(
-        and(
-          eq(tournament_units.tournamentId, tournamentId),
-          eq(players_to_units.playerId, player.id),
-        ),
-      )
-      .limit(1);
-    if (existingMembership.length > 0) {
-      throw new AppError('PLAYER_ALREADY_IN_UNIT');
-    }
+    const existingMembership = await d.query.players_to_units.findFirst({
+      where: { tournamentId, playerId: player.id },
+      columns: { unitId: true },
+    });
+    if (existingMembership) throw new AppError('PLAYER_ALREADY_IN_UNIT');
 
     await d.insert(tournament_units).values(unit);
-    await d.insert(players_to_units).values(playerUnit);
+    await d.insert(players_to_units).values({
+      playerId: player.id,
+      unitId,
+      tournamentId,
+      numberInUnit: 1,
+    });
     const currentUnits = await getRawTournamentUnits(tournamentId, d);
     return await applyPreStartUnitOrder({
       tournamentId,

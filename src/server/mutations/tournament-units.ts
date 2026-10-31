@@ -3,7 +3,7 @@ import 'server-only';
 import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
 import { lowerEq } from '@/lib/sql-lower';
-import { createUnit, createUnitMember } from '@/lib/tournament-dashboard';
+import { createUnit } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
@@ -133,10 +133,12 @@ export async function addDoublesUnit({
     addedAt: now,
     nickname,
   });
-  const unitMembers = [
-    createUnitMember({ playerId: firstPlayerId, unitId, numberInUnit: 1 }),
-    createUnitMember({ playerId: secondPlayerId, unitId, numberInUnit: 2 }),
-  ];
+  const unitMembers = [firstPlayerId, secondPlayerId].map((playerId, i) => ({
+    playerId,
+    unitId,
+    tournamentId,
+    numberInUnit: i + 1,
+  }));
 
   return await db.transaction(async (tx) => {
     const tournament = await lockTournament(tx, tournamentId);
@@ -157,26 +159,14 @@ export async function addDoublesUnit({
       throw new AppError('PAIR_PLAYERS_NOT_FOUND');
     }
 
-    const existingPair = await tx
-      .select({ id: players_to_units.id })
-      .from(players_to_units)
-      .innerJoin(
-        tournament_units,
-        eq(players_to_units.unitId, tournament_units.id),
-      )
-      .where(
-        and(
-          eq(tournament_units.tournamentId, tournamentId),
-          or(
-            eq(players_to_units.playerId, firstPlayerId),
-            eq(players_to_units.playerId, secondPlayerId),
-          ),
-        ),
-      )
-      .limit(1);
-    if (existingPair.length > 0) {
-      throw new AppError('PLAYER_ALREADY_IN_PAIR');
-    }
+    const existingPair = await tx.query.players_to_units.findFirst({
+      where: {
+        tournamentId,
+        playerId: { in: [firstPlayerId, secondPlayerId] },
+      },
+      columns: { unitId: true },
+    });
+    if (existingPair) throw new AppError('PLAYER_ALREADY_IN_PAIR');
 
     const existingNickname = await tx
       .select({ id: tournament_units.id })
@@ -254,35 +244,15 @@ export async function editDoublesUnit({
     ) {
       throw new AppError('PAIR_PLAYERS_NOT_FOUND');
     }
-    const currentUnitMembers = await tx
-      .select({ playerId: players_to_units.playerId })
-      .from(players_to_units)
-      .where(eq(players_to_units.unitId, unitId));
-    const currentUnitMemberIds = new Set(
-      currentUnitMembers.map((member) => member.playerId),
-    );
-    const occupiedPlayers = await tx
-      .select({
-        playerId: players_to_units.playerId,
-        unitId: players_to_units.unitId,
-      })
-      .from(players_to_units)
-      .innerJoin(
-        tournament_units,
-        eq(players_to_units.unitId, tournament_units.id),
-      )
-      .where(
-        and(
-          eq(tournament_units.tournamentId, tournamentId),
-          inArray(players_to_units.playerId, [firstPlayerId, secondPlayerId]),
-        ),
-      );
-    const hasOtherUnitMember = occupiedPlayers.some(
-      (row) => !currentUnitMemberIds.has(row.playerId) && row.unitId !== unitId,
-    );
-    if (hasOtherUnitMember) {
-      throw new AppError('PLAYER_ALREADY_IN_PAIR');
-    }
+    const playerInOtherUnit = await tx.query.players_to_units.findFirst({
+      where: {
+        tournamentId,
+        playerId: { in: [firstPlayerId, secondPlayerId] },
+        unitId: { ne: unitId },
+      },
+      columns: { unitId: true },
+    });
+    if (playerInOtherUnit) throw new AppError('PLAYER_ALREADY_IN_PAIR');
     const existingNickname = await tx
       .select({ id: tournament_units.id })
       .from(tournament_units)
@@ -318,18 +288,14 @@ export async function editDoublesUnit({
         addedAt: preservedAddedAt,
       })
       .where(eq(tournament_units.id, unitId));
-    await tx.insert(players_to_units).values([
-      createUnitMember({
-        playerId: firstPlayer.id,
+    await tx.insert(players_to_units).values(
+      [firstPlayer, secondPlayer].map((player, i) => ({
+        playerId: player.id,
         unitId,
-        numberInUnit: 1,
-      }),
-      createUnitMember({
-        playerId: secondPlayer.id,
-        unitId,
-        numberInUnit: 2,
-      }),
-    ]);
+        tournamentId,
+        numberInUnit: i + 1,
+      })),
+    );
     const currentUnits = await getRawTournamentUnits(tournamentId, tx);
     return await applyPreStartUnitOrder({
       tournamentId,

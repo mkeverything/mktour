@@ -244,9 +244,9 @@ const tournamentRows = (tournament: SeedTournament, createdAt: Date) => {
     units: unitRows,
     playersToUnits: units.flatMap(({ players }, i) =>
       players.map((player, n) => ({
-        id: `${player.id}_${unitRows[i].id}`,
         playerId: player.id,
         unitId: unitRows[i].id,
+        tournamentId: id,
         numberInUnit: n + 1,
       })),
     ),
@@ -303,13 +303,11 @@ export const seedComprehensiveTestData = async () => {
     await db.insert(schema.users).values(users);
     await db.insert(schema.clubs_to_users).values([
       ...users.map((user) => ({
-        id: `${user.selectedClub}_${user.id}`,
         clubId: user.selectedClub,
         userId: user.id,
         status: 'co-owner' as const,
       })),
       ...managed.map(({ clubId }) => ({
-        id: `${clubId}_${ORGANIZER.id}`,
         clubId,
         userId: ORGANIZER.id,
         status: 'admin' as const,

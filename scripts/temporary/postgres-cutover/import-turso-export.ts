@@ -19,12 +19,12 @@ import {
   PgTimestamp,
 } from 'drizzle-orm/pg-core';
 
-// parents before children, so every foreign key already resolves on insert
+// parents before children, so every foreign key already resolves on insert.
+// sqlite's user_preferences was never read and is left out
 const TABLES: PgTable[] = [
   schema.clubs,
   schema.users,
   schema.clubs_to_users,
-  schema.user_preferences,
   schema.sessions,
   schema.apiTokens,
   schema.tournaments,
@@ -39,6 +39,15 @@ const TABLES: PgTable[] = [
 ];
 // a derived projection: rebuilt from the imported source tables instead of copied
 const REBUILT_TABLES: PgTable[] = [schema.player_stats];
+// sqlite kept unit memberships without their tournament
+const SOURCE_QUERIES: Record<string, string> = {
+  players_to_units: `select players_to_units.*, tournament_units.tournament_id
+    from players_to_units
+    join tournament_units on tournament_units.id = players_to_units.unit_id`,
+};
+const RENAMED_COLUMNS: Record<string, string> = { 'tournament.title': 'name' };
+// nullable in sqlite, not null with a default here
+const NULLS_TO_DEFAULT = new Set(['tournament_units.is_out']);
 // the sqlite schema stored these as `timestamp_ms`; every other timestamp is in seconds
 const MILLISECOND_COLUMNS = new Set(['tournament_units.added_at']);
 const INSERT_CHUNK_SIZE = 1000;
@@ -70,8 +79,9 @@ const source = new Database(exportPath, { readonly: true, strict: true });
 const db = drizzle({ connection: targetUrl, relations });
 
 function toPostgresValue(table: string, column: Column, value: unknown) {
-  if (value === null) return null;
   const where = `${table}.${column.name}`;
+  if (value === null)
+    return NULLS_TO_DEFAULT.has(where) ? column.default : null;
   if (is(column, PgTimestamp)) {
     if (!Number.isInteger(value)) fail(`${where}: ${value}`);
     const unit = MILLISECOND_COLUMNS.has(where) ? 1 : 1000;
@@ -90,34 +100,33 @@ function toPostgresValue(table: string, column: Column, value: unknown) {
 
 function readTable(table: PgTable) {
   const name = getTableName(table);
-  const columns = Object.entries(getColumns(table)).filter(
-    ([, column]) => !column.generated,
+  const columns = Object.entries(getColumns(table))
+    .filter(([, column]) => !column.generated)
+    .map(([key, column]) => ({
+      key,
+      column,
+      sourceColumn: RENAMED_COLUMNS[`${name}.${column.name}`] ?? column.name,
+    }));
+  const query = source.query<Record<string, unknown>, []>(
+    SOURCE_QUERIES[name] ?? `select * from "${name}"`,
   );
-  const sourceColumns = new Set(
-    source
-      .query<{ name: string }, []>(
-        `select name from pragma_table_info('${name}')`,
-      )
-      .all()
-      .map((column) => column.name),
-  );
+  const sourceColumns = new Set(query.columnNames);
   const missing = columns.filter(
-    ([, column]) => !sourceColumns.has(column.name),
+    ({ sourceColumn }) => !sourceColumns.has(sourceColumn),
   );
   if (missing.length > 0) {
     fail(
-      `${name} export lacks ${missing.map(([, column]) => column.name).join(', ')}: apply every sqlite migration before exporting`,
+      `${name} export lacks ${missing.map(({ sourceColumn }) => sourceColumn).join(', ')}: apply every sqlite migration before exporting`,
     );
   }
 
-  return source
-    .query<Record<string, unknown>, []>(`select * from "${name}"`)
+  return query
     .all()
     .map((row) =>
       Object.fromEntries(
-        columns.map(([key, column]) => [
+        columns.map(({ key, column, sourceColumn }) => [
           key,
-          toPostgresValue(name, column, row[column.name]),
+          toPostgresValue(name, column, row[sourceColumn]),
         ]),
       ),
     );
