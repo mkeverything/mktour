@@ -6,7 +6,9 @@ import { asc, eq, inArray } from 'drizzle-orm';
 
 // postgres runs transactions concurrently, so a mutation that validates state
 // before writing locks the row owning that state first. when both are needed,
-// lock the tournament before its club, and either before players.
+// lock the tournament before its club, and either before players. tournament
+// and club locks are `no key update`: inserts referencing the row take a key
+// share lock for their foreign key check, which must neither wait nor block.
 
 /** reads the tournament and holds its row lock until the transaction ends */
 export async function lockTournament(tx: Transaction, tournamentId: string) {
@@ -15,7 +17,7 @@ export async function lockTournament(tx: Transaction, tournamentId: string) {
       .select()
       .from(tournaments)
       .where(eq(tournaments.id, tournamentId))
-      .for('update')
+      .for('no key update')
   ).at(0);
 }
 
@@ -26,7 +28,7 @@ export async function lockClubs(tx: Transaction, clubIds: string[]) {
     .from(clubs)
     .where(inArray(clubs.id, clubIds))
     .orderBy(asc(clubs.id))
-    .for('update');
+    .for('no key update');
 }
 
 /**
