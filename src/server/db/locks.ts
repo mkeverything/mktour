@@ -32,8 +32,8 @@ export async function lockClubs(tx: Transaction, clubIds: string[]) {
 }
 
 /**
- * reads players about to join a unit and keeps merges, which lock them for
- * update, from moving their units until the transaction ends
+ * reads players about to join a unit and keeps merges and deletions, which
+ * lock them for update, waiting until the transaction ends
  */
 export async function lockPlayers(tx: Transaction, playerIds: string[]) {
   return await tx

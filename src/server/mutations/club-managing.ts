@@ -190,33 +190,34 @@ export const createPlayer = async (
     : await db.transaction(insertPlayerWithStartingEvent);
 };
 
-export const deletePlayer = async ({ playerId }: { playerId: string }) => {
-  const [playerTournament] = await db
-    .select({ tournamentId: tournament_units.tournamentId })
-    .from(players_to_units)
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
-    .where(eq(players_to_units.playerId, playerId))
-    .limit(1);
-
-  if (playerTournament) {
-    throw new AppError('PLAYER_HAS_TOURNAMENTS');
-  }
-
+export const deletePlayer = async ({
+  playerId,
+  clubId,
+}: {
+  playerId: string;
+  clubId: string;
+}) => {
   await db.transaction(async (tx) => {
-    const stats = await tx
-      .select({
-        clubId: player_stats.clubId,
-        ratingRank: player_stats.ratingRank,
-      })
-      .from(player_stats)
-      .where(eq(player_stats.playerId, playerId))
-      .then((rows) => rows.at(0));
+    await lockClubs(tx, [clubId]);
+    const [player] = await tx
+      .select({ id: players.id })
+      .from(players)
+      .where(eq(players.id, playerId))
+      .for('update');
+    if (!player) return;
+    const unitMember = await tx.query.players_to_units.findFirst({
+      where: { playerId },
+      columns: { id: true },
+    });
+    if (unitMember) throw new AppError('PLAYER_HAS_TOURNAMENTS');
+
+    const stats = await tx.query.player_stats.findFirst({
+      where: { playerId },
+      columns: { ratingRank: true },
+    });
     await tx.delete(players).where(eq(players.id, playerId));
     if (stats && stats.ratingRank !== null) {
-      await refreshPlayerStats(tx, { clubId: stats.clubId, playerIds: [] });
+      await refreshPlayerStats(tx, { clubId, playerIds: [] });
     }
   });
 };

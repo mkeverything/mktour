@@ -211,7 +211,7 @@ describe('player stats projection', () => {
     await refreshClub(clubId);
     expect(await ratingRanksOf([outsider])).toEqual([1]);
 
-    await deletePlayer({ playerId: outsider });
+    await deletePlayer({ playerId: outsider, clubId });
 
     expect(await statsOf(outsider)).toBeUndefined();
     expect((await ratingRanksOf(rest)).toSorted()).toEqual([1, 2, 3, 4, 5]);
