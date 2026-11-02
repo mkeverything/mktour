@@ -1,8 +1,4 @@
 import { useTRPC } from '@/components/trpc/client';
-import {
-  AnyClubNotificationExtended,
-  AnyUserNotificationExtended,
-} from '@/types/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const useChangeNotificationStatusMutation = () => {
@@ -44,7 +40,7 @@ export const useChangeNotificationStatusMutation = () => {
                     };
                   }
                   return item;
-                }) as AnyUserNotificationExtended[],
+                }),
               })),
             };
           },
@@ -124,7 +120,7 @@ export const useMarkAllNotificationAsSeenMutation = () => {
                     ...item.notification,
                     isSeen: true,
                   },
-                })) as typeof page.notifications,
+                })),
               })),
             };
           },
@@ -201,7 +197,7 @@ export const useChangeClubNotificationStatusMutation = () => {
                     };
                   }
                   return item;
-                }) as AnyClubNotificationExtended[],
+                }),
               })),
             };
           },

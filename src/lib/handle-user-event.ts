@@ -25,6 +25,16 @@ export const handleUserEvent = (
           clubId: event.clubId,
         }),
       });
+      queryClient.invalidateQueries({
+        queryKey: trpc.club.notifications.counter.queryKey({
+          clubId: event.clubId,
+        }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.club.affiliations.infiniteQueryKey({
+          clubId: event.clubId,
+        }),
+      });
       break;
   }
 };

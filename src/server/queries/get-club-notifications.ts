@@ -2,7 +2,7 @@ import { db } from '@/server/db';
 import { club_notifications } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
 import { users } from '@/server/db/schema/users';
-import { desc, eq, getColumns, sql } from 'drizzle-orm';
+import { and, desc, eq, getColumns, or } from 'drizzle-orm';
 
 export default async function getClubNotifications({
   clubId,
@@ -13,11 +13,9 @@ export default async function getClubNotifications({
   cursor: number;
   limit: number;
 }) {
-  // always read userId and playerId from metadata for consistency
   const result = await db
     .select({
       ...getColumns(club_notifications),
-      affiliation: affiliations,
       user: users,
       player: players,
     })
@@ -25,18 +23,21 @@ export default async function getClubNotifications({
     .where(eq(club_notifications.clubId, clubId))
     .leftJoin(
       affiliations,
-      eq(
-        affiliations.id,
-        sql`${club_notifications.metadata}->>'affiliationId'`,
-      ),
+      eq(affiliations.id, club_notifications.affiliationId),
     )
     .leftJoin(
       users,
-      eq(users.id, sql`${club_notifications.metadata}->>'userId'`),
+      or(
+        eq(users.id, club_notifications.userId),
+        eq(users.id, affiliations.userId),
+      ),
     )
     .leftJoin(
       players,
-      eq(players.id, sql`${club_notifications.metadata}->>'playerId'`),
+      or(
+        eq(players.id, club_notifications.playerId),
+        eq(players.id, affiliations.playerId),
+      ),
     )
     .orderBy(desc(club_notifications.createdAt))
     .limit(limit + 1)
@@ -50,4 +51,24 @@ export default async function getClubNotifications({
     notifications: result.slice(0, limit),
     nextCursor,
   };
+}
+
+export async function getClubInboxCounter(clubId: string) {
+  const [requests, notifications] = await Promise.all([
+    db.$count(
+      affiliations,
+      and(
+        eq(affiliations.clubId, clubId),
+        eq(affiliations.status, 'requested'),
+      ),
+    ),
+    db.$count(
+      club_notifications,
+      and(
+        eq(club_notifications.clubId, clubId),
+        eq(club_notifications.isSeen, false),
+      ),
+    ),
+  ]);
+  return { requests, notifications };
 }

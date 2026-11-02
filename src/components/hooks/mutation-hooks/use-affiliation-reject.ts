@@ -1,6 +1,5 @@
 import { getAppErrorMessage } from '@/lib/errors';
 import { useTRPC } from '@/components/trpc/client';
-import { AnyClubNotificationExtended } from '@/types/notifications';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -14,17 +13,17 @@ export default function useAffiliationRejectMutation({
   const trpc = useTRPC();
   return useMutation(
     trpc.player.affiliation.reject.mutationOptions({
-      onMutate: async ({ clubId, notificationId }) => {
+      onMutate: async ({ clubId, affiliationId }) => {
         await queryClient.cancelQueries({
-          queryKey: trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+          queryKey: trpc.club.affiliations.infiniteQueryKey({ clubId }),
         });
 
         const prevCache = queryClient.getQueryData(
-          trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+          trpc.club.affiliations.infiniteQueryKey({ clubId }),
         );
 
         queryClient.setQueryData(
-          trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+          trpc.club.affiliations.infiniteQueryKey({ clubId }),
           (cache) => {
             if (!cache) return cache;
 
@@ -32,13 +31,13 @@ export default function useAffiliationRejectMutation({
               ...cache,
               pages: cache.pages.map((page) => ({
                 ...page,
-                notifications: page.notifications.map((item) =>
-                  item.id === notificationId
-                    ? ({
+                affiliations: page.affiliations.map((item) =>
+                  item.id === affiliationId
+                    ? {
                         ...item,
-                        event: 'affiliation_request_rejected',
-                        isSeen: true,
-                      } as AnyClubNotificationExtended)
+                        status: 'rejected' as const,
+                        updatedAt: new Date(),
+                      }
                     : item,
                 ),
               })),
@@ -52,7 +51,7 @@ export default function useAffiliationRejectMutation({
         toast.error(tErrors(getAppErrorMessage(_err)));
         if (context?.prevCache) {
           queryClient.setQueryData(
-            trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+            trpc.club.affiliations.infiniteQueryKey({ clubId }),
             context.prevCache,
           );
         }
@@ -64,7 +63,10 @@ export default function useAffiliationRejectMutation({
           }) === 1
         ) {
           queryClient.invalidateQueries({
-            queryKey: trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+            queryKey: trpc.club.affiliations.infiniteQueryKey({ clubId }),
+          });
+          queryClient.invalidateQueries({
+            queryKey: trpc.club.notifications.counter.queryKey({ clubId }),
           });
         }
       },

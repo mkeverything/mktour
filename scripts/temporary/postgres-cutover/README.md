@@ -20,8 +20,10 @@ run steps 4 and 5 with an export of beta, then of prod, each into a scratch post
 database, then point a local dev server at it and open a few player, club and tournament
 pages. exporting needs no maintenance. postgres enforces rules turso didn't: nicknames
 unique per club regardless of case, one manager row per club and user, one entry per
-player per tournament, and enum values. an import that breaks one stops and names the
-key; fix those rows in turso before the real window.
+player per tournament, one pending or approved affiliation per player and per user in a
+club, and enum values; the import also checks that every linked player has its approved
+affiliation. an import that breaks one stops and names the key or row; fix those rows
+in turso before the real window.
 
 ## 3. maintenance on
 
@@ -59,8 +61,11 @@ TARGET_DATABASE_URL='<postgres url>' \
 
 the target must be migrated and empty. the import runs in one transaction: it converts
 sqlite integers to timestamps and booleans and json text to `jsonb`, validates every value,
-rebuilds `player_stats` from the imported history and prints a count per table. on any
-error nothing is written; fix the cause and rerun.
+rebuilds `player_stats` from the imported history and prints a count per table.
+affiliations and notifications are reshaped by `reshape-affiliations.ts`: rejected and
+cancelled affiliations are rebuilt from old notifications, and notifications it can't
+attach to a row are dropped and counted. on any error nothing is written; fix the cause
+and rerun.
 
 ## 6. switch environment variables
 

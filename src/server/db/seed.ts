@@ -314,6 +314,21 @@ export const seedTestData = async () => {
       })),
     ]);
     await db.insert(schema.players).values(players);
+    await db.insert(schema.affiliations).values(
+      players.flatMap(({ id, clubId, userId }) =>
+        userId
+          ? [
+              {
+                id: `${id}-affiliation`,
+                userId,
+                clubId,
+                playerId: id,
+                status: 'approved' as const,
+              },
+            ]
+          : [],
+      ),
+    );
     await db.insert(schema.rating_events).values(
       players.map((player) => ({
         id: `${player.id}-starting`,

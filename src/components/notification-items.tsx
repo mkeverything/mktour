@@ -12,11 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ItemActions } from '@/components/ui/item';
 import { UserNotificationEvent } from '@/server/zod/enums';
-import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
-import {
-  AnyUserNotificationExtended,
-  UserNotificationExtended,
-} from '@/types/notifications';
+import { UserNotificationExtendedModel } from '@/server/zod/notifications';
+import { ClubAffiliationModel } from '@/server/zod/players';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Check,
@@ -30,18 +27,16 @@ import {
   Skull,
   X,
 } from 'lucide-react';
+import { useFormatter } from 'next-intl';
 import Link from 'next/link';
 import { FC, HTMLAttributes, PropsWithChildren } from 'react';
 
-export const AffiliationNotificationLi = ({
-  affiliation,
-  player,
-  user,
-  clubId,
-  id,
-  isSeen,
-}: ClubNotificationExtendedModel) => {
+export const AffiliationRequestLi: FC<{
+  affiliation: ClubAffiliationModel;
+  clubId: string;
+}> = ({ affiliation, clubId }) => {
   const queryClient = useQueryClient();
+  const format = useFormatter();
   const { mutate: acceptAffiliation, isPending: pendingAccept } =
     useAffiliationAcceptMutation({
       queryClient,
@@ -51,65 +46,68 @@ export const AffiliationNotificationLi = ({
       queryClient,
     });
 
-  if (!user || !affiliation) return null;
-
-  const variables = {
-    clubId,
-    affiliationId: affiliation.id,
-    notificationId: id,
-  };
+  const { user, player, status } = affiliation;
+  const variables = { clubId, affiliationId: affiliation.id };
+  const isPending = status === 'requested';
 
   return (
     <Card
-      key={id}
-      className={`mk-card flex flex-col gap-2 ${isSeen && 'opacity-70'}`}
+      className={`mk-card flex flex-col gap-2 ${!isPending && 'opacity-70'}`}
     >
       <p className="text-muted-foreground flex items-center gap-2 text-xs">
         <GitPullRequestCreateArrow className="size-4" />
-        <FormattedMessage id="Club.Dashboard.Notifications.affiliation" />
+        <FormattedMessage
+          id={`Club.Dashboard.Notifications.Status.${status}`}
+        />
+        {!isPending && (
+          <span>
+            {format.dateTime(affiliation.updatedAt, {
+              day: 'numeric',
+              month: 'short',
+            })}
+          </span>
+        )}
       </p>
       <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-2">
-                <Link href={`/user/${user?.username}`}>{user?.username}</Link>
-              </div>
-              <div className="flex items-center">
-                <CornerDownRightIcon className="text-muted-foreground mx-2 size-4" />
-                <Link href={`/user/${user?.username}`}>{player?.nickname}</Link>
-              </div>
-            </div>
+        <div className="flex flex-col justify-center">
+          <Link href={`/user/${user.username}`}>{user.username}</Link>
+          <div className="flex items-center">
+            <CornerDownRightIcon className="text-muted-foreground mx-2 size-4" />
+            <Link href={`/player/${player.id}`}>{player.nickname}</Link>
           </div>
         </div>
-        <ItemActions>
-          <div className="ml-3 flex gap-2">
-            <Button
-              size="icon-lg"
-              onClick={() => acceptAffiliation(variables)}
-              variant="secondary"
-              disabled={pendingAccept || pendingReject}
-            >
-              {pendingAccept ? <LoadingSpinner /> : <Check />}
-            </Button>
-            <Button
-              size="icon-lg"
-              onClick={() => rejectMutation(variables)}
-              variant="destructive"
-              disabled={pendingAccept || pendingReject}
-            >
-              {pendingReject ? <LoadingSpinner /> : <X />}
-            </Button>
-          </div>
-        </ItemActions>
+        {isPending && (
+          <ItemActions>
+            <div className="ml-3 flex gap-2">
+              <Button
+                size="icon-lg"
+                onClick={() => acceptAffiliation(variables)}
+                variant="secondary"
+                disabled={pendingAccept || pendingReject}
+              >
+                {pendingAccept ? <LoadingSpinner /> : <Check />}
+              </Button>
+              <Button
+                size="icon-lg"
+                onClick={() => rejectMutation(variables)}
+                variant="destructive"
+                disabled={pendingAccept || pendingReject}
+              >
+                {pendingReject ? <LoadingSpinner /> : <X />}
+              </Button>
+            </div>
+          </ItemActions>
+        )}
       </div>
     </Card>
   );
 };
 
-export const UserNotificationLi: FC<AnyUserNotificationExtended> = (props) => {
-  const { event, notification } = props;
-  const { messageId, Icon } = useUserNotificationItem(event);
+export const UserNotificationLi: FC<UserNotificationExtendedModel> = (
+  props,
+) => {
+  const { notification } = props;
+  const { messageId, Icon } = useUserNotificationItem(notification.event);
 
   return (
     <NotificationItem
@@ -127,25 +125,31 @@ export const UserNotificationLi: FC<AnyUserNotificationExtended> = (props) => {
   );
 };
 
-const NotificationContent: FC<AnyUserNotificationExtended> = (notification) => {
-  if (notification.event === 'became_club_manager')
-    return <ManagerNotification {...notification} />;
-  if (notification.event === 'tournament_won')
-    return <TournamentNotification {...notification} />;
-
-  const { player, club } = notification;
-
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      <Link href={`/player/${player?.id}`} className="mk-link">
-        {player?.nickname}
-      </Link>
-      <FormattedMessage id="Notifications.User.from" />
-      <Link href={`/clubs/${club?.id}`} className="mk-link">
-        {club?.name}
-      </Link>
-    </div>
-  );
+const NotificationContent: FC<UserNotificationExtendedModel> = ({
+  notification,
+  player,
+  club,
+  tournament,
+}) => {
+  switch (notification.event) {
+    case 'became_club_manager':
+    case 'removed_from_club_managers':
+      return <div>{club?.name}</div>;
+    case 'tournament_won':
+      return <div>{tournament?.title}</div>;
+    default:
+      return (
+        <div className="flex items-center gap-2 text-xs">
+          <Link href={`/player/${player?.id}`} className="mk-link">
+            {player?.nickname}
+          </Link>
+          <FormattedMessage id="Notifications.User.from" />
+          <Link href={`/clubs/${club?.id}`} className="mk-link">
+            {club?.name}
+          </Link>
+        </div>
+      );
+  }
 };
 
 const useUserNotificationItem = (event: UserNotificationEvent) => {
@@ -244,18 +248,3 @@ const iconMap: Record<UserNotificationEvent, LucideIcon> = {
   tournament_won: Medal,
   removed_from_club_managers: Skull,
 };
-
-const ManagerNotification: FC<Props<'became_club_manager'>> = (
-  notification,
-) => {
-  if (!notification.club) return null;
-  return <div>{notification.club.name}</div>;
-};
-
-const TournamentNotification: FC<
-  UserNotificationExtended<'tournament_won'>
-> = ({ metadata }) => {
-  return <div>{metadata.name}</div>;
-};
-
-type Props<T extends UserNotificationEvent> = UserNotificationExtended<T>;

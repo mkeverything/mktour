@@ -1,5 +1,5 @@
 import { useTRPC } from '@/components/trpc/client';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 export const useClubNotifications = (clubId: string) => {
   const trpc = useTRPC();
@@ -14,4 +14,9 @@ export const useClubNotifications = (clubId: string) => {
       },
     ),
   );
+};
+
+export const useClubInboxCounter = (clubId: string) => {
+  const trpc = useTRPC();
+  return useQuery(trpc.club.notifications.counter.queryOptions({ clubId }));
 };

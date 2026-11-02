@@ -9,7 +9,16 @@ import { relations } from '@/server/db/relations';
 import * as schema from '@/server/db/schema';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { Database } from 'bun:sqlite';
-import { getColumns, getTableName, is, type Column } from 'drizzle-orm';
+import {
+  and,
+  eq,
+  getColumns,
+  getTableName,
+  is,
+  isNotNull,
+  isNull,
+  type Column,
+} from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import {
   PgBoolean,
@@ -18,6 +27,11 @@ import {
   PgTable,
   PgTimestamp,
 } from 'drizzle-orm/pg-core';
+import {
+  reshapeAffiliations,
+  type SourceAffiliation,
+  type SourceNotification,
+} from './reshape-affiliations';
 
 // parents before children, so every foreign key already resolves on insert.
 // sqlite's user_preferences was never read and is left out
@@ -32,8 +46,11 @@ const TABLES: PgTable[] = [
   schema.tournament_units,
   schema.players_to_units,
   schema.games,
-  schema.affiliations,
   schema.rating_events,
+];
+// reshaped by reshape-affiliations.ts after the tables above are in
+const RESHAPED_TABLES: PgTable[] = [
+  schema.affiliations,
   schema.club_notifications,
   schema.user_notifications,
 ];
@@ -67,7 +84,8 @@ if (!exportPath || !targetUrl) {
 
 const allTables = Object.values(schema).filter((value) => is(value, PgTable));
 const unhandled = allTables.filter(
-  (table) => !TABLES.includes(table) && !REBUILT_TABLES.includes(table),
+  (table) =>
+    ![...TABLES, ...RESHAPED_TABLES, ...REBUILT_TABLES].includes(table),
 );
 if (unhandled.length > 0) {
   fail(
@@ -132,6 +150,25 @@ function readTable(table: PgTable) {
     );
 }
 
+function readNotifications(
+  table: PgTable,
+  owner: 'club_id' | 'user_id',
+): SourceNotification[] {
+  const name = getTableName(table);
+  const { isSeen, createdAt } = getColumns(table);
+  return source
+    .query<Record<string, unknown>, []>(`select * from "${name}"`)
+    .all()
+    .map((row) => ({
+      id: String(row.id),
+      ownerId: String(row[owner]),
+      event: String(row.event),
+      isSeen: toPostgresValue(name, isSeen, row.is_seen) as boolean,
+      createdAt: toPostgresValue(name, createdAt, row.created_at) as Date,
+      metadata: JSON.parse(String(row.metadata)),
+    }));
+}
+
 const counts = await db.transaction(async (tx) => {
   for (const table of allTables) {
     if ((await tx.$count(table)) > 0) {
@@ -150,6 +187,71 @@ const counts = await db.transaction(async (tx) => {
       fail(`${getTableName(table)}: read ${rows.length}, stored ${stored}`);
     }
     imported[getTableName(table)] = stored;
+  }
+
+  const ids = async (
+    table: typeof schema.clubs | typeof schema.users | typeof schema.players,
+  ) =>
+    new Set(
+      (await tx.select({ id: table.id }).from(table)).map(({ id }) => id),
+    );
+  const reshaped = reshapeAffiliations({
+    affiliations: readTable(schema.affiliations) as SourceAffiliation[],
+    clubNotifications: readNotifications(schema.club_notifications, 'club_id'),
+    userNotifications: readNotifications(schema.user_notifications, 'user_id'),
+    existing: {
+      clubs: await ids(schema.clubs),
+      users: await ids(schema.users),
+      players: await ids(schema.players),
+    },
+  });
+  for (const [table, rows] of [
+    [schema.affiliations, reshaped.affiliations],
+    [schema.club_notifications, reshaped.clubNotifications],
+    [schema.user_notifications, reshaped.userNotifications],
+  ] as const) {
+    for (let i = 0; i < rows.length; i += INSERT_CHUNK_SIZE) {
+      await tx.insert(table).values(rows.slice(i, i + INSERT_CHUNK_SIZE));
+    }
+    imported[getTableName(table)] = await tx.$count(table);
+  }
+  imported['dropped notifications'] = reshaped.droppedNotifications;
+
+  // a linked player and its approved affiliation are written together; both
+  // one-open-affiliation rules rely on it
+  const approved = and(
+    eq(schema.affiliations.playerId, schema.players.id),
+    eq(schema.affiliations.userId, schema.players.userId),
+    eq(schema.affiliations.status, 'approved'),
+  );
+  const [linkWithoutAffiliation] = await tx
+    .select({ id: schema.players.id })
+    .from(schema.players)
+    .leftJoin(schema.affiliations, approved)
+    .where(
+      and(isNotNull(schema.players.userId), isNull(schema.affiliations.id)),
+    )
+    .limit(1);
+  const [affiliationWithoutLink] = await tx
+    .select({ id: schema.affiliations.id })
+    .from(schema.affiliations)
+    .leftJoin(schema.players, approved)
+    .where(
+      and(
+        eq(schema.affiliations.status, 'approved'),
+        isNull(schema.players.id),
+      ),
+    )
+    .limit(1);
+  if (linkWithoutAffiliation) {
+    fail(
+      `player ${linkWithoutAffiliation.id} is linked without an approved affiliation`,
+    );
+  }
+  if (affiliationWithoutLink) {
+    fail(
+      `affiliation ${affiliationWithoutLink.id} is approved but its player isn't linked`,
+    );
   }
 
   const players = await tx

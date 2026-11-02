@@ -3,7 +3,6 @@ import 'server-only';
 import { revalidatePath } from 'next/cache';
 
 import { AppError } from '@/lib/errors';
-import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { lockClubs } from '@/server/db/locks';
@@ -13,9 +12,8 @@ import { games, players_to_units } from '@/server/db/schema/tournaments';
 import { publishClubNotification } from '@/server/events';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import type { PlayerMergeInputModel } from '@/server/zod/players';
-import { asc, countDistinct, eq, inArray, sql } from 'drizzle-orm';
-
-const pendingStatuses = ['requested_by_user', 'requested_by_club'];
+import { openAffiliationStatusEnum } from '@/server/zod/enums';
+import { and, asc, countDistinct, eq, inArray } from 'drizzle-orm';
 
 export async function mergePlayers({
   clubId,
@@ -26,7 +24,7 @@ export async function mergePlayers({
     throw new AppError('PLAYER_MERGE_SAME_PLAYER');
   }
 
-  const identityInconsistencies = await db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     await lockClubs(tx, [clubId]);
     const playerIds = [basePlayerId, mergedPlayerId];
     const playerRows = await tx
@@ -37,10 +35,15 @@ export async function mergePlayers({
       .for('update');
     const basePlayer = playerRows.find(({ id }) => id === basePlayerId);
     const mergedPlayer = playerRows.find(({ id }) => id === mergedPlayerId);
-    const affiliationRows = await tx
-      .select()
+    const openAffiliations = await tx
+      .select({ id: affiliations.id })
       .from(affiliations)
-      .where(inArray(affiliations.playerId, playerIds));
+      .where(
+        and(
+          inArray(affiliations.playerId, playerIds),
+          inArray(affiliations.status, openAffiliationStatusEnum.options),
+        ),
+      );
     // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
     const sharedTournament = await tx
       .select({ tournamentId: players_to_units.tournamentId })
@@ -60,85 +63,9 @@ export async function mergePlayers({
         details: sharedTournament.tournamentId,
       });
     }
-
-    // an affiliation is "linked" when it correctly ties a player record to a
-    // user account, i.e. its playerId points at a player whose userId matches.
-    const activeAffiliations = affiliationRows.filter(
-      (a) => a.status === 'active',
-    );
-    const linkedAffiliations = activeAffiliations.filter((a) => {
-      const player = a.playerId === basePlayerId ? basePlayer : mergedPlayer;
-      return player.userId === a.userId;
-    });
-
-    // both players being properly linked to (different) users is a conflict
-    // we can't resolve automatically.
-    if (linkedAffiliations.length > 1) {
-      throw new AppError('PLAYER_MERGE_BOTH_USER_LINKED');
-    }
-
-    const keptAffiliation = linkedAffiliations[0] ?? null;
-    const linkedUserId = keptAffiliation?.userId ?? null;
-
-    const pendingAffiliations = affiliationRows.filter((a) =>
-      pendingStatuses.includes(a.status),
-    );
-    const basePlayerHasPending = pendingAffiliations.some(
-      (a) => a.playerId === basePlayerId,
-    );
-    const mergedPlayerHasPending = pendingAffiliations.some(
-      (a) => a.playerId === mergedPlayerId,
-    );
-
-    // neither player is linked yet, but both have pending requests — also a conflict.
-    if (!linkedUserId && basePlayerHasPending && mergedPlayerHasPending) {
-      throw new AppError('PLAYER_MERGE_BOTH_PENDING_AFFILIATIONS');
-    }
-
-    // any active affiliation other than the one we're keeping is stale and gets removed.
-    const orphanedActiveAffiliations = activeAffiliations.filter(
-      (a) => a.id !== keptAffiliation?.id,
-    );
-    const affiliationIdsToDelete = orphanedActiveAffiliations.map((a) => a.id);
-
-    // a confirmed link makes any pending requests redundant.
-    if (linkedUserId) {
-      affiliationIdsToDelete.push(...pendingAffiliations.map((a) => a.id));
-    }
-
-    // affiliations on the merged player that should follow it onto the base player.
-    const affiliationIdsToMove: string[] = [];
-    if (keptAffiliation?.playerId === mergedPlayerId) {
-      affiliationIdsToMove.push(keptAffiliation.id);
-    }
-    if (!linkedUserId) {
-      for (const a of pendingAffiliations) {
-        if (a.playerId === mergedPlayerId) affiliationIdsToMove.push(a.id);
-      }
-    }
-
-    // flag anything we couldn't fully reconcile so it can be reviewed later.
-    const identityInconsistencies: Array<{
-      playerId: string;
-      kind:
-        'active_affiliation_without_user' | 'user_without_active_affiliation';
-    }> = [];
-    for (const a of orphanedActiveAffiliations) {
-      identityInconsistencies.push({
-        playerId: a.playerId,
-        kind: 'active_affiliation_without_user',
-      });
-    }
-    for (const player of [basePlayer, mergedPlayer]) {
-      const hasLinkedAffiliation = linkedAffiliations.some(
-        (a) => a.playerId === player.id,
-      );
-      if (player.userId && !hasLinkedAffiliation) {
-        identityInconsistencies.push({
-          playerId: player.id,
-          kind: 'user_without_active_affiliation',
-        });
-      }
+    // a player has at most one open affiliation, so two means one on each
+    if (openAffiliations.length === 2) {
+      throw new AppError('PLAYER_MERGE_BOTH_HAVE_AFFILIATIONS');
     }
 
     // keep the higher peak rating, treating a missing value as "no peak yet".
@@ -150,11 +77,10 @@ export async function mergePlayers({
       basePlayer.lastSeenAt > mergedPlayer.lastSeenAt
         ? basePlayer.lastSeenAt
         : mergedPlayer.lastSeenAt;
-    const now = new Date();
 
     // free up the userId on the merged player first, otherwise assigning it
     // to the base player below could collide with a uniqueness constraint.
-    if (linkedUserId === mergedPlayer.userId && linkedUserId !== null) {
+    if (mergedPlayer.userId) {
       await tx
         .update(players)
         .set({ userId: null })
@@ -164,33 +90,17 @@ export async function mergePlayers({
     await tx
       .update(players)
       .set({
-        userId: linkedUserId,
+        userId: basePlayer.userId ?? mergedPlayer.userId,
         ratingPeak,
         lastSeenAt,
         realname: basePlayer.realname ?? mergedPlayer.realname,
       })
       .where(eq(players.id, basePlayerId));
 
-    if (affiliationIdsToDelete.length > 0) {
-      await tx
-        .delete(club_notifications)
-        .where(
-          inArray(
-            sql`${club_notifications.metadata}->>'affiliationId'`,
-            affiliationIdsToDelete,
-          ),
-        );
-      await tx
-        .delete(affiliations)
-        .where(inArray(affiliations.id, affiliationIdsToDelete));
-    }
-
-    if (affiliationIdsToMove.length > 0) {
-      await tx
-        .update(affiliations)
-        .set({ playerId: basePlayerId, updatedAt: now })
-        .where(inArray(affiliations.id, affiliationIdsToMove));
-    }
+    await tx
+      .update(affiliations)
+      .set({ playerId: basePlayerId })
+      .where(eq(affiliations.playerId, mergedPlayerId));
 
     await tx
       .update(players_to_units)
@@ -211,31 +121,13 @@ export async function mergePlayers({
       id: newid(),
       clubId,
       event: 'player_merged',
-      isSeen: false,
-      createdAt: now,
-      metadata: {
-        playerId: basePlayerId,
-        mergedPlayerNickname: mergedPlayer.nickname,
-      },
+      playerId: basePlayerId,
+      metadata: { mergedPlayerNickname: mergedPlayer.nickname },
     });
     await tx.delete(players).where(eq(players.id, mergedPlayerId));
     await refreshPlayerStats(tx, { clubId, playerIds: [basePlayerId] });
-
-    return identityInconsistencies;
   });
   publishClubNotification(clubId);
-
-  if (identityInconsistencies.length > 0) {
-    await withPostHogServer(async (posthog) => {
-      for (const inconsistency of identityInconsistencies) {
-        posthog.capture({
-          distinctId: clubId,
-          event: 'player_merge_identity_inconsistency',
-          properties: { clubId, ...inconsistency },
-        });
-      }
-    });
-  }
 
   try {
     revalidatePath(`/player/${basePlayerId}`);

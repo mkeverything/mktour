@@ -35,6 +35,7 @@ import {
   paginatedInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
+import { userNotificationExtendedSchema } from '@/server/zod/notifications';
 import { playerOutputSchema } from '@/server/zod/players';
 import { tournamentWithClubSchema } from '@/server/zod/tournaments';
 import {
@@ -69,6 +70,12 @@ export const authRouter = {
   notifications: {
     infinite: protectedProcedure
       .input(paginatedInputSchema)
+      .output(
+        z.object({
+          notifications: z.array(userNotificationExtendedSchema),
+          nextCursor: z.number().nullable(),
+        }),
+      )
       .query(async ({ input, ctx }) => {
         return await getAuthNotifications({
           limit: input.limit,

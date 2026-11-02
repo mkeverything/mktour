@@ -152,6 +152,24 @@ export const clubMeta = {
     },
   },
 
+  clubNotificationsCounter: {
+    openapi: {
+      method: 'GET',
+      path: '/clubs/{clubId}/notifications/counter',
+      summary: 'count pending affiliation requests and unseen notifications',
+      tags: ['clubs'],
+    },
+  },
+
+  clubAffiliations: {
+    openapi: {
+      method: 'GET',
+      path: '/clubs/{clubId}/affiliations',
+      summary: 'get club affiliations, pending requests first',
+      tags: ['clubs'],
+    },
+  },
+
   clubToggleSeen: {
     openapi: {
       method: 'POST',

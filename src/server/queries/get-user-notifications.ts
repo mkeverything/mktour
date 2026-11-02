@@ -2,9 +2,8 @@ import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { user_notifications } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
-import { users } from '@/server/db/schema/users';
-import { AnyUserNotificationExtended } from '@/types/notifications';
-import { and, count, desc, eq, or, sql } from 'drizzle-orm';
+import { tournaments } from '@/server/db/schema/tournaments';
+import { and, count, desc, eq, or } from 'drizzle-orm';
 
 export const getNotificationsCounter = async (userId: string) => {
   return (
@@ -32,40 +31,32 @@ export const getAuthNotifications = async ({
   limit: number;
   offset: number;
   userId: string;
-}): Promise<{
-  notifications: AnyUserNotificationExtended[];
-  nextCursor: number | null;
-}> => {
-  const result = (await db
+}) => {
+  const result = await db
     .select({
-      event: user_notifications.event,
-      affiliation: affiliations,
       notification: user_notifications,
-      metadata: user_notifications.metadata,
-      player: { nickname: players.nickname, id: players.id },
+      player: { id: players.id, nickname: players.nickname },
       club: clubs,
+      tournament: { id: tournaments.id, title: tournaments.title },
     })
     .from(user_notifications)
     .where(eq(user_notifications.userId, userId))
     .leftJoin(
       affiliations,
-      eq(
-        affiliations.id,
-        sql`${user_notifications.metadata}->>'affiliationId'`,
-      ),
+      eq(affiliations.id, user_notifications.affiliationId),
     )
-    .leftJoin(users, eq(users.id, affiliations.userId))
     .leftJoin(players, eq(players.id, affiliations.playerId))
     .leftJoin(
       clubs,
       or(
         eq(clubs.id, affiliations.clubId),
-        eq(clubs.id, sql`${user_notifications.metadata}->>'clubId'`),
+        eq(clubs.id, user_notifications.clubId),
       ),
     )
+    .leftJoin(tournaments, eq(tournaments.id, user_notifications.tournamentId))
     .orderBy(desc(user_notifications.createdAt))
     .limit(limit + 1)
-    .offset(offset)) as unknown as AnyUserNotificationExtended[];
+    .offset(offset);
 
   let nextCursor: number | null = null;
   if (result.length > limit) {

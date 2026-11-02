@@ -25,7 +25,8 @@ import { FC, useState } from 'react';
 const ClaimPlayer: FC<{
   userId: string;
   clubId: string;
-}> = ({ userId, clubId }) => {
+  requestedByOther: boolean;
+}> = ({ userId, clubId, requestedByOther }) => {
   const { id } = useParams<{ id: string }>();
   const [open, setOpen] = useState(false);
   const { mutate, isPending } = useAffiliationRequestMutation();
@@ -39,7 +40,7 @@ const ClaimPlayer: FC<{
 
   const hasClaimed =
     userAffiliation &&
-    userAffiliation.status === 'requested_by_user' &&
+    userAffiliation.status === 'requested' &&
     id === userAffiliation.player.id;
 
   if (hasClaimed)
@@ -52,7 +53,7 @@ const ClaimPlayer: FC<{
       />
     );
 
-  if (!userAffiliation)
+  if (!userAffiliation && !requestedByOther)
     return (
       <Root open={open} onOpenChange={setOpen}>
         <Trigger asChild>

@@ -30,7 +30,6 @@ import {
 } from '@/server/queries/player';
 import {
   clubIdInputSchema,
-  notificationIdInputSchema,
   playerIdInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
@@ -84,28 +83,16 @@ export const playerRouter = {
         await requestAffiliation(input);
       }),
     acceptByClub: clubAdminProcedure
-      .input(
-        clubIdInputSchema.extend({
-          affiliationId: z.string(),
-          notificationId: notificationIdInputSchema.shape.notificationId,
-        }),
-      )
+      .input(clubIdInputSchema.extend({ affiliationId: z.string() }))
       .mutation(async (opts) => {
         const { input } = opts;
-        const { affiliationId, notificationId } = input;
-        await acceptAffiliationByClub({ affiliationId, notificationId });
+        await acceptAffiliationByClub(input);
       }),
     reject: clubAdminProcedure
-      .input(
-        clubIdInputSchema.extend({
-          affiliationId: z.string(),
-          notificationId: notificationIdInputSchema.shape.notificationId,
-        }),
-      )
+      .input(clubIdInputSchema.extend({ affiliationId: z.string() }))
       .mutation(async (opts) => {
         const { input } = opts;
-        const { affiliationId, notificationId } = input;
-        await rejectAffiliation({ affiliationId, notificationId });
+        await rejectAffiliation(input);
       }),
     abortRequest: protectedProcedure
       .input(
@@ -138,12 +125,25 @@ export const playerRouter = {
       .input(
         playerIdInputSchema.extend({
           clubId: clubIdInputSchema.shape.clubId,
-          skipNotification: z.boolean().optional(),
         }),
       )
       .mutation(async (opts) => {
-        const { input } = opts;
-        await cancelAffiliationByClub(input);
+        const { input, ctx } = opts;
+        await cancelAffiliationByClub({ ...input, user: ctx.user });
+      }),
+    requestedByOther: authProcedure
+      .input(playerIdInputSchema)
+      .output(z.boolean())
+      .query(async ({ ctx, input }) => {
+        const request = await ctx.db.query.affiliations.findFirst({
+          where: {
+            playerId: input.playerId,
+            status: 'requested',
+            ...(ctx.user && { userId: { ne: ctx.user.id } }),
+          },
+          columns: { id: true },
+        });
+        return Boolean(request);
       }),
   },
   delete: protectedProcedure

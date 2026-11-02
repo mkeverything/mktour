@@ -6,7 +6,7 @@ import ClubSelect from '@/app/[locale]/(routes)/clubs/my/club-select';
 import ClubPlayersList from '@/app/[locale]/(routes)/clubs/players';
 import ClubDashboardTournaments from '@/app/[locale]/(routes)/clubs/tournaments';
 import Fab from '@/components/fab';
-import { useClubNotifications } from '@/components/hooks/query-hooks/use-club-notifications';
+import { useClubInboxCounter } from '@/components/hooks/query-hooks/use-club-notifications';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -27,11 +27,9 @@ const DashboardDesktop: FC<{
   const [openSettings, setOpenSettings] = useState(false);
   const selectedClub = user.selectedClub;
   const [openNotifications, setOpenNotifications] = useState(false);
-  const notifications = useClubNotifications(selectedClub);
+  const { data: inboxCounter } = useClubInboxCounter(selectedClub);
   const hasNewNotifications = Boolean(
-    notifications?.data?.pages?.some((page) =>
-      page.notifications.some(({ isSeen }) => !isSeen),
-    ),
+    inboxCounter && inboxCounter.requests + inboxCounter.notifications,
   );
 
   return (

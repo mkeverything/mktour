@@ -227,15 +227,13 @@
     "reloadPage": "перезагрузить страницу"
   },
   "Errors": {
-    "AFFILIATION_EXISTS": "пользователь уже привязан к игроку",
+    "AFFILIATION_EXISTS": "у пользователя уже есть привязка или заявка в этом клубе",
     "AFFILIATION_NOT_FOUND": "пользователь не привязан к игроку",
     "AFFILIATION_STATUS_NOT_REQUESTED": "пользователь и так не запросил привязку к игроку",
-    "ALREADY_AFFILIATED": "пользователь уже привязан к игроку",
+    "ALREADY_AFFILIATED": "игрок уже привязан или на него подана заявка",
     "CANNOT_LEAVE_AS_ONLY_MANAGER": "нельзя выйти из клуба, в котором вы единственный админ",
     "CANNOT_LEAVE_ONLY_CLUB": "нельзя выйти из своего единственного клуба",
     "CLUB_HAS_OTHER_CO_OWNER": "нельзя удалить клуб, у которого есть другие совладельцы",
-    "CLUB_ID_NOT_MATCHING": "ID клуба не соответствует",
-    "CLUB_MISMATCH": "клуб не соответствует",
     "CLUB_NOT_CREATED": "простите! случилась какая-то ошибка и клуб не создан",
     "CLUB_NOT_DELETED": "простите! почему-то не получилось удалить клуб",
     "CLUB_NOT_FOUND": "не получилось найти клуб, увы",
@@ -287,8 +285,7 @@
     "PLAYER_ALREADY_IN_UNIT": "этот игрок уже есть в турнире",
     "PLAYER_EXISTS_ERROR": "этот игрок уже существует!",
     "PLAYER_HAS_TOURNAMENTS": "простите! нельзя удалять игрока, который участвовал в турнирах. для этого придётся удалить и турниры тоже",
-    "PLAYER_MERGE_BOTH_PENDING_AFFILIATIONS": "у обоих игроков есть ожидающие заявки на привязку",
-    "PLAYER_MERGE_BOTH_USER_LINKED": "ошибка! оба игрока привязаны к пользователям",
+    "PLAYER_MERGE_BOTH_HAVE_AFFILIATIONS": "у обоих игроков есть привязка или заявка на привязку",
     "PLAYER_MERGE_SAME_PLAYER": "выберите двух разных игроков",
     "PLAYER_MERGE_SHARED_TOURNAMENT": "ошибка! оба игрока играют в одном и том же турнире. ",
     "PLAYER_NOT_CREATED": "простите! случилась какая-то ошибка и игрок не создан",
@@ -370,12 +367,18 @@
       },
       "Notifications": {
         "loading": "загрузка...",
+        "requests": "заявки",
+        "notifications": "уведомления",
         "empty": "здесь будут заявки на модерацию турниров, привязку игрока к юзеру и другие уведомления клуба",
-        "affiliation": "заявка на привязку игрока",
+        "no requests": "здесь будут заявки пользователей на привязку к игрокам",
         "mark all as read": "отметить все как прочитанные",
+        "Status": {
+          "requested": "заявка на привязку",
+          "approved": "одобрена",
+          "rejected": "отклонена",
+          "cancelled": "отменена"
+        },
         "Notification": {
-          "affiliation_request_approved": "игрок <playerLink>{player}</playerLink> был привязан к юзеру <userLink>{user}</userLink>",
-          "affiliation_request_rejected": "запрос <userLink>{user}</userLink> на привязку к <playerLink>{player}</playerLink> был отклонён",
           "manager_left": "админ <userLink>{user}</userLink> покинул клуб",
           "affiliation_cancelled": "юзер <userLink>{user}</userLink> отменил привязку к <playerLink>{player}</playerLink>",
           "player_merged": "игрок {mergedPlayer} объединён с игроком <playerLink>{player}</playerLink>"

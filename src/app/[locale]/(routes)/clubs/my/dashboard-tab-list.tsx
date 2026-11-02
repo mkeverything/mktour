@@ -4,7 +4,7 @@ import {
   ClubDashboardTab,
   tabMap,
 } from '@/app/[locale]/(routes)/clubs/my/tabMap';
-import { useClubNotifications } from '@/components/hooks/query-hooks/use-club-notifications';
+import { useClubInboxCounter } from '@/components/hooks/query-hooks/use-club-notifications';
 import { CLUB_DASHBOARD_NAVBAR_ITEMS } from '@/components/navigation/club-dashboard-navbar-items';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import Badge, { BadgeWithCount } from '@/components/ui-custom/badge';
@@ -20,17 +20,11 @@ const ClubDashboardTabList: FC<{
 }> = ({ selectedClub, setTab, activeTab }) => {
   const { isMobile } = useContext(MediaQueryContext);
   const preparedTabs = Object.keys(tabMap) as ClubDashboardTab[];
-  const notifications = useClubNotifications(selectedClub);
-  const hasNewNotifications = Boolean(
-    notifications?.data?.pages?.some((page) =>
-      page.notifications.some(({ isSeen }) => !isSeen),
-    ),
-  );
-  const counter = notifications?.data?.pages?.reduce(
-    (acc, page) =>
-      acc + page.notifications.filter(({ isSeen }) => !isSeen).length,
-    0,
-  );
+  const { data: inboxCounter } = useClubInboxCounter(selectedClub);
+  const counter = inboxCounter
+    ? inboxCounter.requests + inboxCounter.notifications
+    : 0;
+  const hasNewNotifications = counter > 0;
 
   return (
     <Tabs
@@ -61,7 +55,7 @@ const TabContent: FC<{
   activeTab: ClubDashboardTab;
   hasNewNotifications: boolean;
   isMobile: boolean;
-  counter?: number;
+  counter: number;
 }> = ({ tab, activeTab, hasNewNotifications, isMobile, counter }) => {
   const item = CLUB_DASHBOARD_NAVBAR_ITEMS[tab];
   const isActive = tab === activeTab;
@@ -79,7 +73,7 @@ const TabContent: FC<{
         (isMobile ? (
           <Badge className="top-0" />
         ) : (
-          <BadgeWithCount count={counter!} />
+          <BadgeWithCount count={counter} />
         ))}
     </div>
   );

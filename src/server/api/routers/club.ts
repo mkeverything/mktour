@@ -25,7 +25,10 @@ import {
   getUserClubPlayer,
 } from '@/server/queries/club';
 import getAllClubsInfinite from '@/server/queries/get-all-clubs-infinite';
-import getClubNotifications from '@/server/queries/get-club-notifications';
+import getClubAffiliations from '@/server/queries/get-club-affiliations';
+import getClubNotifications, {
+  getClubInboxCounter,
+} from '@/server/queries/get-club-notifications';
 import { getClubStats } from '@/server/queries/get-club-stats';
 import { getClubTournamentsInfinite } from '@/server/queries/get-club-tournaments-infinite';
 import getStatusInClub from '@/server/queries/get-status-in-club';
@@ -50,6 +53,7 @@ import {
 import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
 import {
   affiliationExtendedSchema,
+  clubAffiliationSchema,
   clubPlayerOutputSchema,
   clubPlayersInputSchema,
   clubPlayersOutputSchema,
@@ -205,6 +209,26 @@ export const clubRouter = createTRPCRouter({
         revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${input.userId}`, 'max');
       }),
   }),
+  affiliations: clubAdminProcedure
+    .meta(meta.clubAffiliations)
+    .input(
+      clubIdInputSchema.extend({
+        limit: z.number().min(1).max(100).optional().default(20),
+        cursor: z.number().nullable().default(0),
+      }),
+    )
+    .output(
+      z.object({
+        affiliations: z.array(clubAffiliationSchema),
+        nextCursor: z.number().nullable(),
+      }),
+    )
+    .query(async ({ input }) => {
+      return await getClubAffiliations({
+        ...input,
+        cursor: input.cursor ?? 0,
+      });
+    }),
   notifications: {
     all: clubAdminProcedure
       .meta(meta.clubNotifications)
@@ -225,6 +249,12 @@ export const clubRouter = createTRPCRouter({
           ...input,
           cursor: input.cursor ?? 0,
         });
+      }),
+    counter: clubAdminProcedure
+      .meta(meta.clubNotificationsCounter)
+      .output(z.object({ requests: z.number(), notifications: z.number() }))
+      .query(async ({ input }) => {
+        return await getClubInboxCounter(input.clubId);
       }),
     toggleSeen: clubAdminProcedure
       .meta(meta.clubToggleSeen)

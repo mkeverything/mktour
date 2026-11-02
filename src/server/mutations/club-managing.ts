@@ -399,9 +399,8 @@ export const addClubManager = async ({
     id: newid(),
     userId: userId,
     event: 'became_club_manager',
-    isSeen: false,
-    createdAt: new Date(),
-    metadata: { clubId: clubId, role: status },
+    clubId,
+    metadata: { role: status },
   };
   await db.transaction(async (tx) => {
     await tx.insert(clubs_to_users).values(newRelation);
@@ -510,9 +509,9 @@ export const promoteSuccessorCoOwners = async (
       id: newid(),
       userId,
       event: 'became_club_manager',
-      isSeen: false,
       createdAt: promotedAt,
-      metadata: { clubId, role: 'co-owner' },
+      clubId,
+      metadata: { role: 'co-owner' },
     })),
   );
   return successors.map(({ userId }) => userId);
@@ -568,9 +567,7 @@ export const leaveClub = async ({
       id: newid(),
       clubId,
       event: 'manager_left',
-      isSeen: false,
-      createdAt: new Date(),
-      metadata: { userId },
+      userId,
     });
     return successorIds;
   });
