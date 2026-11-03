@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, getColumns, inArray } from 'drizzle-orm';
 
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
@@ -29,9 +29,10 @@ const refreshClub = (clubId: string) =>
 const expectFreshStats = async (clubId: string) => {
   const clubStats = () =>
     db
-      .select()
+      .select(getColumns(player_stats))
       .from(player_stats)
-      .where(eq(player_stats.clubId, clubId))
+      .innerJoin(players, eq(players.id, player_stats.playerId))
+      .where(eq(players.clubId, clubId))
       .orderBy(player_stats.playerId);
   const stored = await clubStats();
   await db.transaction((tx) =>
@@ -193,7 +194,7 @@ describe('player stats projection', () => {
     const stored = await db
       .select()
       .from(player_stats)
-      .where(eq(player_stats.clubId, clubId));
+      .where(inArray(player_stats.playerId, ids));
     const byId = new Map(stored.map((row) => [row.playerId, row]));
     const project = (id: string) => {
       const row = byId.get(id)!;

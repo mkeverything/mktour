@@ -158,7 +158,11 @@ const counts = await db.transaction(async (tx) => {
   for (let i = 0; i < players.length; i += INSERT_CHUNK_SIZE) {
     await tx
       .insert(schema.player_stats)
-      .values(players.slice(i, i + INSERT_CHUNK_SIZE));
+      .values(
+        players
+          .slice(i, i + INSERT_CHUNK_SIZE)
+          .map(({ playerId }) => ({ playerId })),
+      );
   }
   for (const [clubId, clubPlayers] of Map.groupBy(
     players,

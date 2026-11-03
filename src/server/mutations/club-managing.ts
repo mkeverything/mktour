@@ -172,9 +172,7 @@ export const createPlayer = async (
       ratingDeviation: newPlayer.ratingDeviation,
       isStarting: true,
     });
-    await database
-      .insert(player_stats)
-      .values({ playerId: newPlayer.id, clubId: newPlayer.clubId });
+    await database.insert(player_stats).values({ playerId: newPlayer.id });
     return newPlayer;
   };
 

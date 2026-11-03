@@ -31,7 +31,7 @@ export async function getPlayersTournamentsInfinite(
 export async function getPlayerStats(
   playerId: string,
 ): Promise<PlayerStatsModel> {
-  const { playerId: _, clubId, ...statsColumns } = getColumns(player_stats);
+  const { playerId: _, ...statsColumns } = getColumns(player_stats);
   const stats = await db
     .select(statsColumns)
     .from(player_stats)

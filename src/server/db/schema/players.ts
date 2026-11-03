@@ -124,7 +124,6 @@ export const player_stats = pgTable(
     playerId: text('player_id')
       .notNull()
       .references(() => players.id, { onDelete: 'cascade' }),
-    clubId: text('club_id').notNull(),
     tournamentsPlayed: integer('tournaments_played').notNull().default(0),
     tournamentsWon: integer('tournaments_won').notNull().default(0),
     gamesWon: integer('games_won').notNull().default(0),
@@ -143,22 +142,6 @@ export const player_stats = pgTable(
     check(
       'player_stats_counts_non_negative',
       sql`${table.tournamentsPlayed} >= 0 and ${table.tournamentsWon} >= 0 and ${table.gamesWon} >= 0 and ${table.gamesDrawn} >= 0 and ${table.gamesLost} >= 0`,
-    ),
-    index('player_stats_club_rating_rank_idx').on(
-      table.clubId,
-      table.ratingRank,
-    ),
-    index('player_stats_club_tournaments_played_rank_idx').on(
-      table.clubId,
-      table.tournamentsPlayedRank,
-    ),
-    index('player_stats_club_tournaments_won_rank_idx').on(
-      table.clubId,
-      table.tournamentsWonRank,
-    ),
-    index('player_stats_club_games_played_rank_idx').on(
-      table.clubId,
-      table.gamesPlayedRank,
     ),
   ],
 );

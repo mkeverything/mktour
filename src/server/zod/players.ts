@@ -158,7 +158,6 @@ export const clubPlayersInputSchema = clubPaginatedInputSchema.extend(
 
 export const playerStatsSchema = createSelectSchema(player_stats).omit({
   playerId: true,
-  clubId: true,
 });
 
 const playerListItemSchema = playerPublicSchema.pick({

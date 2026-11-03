@@ -338,7 +338,7 @@ export const seedTestData = async () => {
       .values(tournaments.flatMap((rows) => rows.games));
     await db
       .insert(schema.player_stats)
-      .values(players.map(({ id, clubId }) => ({ playerId: id, clubId })));
+      .values(players.map(({ id }) => ({ playerId: id })));
     await Promise.all(
       managed.map((club) =>
         db.transaction((tx) =>

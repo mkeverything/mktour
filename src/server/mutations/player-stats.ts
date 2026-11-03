@@ -101,7 +101,7 @@ async function rankClub(tx: Transaction, clubId: string) {
     })
     .from(player_stats)
     .innerJoin(players, eq(players.id, player_stats.playerId))
-    .where(eq(player_stats.clubId, clubId))
+    .where(eq(players.clubId, clubId))
     .as('ranked');
   await tx
     .update(player_stats)
