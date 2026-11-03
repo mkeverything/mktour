@@ -23,8 +23,9 @@
     "generate-erd": "bun run src/lib/generate-erd.ts",
     "prepare": "husky",
     "generate-openapi": "bun run --conditions=react-server src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
+    "test": "bun db:test && bun test",
     "test:noseed": "SKIP_SEED=1 bun test",
-    "check": "bun db:test && bun run --bun tsc --noEmit && bun run --bun lint && bun run doctor && bun test"
+    "check": "bun run --bun tsc --noEmit && bun run --bun lint && bun run doctor && bun run test"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",
