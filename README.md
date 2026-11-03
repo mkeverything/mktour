@@ -29,10 +29,10 @@ cp .env.example .env
 bun dev
 ```
 
-`bun dev` starts a local postgres (`compose.yaml`, port 5433), applies migrations to its dev and test databases, then serves the app at http://localhost:3000. sign in with lichess: the first login creates your user and club. `bun check` and `bun test` use the test database, so run `bun db:up` first if the dev server isn't running, and again after pulling schema changes.
+`bun dev` starts the dev postgres from `compose.yaml` (port 5433), applies migrations, then serves the app at http://localhost:3000. sign in with lichess: the first login creates your user and club. `bun check` does the same for a separate test postgres (port 5434) before it runs the tests; for a bare `bun test`, run `bun db:test` first.
 
-- `bun db:reset` deletes both local databases and starts fresh
-- with your own postgres, point the two urls in `.env` at it and run `bun db:migrate && bun run --bun next dev`
+- `bun db:reset` deletes the dev database and starts it fresh; the test database is in memory and starts empty anyway
+- with your own postgres, point the two urls in `.env` at it, then run `bunx drizzle-kit migrate && bun run --bun next dev`
 - coming from the turso setup: remove the database variables from `.env.local`, which overrides `.env`
 
 ---

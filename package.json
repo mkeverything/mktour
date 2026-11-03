@@ -5,7 +5,7 @@
   "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "bun db:up && bun run --bun next dev",
-    "dev:test": "bun db:up && MKTOURTEST=true bun run --bun next dev",
+    "dev:test": "bun db:test && MKTOURTEST=true bun run --bun next dev",
     "build": "bun run --bun next build",
     "start": "bun run --bun next start",
     "lint": "bun run --bun eslint src/",
@@ -13,10 +13,10 @@
     "opt": "bun db:up && OPT=true bun run --bun next dev",
     "analyze": "ANALYZE=true bun run --bun next build",
     "format": "bun run --bun prettier . --write",
-    "db:up": "docker compose up --detach --wait && bun db:migrate",
-    "db:migrate": "bun run src/server/db/migrate.ts",
+    "db:up": "docker compose up --detach --wait postgres && drizzle-kit migrate",
+    "db:test": "docker compose up --detach --wait postgres-test && MKTOURTEST=true drizzle-kit migrate",
     "db:reset": "docker compose down --volumes && bun db:up",
-    "db:push": "drizzle-kit generate && bun db:migrate",
+    "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
     "knip": "knip-bun --use-tsconfig-files",
@@ -24,7 +24,7 @@
     "prepare": "husky",
     "generate-openapi": "bun run --conditions=react-server src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
     "test:noseed": "SKIP_SEED=1 bun test",
-    "check": "bun run --bun tsc --noEmit && bun run --bun lint && bun run doctor && bun test"
+    "check": "bun db:test && bun run --bun tsc --noEmit && bun run --bun lint && bun run doctor && bun test"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",

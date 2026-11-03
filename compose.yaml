@@ -1,4 +1,4 @@
-# local postgres for development and tests. `bun db:up` starts it and applies migrations
+# local postgres: `bun db:up` starts and migrates the dev database, `bun db:test` the test one
 services:
   postgres:
     image: postgres:17
@@ -10,9 +10,6 @@ services:
       - 127.0.0.1:5433:5432
     volumes:
       - postgres:/var/lib/postgresql/data
-    configs:
-      - source: create-test-db
-        target: /docker-entrypoint-initdb.d/create-test-db.sql
     healthcheck:
       # over tcp, so the socket-only server that runs init scripts doesn't count as ready
       test: pg_isready --host 127.0.0.1 --username mktour --dbname mktour
@@ -20,9 +17,21 @@ services:
       timeout: 5s
       retries: 30
 
-configs:
-  create-test-db:
-    content: create database mktour_test;
+  postgres-test:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: mktour
+      POSTGRES_PASSWORD: mktour
+      POSTGRES_DB: mktour_test
+    ports:
+      - 127.0.0.1:5434:5432
+    # tests reseed and re-migrate on every run, so the data lives in memory
+    tmpfs: /var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready --host 127.0.0.1 --username mktour --dbname mktour_test
+      interval: 1s
+      timeout: 5s
+      retries: 30
 
 volumes:
   postgres:
