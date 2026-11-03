@@ -104,7 +104,6 @@ const AddUnitDrawer = () => {
             addingNewPlayer={addingNewPlayer}
             setAddingNewPlayer={setAddingNewPlayer}
             handleClose={() => handleChange(false)}
-            setDrawerOpen={handleChange}
             showFakerButton
           />
         )}
