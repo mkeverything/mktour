@@ -2,7 +2,7 @@ import 'server-only';
 
 import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
-import { lowerEq } from '@/lib/sql-lower';
+import { lower } from '@/lib/sql-lower';
 import { createUnit } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
@@ -174,7 +174,7 @@ export async function addDoublesUnit({
       .where(
         and(
           eq(tournament_units.tournamentId, tournamentId),
-          lowerEq(tournament_units.nickname, nickname),
+          eq(lower(tournament_units.nickname), nickname.toLowerCase()),
         ),
       )
       .limit(1);
@@ -259,7 +259,7 @@ export async function editDoublesUnit({
       .where(
         and(
           eq(tournament_units.tournamentId, tournamentId),
-          lowerEq(tournament_units.nickname, nickname),
+          eq(lower(tournament_units.nickname), nickname.toLowerCase()),
           ne(tournament_units.id, unitId),
         ),
       )

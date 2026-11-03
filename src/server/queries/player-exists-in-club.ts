@@ -1,5 +1,5 @@
 import { normalizePlayerNickname } from '@/lib/player-nickname';
-import { lowerEq } from '@/lib/sql-lower';
+import { lower } from '@/lib/sql-lower';
 import { db } from '@/server/db';
 import { players } from '@/server/db/schema/players';
 import { and, eq, ne } from 'drizzle-orm';
@@ -15,7 +15,7 @@ export async function playerExistsInClub({
 }) {
   const normalized = normalizePlayerNickname(nickname);
   const conditions = [
-    lowerEq(players.nickname, normalized),
+    eq(lower(players.nickname), normalized.toLowerCase()),
     eq(players.clubId, clubId),
   ];
   if (excludePlayerId) {
