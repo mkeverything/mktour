@@ -1,58 +1,33 @@
+import {
+  affiliationStatus,
+  clubNotificationEvent,
+  gameResult,
+  roundName,
+  statusInClub,
+  tournamentFormat,
+  tournamentType,
+  userNotificationEvent,
+} from '@/server/db/schema/enums';
+import { createSelectSchema } from 'drizzle-orm/zod';
 import z from 'zod';
 
-export const affiliationStatusEnum = z.enum([
-  'requested_by_user',
-  'requested_by_club',
-  'active',
-]);
-
-export const statusInClubEnum = z.enum(['admin', 'co-owner']);
-
-export const clubNotificationEventEnum = z.enum([
-  'affiliation_request',
-  'manager_left',
-  'affiliation_request_approved',
-  'affiliation_request_rejected',
-  'affiliation_cancelled',
-  'player_merged',
-]);
-
-export const userNotificationEventEnum = z.enum([
-  'affiliation_approved',
-  'affiliation_rejected',
-  'affiliation_cancelled',
-  'tournament_won',
-  'became_club_manager',
-  'removed_from_club_managers',
-]);
-
-export const tournamentFormatEnum = z.enum([
-  'swiss',
-  'round robin',
-  // 'single elimination',
-  // 'double elimination',
-]);
+export const affiliationStatusEnum = createSelectSchema(affiliationStatus);
+export const statusInClubEnum = createSelectSchema(statusInClub);
+export const clubNotificationEventEnum = createSelectSchema(
+  clubNotificationEvent,
+);
+export const userNotificationEventEnum = createSelectSchema(
+  userNotificationEvent,
+);
+export const tournamentFormatEnum = createSelectSchema(tournamentFormat);
+export const tournamentTypeEnum = createSelectSchema(tournamentType);
+export const gameResultEnum = createSelectSchema(gameResult);
+export const roundNameEnum = createSelectSchema(roundName);
 
 export const tournamentAuthStatusEnum = z.enum([
   'organizer',
   'player',
   'viewer',
-]);
-
-export const tournamentTypeEnum = z.enum(['solo', 'doubles']); //team removed until implementatin
-
-export const gameResultEnum = z.enum(['1-0', '0-1', '1/2-1/2']);
-
-export const roundNameEnum = z.enum([
-  'final',
-  'match_for_third',
-  'semifinal',
-  'quarterfinal',
-  '1/8',
-  '1/16',
-  '1/32',
-  '1/64',
-  '1/128',
 ]);
 
 export type AffiliationStatus = z.infer<typeof affiliationStatusEnum>;
