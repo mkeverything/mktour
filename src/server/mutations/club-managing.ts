@@ -302,7 +302,7 @@ export const deleteClubFunction = async ({
   userId,
   userDeletion = false, // true when function is invoked while deleting the user - single owner of a club
 }: ClubDeleteProps) => {
-  const [otherClubs, userStatus] = await Promise.all([
+  const [otherClubs, otherCoOwners, userStatus] = await Promise.all([
     db
       .select()
       .from(clubs_to_users)
@@ -314,25 +314,43 @@ export const deleteClubFunction = async ({
         ),
       )
       .limit(1),
+    db
+      .select()
+      .from(clubs_to_users)
+      .where(
+        and(
+          eq(clubs_to_users.clubId, clubId),
+          ne(clubs_to_users.userId, userId),
+          eq(clubs_to_users.status, 'co-owner'),
+        ),
+      )
+      .limit(1),
     getStatusInClub({ userId, clubId }),
   ]);
   if (userStatus !== 'co-owner') throw new AppError('UNAUTHENTICATED');
-
+  if (otherCoOwners.length !== 0) throw new AppError('CLUB_HAS_OTHER_CO_OWNER');
   if (otherClubs.length === 0 && !userDeletion)
     throw new AppError('ZERO_CLUBS');
-  if (!userDeletion) {
-    await db
-      .update(users)
-      .set({ selectedClub: otherClubs[0].clubId })
-      .where(eq(users.id, userId));
-  }
 
   await db.transaction((tx) => deleteClubRows(tx, clubId));
 };
 
 // memberships and games keep a player who played from being deleted, and the
-// club reaches them through both its players and its tournaments: tournaments go first
+// club reaches them through both its players and its tournaments: tournaments go first.
+// everyone who has the club selected moves to a club they co-own
 export const deleteClubRows = async (tx: Transaction, clubId: string) => {
+  await tx
+    .update(users)
+    .set({ selectedClub: clubs_to_users.clubId })
+    .from(clubs_to_users)
+    .where(
+      and(
+        eq(users.selectedClub, clubId),
+        eq(clubs_to_users.userId, users.id),
+        ne(clubs_to_users.clubId, clubId),
+        eq(clubs_to_users.status, 'co-owner'),
+      ),
+    );
   await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));
   await tx.delete(clubs).where(eq(clubs.id, clubId));
 };
