@@ -7,7 +7,7 @@ in one transaction: any invalid row rolls the whole import back.
 import { AppError } from '@/lib/errors';
 import { relations } from '@/server/db/relations';
 import * as schema from '@/server/db/schema';
-import { buildClubPlayerStats } from '@/server/mutations/player-stats';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { Database } from 'bun:sqlite';
 import { getColumns, getTableName, is, type Column } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -152,16 +152,24 @@ const counts = await db.transaction(async (tx) => {
     imported[getTableName(table)] = stored;
   }
 
-  const clubs = await tx.select({ id: schema.clubs.id }).from(schema.clubs);
-  for (const club of clubs) {
-    const stats = await buildClubPlayerStats(tx, club.id);
-    if (stats.length > 0) await tx.insert(schema.player_stats).values(stats);
+  const players = await tx
+    .select({ playerId: schema.players.id, clubId: schema.players.clubId })
+    .from(schema.players);
+  for (let i = 0; i < players.length; i += INSERT_CHUNK_SIZE) {
+    await tx
+      .insert(schema.player_stats)
+      .values(players.slice(i, i + INSERT_CHUNK_SIZE));
   }
-  const statsCount = await tx.$count(schema.player_stats);
-  if (statsCount !== imported.player) {
-    fail(`player_stats: ${statsCount} rows for ${imported.player} players`);
+  for (const [clubId, clubPlayers] of Map.groupBy(
+    players,
+    ({ clubId }) => clubId,
+  )) {
+    await refreshPlayerStats(tx, {
+      clubId,
+      playerIds: clubPlayers.map(({ playerId }) => playerId),
+    });
   }
-  imported.player_stats = statsCount;
+  imported.player_stats = players.length;
   return imported;
 });
 

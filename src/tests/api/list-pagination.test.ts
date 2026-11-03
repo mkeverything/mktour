@@ -81,7 +81,7 @@ describe('list pagination', () => {
     expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
   });
 
-  test('club.players runs every sort along its stored ranks, both ways', async () => {
+  test('club.players sorts both ways, rating and tournaments along their stored ranks', async () => {
     const collectRows = (filter: ClubPlayersFilterModel) =>
       collectIds(async (cursor) => {
         const page = await publicCaller.club.players({
@@ -100,13 +100,14 @@ describe('list pagination', () => {
       });
     const numbered = (ids: string[]) => ids.map((id, i) => `${i + 1} ${id}`);
     const [p0, p1, p2, p3] = playerIds;
-    // rating ties fall back to last seen, so the rating and nickname sorts share one order
-    const byRating = numbered([p0, p1, p2, p3]);
-    const byTournaments = numbered([p1, p3, p0, p2]);
+    // rating ties put the most recently seen first
+    const byRating = numbered([p0, p3, p2, p1]);
+    const byTournaments = numbered([p3, p1, p0, p2]);
+    const byNickname = [`1 ${p0}`, `4 ${p1}`, `3 ${p2}`, `2 ${p3}`];
 
     for (const [sortBy, order, expected] of [
       ['rating', 'desc', byRating],
-      ['nickname', 'asc', byRating],
+      ['nickname', 'asc', byNickname],
       ['tournamentsPlayed', 'desc', byTournaments],
     ] as const) {
       expect(await collectRows({ sortBy, order })).toEqual(expected);
@@ -120,6 +121,6 @@ describe('list pagination', () => {
         order: 'desc',
         search: 'PLAYER 3',
       }),
-    ).toEqual([byTournaments[1]]);
+    ).toEqual([byTournaments[0]]);
   });
 });

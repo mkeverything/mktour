@@ -7,11 +7,7 @@ import { player_stats, players } from '@/server/db/schema/players';
 import { fixtures } from '@/server/db/seed';
 import { createPlayer, deletePlayer } from '@/server/mutations/club-managing';
 import { mergePlayers } from '@/server/mutations/player-merge';
-import {
-  buildClubPlayerStats,
-  rankClubPlayers,
-  refreshPlayerStats,
-} from '@/server/mutations/player-stats';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import {
   deleteTournament,
   finishTournament,
@@ -29,17 +25,22 @@ const statsOf = async (playerId: string) =>
 const refreshClub = (clubId: string) =>
   db.transaction((tx) => refreshPlayerStats(tx, { clubId, playerIds: [] }));
 
-/** the stored projection must equal one rebuilt from source tables */
-const expectRebuiltStats = async (clubId: string) => {
-  const byPlayer = <T extends { playerId: string }>(rows: T[]) =>
-    rows.toSorted((x, y) => x.playerId.localeCompare(y.playerId));
-  const stored = await db
-    .select()
-    .from(player_stats)
-    .where(eq(player_stats.clubId, clubId));
-  expect(byPlayer(stored.map(({ gamesPlayed: _, ...row }) => row))).toEqual(
-    byPlayer(await buildClubPlayerStats(db, clubId)),
+/** recounting and re-ranking the whole club must leave the stored rows as they are */
+const expectFreshStats = async (clubId: string) => {
+  const clubStats = () =>
+    db
+      .select()
+      .from(player_stats)
+      .where(eq(player_stats.clubId, clubId))
+      .orderBy(player_stats.playerId);
+  const stored = await clubStats();
+  await db.transaction((tx) =>
+    refreshPlayerStats(tx, {
+      clubId,
+      playerIds: stored.map(({ playerId }) => playerId),
+    }),
   );
+  expect(await clubStats()).toEqual(stored);
 };
 
 const ratingRanksOf = async (playerIds: string[]) => {
@@ -54,68 +55,6 @@ const ratingRanksOf = async (playerIds: string[]) => {
     (id) => rows.find((row) => row.playerId === id)?.ratingRank,
   );
 };
-
-describe('rankClubPlayers', () => {
-  const now = new Date('2026-06-01T12:00:00Z');
-  const player = (
-    playerId: string,
-    overrides: Partial<Parameters<typeof rankClubPlayers>[0][number]> = {},
-  ) => ({
-    playerId,
-    rating: 1500,
-    ratingDeviation: 50,
-    lastSeenAt: now,
-    tournamentsPlayed: 0,
-    tournamentsWon: 0,
-    gamesWon: 0,
-    gamesDrawn: 0,
-    gamesLost: 0,
-    ...overrides,
-  });
-
-  test('breaks every metric tie by rating, stored rd, last seen, then id', () => {
-    const ranked = rankClubPlayers([
-      player('f', { rating: 1600, tournamentsPlayed: 2 }),
-      player('a', { rating: 1600, tournamentsPlayed: 2 }),
-      player('b', {
-        rating: 1600,
-        lastSeenAt: new Date('2026-05-01T12:00:00Z'),
-        tournamentsPlayed: 2,
-      }),
-      player('c', { rating: 1600, ratingDeviation: 40, tournamentsPlayed: 2 }),
-      player('d', { rating: 1700, tournamentsPlayed: 2 }),
-      player('e', { rating: 1900, tournamentsPlayed: 1 }),
-    ]);
-    expect(
-      Object.fromEntries(
-        ranked.map((p) => [p.playerId, p.tournamentsPlayedRank]),
-      ),
-    ).toEqual({ d: 1, c: 2, b: 3, a: 4, f: 5, e: 6 });
-    expect(
-      Object.fromEntries(ranked.map((p) => [p.playerId, p.ratingRank])),
-    ).toEqual({ e: 1, d: 2, c: 3, b: 4, a: 5, f: 6 });
-  });
-
-  test('preserves input order and numbers every player, zero counts included', () => {
-    const ranked = rankClubPlayers([
-      player('provisional', { rating: 2000, ratingDeviation: 350 }),
-      player('winner', {
-        tournamentsPlayed: 1,
-        tournamentsWon: 1,
-        gamesWon: 2,
-      }),
-      player('idle', { rating: 1400 }),
-    ]);
-    expect(ranked.map((p) => p.playerId)).toEqual([
-      'provisional',
-      'winner',
-      'idle',
-    ]);
-    expect(ranked.map((p) => p.ratingRank)).toEqual([1, 2, 3]);
-    expect(ranked.map((p) => p.tournamentsWonRank)).toEqual([2, 1, 3]);
-    expect(ranked.map((p) => p.gamesPlayedRank)).toEqual([2, 1, 3]);
-  });
-});
 
 describe('player stats projection', () => {
   test('player creation inserts an unranked zero row without re-ranking', async () => {
@@ -168,14 +107,14 @@ describe('player stats projection', () => {
       [1, 0, 0, 0],
       [0, 0, 0, 0],
     ]);
-    await expectRebuiltStats(clubId);
+    await expectFreshStats(clubId);
 
     await deleteTournament({ tournamentId });
 
     expect(await Promise.all(playerIds.map(counts))).toEqual(
       playerIds.map(() => [0, 0, 0, 0]),
     );
-    await expectRebuiltStats(clubId);
+    await expectFreshStats(clubId);
   });
 
   test('re-ranking can swap stored positions despite the rank indexes', async () => {
@@ -235,7 +174,7 @@ describe('player stats projection', () => {
       gamesWon: 1,
       gamesPlayed: 1,
     });
-    await expectRebuiltStats(clubId);
+    await expectFreshStats(clubId);
   });
 
   test('doubles credit every partner, tied first places each win, byes and open tournaments count no games', async () => {
@@ -277,6 +216,6 @@ describe('player stats projection', () => {
       [1, 0, 1, 0, 0, 5, 5, 5],
       [1, 0, 0, 0, 0, 6, 6, 6],
     ]);
-    await expectRebuiltStats(clubId);
+    await expectFreshStats(clubId);
   });
 });

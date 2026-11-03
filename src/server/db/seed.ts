@@ -2,7 +2,7 @@ import { getUnitResultDeltas } from '@/lib/game-result-deltas';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { db } from '@/server/db/index';
 import * as schema from '@/server/db/schema';
-import { buildClubPlayerStats } from '@/server/mutations/player-stats';
+import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import type { GameResult } from '@/server/zod/enums';
 import { is, sql } from 'drizzle-orm';
 import { PgTable } from 'drizzle-orm/pg-core';
@@ -268,7 +268,7 @@ const tournamentRows = (tournament: SeedTournament, createdAt: Date) => {
   };
 };
 
-export const seedComprehensiveTestData = async () => {
+export const seedTestData = async () => {
   if (verifyTestDatabase()) {
     // one statement: truncating every table at once satisfies the foreign keys between them
     const tables = Object.values(schema).filter((table) => is(table, PgTable));
@@ -338,12 +338,16 @@ export const seedComprehensiveTestData = async () => {
       .values(tournaments.flatMap((rows) => rows.games));
     await db
       .insert(schema.player_stats)
-      .values(
-        (
-          await Promise.all(
-            managed.map((club) => buildClubPlayerStats(db, club.clubId)),
-          )
-        ).flat(),
-      );
+      .values(players.map(({ id, clubId }) => ({ playerId: id, clubId })));
+    await Promise.all(
+      managed.map((club) =>
+        db.transaction((tx) =>
+          refreshPlayerStats(tx, {
+            clubId: club.clubId,
+            playerIds: club.players.map(({ id }) => id),
+          }),
+        ),
+      ),
+    );
   }
 };

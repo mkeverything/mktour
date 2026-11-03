@@ -1,5 +1,7 @@
 import { caseWhen } from '@/lib/sql-case-when';
-import type { Database, Transaction } from '@/server/db';
+import { lower } from '@/lib/sql-lower';
+import { rowNumber, type Ordering } from '@/lib/sql-order';
+import type { Transaction } from '@/server/db';
 import { lockClubs } from '@/server/db/locks';
 import { player_stats, players } from '@/server/db/schema/players';
 import {
@@ -8,43 +10,37 @@ import {
   tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
-import type {
-  PlayerRecordModel,
-  PlayerStatsRowModel,
-} from '@/server/zod/players';
+import type { PlayerStatsRowModel } from '@/server/zod/players';
 import {
   and,
   count,
   countDistinct,
   eq,
-  getColumns,
   inArray,
   isNotNull,
   isNull,
   or,
+  sql,
   type SQL,
 } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
 
-const { gamesPlayed: _, ...STORED_COLUMNS } = getColumns(player_stats);
-const STORED_KEYS = Object.keys(
-  STORED_COLUMNS,
-) as (keyof PlayerStatsRowModel)[];
+const RATING_ORDER: Ordering = [
+  [players.rating, 'desc'],
+  [players.ratingDeviation, 'asc'],
+  [players.lastSeenAt, 'desc'],
+  [lower(players.nickname), 'asc'],
+];
 
-const RATING_ORDER_COLUMNS = {
-  rating: players.rating,
-  ratingDeviation: players.ratingDeviation,
-  lastSeenAt: players.lastSeenAt,
-};
-
-const UPSERT_SET = Object.fromEntries(
-  Object.entries(getColumns(alias(player_stats, 'excluded'))).filter(
-    ([key]) => key !== 'playerId' && key !== 'clubId' && key !== 'gamesPlayed',
-  ),
-);
-
-// 11 bound parameters per row keeps every statement far below postgres's 65535 parameter limit
-const UPSERT_CHUNK_SIZE = 500;
+/** ranks number club players along these orders; the club list sorts by the same ones */
+export const RANK_ORDERS = {
+  ratingRank: RATING_ORDER,
+  tournamentsPlayedRank: [
+    [player_stats.tournamentsPlayed, 'desc'],
+    ...RATING_ORDER,
+  ],
+  tournamentsWonRank: [[player_stats.tournamentsWon, 'desc'], ...RATING_ORDER],
+  gamesPlayedRank: [[player_stats.gamesPlayed, 'desc'], ...RATING_ORDER],
+} satisfies Record<string, Ordering>;
 
 type PlayerStatsCounts = Pick<
   PlayerStatsRowModel,
@@ -54,10 +50,6 @@ type PlayerStatsCounts = Pick<
   | 'gamesDrawn'
   | 'gamesLost'
 >;
-type RankingPlayer = PlayerStatsCounts &
-  Pick<PlayerRecordModel, keyof typeof RATING_ORDER_COLUMNS> & {
-    playerId: string;
-  };
 
 const ZERO_COUNTS: PlayerStatsCounts = {
   tournamentsPlayed: 0,
@@ -67,44 +59,64 @@ const ZERO_COUNTS: PlayerStatsCounts = {
   gamesLost: 0,
 };
 
-const toPlayerStatsRow = (row: PlayerStatsRowModel) =>
-  Object.fromEntries(
-    STORED_KEYS.map((key) => [key, row[key]]),
-  ) as PlayerStatsRowModel;
+/**
+ * recounts `playerIds` from finished tournaments and re-ranks their club. runs in
+ * the transaction of the event that changed their results
+ */
+export async function refreshPlayerStats(
+  tx: Transaction,
+  { clubId, playerIds }: { clubId: string; playerIds: string[] },
+) {
+  await lockClubs(tx, [clubId]);
+  await updateCounts(tx, playerIds);
+  await rankClub(tx, clubId);
+}
 
-const compareByRating = (a: RankingPlayer, b: RankingPlayer) =>
-  b.rating - a.rating ||
-  a.ratingDeviation - b.ratingDeviation ||
-  a.lastSeenAt.getTime() - b.lastSeenAt.getTime() ||
-  (a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0);
+async function updateCounts(tx: Transaction, playerIds: string[]) {
+  if (playerIds.length === 0) return;
+  const counts = await getPlayerStatsCounts(tx, playerIds);
+  for (const playerId of playerIds) {
+    // react-doctor-disable-next-line react-doctor/async-await-in-loop
+    await tx
+      .update(player_stats)
+      .set(counts.get(playerId) ?? ZERO_COUNTS)
+      .where(eq(player_stats.playerId, playerId));
+  }
+}
 
-/** numbers every club player by each metric; ties fall back to rating, stored rd, last seen, then id */
-export function rankClubPlayers<T extends RankingPlayer>(clubPlayers: T[]) {
-  const positions = (metric: (player: T) => number = () => 0) => {
-    const sorted = clubPlayers.toSorted(
-      (a, b) => metric(b) - metric(a) || compareByRating(a, b),
-    );
-    return new Map(sorted.map((player, i) => [player.playerId, i + 1]));
-  };
-
-  const rating = positions();
-  const tournamentsPlayed = positions((player) => player.tournamentsPlayed);
-  const tournamentsWon = positions((player) => player.tournamentsWon);
-  const gamesPlayed = positions(
-    (player) => player.gamesWon + player.gamesDrawn + player.gamesLost,
-  );
-
-  return clubPlayers.map((player) => ({
-    ...player,
-    ratingRank: rating.get(player.playerId) ?? null,
-    tournamentsPlayedRank: tournamentsPlayed.get(player.playerId) ?? null,
-    tournamentsWonRank: tournamentsWon.get(player.playerId) ?? null,
-    gamesPlayedRank: gamesPlayed.get(player.playerId) ?? null,
-  }));
+async function rankClub(tx: Transaction, clubId: string) {
+  const ranked = tx
+    .select({
+      playerId: player_stats.playerId,
+      ratingRank: rowNumber(RANK_ORDERS.ratingRank).as('rating_rank'),
+      tournamentsPlayedRank: rowNumber(RANK_ORDERS.tournamentsPlayedRank).as(
+        'tournaments_played_rank',
+      ),
+      tournamentsWonRank: rowNumber(RANK_ORDERS.tournamentsWonRank).as(
+        'tournaments_won_rank',
+      ),
+      gamesPlayedRank: rowNumber(RANK_ORDERS.gamesPlayedRank).as(
+        'games_played_rank',
+      ),
+    })
+    .from(player_stats)
+    .innerJoin(players, eq(players.id, player_stats.playerId))
+    .where(eq(player_stats.clubId, clubId))
+    .as('ranked');
+  await tx
+    .update(player_stats)
+    .set({
+      ratingRank: sql`${ranked.ratingRank}`,
+      tournamentsPlayedRank: sql`${ranked.tournamentsPlayedRank}`,
+      tournamentsWonRank: sql`${ranked.tournamentsWonRank}`,
+      gamesPlayedRank: sql`${ranked.gamesPlayedRank}`,
+    })
+    .from(ranked)
+    .where(eq(player_stats.playerId, ranked.playerId));
 }
 
 function getResultCounts(
-  database: Database,
+  tx: Transaction,
   where: SQL | undefined,
   colour: 'white' | 'black',
 ) {
@@ -114,7 +126,7 @@ function getResultCounts(
   const winResult = colour === 'white' ? '1-0' : '0-1';
   const lossResult = colour === 'white' ? '0-1' : '1-0';
 
-  return database
+  return tx
     .select({
       playerId: players_to_units.playerId,
       wins: count(caseWhen(eq(games.result, winResult), games.id).elseNull()),
@@ -124,7 +136,6 @@ function getResultCounts(
       draws: count(caseWhen(eq(games.result, '1/2-1/2'), games.id).elseNull()),
     })
     .from(players_to_units)
-    .innerJoin(players, eq(players.id, players_to_units.playerId))
     .innerJoin(
       tournament_units,
       eq(players_to_units.unitId, tournament_units.id),
@@ -141,11 +152,14 @@ function getResultCounts(
     .groupBy(players_to_units.playerId);
 }
 
-/** finished-tournament counts for the players matched by `where`; players without history are absent */
-async function getPlayerStatsCounts(database: Database, where: SQL) {
-  const closed = and(where, isNotNull(tournaments.closedAt));
+/** finished-tournament counts of `playerIds`; players without history are absent */
+async function getPlayerStatsCounts(tx: Transaction, playerIds: string[]) {
+  const closed = and(
+    inArray(players_to_units.playerId, playerIds),
+    isNotNull(tournaments.closedAt),
+  );
   // react-doctor-disable-next-line react-doctor/async-parallel
-  const participationRows = await database
+  const participationRows = await tx
     .select({
       playerId: players_to_units.playerId,
       tournamentsPlayed: countDistinct(tournaments.id),
@@ -154,7 +168,6 @@ async function getPlayerStatsCounts(database: Database, where: SQL) {
       ),
     })
     .from(players_to_units)
-    .innerJoin(players, eq(players.id, players_to_units.playerId))
     .innerJoin(
       tournament_units,
       eq(players_to_units.unitId, tournament_units.id),
@@ -163,8 +176,8 @@ async function getPlayerStatsCounts(database: Database, where: SQL) {
     .where(closed)
     .groupBy(players_to_units.playerId);
   // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
-  const whiteRows = await getResultCounts(database, closed, 'white');
-  const blackRows = await getResultCounts(database, closed, 'black');
+  const whiteRows = await getResultCounts(tx, closed, 'white');
+  const blackRows = await getResultCounts(tx, closed, 'black');
 
   const counts = new Map<string, PlayerStatsCounts>(
     participationRows.map(({ playerId, ...participation }) => [
@@ -180,77 +193,4 @@ async function getPlayerStatsCounts(database: Database, where: SQL) {
     current.gamesLost += row.losses;
   }
   return counts;
-}
-
-/** full projection rows for every club player, computed from source tables only */
-export async function buildClubPlayerStats(
-  database: Database,
-  clubId: string,
-): Promise<PlayerStatsRowModel[]> {
-  const clubPlayers = await database
-    .select({
-      playerId: players.id,
-      clubId: players.clubId,
-      ...RATING_ORDER_COLUMNS,
-    })
-    .from(players)
-    .where(eq(players.clubId, clubId));
-  // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
-  const counts = await getPlayerStatsCounts(
-    database,
-    eq(players.clubId, clubId),
-  );
-
-  return rankClubPlayers(
-    clubPlayers.map((player) => ({
-      ...player,
-      ...(counts.get(player.playerId) ?? ZERO_COUNTS),
-    })),
-  ).map(toPlayerStatsRow);
-}
-
-/**
- * recomputes counts for `playerIds` from source tables, then re-ranks the whole
- * club and writes only the rows that changed. must run inside the transaction
- * of the event that changed the source data.
- */
-export async function refreshPlayerStats(
-  tx: Transaction,
-  { clubId, playerIds }: { clubId: string; playerIds: string[] },
-) {
-  await lockClubs(tx, [clubId]);
-  const storedRows = await tx
-    .select({ ...STORED_COLUMNS, ...RATING_ORDER_COLUMNS })
-    .from(player_stats)
-    .innerJoin(players, eq(players.id, player_stats.playerId))
-    .where(eq(player_stats.clubId, clubId));
-  const counts =
-    playerIds.length > 0
-      ? await getPlayerStatsCounts(
-          tx,
-          inArray(players_to_units.playerId, playerIds),
-        )
-      : new Map<string, PlayerStatsCounts>();
-
-  const affected = new Set(playerIds);
-  const changedRows = rankClubPlayers(
-    storedRows.map((row) =>
-      affected.has(row.playerId)
-        ? { ...row, ...(counts.get(row.playerId) ?? ZERO_COUNTS) }
-        : row,
-    ),
-  )
-    .filter((row, i) =>
-      STORED_KEYS.some((key) => row[key] !== storedRows[i][key]),
-    )
-    .map(toPlayerStatsRow);
-
-  for (let i = 0; i < changedRows.length; i += UPSERT_CHUNK_SIZE) {
-    // these chunks share one transaction; a failed write must prevent the next chunk from being sent.
-    // react-doctor-disable-next-line react-doctor/async-await-in-loop
-    await tx
-      .insert(player_stats)
-      .values(changedRows.slice(i, i + UPSERT_CHUNK_SIZE))
-      .onConflictDoUpdate({ target: player_stats.playerId, set: UPSERT_SET });
-  }
 }
