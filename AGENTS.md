@@ -54,6 +54,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 ## commands
 
 - runtime/package manager: bun
+- `bun db:up` - start the local postgres from `compose.yaml` and migrate its dev and test databases; `bun dev` runs it first, and `bun check`/`bun test` need it after schema changes
 - `bun check` - typecheck + lint + react doctor + tests
 - `bun test path/to/file` - run one test file with db seed
 - `bun test:noseed path/to/file` - tests that don't touch the db, without seeding it; a test that uses the db fails here, as expected

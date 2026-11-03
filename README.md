@@ -19,4 +19,22 @@
 
 ---
 
+### run locally:
+
+needs [bun](https://bun.sh) 1.4.2 and docker with compose.
+
+```sh
+bun install
+cp .env.example .env
+bun dev
+```
+
+`bun dev` starts a local postgres (`compose.yaml`, port 5433), applies migrations to its dev and test databases, then serves the app at http://localhost:3000. sign in with lichess: the first login creates your user and club. `bun check` and `bun test` use the test database, so run `bun db:up` first if the dev server isn't running, and again after pulling schema changes.
+
+- `bun db:reset` deletes both local databases and starts fresh
+- with your own postgres, point the two urls in `.env` at it and run `bun db:migrate && bun run --bun next dev`
+- coming from the turso setup: remove the database variables from `.env.local`, which overrides `.env`
+
+---
+
 сontributions are highly welcome, though we don’t have a decent contribution guide yet
