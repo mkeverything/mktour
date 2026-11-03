@@ -41,6 +41,7 @@ export async function mergePlayers({
       .select()
       .from(affiliations)
       .where(inArray(affiliations.playerId, playerIds));
+    // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
     const sharedTournament = await tx
       .select({ tournamentId: players_to_units.tournamentId })
       .from(players_to_units)

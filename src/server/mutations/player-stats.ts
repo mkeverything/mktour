@@ -144,6 +144,7 @@ function getResultCounts(
 /** finished-tournament counts for the players matched by `where`; players without history are absent */
 async function getPlayerStatsCounts(database: Database, where: SQL) {
   const closed = and(where, isNotNull(tournaments.closedAt));
+  // react-doctor-disable-next-line react-doctor/async-parallel
   const participationRows = await database
     .select({
       playerId: players_to_units.playerId,
@@ -161,6 +162,7 @@ async function getPlayerStatsCounts(database: Database, where: SQL) {
     .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
     .where(closed)
     .groupBy(players_to_units.playerId);
+  // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
   const whiteRows = await getResultCounts(database, closed, 'white');
   const blackRows = await getResultCounts(database, closed, 'black');
 
@@ -193,6 +195,7 @@ export async function buildClubPlayerStats(
     })
     .from(players)
     .where(eq(players.clubId, clubId));
+  // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
   const counts = await getPlayerStatsCounts(
     database,
     eq(players.clubId, clubId),

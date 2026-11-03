@@ -275,6 +275,7 @@ export async function finishTournament({
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     await lockClubs(tx, [tournament.clubId]);
     const allGames = await getTournamentGames(tournamentId, tx);
+    // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
     const unitsUnsorted = await getRawTournamentUnits(tournamentId, tx);
 
     if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');

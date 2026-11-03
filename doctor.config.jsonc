@@ -11,14 +11,6 @@
         "files": ["src/lib/pairing-generators/**"],
         "rules": ["react-doctor/js-index-maps"],
       },
-      // mutations query inside transactions, whose one connection runs a query at a time
-      {
-        "files": ["src/server/mutations/**"],
-        "rules": [
-          "react-doctor/server-sequential-independent-await",
-          "react-doctor/async-parallel",
-        ],
-      },
     ],
   },
 }

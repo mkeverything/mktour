@@ -217,6 +217,7 @@ export async function calculateAndApplyGlickoRatings(
   if (!tournament.rated) return;
 
   const gameRows = await getTournamentGameRows(tournamentId, tx);
+  // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
   const storedPlayers = await getTournamentPlayerRatings(tournamentId, tx);
   if (storedPlayers.some((p) => p.ratingLastUpdateAt > publishedAt)) {
     throw new AppError('RATING_CALCULATION_ERROR', {
