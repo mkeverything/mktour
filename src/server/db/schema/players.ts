@@ -100,6 +100,7 @@ export const rating_events = pgTable(
       table.playerId,
       table.sourceTournamentId,
     ),
+    index('rating_event_source_tournament_idx').on(table.sourceTournamentId),
     uniqueIndex('rating_event_player_starting_unique_idx')
       .on(table.playerId)
       .where(sql`${table.isStarting}`),

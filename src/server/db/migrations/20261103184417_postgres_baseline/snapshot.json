@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "972ac419-b090-444a-a975-1fb14eceb2cc",
+  "id": "b10520db-f5a5-4ae6-bc80-a7d7211eb44c",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -1135,19 +1135,6 @@
       "table": "player_stats"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "club_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "player_stats"
-    },
-    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -1695,6 +1682,48 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "user_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "api_token_user_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "api_token"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "user_session_user_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "user_session"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "tournament_id",
           "isExpression": false,
           "asc": true,
@@ -2045,118 +2074,6 @@
           "opclass": null
         },
         {
-          "value": "rating_rank",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "player_stats_club_rating_rank_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "player_stats"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "club_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "tournaments_played_rank",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "player_stats_club_tournaments_played_rank_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "player_stats"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "club_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "tournaments_won_rank",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "player_stats_club_tournaments_won_rank_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "player_stats"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "club_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "games_played_rank",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "player_stats_club_games_played_rank_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "player_stats"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "club_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
           "value": "lower(\"nickname\")",
           "isExpression": true,
           "asc": true,
@@ -2331,6 +2248,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "rating_event_player_tournament_unique_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "rating_event"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "source_tournament_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "rating_event_source_tournament_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "rating_event"

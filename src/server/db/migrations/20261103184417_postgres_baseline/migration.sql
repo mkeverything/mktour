@@ -113,7 +113,6 @@ CREATE TABLE "affiliation" (
 --> statement-breakpoint
 CREATE TABLE "player_stats" (
 	"player_id" text PRIMARY KEY,
-	"club_id" text NOT NULL,
 	"tournaments_played" integer DEFAULT 0 NOT NULL,
 	"tournaments_won" integer DEFAULT 0 NOT NULL,
 	"games_won" integer DEFAULT 0 NOT NULL,
@@ -174,6 +173,8 @@ CREATE TABLE "user_notification" (
 );
 --> statement-breakpoint
 CREATE INDEX "clubs_to_users_user_idx" ON "clubs_to_users" ("user_id");--> statement-breakpoint
+CREATE INDEX "api_token_user_idx" ON "api_token" ("user_id");--> statement-breakpoint
+CREATE INDEX "user_session_user_idx" ON "user_session" ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "game_tournament_number_unique_idx" ON "game" ("tournament_id","game_number");--> statement-breakpoint
 CREATE INDEX "game_tournament_round_idx" ON "game" ("tournament_id","round_number");--> statement-breakpoint
 CREATE INDEX "game_white_unit_idx" ON "game" ("white_unit_id");--> statement-breakpoint
@@ -187,16 +188,13 @@ CREATE INDEX "tu_tournament_number_idx" ON "tournament_units" ("tournament_id","
 CREATE INDEX "tu_tournament_nickname_idx" ON "tournament_units" ("tournament_id","nickname");--> statement-breakpoint
 CREATE INDEX "tournament_club_date_idx" ON "tournament" ("club_id","date" DESC NULLS LAST,"created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
 CREATE UNIQUE INDEX "affiliation_user_club_unique_idx" ON "affiliation" ("user_id","club_id");--> statement-breakpoint
-CREATE INDEX "player_stats_club_rating_rank_idx" ON "player_stats" ("club_id","rating_rank");--> statement-breakpoint
-CREATE INDEX "player_stats_club_tournaments_played_rank_idx" ON "player_stats" ("club_id","tournaments_played_rank");--> statement-breakpoint
-CREATE INDEX "player_stats_club_tournaments_won_rank_idx" ON "player_stats" ("club_id","tournaments_won_rank");--> statement-breakpoint
-CREATE INDEX "player_stats_club_games_played_rank_idx" ON "player_stats" ("club_id","games_played_rank");--> statement-breakpoint
 CREATE UNIQUE INDEX "player_club_nickname_unique_idx" ON "player" ("club_id",lower("nickname"));--> statement-breakpoint
 CREATE UNIQUE INDEX "player_user_club_unique_idx" ON "player" ("user_id","club_id");--> statement-breakpoint
 CREATE INDEX "player_club_last_seen_idx" ON "player" ("club_id","last_seen_at");--> statement-breakpoint
 CREATE INDEX "player_club_rating_idx" ON "player" ("club_id","rating" DESC NULLS LAST,"rating_deviation","id");--> statement-breakpoint
 CREATE INDEX "rating_event_player_timeline_idx" ON "rating_event" ("player_id","published_at","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "rating_event_player_tournament_unique_idx" ON "rating_event" ("player_id","source_tournament_id");--> statement-breakpoint
+CREATE INDEX "rating_event_source_tournament_idx" ON "rating_event" ("source_tournament_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "rating_event_player_starting_unique_idx" ON "rating_event" ("player_id") WHERE "is_starting";--> statement-breakpoint
 CREATE INDEX "club_notification_club_created_idx" ON "club_notification" ("club_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "user_notification_user_created_idx" ON "user_notification" ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint

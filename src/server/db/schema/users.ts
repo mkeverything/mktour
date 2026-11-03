@@ -1,5 +1,6 @@
 import { clubs } from '@/server/db/schema/clubs';
 import {
+  index,
   integer,
   pgTable,
   primaryKey,
@@ -38,7 +39,10 @@ export const sessions = pgTable(
       precision: 3,
     }).notNull(),
   },
-  (table) => [primaryKey({ columns: [table.id] })],
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    index('user_session_user_idx').on(table.userId),
+  ],
 );
 
 export const apiTokens = pgTable(
@@ -56,5 +60,8 @@ export const apiTokens = pgTable(
     }).notNull(),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true, precision: 3 }),
   },
-  (table) => [primaryKey({ columns: [table.id] })],
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    index('api_token_user_idx').on(table.userId),
+  ],
 );
