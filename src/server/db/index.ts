@@ -8,6 +8,9 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 const pool = new Pool({ connectionString: getDatabaseUrl() });
+pool.on('error', (error) =>
+  console.error('idle database client failed', error),
+);
 
 export const db = drizzle({ client: pool, relations });
 
