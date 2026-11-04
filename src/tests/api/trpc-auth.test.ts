@@ -11,8 +11,8 @@ import { eq } from 'drizzle-orm';
 import { NextRequest } from 'next/server';
 import superjson from 'superjson';
 
-const createBearerClient = async () => {
-  const caller = await createAuthenticatedCaller(fixtures.organizer);
+const createBearerClient = async (user = fixtures.organizer) => {
+  const caller = await createAuthenticatedCaller(user);
   const { token } = await caller.auth.apiToken.generate({ name: 'test' });
   return createTRPCClient<AppRouter>({
     links: [
@@ -122,5 +122,70 @@ describe('bearer token without a cookie session', () => {
     });
     const units = await client.tournament.units.query({ tournamentId });
     expect(units.find((unit) => unit.id === unitIds[0])?.isOut).toBe(true);
+  });
+
+  test('requests, aborts and accepts affiliations with notifications', async () => {
+    const { clubId, playerIds } = fixtures.clubs.next().value!;
+    const member = await createBearerClient(fixtures.member);
+    const organizer = await createBearerClient();
+    const unseen = () => member.auth.notifications.counter.query();
+    const initiallyUnseen = await unseen();
+
+    await member.player.affiliation.request.mutate({
+      playerId: playerIds[0],
+      clubId,
+    });
+    const requested = await member.club.authAffiliation.query({ clubId });
+    await member.player.affiliation.abortRequest.mutate({
+      playerId: playerIds[0],
+      affiliationId: requested!.id,
+    });
+    expect(await member.club.authAffiliation.query({ clubId })).toBeNull();
+
+    await member.player.affiliation.request.mutate({
+      playerId: playerIds[1],
+      clubId,
+    });
+    const { id: affiliationId } = (await member.club.authAffiliation.query({
+      clubId,
+    }))!;
+    await organizer.player.affiliation.accept.mutate({
+      clubId,
+      affiliationId,
+    });
+    expect(await unseen()).toBe(initiallyUnseen + 1);
+
+    const {
+      notifications: [{ notification }],
+    } = await member.auth.notifications.infinite.query({ limit: 1 });
+    const seen = { notificationId: notification.id, seen: true };
+    await organizer.auth.notifications.changeStatus.mutate(seen);
+    expect(await unseen()).toBe(initiallyUnseen + 1);
+    await member.auth.notifications.changeStatus.mutate(seen);
+    expect(await unseen()).toBe(initiallyUnseen);
+
+    await member.auth.notifications.changeStatus.mutate({
+      ...seen,
+      seen: false,
+    });
+    await member.auth.notifications.markAllAsSeen.mutate();
+    expect(await unseen()).toBe(0);
+  });
+
+  test('reads club status and selects a club', async () => {
+    const clubId = fixtures.organizer.selectedClub;
+    const client = await createBearerClient();
+
+    expect(await client.club.authStatus.query({ clubId })).toBe('co-owner');
+    expect(await client.auth.selectClub.mutate({ clubId })).toBe(clubId);
+  });
+
+  test('cannot delete the account', async () => {
+    const user = fixtures.users.next().value!;
+    const client = await createBearerClient(user);
+
+    await expect(
+      client.auth.delete.mutate({ userId: user.id }),
+    ).rejects.toMatchObject({ message: 'UNAUTHENTICATED' });
   });
 });

@@ -2,7 +2,6 @@ import 'server-only';
 
 import { AppError } from '@/lib/errors';
 
-import { validateRequest } from '@/lib/auth/lucia';
 import { newid } from '@/lib/utils';
 import { db, type Database, type Transaction } from '@/server/db';
 import { lockClubs } from '@/server/db/locks';
@@ -30,10 +29,6 @@ export async function requestAffiliation({
   userId: string;
   clubId: string;
 }) {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-  if (user.id !== userId) throw new AppError('USER_MISMATCH');
-
   const [player] = await db
     .select({ clubId: players.clubId })
     .from(players)
@@ -124,10 +119,6 @@ export async function abortAffiliationRequest({
   playerId: string;
   affiliationId: string;
 }) {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-  if (user.id !== userId) throw new AppError('USER_MISMATCH');
-
   const affiliation = await db.transaction(async (tx) => {
     const affiliation = await lockRequestedAffiliation(
       tx,

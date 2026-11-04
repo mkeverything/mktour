@@ -78,15 +78,14 @@ export const authRouter = {
           userId: ctx.user.id,
         });
       }),
-    counter: publicProcedure.query(async () => {
-      const { user } = await validateRequest();
-      if (!user) return 0;
-      return await getNotificationsCounter(user.id);
+    counter: authProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) return 0;
+      return await getNotificationsCounter(ctx.user.id);
     }),
     changeStatus: protectedProcedure
       .input(notificationIdInputSchema.extend({ seen: z.boolean() }))
-      .mutation(async ({ input }) => {
-        await changeNotificationStatus(input);
+      .mutation(async ({ ctx, input }) => {
+        await changeNotificationStatus({ ...input, userId: ctx.user.id });
       }),
     markAllAsSeen: protectedProcedure.mutation(async (opts) => {
       await markAllNotificationsAsSeen(opts.ctx.user.id);
@@ -140,9 +139,11 @@ export const authRouter = {
     .meta(meta.authSelectClub)
     .output(z.string())
     .input(clubIdInputSchema)
-    .mutation(async (opts) => {
-      const { input } = opts;
-      const { selectedClub } = await selectClub(input);
+    .mutation(async ({ ctx, input }) => {
+      const { selectedClub } = await selectClub({
+        ...input,
+        userId: ctx.user.id,
+      });
       await timeout(1000);
       return selectedClub;
     }),
