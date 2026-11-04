@@ -5,10 +5,10 @@ one-off, operator-controlled move of a turso database to postgres. run it for be
 
 ## 1. prepare
 
-create an empty postgres database for each environment: production, beta, local
-development and tests. the test database name must contain `test`; the test guard checks
-it. each app process keeps a pool of up to 10 connections, and a rollout runs two slots
-of an environment at once. apply the schema to each:
+create an empty postgres database for production and for beta, as `mktour-infra`
+describes; local development and tests run theirs from `compose.yaml`. each app process
+keeps a pool of up to 10 connections, and a rollout runs two slots of an environment at
+once. apply the schema to each:
 
 ```sh
 DATABASE_URL='<postgres url>' bunx drizzle-kit migrate
@@ -27,6 +27,13 @@ key; fix those rows in turso before the real window.
 
 turn maintenance on, as the server runbook in `mktour-infra` describes. from here until
 step 7 nothing may write to turso, so the export stays complete.
+
+beta's maintenance is the app's own, so it would answer the deploy's smoke test with 503
+and fail the deploy. stop beta's serving slot instead:
+
+```sh
+docker compose -f /etc/mktour/beta/compose.yml stop beta-$(mktour-app-route beta)
+```
 
 ## 4. export
 
@@ -59,16 +66,24 @@ error nothing is written; fix the cause and rerun.
 in the environment's env file on the server, set `DATABASE_URL` to its postgres url and
 delete `DATABASE_AUTH_TOKEN`. running containers keep their old environment; the next
 deploy starts its slot with the new one, and its smoke test reads the database through it.
-locally, point `TEST_DATABASE_URL` at the test database. ci runs its own postgres service,
-so the `TEST_DATABASE_URL` and `TEST_DATABASE_AUTH_TOKEN` repository secrets can go.
 
 ## 7. deploy and reopen
 
 merge, and ci deploys the release. check a few player, club and tournament pages, then
-turn maintenance off. from then on, rolling back to a turso-era image also needs the old
-env file, and loses every write made since.
+turn prod's maintenance off; beta reopens with the deploy. from then on, rolling back to a
+turso-era image also needs the old env file, and loses every write made since.
+
+a failed deploy leaves the old slot as it was, still on turso, which has had no writes
+since the export. on prod, turn maintenance off. on beta, start the stopped slot: a
+container keeps the environment it was created with.
+
+```sh
+docker compose -f /etc/mktour/beta/compose.yml start beta-$(mktour-app-route beta)
+```
 
 ## cleanup after cutover
 
 once both beta and main are verified, delete `scripts/temporary/postgres-cutover/`, the
-private export and the turso databases.
+private export, the turso databases and the `TEST_DATABASE_URL` and
+`TEST_DATABASE_AUTH_TOKEN` repository secrets. delete the secrets no earlier: main's ci
+reads them until main runs on postgres.
