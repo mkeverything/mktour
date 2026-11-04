@@ -4,7 +4,7 @@ import { QueryClient, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 export const useClubInbox = (clubId: string) => {
   const trpc = useTRPC();
   return useInfiniteQuery(
-    trpc.club.inbox.infiniteQueryOptions(
+    trpc.club.inbox.all.infiniteQueryOptions(
       {
         clubId,
         cursor: undefined,
@@ -18,7 +18,7 @@ export const useClubInbox = (clubId: string) => {
 
 export const useClubInboxCounter = (clubId: string) => {
   const trpc = useTRPC();
-  return useQuery(trpc.club.notifications.counter.queryOptions({ clubId }));
+  return useQuery(trpc.club.inbox.counter.queryOptions({ clubId }));
 };
 
 export const countPendingInboxMutations = (
@@ -28,7 +28,7 @@ export const countPendingInboxMutations = (
   [
     trpc.player.affiliation.accept.mutationKey(),
     trpc.player.affiliation.reject.mutationKey(),
-    trpc.club.notifications.toggleSeen.mutationKey(),
+    trpc.club.inbox.toggleSeen.mutationKey(),
   ].reduce(
     (count, mutationKey) => count + queryClient.isMutating({ mutationKey }),
     0,

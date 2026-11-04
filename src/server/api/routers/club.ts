@@ -211,19 +211,19 @@ export const clubRouter = createTRPCRouter({
         revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${input.userId}`, 'max');
       }),
   }),
-  inbox: clubAdminProcedure
-    .meta(meta.clubInbox)
-    .input(clubPaginatedInputSchema)
-    .output(clubInboxOutputSchema)
-    .query(async ({ input }) => {
-      return await getClubInbox({
-        ...input,
-        cursor: input.cursor ?? 0,
-      });
-    }),
-  notifications: {
+  inbox: {
+    all: clubAdminProcedure
+      .meta(meta.clubInbox)
+      .input(clubPaginatedInputSchema)
+      .output(clubInboxOutputSchema)
+      .query(async ({ input }) => {
+        return await getClubInbox({
+          ...input,
+          cursor: input.cursor ?? 0,
+        });
+      }),
     counter: clubAdminProcedure
-      .meta(meta.clubNotificationsCounter)
+      .meta(meta.clubInboxCounter)
       .output(clubInboxCounterSchema)
       .query(async ({ input }) => {
         return await getClubInboxCounter(input.clubId);

@@ -143,10 +143,10 @@ export const clubMeta = {
     },
   },
 
-  clubNotificationsCounter: {
+  clubInboxCounter: {
     openapi: {
       method: 'GET',
-      path: '/clubs/{clubId}/notifications/counter',
+      path: '/clubs/{clubId}/inbox/counter',
       summary: 'count pending affiliation requests and unseen notifications',
       tags: ['clubs'],
     },

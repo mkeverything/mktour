@@ -22,13 +22,13 @@ export const handleUserEvent = (
       break;
     case 'club-notification':
       queryClient.invalidateQueries({
-        queryKey: trpc.club.notifications.counter.queryKey({
+        queryKey: trpc.club.inbox.counter.queryKey({
           clubId: event.clubId,
         }),
       });
       if (!countPendingInboxMutations(queryClient, trpc))
         queryClient.invalidateQueries({
-          queryKey: trpc.club.inbox.infiniteQueryKey({
+          queryKey: trpc.club.inbox.all.infiniteQueryKey({
             clubId: event.clubId,
           }),
         });

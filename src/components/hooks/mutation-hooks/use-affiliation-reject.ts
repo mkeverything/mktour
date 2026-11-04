@@ -16,15 +16,15 @@ export default function useAffiliationRejectMutation({
     trpc.player.affiliation.reject.mutationOptions({
       onMutate: async ({ clubId, affiliationId }) => {
         await queryClient.cancelQueries({
-          queryKey: trpc.club.inbox.infiniteQueryKey({ clubId }),
+          queryKey: trpc.club.inbox.all.infiniteQueryKey({ clubId }),
         });
 
         const prevCache = queryClient.getQueryData(
-          trpc.club.inbox.infiniteQueryKey({ clubId }),
+          trpc.club.inbox.all.infiniteQueryKey({ clubId }),
         );
 
         queryClient.setQueryData(
-          trpc.club.inbox.infiniteQueryKey({ clubId }),
+          trpc.club.inbox.all.infiniteQueryKey({ clubId }),
           (cache) => {
             if (!cache) return cache;
 
@@ -52,7 +52,7 @@ export default function useAffiliationRejectMutation({
         toast.error(tErrors(getAppErrorMessage(_err)));
         if (context?.prevCache) {
           queryClient.setQueryData(
-            trpc.club.inbox.infiniteQueryKey({ clubId }),
+            trpc.club.inbox.all.infiniteQueryKey({ clubId }),
             context.prevCache,
           );
         }
@@ -60,10 +60,10 @@ export default function useAffiliationRejectMutation({
       onSettled: (_, __, { clubId }) => {
         if (countPendingInboxMutations(queryClient, trpc) === 1) {
           queryClient.invalidateQueries({
-            queryKey: trpc.club.inbox.infiniteQueryKey({ clubId }),
+            queryKey: trpc.club.inbox.all.infiniteQueryKey({ clubId }),
           });
           queryClient.invalidateQueries({
-            queryKey: trpc.club.notifications.counter.queryKey({ clubId }),
+            queryKey: trpc.club.inbox.counter.queryKey({ clubId }),
           });
         }
       },

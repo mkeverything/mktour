@@ -18,7 +18,7 @@ export default function UserEvents() {
           queryKey: trpc.auth.notifications.pathKey(),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.club.notifications.pathKey(),
+          queryKey: trpc.club.inbox.pathKey(),
         });
       },
       onData: (event) => handleUserEvent(event, queryClient, trpc),

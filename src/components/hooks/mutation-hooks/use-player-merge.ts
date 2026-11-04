@@ -30,7 +30,7 @@ export default function usePlayerMergeMutation({
           queryKey: trpc.club.stats.queryKey({ clubId: variables.clubId }),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.club.inbox.infiniteQueryKey({
+          queryKey: trpc.club.inbox.all.infiniteQueryKey({
             clubId: variables.clubId,
           }),
         });
