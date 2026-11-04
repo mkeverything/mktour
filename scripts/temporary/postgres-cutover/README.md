@@ -63,9 +63,10 @@ the target must be migrated and empty. the import runs in one transaction: it co
 sqlite integers to timestamps and booleans and json text to `jsonb`, validates every value,
 rebuilds `player_stats` from the imported history and prints a count per table.
 affiliations and notifications are reshaped by `reshape-affiliations.ts`: rejected and
-cancelled affiliations are rebuilt from old notifications, and notifications it can't
-attach to a row are dropped and counted. on any error nothing is written; fix the cause
-and rerun.
+cancelled affiliations are rebuilt from old notifications. old request notifications are
+left out on purpose, since the club now sees requests as affiliations; notifications it
+can't attach to a row are dropped. both are counted separately, and a non-zero dropped
+count is worth a look. on any error nothing is written; fix the cause and rerun.
 
 ## 6. switch environment variables
 

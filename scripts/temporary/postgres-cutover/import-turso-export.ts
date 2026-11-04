@@ -215,6 +215,7 @@ const counts = await db.transaction(async (tx) => {
     }
     imported[getTableName(table)] = await tx.$count(table);
   }
+  imported['left out request notifications'] = reshaped.requestNotifications;
   imported['dropped notifications'] = reshaped.droppedNotifications;
 
   // a linked player and its approved affiliation are written together; both

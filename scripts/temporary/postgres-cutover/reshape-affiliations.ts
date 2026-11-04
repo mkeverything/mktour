@@ -3,7 +3,7 @@ turso kept only open affiliations: a rejected or cancelled one was deleted and s
 only in its notifications, which pointed at rows through json ids. here closed
 affiliations are rebuilt from that news, news points at its affiliation, club, user or
 player through columns, and request news, which the club now sees as requests, is left
-out. news that can't be attached to a row is dropped and counted.
+out. news that can't be attached to a row is dropped; the two are counted apart.
 */
 import { AppError } from '@/lib/errors';
 import { newid } from '@/lib/utils';
@@ -28,6 +28,11 @@ export type SourceNotification = {
   metadata: Record<string, unknown>;
 };
 
+const REQUEST_EVENTS = new Set([
+  'affiliation_request',
+  'affiliation_request_approved',
+  'affiliation_request_rejected',
+]);
 const STATUSES: Record<string, AffiliationStatus> = {
   requested_by_user: 'requested',
   active: 'approved',
@@ -237,14 +242,19 @@ export function reshapeAffiliations({
     },
   );
 
+  const requestNotifications = clubNotifications.filter(({ event }) =>
+    REQUEST_EVENTS.has(event),
+  ).length;
   return {
     affiliations: [...rows.values()],
     userNotifications: userRows,
     clubNotifications: clubRows,
+    requestNotifications,
     droppedNotifications:
       userNotifications.length +
       clubNotifications.length -
       userRows.length -
-      clubRows.length,
+      clubRows.length -
+      requestNotifications,
   };
 }
