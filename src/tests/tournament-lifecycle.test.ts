@@ -215,8 +215,7 @@ describe('finishing a tournament', () => {
 
     const { closedAt } = await finishTournament({ tournamentId });
 
-    expect(closedAt.getTime() % 1000).toBe(0);
-    expect(closedAt.getTime()).toBeGreaterThanOrEqual(before - 1000);
+    expect(closedAt.getTime()).toBeGreaterThanOrEqual(before);
     expect(closedAt.getTime()).toBeLessThanOrEqual(Date.now());
 
     const tournament = await tournamentRow(tournamentId);

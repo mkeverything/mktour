@@ -3,10 +3,6 @@ import {
   user_notifications,
 } from '@/server/db/schema/notifications';
 import {
-  clubNotificationEventEnum,
-  userNotificationEventEnum,
-} from '@/server/zod/enums';
-import {
   affiliationMinimalSchema,
   playersMinimalSchema,
   playerOutputSchema,
@@ -27,24 +23,15 @@ export const userNotificationsSelectSchema = createSelectSchema(
 );
 export const clubNotificationsSelectSchema = createSelectSchema(
   club_notifications,
-  {
-    event: clubNotificationEventEnum,
-    metadata: notificationMetadataSchema,
-  },
+  { metadata: notificationMetadataSchema },
 );
 export const userNotificationsInsertSchema = createInsertSchema(
   user_notifications,
-  {
-    event: userNotificationEventEnum,
-    metadata: notificationMetadataSchema,
-  },
+  { metadata: notificationMetadataSchema },
 );
 export const clubNotificationsInsertSchema = createInsertSchema(
   club_notifications,
-  {
-    event: clubNotificationEventEnum,
-    metadata: notificationMetadataSchema,
-  },
+  { metadata: notificationMetadataSchema },
 );
 export const userNotificationsUpdateSchema = createUpdateSchema(
   user_notifications,

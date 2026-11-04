@@ -7,12 +7,7 @@ const toDatabaseSession = (
   session: typeof sessions.$inferSelect,
 ): DatabaseSession => {
   const { id, userId, expiresAt, ...attributes } = session;
-  return {
-    id,
-    userId,
-    expiresAt: new Date(expiresAt * 1000),
-    attributes,
-  };
+  return { id, userId, expiresAt, attributes };
 };
 
 export const adapter: Adapter = {
@@ -51,19 +46,17 @@ export const adapter: Adapter = {
     await db.insert(sessions).values({
       id: session.id,
       userId: session.userId,
-      expiresAt: Math.floor(session.expiresAt.getTime() / 1000),
+      expiresAt: session.expiresAt,
       ...session.attributes,
     });
   },
   async updateSessionExpiration(sessionId, expiresAt) {
     await db
       .update(sessions)
-      .set({ expiresAt: Math.floor(expiresAt.getTime() / 1000) })
+      .set({ expiresAt })
       .where(eq(sessions.id, sessionId));
   },
   async deleteExpiredSessions() {
-    await db
-      .delete(sessions)
-      .where(lte(sessions.expiresAt, Math.floor(Date.now() / 1000)));
+    await db.delete(sessions).where(lte(sessions.expiresAt, new Date()));
   },
 };

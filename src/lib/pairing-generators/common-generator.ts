@@ -405,8 +405,6 @@ export function getGameToInsert(
     gameNumber: finalizedMatch.pairNumber,
     // all those fields are set to null here, maybe will rethink that later
     roundName: null, // TODO: can be equal to round number in R&R
-    whitePrevGameId: null,
-    blackPrevGameId: null,
     whitePlayerId: finalizedMatch.whiteEntity.personalPlayerId,
     blackPlayerId: finalizedMatch.blackEntity.personalPlayerId,
     result: null,

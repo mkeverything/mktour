@@ -14,7 +14,6 @@ const AddUnitDrawerContent = ({
   addingNewPlayer,
   setAddingNewPlayer,
   handleClose,
-  setDrawerOpen,
   onPlayerSelected,
   onPlayerCreated,
   showFakerButton = true,
@@ -38,9 +37,9 @@ const AddUnitDrawerContent = ({
           {!addingNewPlayer ? <Plus /> : <ArrowLeft />}
           {!addingNewPlayer ? t('add new player') : t('back')}{' '}
         </Button>
-        {showFakerButton &&
-          process.env.NODE_ENV !== 'production' &&
-          setDrawerOpen && <AddFakerPlayer setOpen={setDrawerOpen} />}
+        {showFakerButton && process.env.NODE_ENV !== 'production' && (
+          <AddFakerPlayer />
+        )}
       </div>
 
       {addingNewPlayer ? (
@@ -70,7 +69,6 @@ type AddUnitDrawerContentProps = {
   addingNewPlayer: boolean;
   setAddingNewPlayer: Dispatch<SetStateAction<boolean>>;
   handleClose: () => void;
-  setDrawerOpen?: (_state: boolean) => void;
   onPlayerSelected?: (_player: PlayerWithUsernameModel) => void;
   onPlayerCreated?: (_player: PlayerWithUsernameModel) => void;
   showFakerButton?: boolean;

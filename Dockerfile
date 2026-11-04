@@ -24,7 +24,7 @@ ARG DEPLOY_ENV
 ARG NEXT_DEPLOYMENT_ID
 ENV NEXT_TELEMETRY_DISABLED=1
 # the build runs no queries, but the database client is created on import and needs a valid url
-RUN DATABASE_URL=libsql://build.invalid bun run build
+RUN DATABASE_URL=postgresql://build.invalid/mktour bun run build
 
 # only the traced server, its static assets and public files: no sources, secrets or dev tooling
 FROM base AS release

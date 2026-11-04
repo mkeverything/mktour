@@ -2,25 +2,20 @@ import { getLichessTeam, getUserLichessTeams } from '@/lib/api/lichess';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { AppError } from '@/lib/errors';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
-import { newid, nowTimestamp } from '@/lib/utils';
-import { db, Transaction } from '@/server/db';
+import { newid } from '@/lib/utils';
+import { db, type Transaction } from '@/server/db';
+import { lockClubs } from '@/server/db/locks';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import {
   club_notifications,
   user_notifications,
 } from '@/server/db/schema/notifications';
 import {
-  affiliations,
   player_stats,
   players,
   rating_events,
 } from '@/server/db/schema/players';
-import {
-  games,
-  players_to_units,
-  tournament_units,
-  tournaments,
-} from '@/server/db/schema/tournaments';
+import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
 import {
   publishClubNotification,
@@ -42,7 +37,7 @@ import {
   playerFormSchema,
 } from '@/server/zod/players';
 import { UserModel } from '@/server/zod/users';
-import { and, asc, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
@@ -64,7 +59,6 @@ export const createClub = async (user: User, values: ClubFormModel) => {
     createdAt,
   };
   const newRelation: ClubToUserModel = {
-    id: `${user.id}_${id}`,
     clubId: id,
     userId: user.id,
     status: 'co-owner',
@@ -153,7 +147,7 @@ export const createPlayer = async (
   }
 
   const insertPlayerWithStartingEvent = async (database: Transaction) => {
-    const createdAt = nowTimestamp();
+    const createdAt = new Date();
     const newPlayer = (
       await database
         .insert(players)
@@ -178,9 +172,7 @@ export const createPlayer = async (
       ratingDeviation: newPlayer.ratingDeviation,
       isStarting: true,
     });
-    await database
-      .insert(player_stats)
-      .values({ playerId: newPlayer.id, clubId: newPlayer.clubId });
+    await database.insert(player_stats).values({ playerId: newPlayer.id });
     return newPlayer;
   };
 
@@ -189,33 +181,34 @@ export const createPlayer = async (
     : await db.transaction(insertPlayerWithStartingEvent);
 };
 
-export const deletePlayer = async ({ playerId }: { playerId: string }) => {
-  const [playerTournament] = await db
-    .select({ tournamentId: tournament_units.tournamentId })
-    .from(players_to_units)
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
-    .where(eq(players_to_units.playerId, playerId))
-    .limit(1);
-
-  if (playerTournament) {
-    throw new AppError('PLAYER_HAS_TOURNAMENTS');
-  }
-
+export const deletePlayer = async ({
+  playerId,
+  clubId,
+}: {
+  playerId: string;
+  clubId: string;
+}) => {
   await db.transaction(async (tx) => {
-    const stats = await tx
-      .select({
-        clubId: player_stats.clubId,
-        ratingRank: player_stats.ratingRank,
-      })
-      .from(player_stats)
-      .where(eq(player_stats.playerId, playerId))
-      .get();
+    await lockClubs(tx, [clubId]);
+    const [player] = await tx
+      .select({ id: players.id })
+      .from(players)
+      .where(eq(players.id, playerId))
+      .for('update');
+    if (!player) return;
+    const unitMember = await tx.query.players_to_units.findFirst({
+      where: { playerId },
+      columns: { unitId: true },
+    });
+    if (unitMember) throw new AppError('PLAYER_HAS_TOURNAMENTS');
+
+    const stats = await tx.query.player_stats.findFirst({
+      where: { playerId },
+      columns: { ratingRank: true },
+    });
     await tx.delete(players).where(eq(players.id, playerId));
     if (stats && stats.ratingRank !== null) {
-      await refreshPlayerStats(tx, { clubId: stats.clubId, playerIds: [] });
+      await refreshPlayerStats(tx, { clubId, playerIds: [] });
     }
   });
 };
@@ -307,7 +300,7 @@ export const deleteClubFunction = async ({
   userId,
   userDeletion = false, // true when function is invoked while deleting the user - single owner of a club
 }: ClubDeleteProps) => {
-  const [otherClubs, userStatus] = await Promise.all([
+  const [otherClubs, otherCoOwners, userStatus] = await Promise.all([
     db
       .select()
       .from(clubs_to_users)
@@ -319,45 +312,45 @@ export const deleteClubFunction = async ({
         ),
       )
       .limit(1),
+    db
+      .select()
+      .from(clubs_to_users)
+      .where(
+        and(
+          eq(clubs_to_users.clubId, clubId),
+          ne(clubs_to_users.userId, userId),
+          eq(clubs_to_users.status, 'co-owner'),
+        ),
+      )
+      .limit(1),
     getStatusInClub({ userId, clubId }),
   ]);
   if (userStatus !== 'co-owner') throw new AppError('UNAUTHENTICATED');
-
+  if (otherCoOwners.length !== 0) throw new AppError('CLUB_HAS_OTHER_CO_OWNER');
   if (otherClubs.length === 0 && !userDeletion)
     throw new AppError('ZERO_CLUBS');
-  if (!userDeletion) {
-    await db
-      .update(users)
-      .set({ selectedClub: otherClubs[0].clubId })
-      .where(eq(users.id, userId));
-  }
 
-  const clubTournamentIds = db
-    .select({ id: tournaments.id })
-    .from(tournaments)
-    .where(eq(tournaments.clubId, clubId));
-  const clubUnitIds = db
-    .select({ id: tournament_units.id })
-    .from(tournament_units)
-    .where(inArray(tournament_units.tournamentId, clubTournamentIds));
+  await db.transaction((tx) => deleteClubRows(tx, clubId));
+};
 
-  await db.batch([
-    db.delete(games).where(inArray(games.tournamentId, clubTournamentIds)),
-    db
-      .delete(players_to_units)
-      .where(inArray(players_to_units.unitId, clubUnitIds)),
-    db
-      .delete(tournament_units)
-      .where(inArray(tournament_units.tournamentId, clubTournamentIds)),
-
-    db.delete(affiliations).where(eq(affiliations.clubId, clubId)),
-    db.delete(club_notifications).where(eq(club_notifications.clubId, clubId)),
-    db.delete(players).where(eq(players.clubId, clubId)),
-    db.delete(tournaments).where(eq(tournaments.clubId, clubId)),
-    db.delete(clubs_to_users).where(eq(clubs_to_users.clubId, clubId)),
-
-    db.delete(clubs).where(eq(clubs.id, clubId)),
-  ]);
+// memberships and games keep a player who played from being deleted, and the
+// club reaches them through both its players and its tournaments: tournaments go first.
+// everyone who has the club selected moves to a club they co-own
+export const deleteClubRows = async (tx: Transaction, clubId: string) => {
+  await tx
+    .update(users)
+    .set({ selectedClub: clubs_to_users.clubId })
+    .from(clubs_to_users)
+    .where(
+      and(
+        eq(users.selectedClub, clubId),
+        eq(clubs_to_users.userId, users.id),
+        ne(clubs_to_users.clubId, clubId),
+        eq(clubs_to_users.status, 'co-owner'),
+      ),
+    );
+  await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));
+  await tx.delete(clubs).where(eq(clubs.id, clubId));
 };
 
 export const getClubAffiliatedUsers = async (clubId: string) => {
@@ -396,7 +389,6 @@ export const addClubManager = async ({
     );
   if (existingRelation.length > 0) throw new AppError('RELATION_EXISTS');
   const newRelation: ClubToUserModel = {
-    id: `${clubId}_${userId}`,
     clubId: clubId,
     userId: userId,
     status,
@@ -504,9 +496,13 @@ export const promoteSuccessorCoOwners = async (
     .update(clubs_to_users)
     .set({ status: 'co-owner', promotedAt })
     .where(
-      inArray(
-        clubs_to_users.id,
-        successors.map(({ id }) => id),
+      or(
+        ...successors.map(({ clubId, userId }) =>
+          and(
+            eq(clubs_to_users.clubId, clubId),
+            eq(clubs_to_users.userId, userId),
+          ),
+        ),
       ),
     );
   await tx.insert(user_notifications).values(
@@ -545,9 +541,10 @@ export const leaveClub = async ({
   if (!otherClubId) throw new AppError('NO_OTHER_CLUB_CO_OWNER');
 
   const promotedUserIds = await db.transaction(async (tx) => {
+    await lockClubs(tx, [clubId]);
     const otherManager = await tx.query.clubs_to_users.findFirst({
       where: { clubId, userId: { ne: userId } },
-      columns: { id: true },
+      columns: { userId: true },
     });
     if (!otherManager) throw new AppError('CANNOT_LEAVE_AS_ONLY_MANAGER');
     const successorIds = await promoteSuccessorCoOwners(tx, {

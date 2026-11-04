@@ -160,7 +160,7 @@ export const playerRouter = {
         (clubId) => clubId === player.clubId,
       );
       if (!isAdmin) throw new AppError('NOT_CLUB_ADMIN');
-      await deletePlayer(input);
+      await deletePlayer({ playerId: input.playerId, clubId: player.clubId });
     }),
   edit: protectedProcedure
     .meta(meta.playersEdit)

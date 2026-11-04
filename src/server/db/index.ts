@@ -1,33 +1,18 @@
-import { getDatabaseAuthToken, getDatabaseUrl } from '@/lib/config/urls';
+import { getDatabaseUrl } from '@/lib/config/non-next-urls';
 import { relations } from '@/server/db/relations';
-import type { Client } from '@libsql/client';
-import { createClient } from '@libsql/client';
-import type { LibSQLDatabase, LibSQLTransaction } from 'drizzle-orm/libsql';
-import { drizzle } from 'drizzle-orm/libsql';
+import type {
+  NodePgDatabase,
+  NodePgTransaction,
+} from 'drizzle-orm/node-postgres';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 
-let _sqlite: Client | null = null;
-let _db: LibSQLDatabase<typeof relations> | null = null;
+const pool = new Pool({ connectionString: getDatabaseUrl() });
+pool.on('error', (error) =>
+  console.error('idle database client failed', error),
+);
 
-export const getSqlite = () => {
-  if (!_sqlite) {
-    const url = getDatabaseUrl() ?? '';
-    _sqlite = createClient({
-      url,
-      authToken: getDatabaseAuthToken(),
-    });
-  }
-  return _sqlite;
-};
+export const db = drizzle({ client: pool, relations });
 
-export const getDatabase = () => {
-  if (!_db) {
-    _db = drizzle({ client: getSqlite(), relations });
-  }
-  return _db;
-};
-
-export const sqlite = getSqlite();
-export const db = getDatabase();
-
-export type Database = LibSQLDatabase<typeof relations> | Transaction;
-export type Transaction = LibSQLTransaction<typeof relations>;
+export type Database = NodePgDatabase<typeof relations> | Transaction;
+export type Transaction = NodePgTransaction<typeof relations>;

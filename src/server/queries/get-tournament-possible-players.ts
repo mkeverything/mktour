@@ -5,11 +5,7 @@ import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
 import { players } from '@/server/db/schema/players';
-import {
-  players_to_units,
-  tournament_units,
-  tournaments,
-} from '@/server/db/schema/tournaments';
+import { players_to_units, tournaments } from '@/server/db/schema/tournaments';
 import { and, desc, eq, getColumns, notInArray } from 'drizzle-orm';
 
 export async function getTournamentPossiblePlayers(tournamentId: string) {
@@ -24,11 +20,7 @@ export async function getTournamentPossiblePlayers(tournamentId: string) {
   const tournamentPlayerRows = db
     .select({ playerId: players_to_units.playerId })
     .from(players_to_units)
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
-    .where(eq(tournament_units.tournamentId, tournamentId));
+    .where(eq(players_to_units.tournamentId, tournamentId));
 
   return await db
     .select({ ...getColumns(players), username: users.username })

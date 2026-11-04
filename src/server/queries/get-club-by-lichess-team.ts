@@ -15,6 +15,6 @@ export async function getClubByLichessTeam({
     .select()
     .from(clubs)
     .where(eq(clubs.lichessTeam, lichessTeam))
-    .get();
+    .then((rows) => rows.at(0));
   return club?.id === excludeClubId ? undefined : club;
 }

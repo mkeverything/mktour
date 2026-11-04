@@ -5,11 +5,10 @@ import { player_stats, players } from '@/server/db/schema/players';
 import {
   games,
   players_to_units,
-  tournament_units,
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { PlayerAuthStatsModel, PlayerStatsModel } from '@/server/zod/players';
-import { and, count, desc, eq, getColumns, or } from 'drizzle-orm';
+import { and, count, desc, eq, getColumns, or, sql } from 'drizzle-orm';
 
 // returns the last 5 tournaments a player participated in
 export async function getPlayersTournamentsInfinite(
@@ -22,11 +21,7 @@ export async function getPlayersTournamentsInfinite(
       ...getColumns(tournaments),
     })
     .from(players_to_units)
-    .innerJoin(
-      tournament_units,
-      eq(players_to_units.unitId, tournament_units.id),
-    )
-    .innerJoin(tournaments, eq(tournament_units.tournamentId, tournaments.id))
+    .innerJoin(tournaments, eq(players_to_units.tournamentId, tournaments.id))
     .where(eq(players_to_units.playerId, playerId))
     .orderBy(desc(tournaments.createdAt))
     .limit(limit)
@@ -36,12 +31,12 @@ export async function getPlayersTournamentsInfinite(
 export async function getPlayerStats(
   playerId: string,
 ): Promise<PlayerStatsModel> {
-  const { playerId: _, clubId, ...statsColumns } = getColumns(player_stats);
+  const { playerId: _, ...statsColumns } = getColumns(player_stats);
   const stats = await db
     .select(statsColumns)
     .from(player_stats)
     .where(eq(player_stats.playerId, playerId))
-    .get();
+    .then((rows) => rows.at(0));
 
   if (!stats) throw new AppError('PLAYER_NOT_FOUND');
   return stats;
@@ -60,14 +55,14 @@ export async function getPlayerAuthStats({
     })
     .from(players)
     .where(eq(players.id, playerId))
-    .get();
+    .then((rows) => rows.at(0));
   if (!player) return null;
 
   const authPlayer = await db
     .select({ id: players.id, nickname: players.nickname })
     .from(players)
     .where(and(eq(players.userId, userId), eq(players.clubId, player.clubId)))
-    .get();
+    .then((rows) => rows.at(0));
 
   if (!authPlayer) return null;
   const authPlayerId = authPlayer.id;
@@ -109,7 +104,7 @@ export async function getPlayerAuthStats({
     })
     .from(games)
     .where(headToHeadCondition)
-    .get();
+    .then((rows) => rows.at(0));
 
   // Return null if no games exist between these players
   if (!headToHead || headToHead.totalGames === 0) return null;
@@ -118,16 +113,16 @@ export async function getPlayerAuthStats({
     .select({ tournamentId: games.tournamentId })
     .from(games)
     .where(headToHeadCondition)
-    .orderBy(desc(games.finishedAt))
+    .orderBy(sql`${desc(games.finishedAt)} nulls last`)
     .limit(1)
-    .get();
+    .then((rows) => rows.at(0));
 
   const lastTournament = mostRecentGame
     ? await db
         .select()
         .from(tournaments)
         .where(eq(tournaments.id, mostRecentGame.tournamentId))
-        .get()
+        .then((rows) => rows.at(0))
     : null;
 
   return {
