@@ -70,4 +70,20 @@ describe('bearer token without a cookie session', () => {
 
     expect((await tournamentRow(tournamentId))?.closedAt).toBeInstanceOf(Date);
   });
+
+  test('sees organiser status, resets and deletes a tournament', async () => {
+    const { tournamentId } = fixtures.ready.next().value!;
+
+    const client = await createBearerClient();
+    const { status } = await client.tournament.authStatus.query({
+      tournamentId,
+    });
+    expect(status).toBe('organizer');
+
+    await client.tournament.reset.mutate({ tournamentId });
+    expect((await tournamentRow(tournamentId))?.startedAt).toBeNull();
+
+    await client.tournament.delete.mutate({ tournamentId });
+    expect(await tournamentRow(tournamentId)).toBeUndefined();
+  });
 });

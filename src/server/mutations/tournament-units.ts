@@ -119,8 +119,6 @@ export async function addDoublesUnit({
   addedAt?: Date;
 }): Promise<UnitModel[]> {
   const now = addedAt ?? new Date();
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
   if (firstPlayerId === secondPlayerId) {
     throw new AppError('INVALID_DOUBLES_PAIR');
   }
@@ -201,8 +199,6 @@ export async function editDoublesUnit({
 }: EditDoublesUnitModel & {
   tournamentId: string;
 }): Promise<UnitModel[]> {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
   if (firstPlayerId === secondPlayerId) {
     throw new AppError('INVALID_DOUBLES_PAIR');
   }

@@ -1,7 +1,7 @@
-import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import meta from '@/server/api/meta';
 import {
+  authProcedure,
   clubAdminProcedure,
   protectedProcedure,
   publicProcedure,
@@ -330,13 +330,12 @@ export const tournamentRouter = {
         event: 'delete-tournament',
       });
     }),
-  authStatus: publicProcedure
+  authStatus: authProcedure
     .input(tournamentIdInputSchema)
     .output(tournamentAuthStatusSchema)
-    .query(async (opts) => {
-      const { user } = await validateRequest();
-      if (!user) return { status: 'viewer' as const, unitId: null };
-      return await getStatusInTournament(user.id, opts.input.tournamentId);
+    .query(async ({ ctx, input }) => {
+      if (!ctx.user) return { status: 'viewer' as const, unitId: null };
+      return await getStatusInTournament(ctx.user.id, input.tournamentId);
     }),
   updateSwissRoundsNumber: tournamentAdminProcedure
     .input(
