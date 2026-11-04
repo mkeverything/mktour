@@ -52,7 +52,7 @@ const TournamentTable = () => {
   const { id } = useParams<{ id: string }>();
   const units = useTournamentUnits(id);
   const tournament = useTournamentScoringInfo(id);
-  const { status, userId } = useContext(DashboardContext);
+  const { status } = useContext(DashboardContext);
   const removeUnit = useTournamentRemoveUnit(id);
   const withdrawUnit = useTournamentWithdrawUnit(id);
   const preStartLocked = useTournamentPreStartLocked(id);
@@ -141,7 +141,6 @@ const TournamentTable = () => {
 
   const handleDelete = () => {
     if (
-      userId &&
       status === 'organizer' &&
       !hasStarted &&
       !preStartLocked &&
@@ -150,14 +149,12 @@ const TournamentTable = () => {
       removeUnit.mutate({
         tournamentId: id,
         unitId: selectedUnit.id,
-        userId,
       });
     }
   };
 
   const handleWithdraw = () => {
     if (
-      userId &&
       status === 'organizer' &&
       hasStarted &&
       !hasEnded &&
@@ -168,7 +165,6 @@ const TournamentTable = () => {
       withdrawUnit.mutate({
         tournamentId: id,
         unitId: selectedUnit.id,
-        userId,
       });
     }
   };

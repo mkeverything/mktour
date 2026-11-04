@@ -114,7 +114,6 @@ export const reorderTournamentUnitsInputSchema = z.object({
 export const withdrawTournamentUnitInputSchema = z.object({
   tournamentId: z.string(),
   unitId: unitSchema.shape.id,
-  userId: z.string(),
 });
 export const withdrawTournamentUnitResultSchema = z.object({
   roundsNumber: z.number().int().nonnegative(),

@@ -143,7 +143,6 @@ export const tournamentRouter = {
     .input(
       tournamentIdInputSchema.extend({
         player: playersWithUsernameSchema,
-        userId: z.string(),
         unitId: unitSchema.shape.id.optional(),
         addedAt: z.date().optional(),
       }),
@@ -207,7 +206,6 @@ export const tournamentRouter = {
     .input(
       tournamentIdInputSchema.extend({
         unitId: unitSchema.shape.id,
-        userId: z.string(),
       }),
     )
     .output(z.array(unitSchema))

@@ -86,4 +86,41 @@ describe('bearer token without a cookie session', () => {
     await client.tournament.delete.mutate({ tournamentId });
     expect(await tournamentRow(tournamentId)).toBeUndefined();
   });
+
+  test('adds, removes and withdraws units', async () => {
+    const { tournamentId, unitIds } = fixtures.ongoing.next().value!;
+    const startedAt = (await tournamentRow(tournamentId))?.startedAt;
+    await db
+      .update(tournaments)
+      .set({ startedAt: null })
+      .where(eq(tournaments.id, tournamentId));
+
+    const client = await createBearerClient();
+    const [player] = await client.tournament.playersOut.query({
+      tournamentId,
+    });
+    const added = await client.tournament.addSoloUnit.mutate({
+      tournamentId,
+      player,
+    });
+    expect(added).toHaveLength(unitIds.length + 1);
+
+    const unitId = added.find((unit) => !unitIds.includes(unit.id))!.id;
+    const removed = await client.tournament.removeUnit.mutate({
+      tournamentId,
+      unitId,
+    });
+    expect(removed).toHaveLength(unitIds.length);
+
+    await db
+      .update(tournaments)
+      .set({ startedAt, format: 'swiss' })
+      .where(eq(tournaments.id, tournamentId));
+    await client.tournament.withdrawUnit.mutate({
+      tournamentId,
+      unitId: unitIds[0],
+    });
+    const units = await client.tournament.units.query({ tournamentId });
+    expect(units.find((unit) => unit.id === unitIds[0])?.isOut).toBe(true);
+  });
 });
