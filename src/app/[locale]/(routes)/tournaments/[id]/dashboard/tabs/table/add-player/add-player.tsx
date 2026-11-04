@@ -71,6 +71,7 @@ const AddPlayer = ({
             tournament_id: id,
             player_id: player.id,
             has_lichess_account: !!player.username,
+            source: 'club_player',
           });
         },
       },
