@@ -117,6 +117,11 @@ export async function mergePlayers({
       .set({ blackPlayerId: basePlayerId })
       .where(eq(games.blackPlayerId, mergedPlayerId));
 
+    await tx
+      .update(club_notifications)
+      .set({ playerId: basePlayerId })
+      .where(eq(club_notifications.playerId, mergedPlayerId));
+
     await tx.insert(club_notifications).values({
       id: newid(),
       clubId,
