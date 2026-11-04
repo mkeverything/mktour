@@ -1,7 +1,7 @@
 # local postgres: `bun db:up` starts and migrates the dev database, `bun db:test` the test one
 services:
   postgres:
-    image: postgres:17
+    image: postgres:18
     environment:
       POSTGRES_USER: mktour
       POSTGRES_PASSWORD: mktour
@@ -9,7 +9,7 @@ services:
     ports:
       - 127.0.0.1:5433:5432
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     healthcheck:
       # over tcp, so the socket-only server that runs init scripts doesn't count as ready
       test: pg_isready --host 127.0.0.1 --username mktour --dbname mktour
@@ -18,7 +18,7 @@ services:
       retries: 30
 
   postgres-test:
-    image: postgres:17
+    image: postgres:18
     environment:
       POSTGRES_USER: mktour
       POSTGRES_PASSWORD: mktour
@@ -26,7 +26,7 @@ services:
     ports:
       - 127.0.0.1:5434:5432
     # tests reseed and re-migrate on every run, so the data lives in memory
-    tmpfs: /var/lib/postgresql/data
+    tmpfs: /var/lib/postgresql
     healthcheck:
       test: pg_isready --host 127.0.0.1 --username mktour --dbname mktour_test
       interval: 1s
