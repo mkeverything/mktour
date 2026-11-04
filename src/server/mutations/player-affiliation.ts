@@ -170,6 +170,7 @@ export async function affiliateUser({
       .set({ userId: user.id })
       .where(eq(players.id, playerId));
   });
+  publishClubNotification(clubId);
 }
 
 export async function cancelAffiliationByUser({
@@ -226,6 +227,7 @@ export async function cancelAffiliationByClub({
     return affiliation.userId;
   });
   if (notifiedUserId) publishUserNotification(notifiedUserId);
+  publishClubNotification(clubId);
 }
 
 async function insertOpenAffiliation(

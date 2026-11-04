@@ -1,5 +1,6 @@
 'use client';
 
+import { countPendingAffiliationDecisions } from '@/components/hooks/query-hooks/use-club-affiliations';
 import { useTRPC } from '@/components/trpc/client';
 import type { UserEventModel } from '@/server/zod/events';
 import { QueryClient } from '@tanstack/react-query';
@@ -30,11 +31,12 @@ export const handleUserEvent = (
           clubId: event.clubId,
         }),
       });
-      queryClient.invalidateQueries({
-        queryKey: trpc.club.affiliations.infiniteQueryKey({
-          clubId: event.clubId,
-        }),
-      });
+      if (!countPendingAffiliationDecisions(queryClient, trpc))
+        queryClient.invalidateQueries({
+          queryKey: trpc.club.affiliations.infiniteQueryKey({
+            clubId: event.clubId,
+          }),
+        });
       break;
   }
 };

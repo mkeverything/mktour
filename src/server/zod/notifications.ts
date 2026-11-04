@@ -54,6 +54,16 @@ export const clubNotificationExtendedSchema =
       .nullable(),
   });
 
+export const userNotificationsOutputSchema = z.object({
+  notifications: z.array(userNotificationExtendedSchema),
+  nextCursor: z.number().nullable(),
+});
+
+export const clubInboxCounterSchema = z.object({
+  requests: z.number(),
+  notifications: z.number(),
+});
+
 export type UserNotificationInsertModel = z.infer<
   typeof userNotificationsInsertSchema
 >;

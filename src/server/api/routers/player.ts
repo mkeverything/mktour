@@ -82,7 +82,7 @@ export const playerRouter = {
         const { input } = opts;
         await requestAffiliation(input);
       }),
-    acceptByClub: clubAdminProcedure
+    accept: clubAdminProcedure
       .input(clubIdInputSchema.extend({ affiliationId: z.string() }))
       .mutation(async (opts) => {
         const { input } = opts;

@@ -1,4 +1,5 @@
 import { getAppErrorMessage } from '@/lib/errors';
+import { countPendingAffiliationDecisions } from '@/components/hooks/query-hooks/use-club-affiliations';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -57,11 +58,7 @@ export default function useAffiliationRejectMutation({
         }
       },
       onSettled: (_, __, { clubId }) => {
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.player.affiliation.reject.mutationKey(),
-          }) === 1
-        ) {
+        if (countPendingAffiliationDecisions(queryClient, trpc) === 1) {
           queryClient.invalidateQueries({
             queryKey: trpc.club.affiliations.infiniteQueryKey({ clubId }),
           });

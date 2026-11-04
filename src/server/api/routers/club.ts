@@ -50,10 +50,13 @@ import {
   paginatedInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
-import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
+import {
+  clubInboxCounterSchema,
+  clubNotificationExtendedSchema,
+} from '@/server/zod/notifications';
 import {
   affiliationExtendedSchema,
-  clubAffiliationSchema,
+  clubAffiliationsOutputSchema,
   clubPlayerOutputSchema,
   clubPlayersInputSchema,
   clubPlayersOutputSchema,
@@ -211,18 +214,8 @@ export const clubRouter = createTRPCRouter({
   }),
   affiliations: clubAdminProcedure
     .meta(meta.clubAffiliations)
-    .input(
-      clubIdInputSchema.extend({
-        limit: z.number().min(1).max(100).optional().default(20),
-        cursor: z.number().nullable().default(0),
-      }),
-    )
-    .output(
-      z.object({
-        affiliations: z.array(clubAffiliationSchema),
-        nextCursor: z.number().nullable(),
-      }),
-    )
+    .input(clubPaginatedInputSchema)
+    .output(clubAffiliationsOutputSchema)
     .query(async ({ input }) => {
       return await getClubAffiliations({
         ...input,
@@ -252,7 +245,7 @@ export const clubRouter = createTRPCRouter({
       }),
     counter: clubAdminProcedure
       .meta(meta.clubNotificationsCounter)
-      .output(z.object({ requests: z.number(), notifications: z.number() }))
+      .output(clubInboxCounterSchema)
       .query(async ({ input }) => {
         return await getClubInboxCounter(input.clubId);
       }),

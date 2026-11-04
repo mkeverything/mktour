@@ -1,10 +1,11 @@
 import { getAppErrorMessage } from '@/lib/errors';
+import { countPendingAffiliationDecisions } from '@/components/hooks/query-hooks/use-club-affiliations';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
-export default function useAffiliationAcceptByClubMutation({
+export default function useAffiliationAcceptMutation({
   queryClient,
 }: {
   queryClient: QueryClient;
@@ -12,7 +13,7 @@ export default function useAffiliationAcceptByClubMutation({
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
   return useMutation(
-    trpc.player.affiliation.acceptByClub.mutationOptions({
+    trpc.player.affiliation.accept.mutationOptions({
       onMutate: async ({ clubId, affiliationId }) => {
         await queryClient.cancelQueries({
           queryKey: trpc.club.affiliations.infiniteQueryKey({ clubId }),
@@ -57,11 +58,7 @@ export default function useAffiliationAcceptByClubMutation({
         }
       },
       onSettled: (_, __, { clubId }) => {
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.player.affiliation.acceptByClub.mutationKey(),
-          }) === 1
-        ) {
+        if (countPendingAffiliationDecisions(queryClient, trpc) === 1) {
           queryClient.invalidateQueries({
             queryKey: trpc.club.affiliations.infiniteQueryKey({ clubId }),
           });
