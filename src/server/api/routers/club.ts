@@ -49,6 +49,7 @@ import {
   paginatedInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
+import { statusInClubEnum } from '@/server/zod/enums';
 import {
   clubInboxCounterSchema,
   clubInboxOutputSchema,
@@ -162,7 +163,7 @@ export const clubRouter = createTRPCRouter({
   authStatus: publicProcedure
     .meta(meta.clubAuthStatus)
     .input(clubIdInputSchema)
-    .output(z.enum(['co-owner', 'admin']).nullable())
+    .output(statusInClubEnum.nullable())
     .query(async (opts) => {
       if (!opts.ctx.user || !opts.ctx.clubs) {
         const { user } = await validateRequest();
@@ -187,7 +188,7 @@ export const clubRouter = createTRPCRouter({
       .input(
         clubIdInputSchema.extend({
           userId: userIdInputSchema.shape.userId,
-          status: z.enum(['co-owner', 'admin']),
+          status: statusInClubEnum,
         }),
       )
       .output(z.void())

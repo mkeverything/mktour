@@ -9,6 +9,7 @@ tournament management web app. users sign in via lichess, create clubs, manage p
 - tRPC `.input()` and `.output()` contracts must use canonical schemas from `src/server/zod/`
 - client-side domain types must be inferred/imported from canonical server zod schemas; do not redeclare domain shapes manually
 - zod schemas should be derived from drizzle db schemas where possible
+- enums stored in the db are defined as `pgEnum`s in `src/server/db/schema/enums.ts` and inferred in `src/server/zod/enums.ts` with `createSelectSchema` (subsets with `.extract`); only enums the db doesn't store are defined directly as zod enums
 - allowed non-domain route exceptions: oauth, cron/migration, health check
 
 ## domain rules that are easy to get wrong
