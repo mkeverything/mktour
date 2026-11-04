@@ -25,10 +25,9 @@ import {
   getUserClubPlayer,
 } from '@/server/queries/club';
 import getAllClubsInfinite from '@/server/queries/get-all-clubs-infinite';
-import getClubAffiliations from '@/server/queries/get-club-affiliations';
-import getClubNotifications, {
+import getClubInbox, {
   getClubInboxCounter,
-} from '@/server/queries/get-club-notifications';
+} from '@/server/queries/get-club-inbox';
 import { getClubStats } from '@/server/queries/get-club-stats';
 import { getClubTournamentsInfinite } from '@/server/queries/get-club-tournaments-infinite';
 import getStatusInClub from '@/server/queries/get-status-in-club';
@@ -52,11 +51,10 @@ import {
 } from '@/server/zod/common';
 import {
   clubInboxCounterSchema,
-  clubNotificationExtendedSchema,
+  clubInboxOutputSchema,
 } from '@/server/zod/notifications';
 import {
   affiliationExtendedSchema,
-  clubAffiliationsOutputSchema,
   clubPlayerOutputSchema,
   clubPlayersInputSchema,
   clubPlayersOutputSchema,
@@ -212,37 +210,17 @@ export const clubRouter = createTRPCRouter({
         revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${input.userId}`, 'max');
       }),
   }),
-  affiliations: clubAdminProcedure
-    .meta(meta.clubAffiliations)
+  inbox: clubAdminProcedure
+    .meta(meta.clubInbox)
     .input(clubPaginatedInputSchema)
-    .output(clubAffiliationsOutputSchema)
+    .output(clubInboxOutputSchema)
     .query(async ({ input }) => {
-      return await getClubAffiliations({
+      return await getClubInbox({
         ...input,
         cursor: input.cursor ?? 0,
       });
     }),
   notifications: {
-    all: clubAdminProcedure
-      .meta(meta.clubNotifications)
-      .input(
-        clubIdInputSchema.extend({
-          limit: z.number().min(1).max(100).optional().default(20),
-          cursor: z.number().nullable().default(0),
-        }),
-      )
-      .output(
-        z.object({
-          notifications: z.array(clubNotificationExtendedSchema),
-          nextCursor: z.number().nullable(),
-        }),
-      )
-      .query(async ({ input }) => {
-        return await getClubNotifications({
-          ...input,
-          cursor: input.cursor ?? 0,
-        });
-      }),
     counter: clubAdminProcedure
       .meta(meta.clubNotificationsCounter)
       .output(clubInboxCounterSchema)

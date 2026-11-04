@@ -143,15 +143,6 @@ export const clubMeta = {
     },
   },
 
-  clubNotifications: {
-    openapi: {
-      method: 'GET',
-      path: '/clubs/{clubId}/notifications',
-      summary: 'get club notifications',
-      tags: ['clubs'],
-    },
-  },
-
   clubNotificationsCounter: {
     openapi: {
       method: 'GET',
@@ -161,11 +152,12 @@ export const clubMeta = {
     },
   },
 
-  clubAffiliations: {
+  clubInbox: {
     openapi: {
       method: 'GET',
-      path: '/clubs/{clubId}/affiliations',
-      summary: 'get club affiliations, pending requests first',
+      path: '/clubs/{clubId}/inbox',
+      summary:
+        'get club affiliations and notifications, newest first by creation date',
       tags: ['clubs'],
     },
   },

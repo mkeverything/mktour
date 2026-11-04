@@ -1,3 +1,4 @@
+import { countPendingInboxMutations } from '@/components/hooks/query-hooks/use-club-inbox';
 import { useTRPC } from '@/components/trpc/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -173,15 +174,15 @@ export const useChangeClubNotificationStatusMutation = () => {
     trpc.club.notifications.toggleSeen.mutationOptions({
       onMutate: async ({ notificationId, isSeen, clubId }) => {
         await queryClient.cancelQueries({
-          queryKey: trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+          queryKey: trpc.club.inbox.infiniteQueryKey({ clubId }),
         });
 
         const prevCache = queryClient.getQueryData(
-          trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+          trpc.club.inbox.infiniteQueryKey({ clubId }),
         );
 
         queryClient.setQueryData(
-          trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+          trpc.club.inbox.infiniteQueryKey({ clubId }),
           (cache) => {
             if (!cache) return cache;
 
@@ -189,15 +190,11 @@ export const useChangeClubNotificationStatusMutation = () => {
               ...cache,
               pages: cache.pages.map((page) => ({
                 ...page,
-                notifications: page.notifications.map((item) => {
-                  if (item.id === notificationId) {
-                    return {
-                      ...item,
-                      isSeen,
-                    };
-                  }
-                  return item;
-                }),
+                items: page.items.map((item) =>
+                  item.kind === 'notification' && item.id === notificationId
+                    ? { ...item, isSeen }
+                    : item,
+                ),
               })),
             };
           },
@@ -208,19 +205,18 @@ export const useChangeClubNotificationStatusMutation = () => {
       onError: (_err, { clubId }, context) => {
         if (context?.prevCache) {
           queryClient.setQueryData(
-            trpc.club.notifications.all.infiniteQueryKey({ clubId }),
+            trpc.club.inbox.infiniteQueryKey({ clubId }),
             context.prevCache,
           );
         }
       },
-      onSettled: () => {
-        if (
-          queryClient.isMutating({
-            mutationKey: trpc.club.notifications.toggleSeen.mutationKey(),
-          }) === 1
-        ) {
+      onSettled: (_, __, { clubId }) => {
+        if (countPendingInboxMutations(queryClient, trpc) === 1) {
           queryClient.invalidateQueries({
-            queryKey: trpc.club.notifications.pathKey(),
+            queryKey: trpc.club.inbox.infiniteQueryKey({ clubId }),
+          });
+          queryClient.invalidateQueries({
+            queryKey: trpc.club.notifications.counter.queryKey({ clubId }),
           });
         }
       },

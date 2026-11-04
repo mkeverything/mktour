@@ -15,7 +15,7 @@ export function useAffiliationCancelByClubMutation() {
           queryKey: trpc.player.info.queryKey({ playerId }),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.club.affiliations.infiniteQueryKey({ clubId }),
+          queryKey: trpc.club.inbox.infiniteQueryKey({ clubId }),
         });
       },
       onError: (error) => toast.error(tErrors(getAppErrorMessage(error))),

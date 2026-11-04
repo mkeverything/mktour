@@ -1,5 +1,5 @@
 import { getAppErrorMessage } from '@/lib/errors';
-import { countPendingAffiliationDecisions } from '@/components/hooks/query-hooks/use-club-affiliations';
+import { countPendingInboxMutations } from '@/components/hooks/query-hooks/use-club-inbox';
 import { useTRPC } from '@/components/trpc/client';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -16,15 +16,15 @@ export default function useAffiliationRejectMutation({
     trpc.player.affiliation.reject.mutationOptions({
       onMutate: async ({ clubId, affiliationId }) => {
         await queryClient.cancelQueries({
-          queryKey: trpc.club.affiliations.infiniteQueryKey({ clubId }),
+          queryKey: trpc.club.inbox.infiniteQueryKey({ clubId }),
         });
 
         const prevCache = queryClient.getQueryData(
-          trpc.club.affiliations.infiniteQueryKey({ clubId }),
+          trpc.club.inbox.infiniteQueryKey({ clubId }),
         );
 
         queryClient.setQueryData(
-          trpc.club.affiliations.infiniteQueryKey({ clubId }),
+          trpc.club.inbox.infiniteQueryKey({ clubId }),
           (cache) => {
             if (!cache) return cache;
 
@@ -32,8 +32,8 @@ export default function useAffiliationRejectMutation({
               ...cache,
               pages: cache.pages.map((page) => ({
                 ...page,
-                affiliations: page.affiliations.map((item) =>
-                  item.id === affiliationId
+                items: page.items.map((item) =>
+                  item.kind === 'affiliation' && item.id === affiliationId
                     ? {
                         ...item,
                         status: 'rejected' as const,
@@ -52,15 +52,15 @@ export default function useAffiliationRejectMutation({
         toast.error(tErrors(getAppErrorMessage(_err)));
         if (context?.prevCache) {
           queryClient.setQueryData(
-            trpc.club.affiliations.infiniteQueryKey({ clubId }),
+            trpc.club.inbox.infiniteQueryKey({ clubId }),
             context.prevCache,
           );
         }
       },
       onSettled: (_, __, { clubId }) => {
-        if (countPendingAffiliationDecisions(queryClient, trpc) === 1) {
+        if (countPendingInboxMutations(queryClient, trpc) === 1) {
           queryClient.invalidateQueries({
-            queryKey: trpc.club.affiliations.infiniteQueryKey({ clubId }),
+            queryKey: trpc.club.inbox.infiniteQueryKey({ clubId }),
           });
           queryClient.invalidateQueries({
             queryKey: trpc.club.notifications.counter.queryKey({ clubId }),

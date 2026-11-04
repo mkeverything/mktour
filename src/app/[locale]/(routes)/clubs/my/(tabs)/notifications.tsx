@@ -1,61 +1,22 @@
 'use client';
 
 import Empty from '@/components/empty';
-import { useClubAffiliations } from '@/components/hooks/query-hooks/use-club-affiliations';
-import {
-  useClubInboxCounter,
-  useClubNotifications,
-} from '@/components/hooks/query-hooks/use-club-notifications';
+import { useClubInbox } from '@/components/hooks/query-hooks/use-club-inbox';
 import {
   AffiliationRequestLi,
   NotificationItem,
 } from '@/components/notification-items';
 import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
-import { BadgeWithCount } from '@/components/ui-custom/badge';
 import Paginator from '@/components/ui-custom/paginator';
 import { ScrollArea } from '@/components/ui-custom/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getAppErrorMessage } from '@/lib/errors';
 import { ClubNotificationExtendedModel } from '@/server/zod/notifications';
 import { Merge } from 'lucide-react';
 import { RichTagsFunction, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { FC, ReactNode, useState } from 'react';
-
-const INBOX_SECTIONS = ['requests', 'notifications'] as const;
+import { FC, ReactNode } from 'react';
 
 const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
-  const t = useTranslations('Club.Dashboard.Notifications');
-  const { data: counter } = useClubInboxCounter(selectedClub);
-  const [section, setSection] = useState<InboxSection>();
-  const activeSection =
-    section ?? (counter?.requests ? 'requests' : 'notifications');
-
-  return (
-    <Tabs
-      value={activeSection}
-      onValueChange={(value) => setSection(value as InboxSection)}
-      className="flex h-full min-h-0 flex-col"
-    >
-      <TabsList className="grid w-full grid-cols-2">
-        {INBOX_SECTIONS.map((value) => (
-          <TabsTrigger key={value} value={value} className="gap-1.5">
-            {t(value)}
-            {!!counter?.[value] && <BadgeWithCount count={counter[value]} />}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-      <TabsContent value="requests" className="min-h-0 flex-1">
-        <ClubRequests selectedClub={selectedClub} />
-      </TabsContent>
-      <TabsContent value="notifications" className="min-h-0 flex-1">
-        <ClubNotifications selectedClub={selectedClub} />
-      </TabsContent>
-    </Tabs>
-  );
-};
-
-const ClubRequests: FC<{ selectedClub: string }> = ({ selectedClub }) => {
   const t = useTranslations('Club.Dashboard.Notifications');
   const tErrors = useTranslations('Errors');
   const {
@@ -66,68 +27,33 @@ const ClubRequests: FC<{ selectedClub: string }> = ({ selectedClub }) => {
     status,
     error,
     isLoading,
-  } = useClubAffiliations(selectedClub);
+  } = useClubInbox(selectedClub);
 
   if (isLoading) return <ClubsNotificationsSkeletonList />;
   if (status === 'error') return <p>{tErrors(getAppErrorMessage(error))}</p>;
   if (!data) return null;
 
-  const affiliations = data.pages.flatMap((page) => page.affiliations);
+  const items = data.pages.flatMap((page) => page.items);
 
-  if (!affiliations.length) return <Empty>{t('no requests')}</Empty>;
+  if (!items.length) return <Empty>{t('empty')}</Empty>;
   return (
     <ScrollArea className="h-full">
       <div className="mk-list">
-        {affiliations.map((affiliation) => (
-          <AffiliationRequestLi
-            key={affiliation.id}
-            affiliation={affiliation}
-            clubId={selectedClub}
-          />
-        ))}
-        <Paginator
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          fetchNextPage={fetchNextPage}
-          skeleton={<ClubsNotificationsSkeletonList length={3} />}
-        />
-      </div>
-    </ScrollArea>
-  );
-};
-
-const ClubNotifications: FC<{ selectedClub: string }> = ({ selectedClub }) => {
-  const t = useTranslations('Club.Dashboard.Notifications');
-  const tErrors = useTranslations('Errors');
-  const {
-    data: notifications,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-    error,
-    isLoading,
-  } = useClubNotifications(selectedClub);
-
-  if (isLoading) return <ClubsNotificationsSkeletonList />;
-  if (status === 'error') return <p>{tErrors(getAppErrorMessage(error))}</p>;
-  if (!notifications) return null;
-
-  const allNotifications = notifications.pages.flatMap(
-    (page) => page.notifications,
-  );
-
-  if (!allNotifications.length) return <Empty>{t('empty')}</Empty>;
-  return (
-    <ScrollArea className="h-full">
-      <div className="mk-list">
-        {allNotifications.map((event) => (
-          <Notification
-            key={event.id}
-            data={event}
-            t={(value, values) => t.rich(`Notification.${value}`, values)}
-          />
-        ))}
+        {items.map((item) =>
+          item.kind === 'affiliation' ? (
+            <AffiliationRequestLi
+              key={item.id}
+              affiliation={item}
+              clubId={selectedClub}
+            />
+          ) : (
+            <Notification
+              key={item.id}
+              data={item}
+              t={(value, values) => t.rich(`Notification.${value}`, values)}
+            />
+          ),
+        )}
         <Paginator
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
@@ -221,8 +147,6 @@ const Notification: FC<{
 const ClubsNotificationsSkeletonList: FC<SkeletonListProps> = ({ length }) => (
   <SkeletonList length={length} className="h-19" />
 );
-
-type InboxSection = (typeof INBOX_SECTIONS)[number];
 
 type NotificationTranslator = (
   key: ClubNotificationExtendedModel['event'],

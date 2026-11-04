@@ -367,10 +367,7 @@
       },
       "Notifications": {
         "loading": "loading...",
-        "requests": "requests",
-        "notifications": "notifications",
         "empty": "claims to moderate tournaments, to link players to users and other club related notifications",
-        "no requests": "link requests from users will show here",
         "mark all as read": "mark all as read",
         "Status": {
           "requested": "link request",

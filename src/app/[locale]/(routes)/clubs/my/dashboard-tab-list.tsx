@@ -4,7 +4,7 @@ import {
   ClubDashboardTab,
   tabMap,
 } from '@/app/[locale]/(routes)/clubs/my/tabMap';
-import { useClubInboxCounter } from '@/components/hooks/query-hooks/use-club-notifications';
+import { useClubInboxCounter } from '@/components/hooks/query-hooks/use-club-inbox';
 import { CLUB_DASHBOARD_NAVBAR_ITEMS } from '@/components/navigation/club-dashboard-navbar-items';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import Badge, { BadgeWithCount } from '@/components/ui-custom/badge';

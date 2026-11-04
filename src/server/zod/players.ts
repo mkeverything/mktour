@@ -198,11 +198,6 @@ export const clubPlayersOutputSchema = z.object({
   nextCursor: z.number().nullable(),
 });
 
-export const clubAffiliationsOutputSchema = z.object({
-  affiliations: z.array(clubAffiliationSchema),
-  nextCursor: z.number().nullable(),
-});
-
 export const playerStatsRowSchema = createSelectSchema(player_stats).omit({
   gamesPlayed: true,
 });

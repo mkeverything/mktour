@@ -5,6 +5,7 @@ import {
 import { clubsSelectSchema } from '@/server/zod/clubs';
 import { statusInClubEnum } from '@/server/zod/enums';
 import {
+  clubAffiliationSchema,
   playerOutputSchema,
   playerPublicSchema,
   playersMinimalSchema,
@@ -56,6 +57,16 @@ export const clubNotificationExtendedSchema =
 
 export const userNotificationsOutputSchema = z.object({
   notifications: z.array(userNotificationExtendedSchema),
+  nextCursor: z.number().nullable(),
+});
+
+export const clubInboxItemSchema = z.discriminatedUnion('kind', [
+  clubAffiliationSchema.extend({ kind: z.literal('affiliation') }),
+  clubNotificationExtendedSchema.extend({ kind: z.literal('notification') }),
+]);
+
+export const clubInboxOutputSchema = z.object({
+  items: z.array(clubInboxItemSchema),
   nextCursor: z.number().nullable(),
 });
 

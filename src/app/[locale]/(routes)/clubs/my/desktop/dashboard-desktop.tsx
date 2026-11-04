@@ -6,7 +6,7 @@ import ClubSelect from '@/app/[locale]/(routes)/clubs/my/club-select';
 import ClubPlayersList from '@/app/[locale]/(routes)/clubs/players';
 import ClubDashboardTournaments from '@/app/[locale]/(routes)/clubs/tournaments';
 import Fab from '@/components/fab';
-import { useClubInboxCounter } from '@/components/hooks/query-hooks/use-club-notifications';
+import { useClubInboxCounter } from '@/components/hooks/query-hooks/use-club-inbox';
 import SideDrawer from '@/components/ui-custom/side-drawer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
