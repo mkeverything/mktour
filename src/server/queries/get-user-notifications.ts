@@ -54,7 +54,7 @@ export const getAuthNotifications = async ({
       ),
     )
     .leftJoin(tournaments, eq(tournaments.id, user_notifications.tournamentId))
-    .orderBy(desc(user_notifications.createdAt))
+    .orderBy(desc(user_notifications.createdAt), desc(user_notifications.id))
     .limit(limit + 1)
     .offset(offset);
 

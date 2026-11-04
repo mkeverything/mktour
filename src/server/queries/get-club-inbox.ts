@@ -39,7 +39,7 @@ async function getNewestAffiliations(clubId: string, limit: number) {
     .innerJoin(users, eq(users.id, affiliations.userId))
     .innerJoin(players, eq(players.id, affiliations.playerId))
     .where(eq(affiliations.clubId, clubId))
-    .orderBy(desc(affiliations.createdAt))
+    .orderBy(desc(affiliations.createdAt), desc(affiliations.id))
     .limit(limit);
   return rows.map((row) => ({ ...row, kind: 'affiliation' as const }));
 }
@@ -71,7 +71,7 @@ async function getNewestNotifications(clubId: string, limit: number) {
       ),
     )
     .where(eq(club_notifications.clubId, clubId))
-    .orderBy(desc(club_notifications.createdAt))
+    .orderBy(desc(club_notifications.createdAt), desc(club_notifications.id))
     .limit(limit);
   return rows.map((row) => ({ ...row, kind: 'notification' as const }));
 }
