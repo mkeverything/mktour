@@ -43,7 +43,8 @@ turso db export <db> --output-file /absolute/export.db
 
 it writes the snapshot plus `export.db-wal`; keep both files together and do not rename
 one without the other, because sqlite only reads frames from `<database file>-wal`. keep
-them private and outside git. the database must have every sqlite migration applied; on
+them private and outside git, in a directory the importing user can write: sqlite creates
+`export.db-shm` next to them, and fails with `SQLITE_CANTOPEN` where it can't. the database must have every sqlite migration applied; on
 prod, run `scripts/temporary/tournament-rounds/` first, or the import fails on null
 `rounds_number`.
 
