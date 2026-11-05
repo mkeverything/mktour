@@ -17,7 +17,7 @@ import {
 } from '@/server/events';
 import { openAffiliationStatusEnum } from '@/server/zod/enums';
 import { AffiliationInsertModel } from '@/server/zod/players';
-import { and, eq, type SQL } from 'drizzle-orm';
+import { and, eq, inArray, type SQL } from 'drizzle-orm';
 import { User } from 'lucia';
 import { revalidatePath } from 'next/cache';
 
@@ -34,10 +34,10 @@ export async function requestAffiliation({
   if (!user) throw new AppError('UNAUTHENTICATED');
   if (user.id !== userId) throw new AppError('USER_MISMATCH');
 
-  const player = await db.query.players.findFirst({
-    where: { id: playerId },
-    columns: { clubId: true },
-  });
+  const [player] = await db
+    .select({ clubId: players.clubId })
+    .from(players)
+    .where(eq(players.id, playerId));
   if (!player) throw new AppError('PLAYER_NOT_FOUND');
   if (player.clubId !== clubId) throw new AppError('PLAYER_NOT_IN_CLUB');
 
@@ -151,10 +151,10 @@ export async function affiliateUser({
 }) {
   await db.transaction(async (tx) => {
     await lockClubs(tx, [clubId]);
-    const player = await tx.query.players.findFirst({
-      where: { id: playerId },
-      columns: { clubId: true },
-    });
+    const [player] = await tx
+      .select({ clubId: players.clubId })
+      .from(players)
+      .where(eq(players.id, playerId));
     if (!player) throw new AppError('PLAYER_NOT_FOUND');
     if (player.clubId !== clubId) throw new AppError('PLAYER_NOT_IN_CLUB');
 
@@ -180,10 +180,10 @@ export async function cancelAffiliationByUser({
   playerId: string;
   userId: string;
 }) {
-  const player = await db.query.players.findFirst({
-    where: { id: playerId },
-    columns: { clubId: true },
-  });
+  const [player] = await db
+    .select({ clubId: players.clubId })
+    .from(players)
+    .where(eq(players.id, playerId));
   if (!player) throw new AppError('PLAYER_NOT_FOUND');
 
   await db.transaction(async (tx) => {
@@ -241,13 +241,13 @@ async function insertOpenAffiliation(
     .returning({ id: affiliations.id });
   if (created) return;
 
-  const playerTaken = await database.query.affiliations.findFirst({
-    where: {
-      playerId: values.playerId,
-      status: { in: openAffiliationStatusEnum.options },
-    },
-    columns: { id: true },
-  });
+  const playerTaken = await database.$count(
+    affiliations,
+    and(
+      eq(affiliations.playerId, values.playerId),
+      inArray(affiliations.status, openAffiliationStatusEnum.options),
+    ),
+  );
   throw new AppError(playerTaken ? 'ALREADY_AFFILIATED' : 'AFFILIATION_EXISTS');
 }
 
