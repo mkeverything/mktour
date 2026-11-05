@@ -6,6 +6,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
+import { affiliations } from '@/server/db/schema/players';
 import {
   createPlayer,
   deletePlayer,
@@ -43,6 +44,7 @@ import {
   playerStatsSchema,
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
+import { and, eq, ne } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const playerRouter = {
@@ -135,15 +137,16 @@ export const playerRouter = {
       .input(playerIdInputSchema)
       .output(z.boolean())
       .query(async ({ ctx, input }) => {
-        const request = await ctx.db.query.affiliations.findFirst({
-          where: {
-            playerId: input.playerId,
-            status: 'requested',
-            ...(ctx.user && { userId: { ne: ctx.user.id } }),
-          },
-          columns: { id: true },
-        });
-        return Boolean(request);
+        if (!ctx.user) return false;
+        const requests = await ctx.db.$count(
+          affiliations,
+          and(
+            eq(affiliations.playerId, input.playerId),
+            eq(affiliations.status, 'requested'),
+            ne(affiliations.userId, ctx.user.id),
+          ),
+        );
+        return requests > 0;
       }),
   },
   delete: protectedProcedure
