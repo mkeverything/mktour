@@ -1,19 +1,43 @@
-import { getAppErrorMessage } from '@/lib/errors';
 import { countPendingInboxMutations } from '@/components/hooks/query-hooks/use-club-inbox';
 import { useTRPC } from '@/components/trpc/client';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { getAppErrorMessage } from '@/lib/errors';
+import type { AffiliationModel } from '@/server/zod/players';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
-export default function useAffiliationRejectMutation({
-  queryClient,
+type DecisionProcedure = ReturnType<
+  typeof useTRPC
+>['player']['affiliation']['accept'];
+
+export function useAffiliationAcceptMutation() {
+  const trpc = useTRPC();
+  return useAffiliationDecisionMutation({
+    procedure: trpc.player.affiliation.accept,
+    status: 'approved',
+  });
+}
+
+export function useAffiliationRejectMutation() {
+  const trpc = useTRPC();
+  return useAffiliationDecisionMutation({
+    procedure: trpc.player.affiliation.reject,
+    status: 'rejected',
+  });
+}
+
+function useAffiliationDecisionMutation({
+  procedure,
+  status,
 }: {
-  queryClient: QueryClient;
+  procedure: DecisionProcedure;
+  status: AffiliationModel['status'];
 }) {
   const tErrors = useTranslations('Errors');
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   return useMutation(
-    trpc.player.affiliation.reject.mutationOptions({
+    procedure.mutationOptions({
       onMutate: async ({ clubId, affiliationId }) => {
         await queryClient.cancelQueries({
           queryKey: trpc.club.inbox.all.infiniteQueryKey({ clubId }),
@@ -34,11 +58,7 @@ export default function useAffiliationRejectMutation({
                 ...page,
                 items: page.items.map((item) =>
                   item.kind === 'affiliation' && item.id === affiliationId
-                    ? {
-                        ...item,
-                        status: 'rejected' as const,
-                        updatedAt: new Date(),
-                      }
+                    ? { ...item, status, updatedAt: new Date() }
                     : item,
                 ),
               })),

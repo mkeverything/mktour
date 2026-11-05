@@ -2,8 +2,10 @@
 
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import FormattedMessage from '@/components/formatted-message';
-import useAffiliationAcceptMutation from '@/components/hooks/mutation-hooks/use-affiliation-accept';
-import useAffiliationRejectMutation from '@/components/hooks/mutation-hooks/use-affiliation-reject';
+import {
+  useAffiliationAcceptMutation,
+  useAffiliationRejectMutation,
+} from '@/components/hooks/mutation-hooks/use-affiliation-decision';
 import {
   useChangeClubNotificationStatusMutation,
   useChangeNotificationStatusMutation,
@@ -14,7 +16,6 @@ import { ItemActions } from '@/components/ui/item';
 import { UserNotificationEvent } from '@/server/zod/enums';
 import { UserNotificationExtendedModel } from '@/server/zod/notifications';
 import { ClubAffiliationModel } from '@/server/zod/players';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   Check,
   CornerDownRightIcon,
@@ -35,16 +36,11 @@ export const AffiliationRequestLi: FC<{
   affiliation: ClubAffiliationModel;
   clubId: string;
 }> = ({ affiliation, clubId }) => {
-  const queryClient = useQueryClient();
   const format = useFormatter();
   const { mutate: acceptAffiliation, isPending: pendingAccept } =
-    useAffiliationAcceptMutation({
-      queryClient,
-    });
+    useAffiliationAcceptMutation();
   const { mutate: rejectMutation, isPending: pendingReject } =
-    useAffiliationRejectMutation({
-      queryClient,
-    });
+    useAffiliationRejectMutation();
 
   const { user, player, status } = affiliation;
   const variables = { clubId, affiliationId: affiliation.id };
