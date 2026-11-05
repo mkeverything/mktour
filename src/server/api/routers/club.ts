@@ -1,8 +1,8 @@
-import { validateRequest } from '@/lib/auth/lucia';
 import { CACHE_TAGS } from '@/lib/cache-tags';
 import { AppError } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import {
+  authProcedure,
   clubAdminProcedure,
   createTRPCRouter,
   protectedProcedure,
@@ -160,20 +160,16 @@ export const clubRouter = createTRPCRouter({
         userId: opts.ctx.user.id,
       });
     }),
-  authStatus: publicProcedure
+  authStatus: authProcedure
     .meta(meta.clubAuthStatus)
     .input(clubIdInputSchema)
     .output(statusInClubEnum.nullable())
-    .query(async (opts) => {
-      if (!opts.ctx.user || !opts.ctx.clubs) {
-        const { user } = await validateRequest();
-        if (!user) return null;
-        return await getStatusInClub({
-          userId: user.id,
-          clubId: opts.input.clubId,
-        });
-      }
-      return opts.ctx.clubs && opts.ctx.clubs[opts.input.clubId];
+    .query(async ({ ctx, input }) => {
+      if (!ctx.user) return null;
+      return await getStatusInClub({
+        userId: ctx.user.id,
+        clubId: input.clubId,
+      });
     }),
   managers: createTRPCRouter({
     all: publicProcedure

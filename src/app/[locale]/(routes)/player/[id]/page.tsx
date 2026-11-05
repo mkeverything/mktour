@@ -66,11 +66,7 @@ export default async function PlayerPage(props: PlayerPageProps) {
           />
         )}
         {canClaim && (
-          <ClaimPlayer
-            userId={user.id}
-            clubId={club.id}
-            requestedByOther={requestedByOther}
-          />
+          <ClaimPlayer clubId={club.id} requestedByOther={requestedByOther} />
         )}
       </div>
       <PlayerStats clubName={club.name} player={player} />

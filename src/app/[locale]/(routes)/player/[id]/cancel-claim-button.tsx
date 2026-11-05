@@ -18,20 +18,15 @@ import { useTranslations } from 'next-intl';
 import { FC, useState } from 'react';
 
 const CancelClaimPlayer: FC<{
-  userId: string;
   clubId: string;
   affiliationId: string;
   playerId: string;
-}> = ({ userId, clubId, affiliationId, playerId }) => {
+}> = ({ clubId, affiliationId, playerId }) => {
   const [open, setOpen] = useState(false);
   const { mutate, isPending } = useAffiliationAbortRequestMutation(clubId);
   const handleClick = () => {
     setOpen(false);
-    mutate({
-      affiliationId,
-      userId,
-      playerId,
-    });
+    mutate({ affiliationId, playerId });
   };
   const t = useTranslations();
 

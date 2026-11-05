@@ -23,16 +23,15 @@ import { useParams } from 'next/navigation';
 import { FC, useState } from 'react';
 
 const ClaimPlayer: FC<{
-  userId: string;
   clubId: string;
   requestedByOther: boolean;
-}> = ({ userId, clubId, requestedByOther }) => {
+}> = ({ clubId, requestedByOther }) => {
   const { id } = useParams<{ id: string }>();
   const [open, setOpen] = useState(false);
   const { mutate, isPending } = useAffiliationRequestMutation();
   const handleClick = () => {
     setOpen(false);
-    mutate({ playerId: id, userId, clubId });
+    mutate({ playerId: id, clubId });
   };
   const t = useTranslations();
 
@@ -46,7 +45,6 @@ const ClaimPlayer: FC<{
   if (hasClaimed)
     return (
       <CancelClaimPlayer
-        userId={userId}
         clubId={clubId}
         affiliationId={userAffiliation.id}
         playerId={userAffiliation.player.id}

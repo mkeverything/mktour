@@ -29,11 +29,7 @@ import {
   getPlayerStats,
   getPlayersTournamentsInfinite,
 } from '@/server/queries/player';
-import {
-  clubIdInputSchema,
-  playerIdInputSchema,
-  userIdInputSchema,
-} from '@/server/zod/common';
+import { clubIdInputSchema, playerIdInputSchema } from '@/server/zod/common';
 import {
   playerAuthStatsSchema,
   playerEditSchema,
@@ -76,13 +72,11 @@ export const playerRouter = {
     request: protectedProcedure
       .input(
         playerIdInputSchema.extend({
-          userId: userIdInputSchema.shape.userId,
           clubId: clubIdInputSchema.shape.clubId,
         }),
       )
-      .mutation(async (opts) => {
-        const { input } = opts;
-        await requestAffiliation(input);
+      .mutation(async ({ ctx, input }) => {
+        await requestAffiliation({ ...input, userId: ctx.user.id });
       }),
     accept: clubAdminProcedure
       .input(clubIdInputSchema.extend({ affiliationId: z.string() }))
@@ -97,15 +91,9 @@ export const playerRouter = {
         await rejectAffiliation(input);
       }),
     abortRequest: protectedProcedure
-      .input(
-        userIdInputSchema.extend({
-          affiliationId: z.string(),
-          playerId: playerIdInputSchema.shape.playerId,
-        }),
-      )
-      .mutation(async (opts) => {
-        const { input } = opts;
-        await abortAffiliationRequest(input);
+      .input(playerIdInputSchema.extend({ affiliationId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        await abortAffiliationRequest({ ...input, userId: ctx.user.id });
       }),
     affiliateAuth: clubAdminProcedure
       .input(playerIdInputSchema)

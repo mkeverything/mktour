@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
 import { generatePreStartRoundGames } from '@/lib/pre-start-round';
 import {
@@ -25,7 +24,6 @@ import {
   tournaments,
 } from '@/server/db/schema/tournaments';
 import { publishUserNotification } from '@/server/events';
-import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { getTournamentGames } from '@/server/queries/get-tournament-games';
 import {
   getRawTournamentUnits,
@@ -189,11 +187,6 @@ export async function startTournament({
   format,
   roundsNumber,
 }: TournamentStartInputModel) {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-  const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
-
   const finalRoundsNumber = await resolveTournamentRoundsNumber({
     tournamentId,
     format,
@@ -221,10 +214,6 @@ export async function resetTournament({
 }: {
   tournamentId: string;
 }) {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-  const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   await db.transaction(async (tx) => {
     const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
@@ -266,12 +255,6 @@ export async function finishTournament({
 }: {
   tournamentId: string;
 }) {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-
-  const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
-
   const { closedAt, winnerIds } = await db.transaction(async (tx) => {
     const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
@@ -377,10 +360,6 @@ export async function deleteTournament({
 }: {
   tournamentId: string;
 }) {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-  const { status } = await getStatusInTournament(user.id, tournamentId);
-  if (status !== 'organizer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
   await db.transaction(async (tx) => {
     const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');

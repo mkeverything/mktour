@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { AppError } from '@/lib/errors';
-import { validateRequest } from '@/lib/auth/lucia';
 import { createUnit } from '@/lib/tournament-dashboard';
 import { baselineUnitSort } from '@/lib/tournament-results';
 import { newid } from '@/lib/utils';
@@ -11,7 +10,6 @@ import {
   players_to_units,
   tournament_units,
 } from '@/server/db/schema/tournaments';
-import { getStatusInTournament } from '@/server/queries/get-status-in-tournament';
 import { getRawTournamentUnits } from '@/server/queries/get-tournament-units';
 import { getTournamentById } from '@/server/queries/tournament-helpers';
 import type { PlayerFormModel, PlayerInsertModel } from '@/server/zod/players';
@@ -41,7 +39,7 @@ export async function addNewSoloUnit({
     );
     return await addSoloUnit(
       { tournamentId, player: createdPlayer, unitId, addedAt },
-      { database: tx, skipAuth: true },
+      { database: tx },
     );
   });
 }
@@ -50,28 +48,17 @@ export async function addSoloUnit(
   {
     tournamentId,
     player,
-    userId,
     unitId: requestedUnitId,
     addedAt,
   }: {
     tournamentId: string;
     player: PlayerInsertModel;
-    userId?: string;
     unitId?: string;
     addedAt?: Date;
   },
-  options: { database?: Transaction; skipAuth?: boolean } = {},
+  options: { database?: Transaction } = {},
 ): Promise<UnitModel[]> {
   const now = addedAt ?? new Date();
-
-  if (!options.skipAuth) {
-    if (!userId) throw new AppError('UNAUTHENTICATED');
-    const { user } = await validateRequest();
-    if (!user) throw new AppError('UNAUTHENTICATED');
-    if (user.id !== userId) throw new AppError('USER_MISMATCH');
-    const { status } = await getStatusInTournament(user.id, tournamentId);
-    if (status === 'viewer') throw new AppError('NOT_TOURNAMENT_ORGANIZER');
-  }
 
   const unitId = requestedUnitId ?? newid();
   const unit = createUnit({

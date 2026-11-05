@@ -14,7 +14,9 @@ Object.assign(globalThis, { AsyncLocalStorage });
 const nextCache = await import('next/cache');
 mock.module('next/cache', () => ({
   ...nextCache,
+  cacheLife: () => {},
   cacheTag: () => {},
+  revalidatePath: () => {},
   revalidateTag: () => {},
 }));
 const lucia = await import('@/lib/auth/lucia');
