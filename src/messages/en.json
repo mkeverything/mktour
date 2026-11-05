@@ -227,15 +227,13 @@
     "reloadPage": "reload page"
   },
   "Errors": {
-    "AFFILIATION_EXISTS": "this user is already affiliated",
+    "AFFILIATION_EXISTS": "this user already has a link or a pending request in this club",
     "AFFILIATION_NOT_FOUND": "affiliation not found",
     "AFFILIATION_STATUS_NOT_REQUESTED": "affiliation was not requested",
-    "ALREADY_AFFILIATED": "this player is already affiliated",
+    "ALREADY_AFFILIATED": "this player is already linked or requested",
     "CANNOT_LEAVE_AS_ONLY_MANAGER": "you can not leave a club you are the only manager of",
     "CANNOT_LEAVE_ONLY_CLUB": "you can not leave the only club you are in",
     "CLUB_HAS_OTHER_CO_OWNER": "a club with other co-owners can not be deleted",
-    "CLUB_ID_NOT_MATCHING": "club id does not match",
-    "CLUB_MISMATCH": "club does not match",
     "CLUB_NOT_CREATED": "sorry! some error happened. the club wasn't created",
     "CLUB_NOT_DELETED": "sorry! some error happened. the club wasn't deleted",
     "CLUB_NOT_FOUND": "club not found",
@@ -287,8 +285,7 @@
     "PLAYER_ALREADY_IN_UNIT": "this player is already in the tournament",
     "PLAYER_EXISTS_ERROR": "this player already exists!",
     "PLAYER_HAS_TOURNAMENTS": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
-    "PLAYER_MERGE_BOTH_PENDING_AFFILIATIONS": "both players have pending link requests",
-    "PLAYER_MERGE_BOTH_USER_LINKED": "both players are linked to users",
+    "PLAYER_MERGE_BOTH_HAVE_AFFILIATIONS": "both players have a link or a pending link request",
     "PLAYER_MERGE_SAME_PLAYER": "choose two different players",
     "PLAYER_MERGE_SHARED_TOURNAMENT": "these players cannot be merged cause they both are added to the same tournament (as two different players)",
     "PLAYER_NOT_CREATED": "sorry! player wasn't created",
@@ -371,11 +368,14 @@
       "Notifications": {
         "loading": "loading...",
         "empty": "claims to moderate tournaments, to link players to users and other club related notifications",
-        "affiliation": "link request",
         "mark all as read": "mark all as read",
+        "Status": {
+          "requested": "link request",
+          "approved": "approved",
+          "rejected": "rejected",
+          "cancelled": "cancelled"
+        },
         "Notification": {
-          "affiliation_request_approved": "player <playerLink>{player}</playerLink> is officially user <userLink>{user}</userLink>",
-          "affiliation_request_rejected": "<userLink>{user}</userLink>'s request to link with <playerLink>{player}</playerLink> was rejected",
           "manager_left": "manager <userLink>{user}</userLink> has left the club",
           "affiliation_cancelled": "<userLink>{user}</userLink> is no more linked to <playerLink>{player}</playerLink>",
           "player_merged": "player <playerLink>{player}</playerLink> now includes duplicate {mergedPlayer}"

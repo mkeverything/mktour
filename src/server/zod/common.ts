@@ -1,29 +1,27 @@
 import z from 'zod';
 
-export const idSchema = z.string();
-
 export const userIdInputSchema = z.object({
-  userId: idSchema,
+  userId: z.string(),
 });
 
 export const clubIdInputSchema = z.object({
-  clubId: idSchema,
+  clubId: z.string(),
 });
 
 export const tournamentIdInputSchema = z.object({
-  tournamentId: idSchema,
+  tournamentId: z.string(),
 });
 
 export const playerIdInputSchema = z.object({
-  playerId: idSchema,
+  playerId: z.string(),
 });
 
 export const notificationIdInputSchema = z.object({
-  notificationId: idSchema,
+  notificationId: z.string(),
 });
 
 export const apiTokenIdInputSchema = z.object({
-  id: idSchema,
+  id: z.string(),
 });
 
 export const paginatedInputSchema = z.object({

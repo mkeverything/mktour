@@ -3,7 +3,10 @@ import {
   clubNotificationEvent,
   userNotificationEvent,
 } from '@/server/db/schema/enums';
+import { affiliations, players } from '@/server/db/schema/players';
+import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
+import type { StatusInClub } from '@/server/zod/enums';
 import {
   boolean,
   index,
@@ -14,6 +17,8 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 
+// each event fills only the references it is about; metadata keeps what the
+// event has to show as it was then
 export const user_notifications = pgTable(
   'user_notification',
   {
@@ -26,7 +31,16 @@ export const user_notifications = pgTable(
       .notNull(),
     event: userNotificationEvent('event').notNull(),
     isSeen: boolean('is_seen').default(false).notNull(),
-    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull(),
+    affiliationId: text('affiliation_id').references(() => affiliations.id, {
+      onDelete: 'cascade',
+    }),
+    clubId: text('club_id').references(() => clubs.id, {
+      onDelete: 'cascade',
+    }),
+    tournamentId: text('tournament_id').references(() => tournaments.id, {
+      onDelete: 'cascade',
+    }),
+    metadata: jsonb('metadata').$type<{ role: StatusInClub }>(),
   },
   (table) => [
     primaryKey({ columns: [table.id] }),
@@ -49,7 +63,16 @@ export const club_notifications = pgTable(
       .notNull(),
     event: clubNotificationEvent('event').notNull(),
     isSeen: boolean('is_seen').default(false).notNull(),
-    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull(),
+    affiliationId: text('affiliation_id').references(() => affiliations.id, {
+      onDelete: 'cascade',
+    }),
+    userId: text('user_id').references(() => users.id, {
+      onDelete: 'cascade',
+    }),
+    playerId: text('player_id').references(() => players.id, {
+      onDelete: 'cascade',
+    }),
+    metadata: jsonb('metadata').$type<{ mergedPlayerNickname: string }>(),
   },
   (table) => [
     primaryKey({ columns: [table.id] }),

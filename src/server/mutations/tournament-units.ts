@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { validateRequest } from '@/lib/auth/lucia';
 import { AppError } from '@/lib/errors';
 import { lower } from '@/lib/sql-lower';
 import { createUnit } from '@/lib/tournament-dashboard';
@@ -30,15 +29,10 @@ import { applyPreStartUnitOrder } from './tournament-unit-order';
 export async function removeUnit({
   tournamentId,
   unitId,
-  userId,
 }: {
   tournamentId: string;
   unitId: string;
-  userId: string;
 }): Promise<UnitModel[]> {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-  if (user.id !== userId) throw new AppError('USER_MISMATCH');
   const unit = await db
     .select({ id: tournament_units.id })
     .from(tournament_units)
@@ -119,8 +113,6 @@ export async function addDoublesUnit({
   addedAt?: Date;
 }): Promise<UnitModel[]> {
   const now = addedAt ?? new Date();
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
   if (firstPlayerId === secondPlayerId) {
     throw new AppError('INVALID_DOUBLES_PAIR');
   }
@@ -201,8 +193,6 @@ export async function editDoublesUnit({
 }: EditDoublesUnitModel & {
   tournamentId: string;
 }): Promise<UnitModel[]> {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
   if (firstPlayerId === secondPlayerId) {
     throw new AppError('INVALID_DOUBLES_PAIR');
   }
@@ -334,18 +324,13 @@ export async function resetTournamentUnits({
 export async function withdrawUnit({
   tournamentId,
   unitId,
-  userId,
 }: {
   tournamentId: string;
   unitId: string;
-  userId: string;
 }): Promise<{
   roundsNumber: number;
   roundsNumberAutoDecreased: boolean;
 }> {
-  const { user } = await validateRequest();
-  if (!user) throw new AppError('UNAUTHENTICATED');
-  if (user.id !== userId) throw new AppError('USER_MISMATCH');
   const result = await db.transaction(async (tx) => {
     const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');

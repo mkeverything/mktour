@@ -1,5 +1,4 @@
 import { AddPlayerListLoadingSkeleton } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/loading-skeletons';
-import { DashboardContext } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import { DrawerProps } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs/table/add-player';
 import { useTournamentAddExistingPlayer } from '@/components/hooks/mutation-hooks/tournament-pre-start-hooks/use-tournament-add-existing-player';
 import { useTournamentPossiblePlayers } from '@/components/hooks/query-hooks/use-tournament-possible-players';
@@ -12,7 +11,6 @@ import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useContext } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 
@@ -28,7 +26,6 @@ const AddPlayer = ({
 }) => {
   const { id } = useParams<{ id: string }>();
   const possiblePlayers = useTournamentPossiblePlayers(id);
-  const { userId } = useContext(DashboardContext);
   const { mutate } = useTournamentAddExistingPlayer(id);
   const t = useTranslations('Tournament.AddPlayer');
   const { translateError } = useIntlError();
@@ -57,14 +54,9 @@ const AddPlayer = ({
       return;
     }
 
-    if (!userId) {
-      console.log('not found user id in context');
-      return;
-    }
-
     const addedAt = new Date();
     mutate(
-      { tournamentId: id, player, userId, addedAt },
+      { tournamentId: id, player, addedAt },
       {
         onSuccess: () => {
           posthog.capture('player_added_to_tournament', {

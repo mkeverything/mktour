@@ -104,7 +104,7 @@ const ORGANIZER = userRow('organizer');
 const MEMBER = userRow('club-member');
 const USERS = ids('user', 4).map(userRow);
 
-const CLUBS = ids('club', 4).map((id) => newClub(id));
+const CLUBS = ids('club', 5).map((id) => newClub(id));
 const READY = ids('ready', 20).map((id) => newClub(id, ['1-0', '1-0']));
 const ONGOING = ids('ongoing', 4).map((id) => newClub(id, ['1-0', null]));
 
@@ -314,6 +314,21 @@ export const seedTestData = async () => {
       })),
     ]);
     await db.insert(schema.players).values(players);
+    await db.insert(schema.affiliations).values(
+      players.flatMap(({ id, clubId, userId }) =>
+        userId
+          ? [
+              {
+                id: `${id}-affiliation`,
+                userId,
+                clubId,
+                playerId: id,
+                status: 'approved' as const,
+              },
+            ]
+          : [],
+      ),
+    );
     await db.insert(schema.rating_events).values(
       players.map((player) => ({
         id: `${player.id}-starting`,

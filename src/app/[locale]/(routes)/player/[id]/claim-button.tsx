@@ -23,15 +23,15 @@ import { useParams } from 'next/navigation';
 import { FC, useState } from 'react';
 
 const ClaimPlayer: FC<{
-  userId: string;
   clubId: string;
-}> = ({ userId, clubId }) => {
+  requestedByOther: boolean;
+}> = ({ clubId, requestedByOther }) => {
   const { id } = useParams<{ id: string }>();
   const [open, setOpen] = useState(false);
   const { mutate, isPending } = useAffiliationRequestMutation();
   const handleClick = () => {
     setOpen(false);
-    mutate({ playerId: id, userId, clubId });
+    mutate({ playerId: id, clubId });
   };
   const t = useTranslations();
 
@@ -39,20 +39,19 @@ const ClaimPlayer: FC<{
 
   const hasClaimed =
     userAffiliation &&
-    userAffiliation.status === 'requested_by_user' &&
+    userAffiliation.status === 'requested' &&
     id === userAffiliation.player.id;
 
   if (hasClaimed)
     return (
       <CancelClaimPlayer
-        userId={userId}
         clubId={clubId}
         affiliationId={userAffiliation.id}
         playerId={userAffiliation.player.id}
       />
     );
 
-  if (!userAffiliation)
+  if (!userAffiliation && !requestedByOther)
     return (
       <Root open={open} onOpenChange={setOpen}>
         <Trigger asChild>

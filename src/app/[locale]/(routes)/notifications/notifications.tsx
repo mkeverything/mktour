@@ -12,7 +12,7 @@ import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
 import Paginator from '@/components/ui-custom/paginator';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AnyUserNotificationExtended } from '@/types/notifications';
+import { UserNotificationExtendedModel } from '@/server/zod/notifications';
 import { LucideCheckCheck } from 'lucide-react';
 import { FC } from 'react';
 
@@ -75,8 +75,7 @@ const UserNotifications = () => {
   );
 };
 
-const NotificationItemIteratee = (data: AnyUserNotificationExtended) => {
-  if (data.event.startsWith('affiliation') && !data.affiliation) return null; // FIXME
+const NotificationItemIteratee = (data: UserNotificationExtendedModel) => {
   return <UserNotificationLi key={data.notification.id} {...data} />;
 };
 

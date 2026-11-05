@@ -110,11 +110,7 @@ describe('finishing a tournament', () => {
         ? 'TOURNAMENT_ALREADY_FINISHED'
         : 'TOURNAMENT_ALREADY_STARTED';
       await expect(
-        removeUnit({
-          tournamentId,
-          unitId: unitIds[0],
-          userId: fixtures.organizer.id,
-        }),
+        removeUnit({ tournamentId, unitId: unitIds[0] }),
       ).rejects.toMatchObject({ message });
       await expect(
         reorderTournamentUnits({ tournamentId, unitIds }),

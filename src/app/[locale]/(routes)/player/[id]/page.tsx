@@ -27,17 +27,20 @@ export default async function PlayerPage(props: PlayerPageProps) {
   if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
 
   const { club, ...player } = playerData;
-  const [status, affiliation, playerLastTournaments] = await Promise.all([
-    publicCaller.club.authStatus({
-      clubId: club.id,
-    }),
-    publicCaller.auth.affiliationInClub({ clubId: club.id }),
-    publicCaller.player.lastTournaments({ playerId: player.id }),
-  ]);
+  const [status, affiliation, playerLastTournaments, requestedByOther] =
+    await Promise.all([
+      publicCaller.club.authStatus({
+        clubId: club.id,
+      }),
+      publicCaller.auth.affiliationInClub({ clubId: club.id }),
+      publicCaller.player.lastTournaments({ playerId: player.id }),
+      publicCaller.player.affiliation.requestedByOther({ playerId: player.id }),
+    ]);
 
   const canEdit = status !== null;
   const canClaim = !status && user && !player.userId;
-  const canAffiliate = status !== null && !player.userId && !affiliation;
+  const canAffiliate =
+    status !== null && !player.userId && !affiliation && !requestedByOther;
 
   return (
     <div className="mk-container flex w-full flex-col gap-4">
@@ -62,7 +65,9 @@ export default async function PlayerPage(props: PlayerPageProps) {
             status={status}
           />
         )}
-        {canClaim && <ClaimPlayer userId={user.id} clubId={club.id} />}
+        {canClaim && (
+          <ClaimPlayer clubId={club.id} requestedByOther={requestedByOther} />
+        )}
       </div>
       <PlayerStats clubName={club.name} player={player} />
       <LastTournaments tournaments={playerLastTournaments} />

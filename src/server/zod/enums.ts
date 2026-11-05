@@ -24,6 +24,11 @@ export const tournamentTypeEnum = createSelectSchema(tournamentType);
 export const gameResultEnum = createSelectSchema(gameResult);
 export const roundNameEnum = createSelectSchema(roundName);
 
+export const openAffiliationStatusEnum = affiliationStatusEnum.extract([
+  'requested',
+  'approved',
+]);
+
 export const tournamentAuthStatusEnum = z.enum([
   'organizer',
   'player',

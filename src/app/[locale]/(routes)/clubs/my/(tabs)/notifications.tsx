@@ -1,9 +1,9 @@
 'use client';
 
 import Empty from '@/components/empty';
-import { useClubNotifications } from '@/components/hooks/query-hooks/use-club-notifications';
+import { useClubInbox } from '@/components/hooks/query-hooks/use-club-inbox';
 import {
-  AffiliationNotificationLi,
+  AffiliationRequestLi,
   NotificationItem,
 } from '@/components/notification-items';
 import SkeletonList, { SkeletonListProps } from '@/components/skeleton-list';
@@ -20,34 +20,40 @@ const ClubInbox: FC<{ selectedClub: string }> = ({ selectedClub }) => {
   const t = useTranslations('Club.Dashboard.Notifications');
   const tErrors = useTranslations('Errors');
   const {
-    data: notifications,
+    data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     status,
     error,
     isLoading,
-  } = useClubNotifications(selectedClub);
+  } = useClubInbox(selectedClub);
 
   if (isLoading) return <ClubsNotificationsSkeletonList />;
   if (status === 'error') return <p>{tErrors(getAppErrorMessage(error))}</p>;
-  if (!notifications) return null;
+  if (!data) return null;
 
-  const allNotifications = notifications.pages.flatMap(
-    (page) => page.notifications,
-  );
+  const items = data.pages.flatMap((page) => page.items);
 
-  if (!allNotifications.length) return <Empty>{t('empty')}</Empty>;
+  if (!items.length) return <Empty>{t('empty')}</Empty>;
   return (
     <ScrollArea className="h-full">
       <div className="mk-list">
-        {allNotifications.map((event) => (
-          <Notification
-            key={event.id}
-            data={event}
-            t={(value, values) => t.rich(`Notification.${value}`, values)}
-          />
-        ))}
+        {items.map((item) =>
+          item.kind === 'affiliation' ? (
+            <AffiliationRequestLi
+              key={item.id}
+              affiliation={item}
+              clubId={selectedClub}
+            />
+          ) : (
+            <Notification
+              key={item.id}
+              data={item}
+              t={(value, values) => t.rich(`Notification.${value}`, values)}
+            />
+          ),
+        )}
         <Paginator
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
@@ -66,10 +72,7 @@ const Notification: FC<{
   const user = data.user;
   const player = data.player;
 
-  const mergedPlayer =
-    data.event === 'player_merged'
-      ? String(data.metadata.mergedPlayerNickname)
-      : '';
+  const mergedPlayer = data.metadata?.mergedPlayerNickname ?? '';
   const richValues = {
     user: user?.username ?? '',
     player: player?.nickname ?? '',
@@ -97,32 +100,6 @@ const Notification: FC<{
   };
 
   switch (data.event) {
-    case 'affiliation_request':
-      return <AffiliationNotificationLi key={data.id} {...data} />;
-    case 'affiliation_request_approved':
-      return (
-        <NotificationItem
-          notificationId={data.id}
-          key={data.id}
-          is_seen={data.isSeen}
-          type="club"
-          clubId={data.clubId}
-        >
-          <span>{t(data.event, richValues)}</span>
-        </NotificationItem>
-      );
-    case 'affiliation_request_rejected':
-      return (
-        <NotificationItem
-          notificationId={data.id}
-          key={data.id}
-          is_seen={data.isSeen}
-          type="club"
-          clubId={data.clubId}
-        >
-          {t(data.event, richValues)}
-        </NotificationItem>
-      );
     case 'manager_left':
       return (
         <NotificationItem

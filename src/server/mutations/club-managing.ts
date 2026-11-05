@@ -11,6 +11,7 @@ import {
   user_notifications,
 } from '@/server/db/schema/notifications';
 import {
+  affiliations,
   player_stats,
   players,
   rating_events,
@@ -333,22 +334,30 @@ export const deleteClubFunction = async ({
   await db.transaction((tx) => deleteClubRows(tx, clubId));
 };
 
-// memberships and games keep a player who played from being deleted, and the
-// club reaches them through both its players and its tournaments: tournaments go first.
-// everyone who has the club selected moves to a club they co-own
-export const deleteClubRows = async (tx: Transaction, clubId: string) => {
-  await tx
+/** everyone who has the club selected, or only the given user, moves to a club they co-own */
+const moveSelectionFromClub = (
+  tx: Transaction,
+  clubId: string,
+  userId?: string,
+) =>
+  tx
     .update(users)
     .set({ selectedClub: clubs_to_users.clubId })
     .from(clubs_to_users)
     .where(
       and(
         eq(users.selectedClub, clubId),
+        userId ? eq(users.id, userId) : undefined,
         eq(clubs_to_users.userId, users.id),
         ne(clubs_to_users.clubId, clubId),
         eq(clubs_to_users.status, 'co-owner'),
       ),
     );
+
+// memberships and games keep a player who played from being deleted, and the
+// club reaches them through both its players and its tournaments: tournaments go first
+export const deleteClubRows = async (tx: Transaction, clubId: string) => {
+  await moveSelectionFromClub(tx, clubId);
   await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));
   await tx.delete(clubs).where(eq(clubs.id, clubId));
 };
@@ -399,13 +408,31 @@ export const addClubManager = async ({
     id: newid(),
     userId: userId,
     event: 'became_club_manager',
-    isSeen: false,
-    createdAt: new Date(),
-    metadata: { clubId: clubId, role: status },
+    clubId,
+    metadata: { role: status },
   };
   await db.transaction(async (tx) => {
+    await lockClubs(tx, [clubId]);
     await tx.insert(clubs_to_users).values(newRelation);
     await tx.insert(user_notifications).values(userNotification);
+
+    const [request] = await tx
+      .update(affiliations)
+      .set({ status: 'approved', updatedAt: new Date() })
+      .where(
+        and(
+          eq(affiliations.userId, userId),
+          eq(affiliations.clubId, clubId),
+          eq(affiliations.status, 'requested'),
+        ),
+      )
+      .returning({ playerId: affiliations.playerId });
+    if (request) {
+      await tx
+        .update(players)
+        .set({ userId })
+        .where(eq(players.id, request.playerId));
+    }
 
     if (status !== 'admin') return;
 
@@ -434,6 +461,7 @@ export const addClubManager = async ({
     }
   });
   publishUserNotification(userId);
+  publishClubNotification(clubId);
 };
 
 export const deleteClubManager = async ({
@@ -449,13 +477,26 @@ export const deleteClubManager = async ({
     getStatusInClub({ userId: user.id, clubId }),
     getStatusInClub({ userId, clubId }),
   ]);
-  if (targetStatus === 'co-owner') throw new AppError('FORBIDDEN');
+  if (targetStatus !== 'admin') throw new AppError('FORBIDDEN');
   if (authorStatus !== 'co-owner') throw new AppError('FORBIDDEN');
-  await db
-    .delete(clubs_to_users)
-    .where(
-      and(eq(clubs_to_users.clubId, clubId), eq(clubs_to_users.userId, userId)),
-    );
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(clubs_to_users)
+      .where(
+        and(
+          eq(clubs_to_users.clubId, clubId),
+          eq(clubs_to_users.userId, userId),
+        ),
+      );
+    await moveSelectionFromClub(tx, clubId, userId);
+    await tx.insert(user_notifications).values({
+      id: newid(),
+      userId,
+      event: 'removed_from_club_managers',
+      clubId,
+    });
+  });
+  publishUserNotification(userId);
 };
 
 /** in each club the user is leaving with no other co-owner, the longest-serving admin becomes co-owner */
@@ -510,9 +551,9 @@ export const promoteSuccessorCoOwners = async (
       id: newid(),
       userId,
       event: 'became_club_manager',
-      isSeen: false,
       createdAt: promotedAt,
-      metadata: { clubId, role: 'co-owner' },
+      clubId,
+      metadata: { role: 'co-owner' },
     })),
   );
   return successors.map(({ userId }) => userId);
@@ -568,9 +609,7 @@ export const leaveClub = async ({
       id: newid(),
       clubId,
       event: 'manager_left',
-      isSeen: false,
-      createdAt: new Date(),
-      metadata: { userId },
+      userId,
     });
     return successorIds;
   });
@@ -582,13 +621,20 @@ export const leaveClub = async ({
 
 export const changeClubNotificationStatus = async ({
   notificationId,
+  clubId,
   isSeen,
 }: {
   notificationId: string;
+  clubId: string;
   isSeen: boolean;
 }) => {
   await db
     .update(club_notifications)
     .set({ isSeen })
-    .where(eq(club_notifications.id, notificationId));
+    .where(
+      and(
+        eq(club_notifications.id, notificationId),
+        eq(club_notifications.clubId, clubId),
+      ),
+    );
 };

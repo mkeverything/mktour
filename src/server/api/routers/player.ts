@@ -6,6 +6,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
+import { affiliations } from '@/server/db/schema/players';
 import {
   createPlayer,
   deletePlayer,
@@ -28,12 +29,7 @@ import {
   getPlayerStats,
   getPlayersTournamentsInfinite,
 } from '@/server/queries/player';
-import {
-  clubIdInputSchema,
-  notificationIdInputSchema,
-  playerIdInputSchema,
-  userIdInputSchema,
-} from '@/server/zod/common';
+import { clubIdInputSchema, playerIdInputSchema } from '@/server/zod/common';
 import {
   playerAuthStatsSchema,
   playerEditSchema,
@@ -44,6 +40,7 @@ import {
   playerStatsSchema,
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
+import { and, eq, ne } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const playerRouter = {
@@ -75,48 +72,28 @@ export const playerRouter = {
     request: protectedProcedure
       .input(
         playerIdInputSchema.extend({
-          userId: userIdInputSchema.shape.userId,
           clubId: clubIdInputSchema.shape.clubId,
         }),
       )
-      .mutation(async (opts) => {
-        const { input } = opts;
-        await requestAffiliation(input);
+      .mutation(async ({ ctx, input }) => {
+        await requestAffiliation({ ...input, userId: ctx.user.id });
       }),
-    acceptByClub: clubAdminProcedure
-      .input(
-        clubIdInputSchema.extend({
-          affiliationId: z.string(),
-          notificationId: notificationIdInputSchema.shape.notificationId,
-        }),
-      )
+    accept: clubAdminProcedure
+      .input(clubIdInputSchema.extend({ affiliationId: z.string() }))
       .mutation(async (opts) => {
         const { input } = opts;
-        const { affiliationId, notificationId } = input;
-        await acceptAffiliationByClub({ affiliationId, notificationId });
+        await acceptAffiliationByClub(input);
       }),
     reject: clubAdminProcedure
-      .input(
-        clubIdInputSchema.extend({
-          affiliationId: z.string(),
-          notificationId: notificationIdInputSchema.shape.notificationId,
-        }),
-      )
+      .input(clubIdInputSchema.extend({ affiliationId: z.string() }))
       .mutation(async (opts) => {
         const { input } = opts;
-        const { affiliationId, notificationId } = input;
-        await rejectAffiliation({ affiliationId, notificationId });
+        await rejectAffiliation(input);
       }),
     abortRequest: protectedProcedure
-      .input(
-        userIdInputSchema.extend({
-          affiliationId: z.string(),
-          playerId: playerIdInputSchema.shape.playerId,
-        }),
-      )
-      .mutation(async (opts) => {
-        const { input } = opts;
-        await abortAffiliationRequest(input);
+      .input(playerIdInputSchema.extend({ affiliationId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        await abortAffiliationRequest({ ...input, userId: ctx.user.id });
       }),
     affiliateAuth: clubAdminProcedure
       .input(playerIdInputSchema)
@@ -138,12 +115,26 @@ export const playerRouter = {
       .input(
         playerIdInputSchema.extend({
           clubId: clubIdInputSchema.shape.clubId,
-          skipNotification: z.boolean().optional(),
         }),
       )
       .mutation(async (opts) => {
-        const { input } = opts;
-        await cancelAffiliationByClub(input);
+        const { input, ctx } = opts;
+        await cancelAffiliationByClub({ ...input, user: ctx.user });
+      }),
+    requestedByOther: authProcedure
+      .input(playerIdInputSchema)
+      .output(z.boolean())
+      .query(async ({ ctx, input }) => {
+        if (!ctx.user) return false;
+        const requests = await ctx.db.$count(
+          affiliations,
+          and(
+            eq(affiliations.playerId, input.playerId),
+            eq(affiliations.status, 'requested'),
+            ne(affiliations.userId, ctx.user.id),
+          ),
+        );
+        return requests > 0;
       }),
   },
   delete: protectedProcedure

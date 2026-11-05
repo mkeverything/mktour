@@ -9,9 +9,9 @@ const handler = (req: NextRequest) =>
     endpoint: '/api/trpc',
     req,
     router: appRouter,
-    createContext: ({ resHeaders }) =>
+    createContext: () =>
       createTRPCContext({
-        headers: resHeaders,
+        headers: req.headers,
         req,
       }),
     onError:
