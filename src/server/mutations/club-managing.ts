@@ -612,13 +612,20 @@ export const leaveClub = async ({
 
 export const changeClubNotificationStatus = async ({
   notificationId,
+  clubId,
   isSeen,
 }: {
   notificationId: string;
+  clubId: string;
   isSeen: boolean;
 }) => {
   await db
     .update(club_notifications)
     .set({ isSeen })
-    .where(eq(club_notifications.id, notificationId));
+    .where(
+      and(
+        eq(club_notifications.id, notificationId),
+        eq(club_notifications.clubId, clubId),
+      ),
+    );
 };
