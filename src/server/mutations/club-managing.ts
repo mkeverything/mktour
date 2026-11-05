@@ -11,6 +11,7 @@ import {
   user_notifications,
 } from '@/server/db/schema/notifications';
 import {
+  affiliations,
   player_stats,
   players,
   rating_events,
@@ -403,8 +404,27 @@ export const addClubManager = async ({
     metadata: { role: status },
   };
   await db.transaction(async (tx) => {
+    await lockClubs(tx, [clubId]);
     await tx.insert(clubs_to_users).values(newRelation);
     await tx.insert(user_notifications).values(userNotification);
+
+    const [request] = await tx
+      .update(affiliations)
+      .set({ status: 'approved', updatedAt: new Date() })
+      .where(
+        and(
+          eq(affiliations.userId, userId),
+          eq(affiliations.clubId, clubId),
+          eq(affiliations.status, 'requested'),
+        ),
+      )
+      .returning({ playerId: affiliations.playerId });
+    if (request) {
+      await tx
+        .update(players)
+        .set({ userId })
+        .where(eq(players.id, request.playerId));
+    }
 
     if (status !== 'admin') return;
 
@@ -433,6 +453,7 @@ export const addClubManager = async ({
     }
   });
   publishUserNotification(userId);
+  publishClubNotification(clubId);
 };
 
 export const deleteClubManager = async ({
