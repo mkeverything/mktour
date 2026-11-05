@@ -12,6 +12,7 @@ import { newid } from '@/lib/utils';
 import { type PlayerWithUsernameModel } from '@/server/zod/players';
 import { UnitModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import posthog from 'posthog-js';
 import { toast } from 'sonner';
 
 export const useTournamentAddDoublesUnit = (tournamentId: string) => {
@@ -83,7 +84,14 @@ export const useTournamentAddDoublesUnit = (tournamentId: string) => {
 
         toast.error(translateError(error, { fallback: 'UNIT_NOT_ADDED' }));
       },
-      onSuccess: applyServerPreStartUnitsIfLatest,
+      onSuccess: (units, data) => {
+        applyServerPreStartUnitsIfLatest(units);
+        posthog.capture('player_added_to_tournament', {
+          tournament_id: tournamentId,
+          unit_id: data.unitId,
+          source: 'doubles_unit',
+        });
+      },
       onSettled: () => settle('addDoublesUnit'),
     }),
   );
