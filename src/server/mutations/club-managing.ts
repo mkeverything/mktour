@@ -448,13 +448,25 @@ export const deleteClubManager = async ({
     getStatusInClub({ userId: user.id, clubId }),
     getStatusInClub({ userId, clubId }),
   ]);
-  if (targetStatus === 'co-owner') throw new AppError('FORBIDDEN');
+  if (targetStatus !== 'admin') throw new AppError('FORBIDDEN');
   if (authorStatus !== 'co-owner') throw new AppError('FORBIDDEN');
-  await db
-    .delete(clubs_to_users)
-    .where(
-      and(eq(clubs_to_users.clubId, clubId), eq(clubs_to_users.userId, userId)),
-    );
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(clubs_to_users)
+      .where(
+        and(
+          eq(clubs_to_users.clubId, clubId),
+          eq(clubs_to_users.userId, userId),
+        ),
+      );
+    await tx.insert(user_notifications).values({
+      id: newid(),
+      userId,
+      event: 'removed_from_club_managers',
+      clubId,
+    });
+  });
+  publishUserNotification(userId);
 };
 
 /** in each club the user is leaving with no other co-owner, the longest-serving admin becomes co-owner */
