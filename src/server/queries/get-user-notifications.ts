@@ -14,7 +14,6 @@ export const getNotificationsCounter = async (userId: string) => {
           count: count(),
         })
         .from(user_notifications)
-        .orderBy(desc(user_notifications.createdAt))
         .where(
           and(
             eq(user_notifications.userId, userId),
@@ -50,7 +49,10 @@ export const getAuthNotifications = async ({
     .where(eq(user_notifications.userId, userId))
     .leftJoin(
       affiliations,
-      sql`json_extract(${user_notifications.metadata}, '$.affiliationId') = ${affiliations.id}`,
+      eq(
+        affiliations.id,
+        sql`${user_notifications.metadata}->>'affiliationId'`,
+      ),
     )
     .leftJoin(users, eq(users.id, affiliations.userId))
     .leftJoin(players, eq(players.id, affiliations.playerId))
@@ -58,10 +60,7 @@ export const getAuthNotifications = async ({
       clubs,
       or(
         eq(clubs.id, affiliations.clubId),
-        eq(
-          clubs.id,
-          sql`json_extract(${user_notifications.metadata}, '$.clubId')`,
-        ),
+        eq(clubs.id, sql`${user_notifications.metadata}->>'clubId'`),
       ),
     )
     .orderBy(desc(user_notifications.createdAt))

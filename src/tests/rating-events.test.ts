@@ -93,7 +93,7 @@ describe('rating events', () => {
       playerIds: [a, b, c, d, byeOnly],
     } = fixtures.ready.next().value!;
     const byeBefore = await playerRow(byeOnly);
-    const publishedAt = new Date(Math.floor(Date.now() / 1000) * 1000);
+    const publishedAt = new Date();
     await publish(tournamentId, publishedAt);
 
     for (const playerId of [a, b, c, d]) {

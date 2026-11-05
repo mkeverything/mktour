@@ -22,7 +22,7 @@ function createSoloUnit(side: string): UnitModel {
     draws: 0,
     losses: 0,
     place: null,
-    isOut: null,
+    isOut: false,
     players: [
       {
         id: playerId,

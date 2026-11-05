@@ -9,12 +9,12 @@ import { eq } from 'drizzle-orm';
 const selectClub = async ({ clubId }: { clubId: string }) => {
   const { user } = await validateRequest();
   if (!user) throw new AppError('UNAUTHENTICATED');
-  return await db
+  const [updatedUser] = await db
     .update(users)
     .set({ selectedClub: clubId })
     .where(eq(users.id, user.id))
-    .returning({ selectedClub: users.selectedClub })
-    .get();
+    .returning({ selectedClub: users.selectedClub });
+  return updatedUser;
 };
 
 export default selectClub;

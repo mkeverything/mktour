@@ -1,43 +1,48 @@
+import { statusInClub } from '@/server/db/schema/enums';
 import { users } from '@/server/db/schema/users';
-import { StatusInClub } from '@/server/zod/enums';
 import {
-  integer,
+  boolean,
+  index,
+  pgTable,
   primaryKey,
-  sqliteTable,
   text,
-} from 'drizzle-orm/sqlite-core';
+  timestamp,
+} from 'drizzle-orm/pg-core';
 
-export const clubs = sqliteTable(
+export const clubs = pgTable(
   'club',
   {
     id: text('id').notNull(),
     name: text('name').notNull(),
     description: text('description'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
     lichessTeam: text('lichess_team').unique(),
-    allowPlayersSetResults: integer('allow_players_set_results', {
-      mode: 'boolean',
-    })
+    allowPlayersSetResults: boolean('allow_players_set_results')
       .notNull()
       .default(true),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );
 
-export const clubs_to_users = sqliteTable(
+export const clubs_to_users = pgTable(
   'clubs_to_users',
   {
-    id: text('id').notNull(),
     clubId: text('club_id')
       .notNull()
-      .references(() => clubs.id),
+      .references(() => clubs.id, { onDelete: 'cascade' }),
     userId: text('user_id')
       .notNull()
-      .references(() => users.id),
-    status: text('status').notNull().$type<StatusInClub>(),
-    promotedAt: integer('promoted_at', { mode: 'timestamp' })
-      .$default(() => new Date())
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: statusInClub('status').notNull(),
+    promotedAt: timestamp('promoted_at', { withTimezone: true, precision: 3 })
+      .defaultNow()
       .notNull(),
   },
-  (table) => [primaryKey({ columns: [table.id] })],
+  (table) => [
+    primaryKey({ columns: [table.clubId, table.userId] }),
+    index('clubs_to_users_user_idx').on(table.userId),
+  ],
 );

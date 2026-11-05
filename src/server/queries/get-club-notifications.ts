@@ -25,21 +25,18 @@ export default async function getClubNotifications({
     .where(eq(club_notifications.clubId, clubId))
     .leftJoin(
       affiliations,
-      sql`json_extract(${club_notifications.metadata}, '$.affiliationId') = ${affiliations.id}`,
+      eq(
+        affiliations.id,
+        sql`${club_notifications.metadata}->>'affiliationId'`,
+      ),
     )
     .leftJoin(
       users,
-      eq(
-        users.id,
-        sql`json_extract(${club_notifications.metadata}, '$.userId')`,
-      ),
+      eq(users.id, sql`${club_notifications.metadata}->>'userId'`),
     )
     .leftJoin(
       players,
-      eq(
-        players.id,
-        sql`json_extract(${club_notifications.metadata}, '$.playerId')`,
-      ),
+      eq(players.id, sql`${club_notifications.metadata}->>'playerId'`),
     )
     .orderBy(desc(club_notifications.createdAt))
     .limit(limit + 1)

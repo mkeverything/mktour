@@ -96,16 +96,11 @@ export async function getTournamentUnits(
 
   if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
 
-  const [units, allGames] = await Promise.all([
-    getRawTournamentUnits(id, database),
-    tournament.startedAt
-      ? getTournamentGames(id, database)
-      : Promise.resolve([]),
-  ]);
-
+  const units = await getRawTournamentUnits(id, database);
   if (!tournament.startedAt) {
     return units.sort(baselineUnitSort);
   }
 
+  const allGames = await getTournamentGames(id, database);
   return sortUnitsByResults(units, tournament, allGames);
 }

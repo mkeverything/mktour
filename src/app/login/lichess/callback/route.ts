@@ -11,7 +11,7 @@ import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
-import { user_preferences, users } from '@/server/db/schema/users';
+import { users } from '@/server/db/schema/users';
 import { UserModel } from '@/server/zod/users';
 import { LichessUser } from '@/types/lichess-api';
 
@@ -120,7 +120,6 @@ export async function GET(request: Request): Promise<Response> {
     try {
       const userId = newid();
       const clubId = newid();
-      const ctuId = `${clubId}_${userId}`;
       const name = lichessUser.profile?.realName ?? null;
 
       await db.insert(clubs).values({
@@ -140,15 +139,10 @@ export async function GET(request: Request): Promise<Response> {
       });
 
       await db.insert(clubs_to_users).values({
-        id: ctuId,
         clubId,
         userId,
         status: 'co-owner',
         promotedAt: new Date(),
-      });
-      await db.insert(user_preferences).values({
-        userId: userId,
-        language: 'en',
       });
 
       cooks.set(COOKIES.NEW_USER_TOAST, 'true');

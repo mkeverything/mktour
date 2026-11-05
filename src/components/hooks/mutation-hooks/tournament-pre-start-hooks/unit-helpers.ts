@@ -28,7 +28,7 @@ const createBaseUnit = (
   draws: 0,
   colorIndex: 0,
   place: null,
-  isOut: null,
+  isOut: false,
   number,
   addedAt: addedAt ?? null,
   unitNickname,

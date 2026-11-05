@@ -17,5 +17,5 @@ export const getUserInfoByUsername = async (username: string) => {
     .select()
     .from(users)
     .where(eq(users.username, username))
-    .get();
+    .then((rows) => rows.at(0));
 };

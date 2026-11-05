@@ -5,6 +5,7 @@ import { getUnitResultDeltas } from '@/lib/game-result-deltas';
 import { generateTournamentRound } from '@/lib/pairing-generators/utils';
 import { sortUnitsByResults } from '@/lib/tournament-results';
 import { db, type Transaction } from '@/server/db';
+import { lockTournament } from '@/server/db/locks';
 import { clubs } from '@/server/db/schema/clubs';
 import {
   games,
@@ -89,8 +90,6 @@ const hasSameRoundProjection = (
       submitted.blackUnitId === generated.blackUnitId &&
       submitted.whitePlayerId === generated.whitePlayerId &&
       submitted.blackPlayerId === generated.blackPlayerId &&
-      submitted.whitePrevGameId === generated.whitePrevGameId &&
-      submitted.blackPrevGameId === generated.blackPrevGameId &&
       submitted.result === generated.result &&
       submitted.finishedAt === generated.finishedAt &&
       submitted.tournamentId === generated.tournamentId
@@ -104,11 +103,7 @@ export async function saveRound({
   newGames,
 }: SaveRoundInputModel): Promise<GameModel[]> {
   return await db.transaction(async (tx) => {
-    const tournament = await tx
-      .select()
-      .from(tournaments)
-      .where(eq(tournaments.id, tournamentId))
-      .then((rows) => rows.at(0));
+    const tournament = await lockTournament(tx, tournamentId);
     if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
     if (!tournament.startedAt) throw new AppError('TOURNAMENT_NOT_STARTED');
     if (tournament.closedAt) {
@@ -167,7 +162,7 @@ export async function saveRound({
           eq(tournaments.ongoingRound, roundNumber - 1),
         ),
       );
-    if (!advancement.rowsAffected) {
+    if (!advancement.rowCount) {
       throw new AppError('INVALID_ROUND_PROGRESSION');
     }
 
@@ -226,20 +221,16 @@ export async function setTournamentGameResult(
   }
 
   await db.transaction(async (tx) => {
-    const game = (
-      await tx
-        .select({
-          result: games.result,
-          startedAt: tournaments.startedAt,
-          closedAt: tournaments.closedAt,
-        })
-        .from(games)
-        .innerJoin(tournaments, eq(games.tournamentId, tournaments.id))
-        .where(and(eq(games.id, gameId), eq(games.tournamentId, tournamentId)))
-    ).at(0);
+    const tournament = await lockTournament(tx, tournamentId);
+    if (!tournament) throw new AppError('TOURNAMENT_NOT_FOUND');
+    if (tournament.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
+    if (!tournament.startedAt) throw new AppError('TOURNAMENT_NOT_STARTED');
+    const game = await tx
+      .select({ result: games.result })
+      .from(games)
+      .where(and(eq(games.id, gameId), eq(games.tournamentId, tournamentId)))
+      .then((rows) => rows.at(0));
     if (!game) throw new AppError('GAME_NOT_FOUND');
-    if (game.closedAt) throw new AppError('TOURNAMENT_ALREADY_FINISHED');
-    if (!game.startedAt) throw new AppError('TOURNAMENT_NOT_STARTED');
 
     const gameUnits = await tx
       .select({ isOut: tournament_units.isOut })
@@ -329,7 +320,7 @@ export async function applyGameResult({
       colorIndex: sql`COALESCE(${tournament_units.colorIndex}, 0) + ${deltas.white.colorIndex}`,
     })
     .where(whiteMatch);
-  if (!whiteUpdate.rowsAffected) {
+  if (!whiteUpdate.rowCount) {
     throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
@@ -342,7 +333,7 @@ export async function applyGameResult({
       colorIndex: sql`COALESCE(${tournament_units.colorIndex}, 0) + ${deltas.black.colorIndex}`,
     })
     .where(blackMatch);
-  if (!blackUpdate.rowsAffected) {
+  if (!blackUpdate.rowCount) {
     throw new AppError('TOURNAMENT_UNIT_NOT_FOUND');
   }
 
@@ -352,5 +343,5 @@ export async function applyGameResult({
     .update(games)
     .set({ result: nextResult, finishedAt })
     .where(and(eq(games.id, gameId), eq(games.tournamentId, tournamentId)));
-  if (!gameUpdate.rowsAffected) throw new AppError('GAME_NOT_FOUND');
+  if (!gameUpdate.rowCount) throw new AppError('GAME_NOT_FOUND');
 }

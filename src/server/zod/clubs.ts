@@ -1,6 +1,5 @@
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { clubIdInputSchema } from '@/server/zod/common';
-import { statusInClubEnum } from '@/server/zod/enums';
 import { usersSelectSchema } from '@/server/zod/users';
 import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod';
 import z from 'zod';
@@ -15,9 +14,7 @@ export const publicPopularClubSchema = clubsSelectSchema.pick({
   lichessTeam: true,
 });
 
-export const clubsToUsersSelectSchema = createSelectSchema(clubs_to_users, {
-  status: statusInClubEnum,
-});
+export const clubsToUsersSelectSchema = createSelectSchema(clubs_to_users);
 
 export const clubsInsertSchema = createInsertSchema(clubs, {
   name: (s) =>

@@ -72,10 +72,10 @@ export const createTRPCContext = async (opts: {
 
           if (dbUser) {
             user = dbUser;
-            db.update(apiTokens)
+            await db
+              .update(apiTokens)
               .set({ lastUsedAt: new Date() })
-              .where(eq(apiTokens.id, id))
-              .run();
+              .where(eq(apiTokens.id, id));
           }
         } else {
           console.log('Hash mismatch or token not found');
@@ -192,7 +192,7 @@ export const clubAdminProcedure = protectedProcedure
         .select({ id: clubsTable.id })
         .from(clubsTable)
         .where(eq(clubsTable.id, opts.input.clubId))
-        .get();
+        .then((rows) => rows.at(0));
       if (!club) throw new AppError('CLUB_NOT_FOUND');
       throw new AppError('NOT_CLUB_ADMIN');
     }

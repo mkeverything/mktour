@@ -6,17 +6,14 @@ import { AppError } from '@/lib/errors';
 import { withPostHogServer } from '@/lib/posthog-server';
 import { newid } from '@/lib/utils';
 import { db } from '@/server/db';
+import { lockClubs } from '@/server/db/locks';
 import { club_notifications } from '@/server/db/schema/notifications';
 import { affiliations, players } from '@/server/db/schema/players';
-import {
-  games,
-  players_to_units,
-  tournament_units,
-} from '@/server/db/schema/tournaments';
+import { games, players_to_units } from '@/server/db/schema/tournaments';
 import { publishClubNotification } from '@/server/events';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import type { PlayerMergeInputModel } from '@/server/zod/players';
-import { countDistinct, eq, inArray, sql } from 'drizzle-orm';
+import { asc, countDistinct, eq, inArray, sql } from 'drizzle-orm';
 
 const pendingStatuses = ['requested_by_user', 'requested_by_club'];
 
@@ -30,27 +27,29 @@ export async function mergePlayers({
   }
 
   const identityInconsistencies = await db.transaction(async (tx) => {
+    await lockClubs(tx, [clubId]);
     const playerIds = [basePlayerId, mergedPlayerId];
-    const [basePlayer, mergedPlayer, affiliationRows, sharedTournament] =
-      await Promise.all([
-        tx.select().from(players).where(eq(players.id, basePlayerId)).get(),
-        tx.select().from(players).where(eq(players.id, mergedPlayerId)).get(),
-        tx
-          .select()
-          .from(affiliations)
-          .where(inArray(affiliations.playerId, playerIds)),
-        tx
-          .select({ tournamentId: tournament_units.tournamentId })
-          .from(players_to_units)
-          .innerJoin(
-            tournament_units,
-            eq(players_to_units.unitId, tournament_units.id),
-          )
-          .where(inArray(players_to_units.playerId, playerIds))
-          .groupBy(tournament_units.tournamentId)
-          .having(eq(countDistinct(players_to_units.playerId), 2))
-          .get(),
-      ]);
+    const playerRows = await tx
+      .select()
+      .from(players)
+      .where(inArray(players.id, playerIds))
+      .orderBy(asc(players.id))
+      .for('update');
+    const basePlayer = playerRows.find(({ id }) => id === basePlayerId);
+    const mergedPlayer = playerRows.find(({ id }) => id === mergedPlayerId);
+    const affiliationRows = await tx
+      .select()
+      .from(affiliations)
+      .where(inArray(affiliations.playerId, playerIds));
+    // react-doctor-disable-next-line react-doctor/server-sequential-independent-await
+    const sharedTournament = await tx
+      .select({ tournamentId: players_to_units.tournamentId })
+      .from(players_to_units)
+      .where(inArray(players_to_units.playerId, playerIds))
+      .groupBy(players_to_units.tournamentId)
+      .having(eq(countDistinct(players_to_units.playerId), 2))
+      .limit(1)
+      .then((rows) => rows.at(0));
 
     if (!basePlayer || !mergedPlayer) throw new AppError('PLAYER_NOT_FOUND');
     if (basePlayer.clubId !== clubId || mergedPlayer.clubId !== clubId) {
@@ -173,12 +172,14 @@ export async function mergePlayers({
       .where(eq(players.id, basePlayerId));
 
     if (affiliationIdsToDelete.length > 0) {
-      await tx.delete(club_notifications).where(
-        sql`json_extract(${club_notifications.metadata}, '$.affiliationId') in (${sql.join(
-          affiliationIdsToDelete.map((id) => sql`${id}`),
-          sql`, `,
-        )})`,
-      );
+      await tx
+        .delete(club_notifications)
+        .where(
+          inArray(
+            sql`${club_notifications.metadata}->>'affiliationId'`,
+            affiliationIdsToDelete,
+          ),
+        );
       await tx
         .delete(affiliations)
         .where(inArray(affiliations.id, affiliationIdsToDelete));

@@ -1,44 +1,21 @@
-import { lower, lowerLike } from '@/lib/sql-sqlite-string';
+import { lower } from '@/lib/sql-lower';
+import { reverse, sortExpressions, type Ordering } from '@/lib/sql-order';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { player_stats, players } from '@/server/db/schema/players';
 import { tournaments } from '@/server/db/schema/tournaments';
+import { RANK_ORDERS } from '@/server/mutations/player-stats';
 import { ClubModel } from '@/server/zod/clubs';
 import {
   ClubPlayersFilterModel,
   ClubPlayersInputModel,
 } from '@/server/zod/players';
-import {
-  and,
-  asc,
-  countDistinct,
-  desc,
-  eq,
-  or,
-  type AnyColumn,
-  type SQL,
-} from 'drizzle-orm';
-
-type Ordering = [
-  column: AnyColumn | SQL,
-  direction: ClubPlayersFilterModel['order'],
-][];
-
-// rankClubPlayers numbers players in this order, so stored ranks count along the list
-const BY_RATING: Ordering = [
-  [players.rating, 'desc'],
-  [players.ratingDeviation, 'asc'],
-  [players.lastSeenAt, 'asc'],
-  [players.id, 'asc'],
-];
+import { and, countDistinct, desc, eq, ilike, or } from 'drizzle-orm';
 
 const ORDERINGS: Record<ClubPlayersFilterModel['sortBy'], Ordering> = {
-  rating: BY_RATING,
-  tournamentsPlayed: [[player_stats.tournamentsPlayed, 'desc'], ...BY_RATING],
-  nickname: [
-    [lower(players.nickname), 'asc'],
-    [players.id, 'asc'],
-  ],
+  rating: RANK_ORDERS.ratingRank,
+  tournamentsPlayed: RANK_ORDERS.tournamentsPlayedRank,
+  nickname: [[lower(players.nickname), 'asc']],
 };
 
 const selectClubPlayers = () =>
@@ -57,7 +34,11 @@ const selectClubPlayers = () =>
     .innerJoin(player_stats, eq(player_stats.playerId, players.id));
 
 export const getClubInfo = async (id: ClubModel['id']) => {
-  return (await db.select().from(clubs).where(eq(clubs.id, id)).get()) ?? null;
+  return await db
+    .select()
+    .from(clubs)
+    .where(eq(clubs.id, id))
+    .then((rows) => rows.at(0) ?? null);
 };
 
 export const getClubPlayers = async (input: ClubPlayersInputModel) => {
@@ -65,23 +46,21 @@ export const getClubPlayers = async (input: ClubPlayersInputModel) => {
   const pattern = `%${search}%`;
   const offset = cursor ?? 0;
   const ordering = ORDERINGS[sortBy];
-  // asking for the sorted column's other direction reverses the whole list
-  const directions =
-    order === ordering[0][1] ? { asc, desc } : { asc: desc, desc: asc };
+  const [, defaultOrder] = ordering[0];
   const result = await selectClubPlayers()
     .where(
       and(
         eq(players.clubId, clubId),
         search
           ? or(
-              lowerLike(players.nickname, pattern),
-              lowerLike(players.realname, pattern),
+              ilike(players.nickname, pattern),
+              ilike(players.realname, pattern),
             )
           : undefined,
       ),
     )
     .orderBy(
-      ...ordering.map(([column, direction]) => directions[direction](column)),
+      ...sortExpressions(order === defaultOrder ? ordering : reverse(ordering)),
     )
     .offset(offset)
     .limit(limit + 1);
@@ -101,7 +80,7 @@ export const getUserClubPlayer = async ({
 }) => {
   const player = await selectClubPlayers()
     .where(and(eq(players.clubId, clubId), eq(players.userId, userId)))
-    .get();
+    .then((rows) => rows.at(0));
 
   return player ?? null;
 };

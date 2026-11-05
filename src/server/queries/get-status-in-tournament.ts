@@ -5,11 +5,7 @@ import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
 import { clubs_to_users } from '@/server/db/schema/clubs';
 import { players } from '@/server/db/schema/players';
-import {
-  players_to_units,
-  tournament_units,
-  tournaments,
-} from '@/server/db/schema/tournaments';
+import { players_to_units, tournaments } from '@/server/db/schema/tournaments';
 import { TournamentAuthStatusModel } from '@/server/zod/tournaments';
 
 export const getStatusInTournamentWithClubId = cache(
@@ -48,14 +44,10 @@ export const getStatusInTournamentWithClubId = cache(
           unitId: players_to_units.unitId,
         })
         .from(players_to_units)
-        .innerJoin(
-          tournament_units,
-          eq(players_to_units.unitId, tournament_units.id),
-        )
         .where(
           and(
             eq(players_to_units.playerId, player.id),
-            eq(tournament_units.tournamentId, tournamentId),
+            eq(players_to_units.tournamentId, tournamentId),
           ),
         )
     ).at(0);

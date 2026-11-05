@@ -27,8 +27,6 @@ function makeGame(overrides: Partial<GameModel> = {}): GameModel {
     gameNumber: 1,
     roundNumber: 1,
     roundName: null,
-    whitePrevGameId: null,
-    blackPrevGameId: null,
     whitePlayerId: null,
     blackPlayerId: null,
     result: null,

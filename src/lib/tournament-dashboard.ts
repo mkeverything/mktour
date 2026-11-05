@@ -1,7 +1,4 @@
-import {
-  PlayerUnitInsertModel,
-  UnitInsertModel,
-} from '@/server/zod/tournaments';
+import { UnitInsertModel } from '@/server/zod/tournaments';
 
 const MAX_TEAM_NICKNAME_LENGTH = 30;
 
@@ -42,21 +39,6 @@ export function createUnit(
     draws: 0,
     colorIndex: 0,
     place: null,
-    isOut: null,
-  };
-}
-export function createUnitMember({
-  playerId,
-  unitId,
-  numberInUnit,
-}: Pick<
-  PlayerUnitInsertModel,
-  'playerId' | 'unitId' | 'numberInUnit'
->): PlayerUnitInsertModel {
-  return {
-    id: `${playerId}_${unitId}`,
-    playerId,
-    unitId,
-    numberInUnit,
+    isOut: false,
   };
 }

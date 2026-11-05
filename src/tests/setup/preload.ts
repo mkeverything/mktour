@@ -18,8 +18,7 @@ mock.module('next/cache', () => ({
   revalidateTag: () => {},
 }));
 const lucia = await import('@/lib/auth/lucia');
-const { fixtures, seedComprehensiveTestData } =
-  await import('@/server/db/seed');
+const { fixtures, seedTestData } = await import('@/server/db/seed');
 mock.module('@/lib/auth/lucia', () => ({
   ...lucia,
   validateRequest: async () => ({
@@ -44,7 +43,7 @@ const skipSeed =
 
 if (!skipSeed) {
   console.log('seeding test database...');
-  await seedComprehensiveTestData();
+  await seedTestData();
   console.log('🌱 test database seeded');
 } else {
   console.log('⏭️  skipping database seed (SKIP_SEED=1)');
