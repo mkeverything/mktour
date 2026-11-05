@@ -1,5 +1,6 @@
 'use client';
 
+import { countPendingInboxMutations } from '@/components/hooks/query-hooks/use-club-inbox';
 import { useTRPC } from '@/components/trpc/client';
 import type { UserEventModel } from '@/server/zod/events';
 import { QueryClient } from '@tanstack/react-query';
@@ -21,10 +22,16 @@ export const handleUserEvent = (
       break;
     case 'club-notification':
       queryClient.invalidateQueries({
-        queryKey: trpc.club.notifications.all.infiniteQueryKey({
+        queryKey: trpc.club.inbox.counter.queryKey({
           clubId: event.clubId,
         }),
       });
+      if (!countPendingInboxMutations(queryClient, trpc))
+        queryClient.invalidateQueries({
+          queryKey: trpc.club.inbox.all.infiniteQueryKey({
+            clubId: event.clubId,
+          }),
+        });
       break;
   }
 };

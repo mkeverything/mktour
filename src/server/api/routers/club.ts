@@ -25,7 +25,9 @@ import {
   getUserClubPlayer,
 } from '@/server/queries/club';
 import getAllClubsInfinite from '@/server/queries/get-all-clubs-infinite';
-import getClubNotifications from '@/server/queries/get-club-notifications';
+import getClubInbox, {
+  getClubInboxCounter,
+} from '@/server/queries/get-club-inbox';
 import { getClubStats } from '@/server/queries/get-club-stats';
 import { getClubTournamentsInfinite } from '@/server/queries/get-club-tournaments-infinite';
 import getStatusInClub from '@/server/queries/get-status-in-club';
@@ -47,7 +49,11 @@ import {
   paginatedInputSchema,
   userIdInputSchema,
 } from '@/server/zod/common';
-import { clubNotificationExtendedSchema } from '@/server/zod/notifications';
+import { statusInClubEnum } from '@/server/zod/enums';
+import {
+  clubInboxCounterSchema,
+  clubInboxOutputSchema,
+} from '@/server/zod/notifications';
 import {
   affiliationExtendedSchema,
   clubPlayerOutputSchema,
@@ -157,7 +163,7 @@ export const clubRouter = createTRPCRouter({
   authStatus: publicProcedure
     .meta(meta.clubAuthStatus)
     .input(clubIdInputSchema)
-    .output(z.enum(['co-owner', 'admin']).nullable())
+    .output(statusInClubEnum.nullable())
     .query(async (opts) => {
       if (!opts.ctx.user || !opts.ctx.clubs) {
         const { user } = await validateRequest();
@@ -182,7 +188,7 @@ export const clubRouter = createTRPCRouter({
       .input(
         clubIdInputSchema.extend({
           userId: userIdInputSchema.shape.userId,
-          status: z.enum(['co-owner', 'admin']),
+          status: statusInClubEnum,
         }),
       )
       .output(z.void())
@@ -205,26 +211,22 @@ export const clubRouter = createTRPCRouter({
         revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${input.userId}`, 'max');
       }),
   }),
-  notifications: {
+  inbox: {
     all: clubAdminProcedure
-      .meta(meta.clubNotifications)
-      .input(
-        clubIdInputSchema.extend({
-          limit: z.number().min(1).max(100).optional().default(20),
-          cursor: z.number().nullable().default(0),
-        }),
-      )
-      .output(
-        z.object({
-          notifications: z.array(clubNotificationExtendedSchema),
-          nextCursor: z.number().nullable(),
-        }),
-      )
+      .meta(meta.clubInbox)
+      .input(clubPaginatedInputSchema)
+      .output(clubInboxOutputSchema)
       .query(async ({ input }) => {
-        return await getClubNotifications({
+        return await getClubInbox({
           ...input,
           cursor: input.cursor ?? 0,
         });
+      }),
+    counter: clubAdminProcedure
+      .meta(meta.clubInboxCounter)
+      .output(clubInboxCounterSchema)
+      .query(async ({ input }) => {
+        return await getClubInboxCounter(input.clubId);
       }),
     toggleSeen: clubAdminProcedure
       .meta(meta.clubToggleSeen)

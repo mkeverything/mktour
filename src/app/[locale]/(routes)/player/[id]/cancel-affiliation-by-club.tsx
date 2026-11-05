@@ -29,11 +29,7 @@ const CancelAffiliationByClub: FC<{
   const router = useRouter();
   const handleClick = () => {
     mutate(
-      {
-        playerId,
-        clubId,
-        skipNotification: isOwnPlayer,
-      },
+      { playerId, clubId },
       {
         onSuccess: () => {
           setOpen(false);

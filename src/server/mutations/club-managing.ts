@@ -11,6 +11,7 @@ import {
   user_notifications,
 } from '@/server/db/schema/notifications';
 import {
+  affiliations,
   player_stats,
   players,
   rating_events,
@@ -399,13 +400,31 @@ export const addClubManager = async ({
     id: newid(),
     userId: userId,
     event: 'became_club_manager',
-    isSeen: false,
-    createdAt: new Date(),
-    metadata: { clubId: clubId, role: status },
+    clubId,
+    metadata: { role: status },
   };
   await db.transaction(async (tx) => {
+    await lockClubs(tx, [clubId]);
     await tx.insert(clubs_to_users).values(newRelation);
     await tx.insert(user_notifications).values(userNotification);
+
+    const [request] = await tx
+      .update(affiliations)
+      .set({ status: 'approved', updatedAt: new Date() })
+      .where(
+        and(
+          eq(affiliations.userId, userId),
+          eq(affiliations.clubId, clubId),
+          eq(affiliations.status, 'requested'),
+        ),
+      )
+      .returning({ playerId: affiliations.playerId });
+    if (request) {
+      await tx
+        .update(players)
+        .set({ userId })
+        .where(eq(players.id, request.playerId));
+    }
 
     if (status !== 'admin') return;
 
@@ -434,6 +453,7 @@ export const addClubManager = async ({
     }
   });
   publishUserNotification(userId);
+  publishClubNotification(clubId);
 };
 
 export const deleteClubManager = async ({
@@ -449,13 +469,25 @@ export const deleteClubManager = async ({
     getStatusInClub({ userId: user.id, clubId }),
     getStatusInClub({ userId, clubId }),
   ]);
-  if (targetStatus === 'co-owner') throw new AppError('FORBIDDEN');
+  if (targetStatus !== 'admin') throw new AppError('FORBIDDEN');
   if (authorStatus !== 'co-owner') throw new AppError('FORBIDDEN');
-  await db
-    .delete(clubs_to_users)
-    .where(
-      and(eq(clubs_to_users.clubId, clubId), eq(clubs_to_users.userId, userId)),
-    );
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(clubs_to_users)
+      .where(
+        and(
+          eq(clubs_to_users.clubId, clubId),
+          eq(clubs_to_users.userId, userId),
+        ),
+      );
+    await tx.insert(user_notifications).values({
+      id: newid(),
+      userId,
+      event: 'removed_from_club_managers',
+      clubId,
+    });
+  });
+  publishUserNotification(userId);
 };
 
 /** in each club the user is leaving with no other co-owner, the longest-serving admin becomes co-owner */
@@ -510,9 +542,9 @@ export const promoteSuccessorCoOwners = async (
       id: newid(),
       userId,
       event: 'became_club_manager',
-      isSeen: false,
       createdAt: promotedAt,
-      metadata: { clubId, role: 'co-owner' },
+      clubId,
+      metadata: { role: 'co-owner' },
     })),
   );
   return successors.map(({ userId }) => userId);
@@ -568,9 +600,7 @@ export const leaveClub = async ({
       id: newid(),
       clubId,
       event: 'manager_left',
-      isSeen: false,
-      createdAt: new Date(),
-      metadata: { userId },
+      userId,
     });
     return successorIds;
   });

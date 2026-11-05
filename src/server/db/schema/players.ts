@@ -3,7 +3,8 @@ import { clubs } from '@/server/db/schema/clubs';
 import { affiliationStatus } from '@/server/db/schema/enums';
 import { tournaments } from '@/server/db/schema/tournaments';
 import { users } from '@/server/db/schema/users';
-import { sql } from 'drizzle-orm';
+import { openAffiliationStatusEnum } from '@/server/zod/enums';
+import { inArray, sql } from 'drizzle-orm';
 import {
   boolean,
   check,
@@ -149,6 +150,8 @@ export const player_stats = pgTable(
 
 // user_id: the user of mktour used with lichess account who initiated the affiliation
 // player_id: the actual player being affiliated
+// each row is one request and its outcome: a closed row never changes, and a
+// new request is a new row
 export const affiliations = pgTable(
   'affiliation',
   {
@@ -172,9 +175,11 @@ export const affiliations = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.id] }),
-    uniqueIndex('affiliation_user_club_unique_idx').on(
-      table.userId,
-      table.clubId,
-    ),
+    uniqueIndex('affiliation_open_user_club_unique_idx')
+      .on(table.userId, table.clubId)
+      .where(inArray(table.status, openAffiliationStatusEnum.options)),
+    uniqueIndex('affiliation_open_player_unique_idx')
+      .on(table.playerId)
+      .where(inArray(table.status, openAffiliationStatusEnum.options)),
   ],
 );

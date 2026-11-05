@@ -1,7 +1,8 @@
 import { AppError } from '@/lib/errors';
 import { db } from '@/server/db';
 import { affiliations, players } from '@/server/db/schema/players';
-import { and, eq, getColumns } from 'drizzle-orm';
+import { openAffiliationStatusEnum } from '@/server/zod/enums';
+import { and, eq, getColumns, inArray } from 'drizzle-orm';
 import { User } from 'lucia';
 
 export async function getUserClubAffiliation(
@@ -19,7 +20,11 @@ export async function getUserClubAffiliation(
     })
     .from(affiliations)
     .where(
-      and(eq(affiliations.clubId, clubId), eq(affiliations.userId, user.id)),
+      and(
+        eq(affiliations.clubId, clubId),
+        eq(affiliations.userId, user.id),
+        inArray(affiliations.status, openAffiliationStatusEnum.options),
+      ),
     )
     .innerJoin(players, eq(affiliations.playerId, players.id));
 

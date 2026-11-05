@@ -2,49 +2,52 @@ import {
   club_notifications,
   user_notifications,
 } from '@/server/db/schema/notifications';
+import { clubsSelectSchema } from '@/server/zod/clubs';
+import { statusInClubEnum } from '@/server/zod/enums';
 import {
-  affiliationMinimalSchema,
-  playersMinimalSchema,
+  clubAffiliationSchema,
   playerOutputSchema,
+  playerPublicSchema,
+  playersMinimalSchema,
 } from '@/server/zod/players';
+import { tournamentSchema } from '@/server/zod/tournaments';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
-import {
-  createInsertSchema,
-  createSelectSchema,
-  createUpdateSchema,
-} from 'drizzle-orm/zod';
+import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod';
 import z from 'zod';
 
-const notificationMetadataSchema = z.record(z.string(), z.unknown());
+const userNotificationRefinements = {
+  metadata: () => z.object({ role: statusInClubEnum }),
+};
+const clubNotificationRefinements = {
+  metadata: () => z.object({ mergedPlayerNickname: z.string() }),
+};
 
 export const userNotificationsSelectSchema = createSelectSchema(
   user_notifications,
-  { metadata: notificationMetadataSchema },
+  userNotificationRefinements,
 );
 export const clubNotificationsSelectSchema = createSelectSchema(
   club_notifications,
-  { metadata: notificationMetadataSchema },
+  clubNotificationRefinements,
 );
 export const userNotificationsInsertSchema = createInsertSchema(
   user_notifications,
-  { metadata: notificationMetadataSchema },
+  userNotificationRefinements,
 );
 export const clubNotificationsInsertSchema = createInsertSchema(
   club_notifications,
-  { metadata: notificationMetadataSchema },
+  clubNotificationRefinements,
 );
-export const userNotificationsUpdateSchema = createUpdateSchema(
-  user_notifications,
-  { metadata: notificationMetadataSchema },
-);
-export const clubNotificationsUpdateSchema = createUpdateSchema(
-  club_notifications,
-  { metadata: notificationMetadataSchema },
-);
+
+export const userNotificationExtendedSchema = z.object({
+  notification: userNotificationsSelectSchema,
+  player: playerPublicSchema.pick({ id: true, nickname: true }).nullable(),
+  club: clubsSelectSchema.nullable(),
+  tournament: tournamentSchema.pick({ id: true, title: true }).nullable(),
+});
 
 export const clubNotificationExtendedSchema =
   clubNotificationsSelectSchema.extend({
-    affiliation: affiliationMinimalSchema.nullable(),
     user: usersSelectMinimalSchema.nullable(),
     player: playerOutputSchema
       .transform(({ clubId, ...player }) => player)
@@ -52,54 +55,36 @@ export const clubNotificationExtendedSchema =
       .nullable(),
   });
 
-export type UserNotificationMetadataMap = {
-  affiliation_approved: { clubId: string; affiliationId: string };
-  affiliation_rejected: { clubId: string; affiliationId: string };
-  tournament_won: { tournamentId: string; name: string };
-  became_club_manager: { clubId: string; role: 'co-owner' | 'admin' };
-  removed_from_club_managers: { clubId: string };
-};
+export const userNotificationsOutputSchema = z.object({
+  notifications: z.array(userNotificationExtendedSchema),
+  nextCursor: z.number().nullable(),
+});
 
-export type ClubNotificationMetadataMap = {
-  affiliation_request: {
-    userId: string;
-    playerId: string;
-    affiliationId: string;
-  };
-  manager_left: { userId: string };
-  affiliation_request_approved: {
-    userId: string;
-    playerId: string;
-    affiliationId: string;
-  };
-  affiliation_request_rejected: {
-    userId: string;
-    playerId: string;
-  };
-  affiliation_cancelled: { userId: string; playerId: string };
-  player_merged: { playerId: string; mergedPlayerNickname: string };
-};
+export const clubInboxItemSchema = z.discriminatedUnion('kind', [
+  clubAffiliationSchema.extend({ kind: z.literal('affiliation') }),
+  clubNotificationExtendedSchema.extend({ kind: z.literal('notification') }),
+]);
 
-export type ClubNotificationExtendedModel = z.infer<
-  typeof clubNotificationExtendedSchema
->;
+export const clubInboxOutputSchema = z.object({
+  items: z.array(clubInboxItemSchema),
+  nextCursor: z.number().nullable(),
+});
 
-export type UserNotificationModel = z.infer<
-  typeof userNotificationsSelectSchema
->;
+export const clubInboxCounterSchema = z.object({
+  requests: z.number(),
+  notifications: z.number(),
+});
+
 export type UserNotificationInsertModel = z.infer<
   typeof userNotificationsInsertSchema
 >;
-export type UserNotificationUpdateModel = z.infer<
-  typeof userNotificationsUpdateSchema
+export type UserNotificationExtendedModel = z.infer<
+  typeof userNotificationExtendedSchema
 >;
 
-export type ClubNotificationModel = z.infer<
-  typeof clubNotificationsSelectSchema
->;
 export type ClubNotificationInsertModel = z.infer<
   typeof clubNotificationsInsertSchema
 >;
-export type ClubNotificationUpdateModel = z.infer<
-  typeof clubNotificationsUpdateSchema
+export type ClubNotificationExtendedModel = z.infer<
+  typeof clubNotificationExtendedSchema
 >;

@@ -1,16 +1,14 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
 
 export const affiliationStatus = pgEnum('affiliation_status', [
-  'requested_by_user',
-  'requested_by_club',
-  'active',
+  'requested',
+  'approved',
+  'rejected',
+  'cancelled',
 ]);
 export const statusInClub = pgEnum('status_in_club', ['admin', 'co-owner']);
 export const clubNotificationEvent = pgEnum('club_notification_event', [
-  'affiliation_request',
   'manager_left',
-  'affiliation_request_approved',
-  'affiliation_request_rejected',
   'affiliation_cancelled',
   'player_merged',
 ]);
