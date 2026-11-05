@@ -25,7 +25,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import posthog from 'posthog-js';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -108,14 +107,6 @@ const AddNewPlayer = ({
     mutate(
       { tournamentId: id, player: playerWithId, addedAt },
       {
-        onSuccess: () => {
-          posthog.capture('player_added_to_tournament', {
-            tournament_id: id,
-            player_id: playerWithId.id,
-            has_lichess_account: false,
-            source: 'new_player',
-          });
-        },
         onError: () => {
           form.reset(player, { keepDefaultValues: true });
           form.setFocus('nickname');

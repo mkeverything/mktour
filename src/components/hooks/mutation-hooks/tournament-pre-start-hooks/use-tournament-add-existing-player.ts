@@ -9,6 +9,7 @@ import { newid } from '@/lib/utils';
 import { type PlayerWithUsernameModel } from '@/server/zod/players';
 import { UnitModel } from '@/server/zod/tournaments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import posthog from 'posthog-js';
 import { toast } from 'sonner';
 
 export const useTournamentAddExistingPlayer = (tournamentId: string) => {
@@ -63,7 +64,15 @@ export const useTournamentAddExistingPlayer = (tournamentId: string) => {
           { id: `add-player-error-${data.player.id}` },
         );
       },
-      onSuccess: applyServerPreStartUnitsIfLatest,
+      onSuccess: (units, data) => {
+        applyServerPreStartUnitsIfLatest(units);
+        posthog.capture('player_added_to_tournament', {
+          tournament_id: tournamentId,
+          player_id: data.player.id,
+          has_lichess_account: !!data.player.username,
+          source: 'club_player',
+        });
+      },
       onSettled: () => settle('addSoloUnit'),
     }),
   );

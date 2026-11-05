@@ -29,7 +29,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import posthog from 'posthog-js';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -224,24 +223,12 @@ const AddDoublesUnit = ({
     setTimeout(() => form.setFocus('nickname'), 0);
 
     const addedAt = new Date();
-    const unitId = newid();
-    addDoublesUnit.mutate(
-      {
-        tournamentId,
-        ...payload,
-        unitId,
-        addedAt,
-      },
-      {
-        onSuccess: () => {
-          posthog.capture('player_added_to_tournament', {
-            tournament_id: tournamentId,
-            unit_id: unitId,
-            source: 'doubles_unit',
-          });
-        },
-      },
-    );
+    addDoublesUnit.mutate({
+      tournamentId,
+      ...payload,
+      unitId: newid(),
+      addedAt,
+    });
   };
 
   return (
