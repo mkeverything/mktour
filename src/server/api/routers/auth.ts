@@ -6,6 +6,7 @@ import { newid, timeout } from '@/lib/utils';
 import meta from '@/server/api/meta';
 import {
   authProcedure,
+  clubAdminProcedure,
   protectedProcedure,
   publicProcedure,
 } from '@/server/api/trpc';
@@ -135,10 +136,9 @@ export const authRouter = {
         value: team.id,
       }));
     }),
-  selectClub: protectedProcedure
+  selectClub: clubAdminProcedure
     .meta(meta.authSelectClub)
     .output(z.string())
-    .input(clubIdInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { selectedClub } = await selectClub({
         ...input,

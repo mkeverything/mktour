@@ -334,22 +334,30 @@ export const deleteClubFunction = async ({
   await db.transaction((tx) => deleteClubRows(tx, clubId));
 };
 
-// memberships and games keep a player who played from being deleted, and the
-// club reaches them through both its players and its tournaments: tournaments go first.
-// everyone who has the club selected moves to a club they co-own
-export const deleteClubRows = async (tx: Transaction, clubId: string) => {
-  await tx
+/** everyone who has the club selected, or only the given user, moves to a club they co-own */
+const moveSelectionFromClub = (
+  tx: Transaction,
+  clubId: string,
+  userId?: string,
+) =>
+  tx
     .update(users)
     .set({ selectedClub: clubs_to_users.clubId })
     .from(clubs_to_users)
     .where(
       and(
         eq(users.selectedClub, clubId),
+        userId ? eq(users.id, userId) : undefined,
         eq(clubs_to_users.userId, users.id),
         ne(clubs_to_users.clubId, clubId),
         eq(clubs_to_users.status, 'co-owner'),
       ),
     );
+
+// memberships and games keep a player who played from being deleted, and the
+// club reaches them through both its players and its tournaments: tournaments go first
+export const deleteClubRows = async (tx: Transaction, clubId: string) => {
+  await moveSelectionFromClub(tx, clubId);
   await tx.delete(tournaments).where(eq(tournaments.clubId, clubId));
   await tx.delete(clubs).where(eq(clubs.id, clubId));
 };
@@ -480,6 +488,7 @@ export const deleteClubManager = async ({
           eq(clubs_to_users.userId, userId),
         ),
       );
+    await moveSelectionFromClub(tx, clubId, userId);
     await tx.insert(user_notifications).values({
       id: newid(),
       userId,
