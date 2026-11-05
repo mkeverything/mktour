@@ -7,12 +7,15 @@ out. news that can't be attached to a row is dropped; the two are counted apart.
 */
 import { AppError } from '@/lib/errors';
 import { newid } from '@/lib/utils';
+import type { Transaction } from '@/server/db';
 import type {
   club_notifications,
   user_notifications,
 } from '@/server/db/schema/notifications';
+import { affiliations, players } from '@/server/db/schema/players';
 import { type AffiliationStatus, statusInClubEnum } from '@/server/zod/enums';
 import type { AffiliationInsertModel } from '@/server/zod/players';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import z from 'zod';
 
 export type SourceAffiliation = Omit<AffiliationInsertModel, 'status'> & {
@@ -257,4 +260,36 @@ export function reshapeAffiliations({
       clubRows.length -
       requestNotifications,
   };
+}
+
+// a linked player and its approved affiliation are written together; both
+// one-open-affiliation rules rely on it
+export async function assertLinksMatchAffiliations(tx: Transaction) {
+  const approved = and(
+    eq(affiliations.playerId, players.id),
+    eq(affiliations.userId, players.userId),
+    eq(affiliations.status, 'approved'),
+  );
+  const [linkWithoutAffiliation] = await tx
+    .select({ id: players.id })
+    .from(players)
+    .leftJoin(affiliations, approved)
+    .where(and(isNotNull(players.userId), isNull(affiliations.id)))
+    .limit(1);
+  const [affiliationWithoutLink] = await tx
+    .select({ id: affiliations.id })
+    .from(affiliations)
+    .leftJoin(players, approved)
+    .where(and(eq(affiliations.status, 'approved'), isNull(players.id)))
+    .limit(1);
+  if (linkWithoutAffiliation) {
+    throw new AppError('DATABASE_MIGRATION_ERROR', {
+      cause: `player ${linkWithoutAffiliation.id} is linked without an approved affiliation`,
+    });
+  }
+  if (affiliationWithoutLink) {
+    throw new AppError('DATABASE_MIGRATION_ERROR', {
+      cause: `affiliation ${affiliationWithoutLink.id} is approved but its player isn't linked`,
+    });
+  }
 }

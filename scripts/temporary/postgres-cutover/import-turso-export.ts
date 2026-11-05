@@ -9,16 +9,7 @@ import { relations } from '@/server/db/relations';
 import * as schema from '@/server/db/schema';
 import { refreshPlayerStats } from '@/server/mutations/player-stats';
 import { Database } from 'bun:sqlite';
-import {
-  and,
-  eq,
-  getColumns,
-  getTableName,
-  is,
-  isNotNull,
-  isNull,
-  type Column,
-} from 'drizzle-orm';
+import { getColumns, getTableName, is, type Column } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import {
   PgBoolean,
@@ -28,6 +19,7 @@ import {
   PgTimestamp,
 } from 'drizzle-orm/pg-core';
 import {
+  assertLinksMatchAffiliations,
   reshapeAffiliations,
   type SourceAffiliation,
   type SourceNotification,
@@ -218,42 +210,7 @@ const counts = await db.transaction(async (tx) => {
   imported['left out request notifications'] = reshaped.requestNotifications;
   imported['dropped notifications'] = reshaped.droppedNotifications;
 
-  // a linked player and its approved affiliation are written together; both
-  // one-open-affiliation rules rely on it
-  const approved = and(
-    eq(schema.affiliations.playerId, schema.players.id),
-    eq(schema.affiliations.userId, schema.players.userId),
-    eq(schema.affiliations.status, 'approved'),
-  );
-  const [linkWithoutAffiliation] = await tx
-    .select({ id: schema.players.id })
-    .from(schema.players)
-    .leftJoin(schema.affiliations, approved)
-    .where(
-      and(isNotNull(schema.players.userId), isNull(schema.affiliations.id)),
-    )
-    .limit(1);
-  const [affiliationWithoutLink] = await tx
-    .select({ id: schema.affiliations.id })
-    .from(schema.affiliations)
-    .leftJoin(schema.players, approved)
-    .where(
-      and(
-        eq(schema.affiliations.status, 'approved'),
-        isNull(schema.players.id),
-      ),
-    )
-    .limit(1);
-  if (linkWithoutAffiliation) {
-    fail(
-      `player ${linkWithoutAffiliation.id} is linked without an approved affiliation`,
-    );
-  }
-  if (affiliationWithoutLink) {
-    fail(
-      `affiliation ${affiliationWithoutLink.id} is approved but its player isn't linked`,
-    );
-  }
+  await assertLinksMatchAffiliations(tx);
 
   const players = await tx
     .select({ playerId: schema.players.id, clubId: schema.players.clubId })

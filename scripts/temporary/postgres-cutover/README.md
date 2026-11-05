@@ -88,6 +88,22 @@ container keeps the environment it was created with.
 docker compose -f /etc/mktour/beta/compose.yml start beta-$(mktour-app-route beta)
 ```
 
+## beta, reshaped in place
+
+beta moved before `reshape-affiliations.ts` existed, so `mktour_beta` holds old statuses,
+request notifications and json ids, which fail the affiliations migration's enum casts.
+with beta's serving slot stopped and a dump taken, run from the repository root:
+
+```sh
+TARGET_DATABASE_URL='<postgres url>' \
+  bun scripts/temporary/postgres-cutover/reshape-beta-in-place.ts
+```
+
+it stashes the affiliation and notification rows in a `reshape` schema, applies the
+migrations to the emptied tables and reshapes the stash back into them, printing the
+same counts as the import. a failed reshape rolls back but keeps the stash, so a rerun
+resumes from it; a reshaped database is refused.
+
 ## cleanup after cutover
 
 once both beta and main are verified, delete `scripts/temporary/postgres-cutover/`, the
