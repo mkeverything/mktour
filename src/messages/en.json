@@ -283,7 +283,7 @@
     "PAIR_PLAYERS_NOT_FOUND": "could not find selected players",
     "PLAYER_ALREADY_IN_PAIR": "one of selected players is already in a team",
     "PLAYER_ALREADY_IN_UNIT": "this player is already in the tournament",
-    "PLAYER_EXISTS_ERROR": "this player already exists!",
+    "PLAYER_EXISTS_ERROR": "a player in this club already has this nickname",
     "PLAYER_HAS_TOURNAMENTS": "sorry! can't delete a player who's in a tournament. you'd have to delete the tournament first",
     "PLAYER_MERGE_BOTH_HAVE_AFFILIATIONS": "both players have a link or a pending link request",
     "PLAYER_MERGE_SAME_PLAYER": "choose two different players",
