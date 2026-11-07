@@ -3,6 +3,7 @@ import Graph from 'graphology';
 import type { ChessTournamentEntity } from '@/lib/pairing-generators/common-generator';
 import { getSwissColouredPair } from '@/lib/pairing-generators/swiss-generator/colouring';
 import { EDGE_WEIGHT_ATTRIBUTE } from '@/lib/pairing-generators/swiss-generator/matching/weighted-operations';
+import { compareScoresDescending } from '@/lib/pairing-generators/swiss-generator/ordering';
 import {
   canEntityReceivePAB,
   getTopscorers,
@@ -20,8 +21,14 @@ import {
 /** Maps score values to the count of players with that score. */
 type ScoregroupSizeMap = Map<number, number>;
 
+/** maps each occupied score to its bracket level index, 0 being the highest. */
+type LevelIndexMap = Map<number, number>;
+
 /** Default count when a scoregroup has not been seen yet. */
 const DEFAULT_SCOREGROUP_COUNT = 0;
+
+/** level index of the highest occupied score. */
+const TOP_LEVEL_INDEX = 0;
 
 /** Graph type for pairing graphs - always undirected. */
 const GRAPH_TYPE = 'undirected' as const;
@@ -49,6 +56,35 @@ function computeScoregroupSizes(
 }
 
 /**
+ * indexes the occupied scores as bracket levels, highest score first.
+ *
+ * only occupied scores are levels (FIDE C.04.3 1.3), so the difference of two
+ * indices counts the brackets a player exits when floating between them.
+ *
+ * @param scoregroupSizes - map from score to count of players with that score
+ * @returns map from each occupied score to its level index, 0 being the highest
+ */
+function computeLevelIndexByScore(
+  scoregroupSizes: ScoregroupSizeMap,
+): LevelIndexMap {
+  const occupiedScores = [...scoregroupSizes.keys()];
+  occupiedScores.sort(compareScoresDescending);
+
+  const levelIndexByScore: LevelIndexMap = new Map();
+
+  for (
+    let levelIndex = TOP_LEVEL_INDEX;
+    levelIndex < occupiedScores.length;
+    levelIndex++
+  ) {
+    const score = occupiedScores[levelIndex];
+    levelIndexByScore.set(score, levelIndex);
+  }
+
+  return levelIndexByScore;
+}
+
+/**
  * Creates weight context for a round.
  *
  * Contains all tournament parameters needed for weight calculations.
@@ -62,6 +98,7 @@ export function createWeightContext(
   roundNumber: number,
 ): WeightContext {
   const scoregroupSizes = computeScoregroupSizes(players);
+  const levelIndexByScore = computeLevelIndexByScore(scoregroupSizes);
 
   return {
     roundNumber,
@@ -70,6 +107,7 @@ export function createWeightContext(
     maxPossibleScore: roundNumber - 1,
     hasOddPlayers: players.length % 2 === 1,
     scoregroupSizes,
+    levelIndexByScore,
   };
 }
 
