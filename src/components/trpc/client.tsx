@@ -8,13 +8,14 @@ import {
   createTRPCClient,
   httpBatchLink,
   httpSubscriptionLink,
-  retryLink,
   splitLink,
 } from '@trpc/client';
 import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { useState } from 'react';
 import SuperJSON from 'superjson';
+import { fetchWithTimeout, retrySubscriptionLink } from './links';
 import { makeQueryClient } from './query-client';
+
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
 let browserQueryClient: QueryClient;
 function getQueryClient() {
@@ -47,11 +48,7 @@ export function TRPCReactProvider(
         splitLink({
           condition: (op) => op.type === 'subscription',
           true: [
-            // errors from the server carry data and are final; a lost connection is retried
-            retryLink({
-              retry: ({ error }) => !error.data,
-              retryDelayMs: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
-            }),
+            retrySubscriptionLink,
             httpSubscriptionLink({
               transformer: SuperJSON,
               url: getUrl(),
@@ -60,6 +57,7 @@ export function TRPCReactProvider(
           false: httpBatchLink({
             transformer: SuperJSON,
             url: getUrl(),
+            fetch: fetchWithTimeout,
           }),
         }),
       ],

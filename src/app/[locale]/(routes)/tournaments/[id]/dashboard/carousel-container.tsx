@@ -23,6 +23,7 @@ const CarouselContainer: FC<CarouselProps> = ({
 }) => {
   const [api, setApi] = useState<CarouselApi>();
   const indexOfTab = tabs.findIndex((tab) => tab.title === currentTab);
+  const [startIndex] = useState(indexOfTab);
 
   const handleSelect = useCallback(() => {
     if (!api) return;
@@ -45,7 +46,11 @@ const CarouselContainer: FC<CarouselProps> = ({
   }, [api, currentTab, indexOfTab]);
 
   return (
-    <Carousel setApi={setApi} opts={{ loop: false }} className="select-none">
+    <Carousel
+      setApi={setApi}
+      opts={{ loop: false, startIndex }}
+      className="select-none"
+    >
       <CarouselContent className="h-[calc(100dvh_-_var(--spacing-mk-navbar-total-height)_-_2.5rem)]">
         {tabs.map((tab) => (
           <CarouselIteratee setScrolling={setScrolling} key={tab.title}>

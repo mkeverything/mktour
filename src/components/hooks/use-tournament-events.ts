@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSubscription } from '@trpc/tanstack-react-query';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import posthog from 'posthog-js';
 import { Dispatch, SetStateAction, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -26,7 +27,7 @@ export const useTournamentEvents = (
   const router = useRouter();
   const { pendingWriters, refresh } = useTournamentCache(tournamentId);
 
-  const { status } = useSubscription(
+  const { status, reset } = useSubscription(
     trpc.tournament.events.subscriptionOptions(
       { tournamentId },
       {
@@ -60,13 +61,24 @@ export const useTournamentEvents = (
   const reconnecting = status === 'connecting';
   useEffect(() => {
     if (!reconnecting) return;
-    const timeout = setTimeout(
-      () => toast.loading(t('reconnecting'), { id: 'realtimeReconnecting' }),
-      RECONNECTING_TOAST_DELAY_MS,
-    );
+    const timeout = setTimeout(() => {
+      toast.loading(t('reconnecting'), { id: 'realtimeReconnecting' });
+      posthog.capture('realtime_stream_down', { tournament_id: tournamentId });
+    }, RECONNECTING_TOAST_DELAY_MS);
     return () => {
       clearTimeout(timeout);
       toast.dismiss('realtimeReconnecting');
     };
-  }, [reconnecting, t]);
+  }, [reconnecting, t, tournamentId]);
+
+  // ios safari drops the stream of a hidden page; reconnect at once when it is back
+  useEffect(() => {
+    if (status === 'pending') return;
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') reset();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [status, reset]);
 };

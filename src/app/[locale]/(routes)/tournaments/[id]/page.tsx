@@ -7,6 +7,7 @@ import { dehydrate, HydrationBoundary, noop } from '@tanstack/react-query';
 import { TRPCError } from '@trpc/server';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { SearchParams } from 'next/dist/server/request/search-params';
 import { notFound } from 'next/navigation';
 
 const notFoundOnMissing = (e: unknown): never => {
@@ -16,6 +17,7 @@ const notFoundOnMissing = (e: unknown): never => {
 
 export default async function TournamentPage(props: TournamentPageProps) {
   const { id: tournamentId } = await props.params;
+  const { tab } = await props.searchParams;
   const queryClient = getQueryClient();
   const [user, authStatus] = await Promise.all([
     publicCaller.auth.info(),
@@ -37,6 +39,7 @@ export default async function TournamentPage(props: TournamentPageProps) {
         status={authStatus.status}
         unitId={unitId}
         userId={user?.id}
+        tab={typeof tab === 'string' ? tab : undefined}
       />
     </HydrationBoundary>
   );
@@ -86,4 +89,5 @@ export async function generateMetadata(
 
 export interface TournamentPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<SearchParams>;
 }
