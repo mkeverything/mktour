@@ -1,11 +1,9 @@
 'use client';
 
-import {
-  DASHBOARD_TABS,
-  DashboardTab,
-} from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
+import { DashboardTab } from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/dashboard-context';
 import DashboardDesktop from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/desktop/dashboard-desktop';
 import DashboardMobile from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/mobile/dashboard-mobile';
+import tabs from '@/app/[locale]/(routes)/tournaments/[id]/dashboard/tabs';
 import { MediaQueryContext } from '@/components/providers/media-query-context';
 import { TournamentAuthStatus } from '@/server/zod/enums';
 import {
@@ -25,17 +23,18 @@ const Dashboard: FC<TournamentPageContentProps> = ({
   tab,
 }) => {
   const [currentTab, setCurrentTab] = useState<DashboardTab>(
-    () => DASHBOARD_TABS.find((dashboardTab) => dashboardTab === tab) ?? 'main',
+    () => tabs.find(({ title }) => title === tab)?.title ?? 'main',
   );
   const { isDesktop } = useContext(MediaQueryContext);
   const Component = isDesktop ? DashboardDesktop : DashboardMobile;
 
-  // a reload keeps the tab the viewer was on
   useEffect(() => {
     const url = new URL(window.location.href);
     if (currentTab === 'main') url.searchParams.delete('tab');
     else url.searchParams.set('tab', currentTab);
-    window.history.replaceState(null, '', url);
+    if (url.href !== window.location.href) {
+      window.history.replaceState(null, '', url);
+    }
   }, [currentTab]);
 
   return (

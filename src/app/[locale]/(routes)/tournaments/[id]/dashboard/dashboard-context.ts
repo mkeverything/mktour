@@ -1,9 +1,7 @@
 import { TournamentAuthStatus } from '@/server/zod/enums';
 import { createContext, Dispatch, SetStateAction } from 'react';
 
-export const DASHBOARD_TABS = ['main', 'table', 'games'] as const;
-
-export type DashboardTab = (typeof DASHBOARD_TABS)[number];
+export type DashboardTab = 'main' | 'table' | 'games';
 
 export const DashboardContext = createContext<DashboardContextType>({
   status: 'viewer',

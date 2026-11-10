@@ -8,7 +8,8 @@ const MAX_RETRY_DELAY_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 20_000;
 
 // errors from the server carry data and are final; a lost connection is retried.
-// the backoff starts over once a connection opens, so a later drop reconnects quickly
+// the backoff starts over once a connection opens, so a later drop reconnects quickly.
+// unlike trpc's retryLink, it does not resume `tracked()` event ids
 export const retrySubscriptionLink: TRPCLink<AppRouter> =
   () =>
   ({ op, next }) =>
@@ -49,7 +50,7 @@ export const fetchWithTimeout = async (
   const controller = new AbortController();
   const abort = () => controller.abort();
   if (init?.signal?.aborted) abort();
-  init?.signal?.addEventListener('abort', abort);
+  init?.signal?.addEventListener('abort', abort, { once: true });
   let timedOut = false;
   const timeout = setTimeout(() => {
     timedOut = true;
