@@ -58,6 +58,8 @@ export const fetchWithTimeout = async (
     abort();
   }, REQUEST_TIMEOUT_MS);
   try {
+    // trpc checks the status and reads error payloads; this only buffers the body
+    // react-doctor-disable-next-line react-doctor/no-fetch-response-used-without-status-check
     const response = await fetch(url, { ...init, signal: controller.signal });
     const body = await response.text();
     return new Response(body || null, response);
