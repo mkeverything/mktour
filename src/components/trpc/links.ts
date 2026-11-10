@@ -42,7 +42,8 @@ export const retrySubscriptionLink: TRPCLink<AppRouter> =
     });
 
 // a request on a dead connection (e.g. after ios safari resumes a page) can hang
-// for minutes; failing it lets the user try again
+// for minutes; failing it lets the user try again. the body is read under the same
+// timer, because a connection can also stall after the headers arrive
 export const fetchWithTimeout = async (
   url: RequestInfo | URL,
   init?: RequestInit,
@@ -57,7 +58,9 @@ export const fetchWithTimeout = async (
     abort();
   }, REQUEST_TIMEOUT_MS);
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    const body = await response.text();
+    return new Response(body || null, response);
   } catch (error) {
     if (!timedOut) throw error;
     posthog.capture('request_timed_out', {

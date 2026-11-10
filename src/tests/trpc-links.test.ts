@@ -122,6 +122,34 @@ describe('fetch with timeout', () => {
     });
   });
 
+  test('fails a request whose body stalls after the headers', async () => {
+    spyOn(globalThis, 'fetch').mockImplementation(((
+      _url: string,
+      init: RequestInit,
+    ) =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream({
+            start: (controller) =>
+              init.signal?.addEventListener('abort', () =>
+                controller.error(new DOMException('aborted', 'AbortError')),
+              ),
+          }),
+        ),
+      )) as never);
+
+    const request = fetchWithTimeout(url, { method: 'POST' });
+    await Promise.resolve();
+    jest.advanceTimersByTime(20_000);
+
+    await expect(request).rejects.toMatchObject({
+      message: 'REQUEST_TIMEOUT',
+    });
+    expect(capture).toHaveBeenCalledWith('request_timed_out', {
+      procedures: 'tournament.setGameResult,tournament.units',
+    });
+  });
+
   test('keeps an abort from the caller as it is', async () => {
     const controller = new AbortController();
     const request = fetchWithTimeout(url, { signal: controller.signal });
@@ -132,9 +160,12 @@ describe('fetch with timeout', () => {
   });
 
   test('gives the response when it comes in time', async () => {
-    const response = new Response('{}');
-    spyOn(globalThis, 'fetch').mockResolvedValue(response);
+    spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('{"ok":true}', { status: 207 }),
+    );
 
-    expect(await fetchWithTimeout(url)).toBe(response);
+    const response = await fetchWithTimeout(url);
+    expect(response.status).toBe(207);
+    expect(await response.json()).toEqual({ ok: true });
   });
 });
