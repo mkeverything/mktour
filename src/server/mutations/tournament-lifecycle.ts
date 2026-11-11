@@ -50,7 +50,7 @@ export const createTournament = async (
     date: string;
   },
 ) => {
-  if (values.type !== 'solo' && values.rated) {
+  if (values.type !== 'solo' && values.isRated) {
     throw new AppError('DOUBLES_TOURNAMENT_CANNOT_BE_RATED');
   }
   const newTournamentID = newid();
@@ -324,7 +324,7 @@ export async function finishTournament({
       .set({ lastSeenAt: closedAt })
       .where(inArray(players.id, playerIds));
 
-    if (tournament.rated) {
+    if (tournament.isRated) {
       await calculateAndApplyGlickoRatings(tournamentId, tx, closedAt);
     }
 

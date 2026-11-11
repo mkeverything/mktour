@@ -64,7 +64,7 @@ const generateRandomClubModel = mock<() => ClubModel>(() => {
     description: randomDescription,
     createdAt: randomCreatedAt,
     lichessTeam: randomLichessTeam,
-    allowPlayersSetResults: true,
+    isPlayerSelfReportingEnabled: true,
   };
   return randomClub;
 });
@@ -93,7 +93,7 @@ export const generateRandomDatabaseTournament = mock<() => TournamentModel>(
       closedAt: randomEndDate,
       roundsNumber: randomRoundsNumber,
       ongoingRound: INITIAL_ONGOING_ROUND,
-      rated: randomIsRated,
+      isRated: randomIsRated,
     };
 
     return randomTournament;

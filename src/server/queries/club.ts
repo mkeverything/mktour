@@ -93,7 +93,7 @@ export const getPublicPopularClubs = async (limit: number) => {
       description: clubs.description,
       createdAt: clubs.createdAt,
       lichessTeam: clubs.lichessTeam,
-      // allowPlayersSetResults: clubs.allowPlayersSetResults, // this is internal setting, why to include here?
+      // isPlayerSelfReportingEnabled: clubs.isPlayerSelfReportingEnabled, // this is internal setting, why to include here?
     })
     .from(clubs)
     .leftJoin(tournaments, eq(clubs.id, tournaments.clubId))

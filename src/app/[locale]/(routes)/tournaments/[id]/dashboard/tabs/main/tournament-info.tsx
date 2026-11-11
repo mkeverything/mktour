@@ -69,7 +69,7 @@ const TournamentInfoList = () => {
           <MetaChip icon={UserRound} label={t(`Types.${data.type}`)} />
           <MetaChip
             icon={ChartNoAxesCombinedIcon}
-            label={data.rated ? t('rated') : t('unrated')}
+            label={data.isRated ? t('rated') : t('unrated')}
           />
         </div>
         {data.format === 'swiss' && (
@@ -98,7 +98,7 @@ const TournamentInfoList = () => {
         )}
         <InfoItem
           icon={ChartNoAxesCombinedIcon}
-          value={data.rated ? t('rated') : t('unrated')}
+          value={data.isRated ? t('rated') : t('unrated')}
         />
         <InfoItem icon={CalendarDays} value={formattedDate} />
       </div>

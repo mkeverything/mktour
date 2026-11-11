@@ -127,7 +127,7 @@ export const tournamentFinishOutputSchema = z.object({
 export const tournamentInfoSchema = z.object({
   tournament: tournamentSchema,
   club: clubsSelectSchema.pick({
-    allowPlayersSetResults: true,
+    isPlayerSelfReportingEnabled: true,
     id: true,
     name: true,
   }),
@@ -176,7 +176,7 @@ const newTournamentFormSchemaConfig = {
   format: tournamentFormatEnum,
   type: tournamentTypeEnum,
   clubId: z.string(),
-  rated: z.boolean(),
+  isRated: z.boolean(),
 };
 
 export const newTournamentFormSchema = z.object(newTournamentFormSchemaConfig);

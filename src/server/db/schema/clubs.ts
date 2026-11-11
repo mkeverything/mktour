@@ -20,7 +20,7 @@ export const clubs = pgTable(
       precision: 3,
     }).notNull(),
     lichessTeam: text('lichess_team').unique(),
-    allowPlayersSetResults: boolean('allow_players_set_results')
+    isPlayerSelfReportingEnabled: boolean('is_player_self_reporting_enabled')
       .notNull()
       .default(true),
   },

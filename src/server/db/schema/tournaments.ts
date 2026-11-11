@@ -40,7 +40,7 @@ export const tournaments = pgTable(
     closedAt: timestamp('closed_at', { withTimezone: true, precision: 3 }),
     roundsNumber: integer('rounds_number').notNull(), // necessary even if playing single elimination (final and match_for_third have same number);
     ongoingRound: integer('ongoing_round').default(1).notNull(),
-    rated: boolean('rated').notNull().default(true),
+    isRated: boolean('is_rated').notNull().default(true),
   },
   (table) => [
     primaryKey({ columns: [table.id] }),

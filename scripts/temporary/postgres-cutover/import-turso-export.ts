@@ -54,7 +54,11 @@ const SOURCE_QUERIES: Record<string, string> = {
     from players_to_units
     join tournament_units on tournament_units.id = players_to_units.unit_id`,
 };
-const RENAMED_COLUMNS: Record<string, string> = { 'tournament.title': 'name' };
+const RENAMED_COLUMNS: Record<string, string> = {
+  'tournament.title': 'name',
+  'tournament.is_rated': 'rated',
+  'club.is_player_self_reporting_enabled': 'allow_players_set_results',
+};
 // nullable in sqlite, not null with a default here
 const NULLS_TO_DEFAULT = new Set(['tournament_units.is_out']);
 // the sqlite schema stored these as `timestamp_ms`; every other timestamp is in seconds

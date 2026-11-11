@@ -51,7 +51,7 @@ import { useRef, useTransition } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
-const DEFAULT_RATED = true;
+const DEFAULT_IS_RATED = true;
 
 export default function NewTournamentForm({
   clubs,
@@ -64,7 +64,7 @@ export default function NewTournamentForm({
       format: undefined,
       date: new Date(),
       type: 'solo',
-      rated: DEFAULT_RATED,
+      isRated: DEFAULT_IS_RATED,
     },
   });
   const t = useTranslations('MakeTournament');
@@ -78,7 +78,7 @@ export default function NewTournamentForm({
     name: 'type',
   });
   const isDoubles = tournamentType === 'doubles';
-  const soloRatedRef = useRef(DEFAULT_RATED);
+  const soloIsRatedRef = useRef(DEFAULT_IS_RATED);
 
   const handleSubmit = (data: NewTournamentFormModel) => {
     mutate(
@@ -92,7 +92,7 @@ export default function NewTournamentForm({
             tournament_id: result.id,
             format: data.format,
             type: data.type,
-            rated: data.rated,
+            rated: data.isRated,
             club_id: data.clubId,
           });
           startNavigation(() => {
@@ -234,11 +234,11 @@ export default function NewTournamentForm({
                   <RadioGroup
                     onValueChange={(value) => {
                       if (value === 'doubles') {
-                        soloRatedRef.current = form.getValues('rated');
-                        form.setValue('rated', false);
+                        soloIsRatedRef.current = form.getValues('isRated');
+                        form.setValue('isRated', false);
                       }
                       if (value === 'solo')
-                        form.setValue('rated', soloRatedRef.current);
+                        form.setValue('isRated', soloIsRatedRef.current);
                       field.onChange(value);
                     }}
                     defaultValue={field.value}
@@ -260,7 +260,7 @@ export default function NewTournamentForm({
             />
             <FormField
               control={form.control}
-              name="rated"
+              name="isRated"
               render={({ field }) => (
                 <div className="flex items-center space-x-2">
                   <Label htmlFor="rated" className="text-muted-foreground">
