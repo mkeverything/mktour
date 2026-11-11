@@ -20,7 +20,7 @@
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
     "knip": "knip-bun --use-tsconfig-files",
-    "generate-erd": "bun run src/lib/generate-erd.ts",
+    "generate-erd": "bunx drizzle-erd --in src/server/db/schema/index.ts --out docs/erd.svg",
     "prepare": "husky",
     "generate-openapi": "bun run --conditions=react-server src/server/api/generateOpenApi.ts > src/app/api/spec/openapi-spec.json",
     "test": "bun db:test && bun test",
