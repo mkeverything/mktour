@@ -48,7 +48,7 @@ const GameItem: FC<GameProps> = ({
   const hasStarted = !!data?.hasStarted;
   const isActive = selected && hasStarted;
   const isClosed = !!data?.isClosed;
-  const allowPlayersSetResults = !!data?.allowPlayersSetResults;
+  const isPlayerSelfReportingEnabled = !!data?.isPlayerSelfReportingEnabled;
   // players can only edit their own games, and only after tournament has started
   const isPlayerUnitInGame = unitId === whiteUnitId || unitId === blackUnitId;
   const canEdit =
@@ -67,7 +67,9 @@ const GameItem: FC<GameProps> = ({
       return;
     }
     const playerBlockedByClubSetting =
-      status === 'player' && isPlayerUnitInGame && !allowPlayersSetResults;
+      status === 'player' &&
+      isPlayerUnitInGame &&
+      !isPlayerSelfReportingEnabled;
     if (playerBlockedByClubSetting) {
       toast.warning(t('player result setting disabled'));
       return;

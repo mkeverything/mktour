@@ -206,7 +206,7 @@ export async function calculateAndApplyGlickoRatings(
   publishedAt: Date,
 ): Promise<void> {
   const tournament = await tx
-    .select({ rated: tournaments.rated })
+    .select({ isRated: tournaments.isRated })
     .from(tournaments)
     .where(eq(tournaments.id, tournamentId))
     .then((rows) => rows[0]);
@@ -214,7 +214,7 @@ export async function calculateAndApplyGlickoRatings(
   if (!tournament) {
     throw new AppError('TOURNAMENT_NOT_FOUND');
   }
-  if (!tournament.rated) return;
+  if (!tournament.isRated) return;
 
   const gameRows = await getTournamentGameRows(tournamentId, tx);
   // react-doctor-disable-next-line react-doctor/server-sequential-independent-await

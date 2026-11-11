@@ -48,14 +48,14 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     name: '',
     description: null,
     lichessTeam: null,
-    allowPlayersSetResults: true,
+    isPlayerSelfReportingEnabled: true,
   };
   const initialValues = data
     ? {
         name: data.name,
         description: data.description,
         lichessTeam: data.lichessTeam,
-        allowPlayersSetResults: data.allowPlayersSetResults,
+        isPlayerSelfReportingEnabled: data.isPlayerSelfReportingEnabled,
       }
     : defaultValues;
 
@@ -142,7 +142,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
               )}
               <FormField
                 control={form.control}
-                name="allowPlayersSetResults"
+                name="isPlayerSelfReportingEnabled"
                 render={({ field }) => (
                   <FormItem className="rounded-md border p-4">
                     <div className="flex items-center justify-between gap-4">

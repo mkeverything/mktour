@@ -199,7 +199,7 @@ describe('finishing a tournament', () => {
     const { tournamentId, playerIds } = fixtures.ready.next().value!;
     await db
       .update(tournaments)
-      .set({ rated: false })
+      .set({ isRated: false })
       .where(eq(tournaments.id, tournamentId));
     const before = await eventsOf(playerIds[0]);
     await finishTournament({ tournamentId });

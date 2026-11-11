@@ -185,7 +185,7 @@ export async function setTournamentGameResult(
         startedAt: tournaments.startedAt,
         closedAt: tournaments.closedAt,
         clubId: tournaments.clubId,
-        allowPlayersSetResults: clubs.allowPlayersSetResults,
+        isPlayerSelfReportingEnabled: clubs.isPlayerSelfReportingEnabled,
       })
       .from(games)
       .innerJoin(tournaments, eq(games.tournamentId, tournaments.id))
@@ -210,7 +210,7 @@ export async function setTournamentGameResult(
   }
 
   if (authStatus === 'player') {
-    if (!gameContext.allowPlayersSetResults) {
+    if (!gameContext.isPlayerSelfReportingEnabled) {
       throw new AppError('PLAYER_RESULT_SETTING_DISABLED');
     }
 

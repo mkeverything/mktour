@@ -19,7 +19,7 @@ export default async function getAllClubsInfinite({
         description: clubs.description,
         createdAt: clubs.createdAt,
         lichessTeam: clubs.lichessTeam,
-        allowPlayersSetResults: clubs.allowPlayersSetResults,
+        isPlayerSelfReportingEnabled: clubs.isPlayerSelfReportingEnabled,
       })
       .from(clubs)
       .innerJoin(tournaments, eq(clubs.id, tournaments.clubId))

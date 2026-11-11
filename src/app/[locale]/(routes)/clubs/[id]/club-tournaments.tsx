@@ -114,7 +114,7 @@ const TournamentRow: FC<{ tournament: TournamentModel }> = ({ tournament }) => {
   const fallbackTitle = useTournamentFallbackTitle(tournament);
   const isLive = Boolean(tournament.startedAt && !tournament.closedAt);
   const details = [
-    tournament.rated ? t('rated') : t('unrated'),
+    tournament.isRated ? t('rated') : t('unrated'),
     t(tournament.format),
     t(`Types.${tournament.type}`),
   ];

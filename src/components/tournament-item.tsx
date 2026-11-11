@@ -14,7 +14,7 @@ const TournamentItem = ({ club, tournament }: Props) => {
   const fallbackTitle = useTournamentFallbackTitle(tournament);
   const title = tournament.title || fallbackTitle;
   const details = [
-    ['rated', tournament.rated ? t('rated') : t('unrated')],
+    ['rated', tournament.isRated ? t('rated') : t('unrated')],
     ['format', t(format)],
     ['type', t(`Types.${type}`)],
     ['date', formatDate(date, 'short')],

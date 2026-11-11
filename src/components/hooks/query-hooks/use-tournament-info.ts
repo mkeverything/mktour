@@ -11,7 +11,7 @@ export const useTournamentGameResultInfo = (tournamentId: string) => {
   return useQuery({
     ...trpc.tournament.info.queryOptions({ tournamentId }),
     select: (data) => ({
-      allowPlayersSetResults: !!data.club.allowPlayersSetResults,
+      isPlayerSelfReportingEnabled: !!data.club.isPlayerSelfReportingEnabled,
       hasStarted: !!data.tournament.startedAt,
       isClosed: !!data.tournament.closedAt,
     }),
@@ -28,7 +28,7 @@ export const useTournamentSummaryInfo = (tournamentId: string) => {
       closedAt: data.tournament.closedAt,
       date: data.tournament.date,
       format: data.tournament.format,
-      rated: data.tournament.rated,
+      isRated: data.tournament.isRated,
       tournamentId: data.tournament.id,
       type: data.tournament.type,
     }),

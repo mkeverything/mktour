@@ -15,7 +15,7 @@ const SEEDED_AT = new Date();
 type SeedPlayer = ReturnType<typeof playerRows>[number];
 type SeedTournament = Pick<
   typeof schema.tournaments.$inferInsert,
-  'id' | 'clubId' | 'type' | 'rated' | 'roundsNumber' | 'ongoingRound'
+  'id' | 'clubId' | 'type' | 'isRated' | 'roundsNumber' | 'ongoingRound'
 > & {
   closed?: boolean;
   units: { players: SeedPlayer[]; place?: number }[];
@@ -74,7 +74,7 @@ const soloRound = (
   id,
   clubId,
   type: 'solo',
-  rated: true,
+  isRated: true,
   roundsNumber: 1,
   ongoingRound: 1,
   units: players.map((player) => ({ players: [player] })),
@@ -124,7 +124,7 @@ const HISTORY: SeedClub[] = ids('history', 3).map((clubId) => {
     players,
     tournaments: ids(`${clubId}-round`, 3).map((id) => ({
       ...soloRound(id, clubId, [players[1], players[3]], ['1-0']),
-      rated: false,
+      isRated: false,
       closed: true,
     })),
   };
@@ -141,7 +141,7 @@ const DOUBLES: SeedClub = (() => {
   const doubles = {
     clubId,
     type: 'doubles',
-    rated: false,
+    isRated: false,
     roundsNumber: 2,
   } as const;
   return {
