@@ -77,7 +77,7 @@ const AddNewPlayer = ({
     if (!validation.valid) {
       form.setError('nickname', {
         type: 'manual',
-        message: t('player exists error'),
+        message: 'PLAYER_EXISTS_ERROR',
       });
       return;
     }
