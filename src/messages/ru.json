@@ -283,7 +283,7 @@
     "PAIR_PLAYERS_NOT_FOUND": "не получилось найти участников пары",
     "PLAYER_ALREADY_IN_PAIR": "игрок уже в паре",
     "PLAYER_ALREADY_IN_UNIT": "этот игрок уже есть в турнире",
-    "PLAYER_EXISTS_ERROR": "в этом клубе уже есть игрок с таким именем",
+    "PLAYER_EXISTS_ERROR": "этот игрок уже существует!",
     "PLAYER_HAS_TOURNAMENTS": "простите! нельзя удалять игрока, который участвовал в турнирах. для этого придётся удалить и турниры тоже",
     "PLAYER_MERGE_BOTH_HAVE_AFFILIATIONS": "у обоих игроков есть привязка или заявка на привязку",
     "PLAYER_MERGE_SAME_PLAYER": "выберите двух разных игроков",
