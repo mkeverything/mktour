@@ -81,6 +81,35 @@ describe('list pagination', () => {
     expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
   });
 
+  test("player.results returns each of the player's tournaments exactly once, with their result", async () => {
+    // the second player wins a two-player round in every tournament of the club
+    const [, playerId] = playerIds;
+    const ids = await collectIds(async (cursor) => {
+      const page = await publicCaller.player.results({
+        playerId,
+        limit: PAGE_SIZE,
+        cursor,
+      });
+      for (const result of page.results) {
+        expect(result).toMatchObject({
+          unit: { place: null, wins: 1, draws: 0, losses: 0 },
+          unitsCount: 2,
+        });
+      }
+      return [
+        page.results.map(({ tournament }) => tournament.id),
+        page.nextCursor,
+      ];
+    });
+    const expected = await db
+      .select({ id: tournaments.id })
+      .from(tournaments)
+      .where(eq(tournaments.clubId, clubId));
+
+    expect(ids.length).toBe(new Set(ids).size);
+    expect(ids.toSorted()).toEqual(expected.map(({ id }) => id).toSorted());
+  });
+
   test('club.players sorts both ways, rating and tournaments along their stored ranks', async () => {
     const collectRows = (filter: ClubPlayersFilterModel) =>
       collectIds(async (cursor) => {

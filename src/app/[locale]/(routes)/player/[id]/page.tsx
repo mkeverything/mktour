@@ -1,20 +1,14 @@
-import { turboPascal } from '@/app/fonts';
 import { AffiliateButton } from '@/app/[locale]/(routes)/player/[id]/affiliate-button';
 import ClaimPlayer from '@/app/[locale]/(routes)/player/[id]/claim-button';
 import EditButton from '@/app/[locale]/(routes)/player/[id]/edit-button';
-import PlayerStats from '@/app/[locale]/(routes)/player/[id]/player-stats';
-import LastTournaments from '@/components/last-tournaments';
-import { PlayerRatingRank } from '@/components/ui-custom/player-stats';
-import { CardTitle } from '@/components/ui/card';
+import Ledger from '@/app/[locale]/(routes)/player/[id]/ledger/ledger';
 import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
-import { PlayerModel } from '@/server/zod/players';
-import { ChevronRight, Users2 } from 'lucide-react';
+import { getQueryClient, trpc } from '@/server/api/query-client';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { ResolvingMetadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { FC } from 'react';
 import 'server-only';
 
 export default async function PlayerPage(props: PlayerPageProps) {
@@ -27,76 +21,56 @@ export default async function PlayerPage(props: PlayerPageProps) {
   if (playerData.user) permanentRedirect(`/user/${playerData.user.username}`);
 
   const { club, ...player } = playerData;
-  const [status, affiliation, playerLastTournaments, requestedByOther] =
-    await Promise.all([
-      publicCaller.club.authStatus({
-        clubId: club.id,
-      }),
-      publicCaller.auth.affiliationInClub({ clubId: club.id }),
-      publicCaller.player.lastTournaments({ playerId: player.id }),
-      publicCaller.player.affiliation.requestedByOther({ playerId: player.id }),
-    ]);
+  const queryClient = getQueryClient();
+  const [status, affiliation, requestedByOther] = await Promise.all([
+    publicCaller.club.authStatus({ clubId: club.id }),
+    publicCaller.auth.affiliationInClub({ clubId: club.id }),
+    publicCaller.player.affiliation.requestedByOther({ playerId: player.id }),
+    queryClient.prefetchQuery(
+      trpc.player.stats.public.queryOptions({ playerId: player.id }),
+    ),
+    queryClient.prefetchQuery(
+      trpc.player.stats.auth.queryOptions({ playerId: player.id }),
+    ),
+    queryClient.prefetchQuery(
+      trpc.player.ratingHistory.queryOptions({ playerId: player.id }),
+    ),
+    queryClient.prefetchInfiniteQuery(
+      trpc.player.results.infiniteQueryOptions(
+        { playerId: player.id, cursor: undefined },
+        { getNextPageParam: (lastPage) => lastPage.nextCursor },
+      ),
+    ),
+    queryClient.prefetchQuery(
+      trpc.club.stats.queryOptions({ clubId: club.id }),
+    ),
+  ]);
 
   const canEdit = status !== null;
   const canClaim = !status && user && !player.userId;
   const canAffiliate =
     status !== null && !player.userId && !affiliation && !requestedByOther;
+  const actions = (
+    <>
+      {canAffiliate && <AffiliateButton player={player} />}
+      {user && canEdit && (
+        <EditButton
+          player={{ playerId: player.id, ...player }}
+          status={status}
+        />
+      )}
+      {canClaim && (
+        <ClaimPlayer clubId={club.id} requestedByOther={requestedByOther} />
+      )}
+    </>
+  );
 
   return (
-    <div className="mk-container flex w-full flex-col gap-4">
-      {/* Club Context Bar */}
-      <Link
-        href={`/clubs/${club.id}`}
-        className="bg-secondary/50 hover:bg-secondary/70 flex items-center justify-between rounded-lg px-4 py-3 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Users2 className="text-muted-foreground size-4" />
-          <span className="text-sm font-medium">{club.name}</span>
-        </div>
-        <ChevronRight className="text-muted-foreground size-4" />
-      </Link>
-      <PlayerHeader player={player} />
-      {/* Action Toolbar */}
-      <div className="flex justify-end gap-2">
-        {canAffiliate && <AffiliateButton player={player} />}
-        {user && canEdit && (
-          <EditButton
-            player={{ playerId: player.id, ...player }}
-            status={status}
-          />
-        )}
-        {canClaim && (
-          <ClaimPlayer clubId={club.id} requestedByOther={requestedByOther} />
-        )}
-      </div>
-      <PlayerStats clubName={club.name} player={player} />
-      <LastTournaments tournaments={playerLastTournaments} />
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Ledger player={player} club={club} actions={actions} />
+    </HydrationBoundary>
   );
 }
-
-const PlayerHeader: FC<{ player: PlayerModel }> = ({ player }) => (
-  <div className="p-mk">
-    <div className="flex items-center justify-between">
-      <div className="flex flex-col gap-1">
-        <CardTitle className={`text-4xl font-light ${turboPascal.className}`}>
-          <h1>{player.nickname}</h1>
-        </CardTitle>
-        {player.realname && (
-          <span className="text-muted-foreground text-sm">
-            {player.realname}
-          </span>
-        )}
-      </div>
-      <div className="flex items-baseline gap-2">
-        <PlayerRatingRank playerId={player.id} />
-        <span className="text-3xl font-bold">
-          {player.isEstablished ? player.rating : `${player.rating}?`}
-        </span>
-      </div>
-    </div>
-  </div>
-);
 
 export async function generateMetadata(
   props: {

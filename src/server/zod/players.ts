@@ -10,9 +10,13 @@ import {
   rating_events,
 } from '@/server/db/schema/players';
 import { clubsSelectSchema } from '@/server/zod/clubs';
-import { clubPaginatedInputSchema } from '@/server/zod/common';
+import {
+  clubPaginatedInputSchema,
+  paginatedInputSchema,
+  playerIdInputSchema,
+} from '@/server/zod/common';
 import { usersSelectMinimalSchema } from '@/server/zod/users';
-import { tournamentSchema } from '@/server/zod/tournaments';
+import { tournamentSchema, unitSelectSchema } from '@/server/zod/tournaments';
 import {
   createInsertSchema,
   createSelectSchema,
@@ -55,6 +59,42 @@ export const ratingEventSchema = createSelectSchema(rating_events, {
     s
       .min(GLICKO2_CONSTANTS.MIN_RATING, { error: 'MIN_RATING' })
       .max(GLICKO2_CONSTANTS.MAX_RATING, { error: 'MAX_RATING' }),
+});
+const ratingHistoryEventSchema = ratingEventSchema
+  .pick({ id: true, publishedAt: true, rating: true, isStarting: true })
+  .extend({
+    isEstablished: z.boolean(),
+    tournament: tournamentSchema
+      .pick({ id: true, title: true, format: true, date: true })
+      .nullable(),
+  });
+// like the player's own rating, an event publishes whether it was established instead of its rd
+export const ratingHistoryOutputSchema = z.array(
+  ratingHistoryEventSchema
+    .omit({ isEstablished: true })
+    .extend({ ratingDeviation: ratingEventSchema.shape.ratingDeviation })
+    .transform(({ ratingDeviation, ...event }) => ({
+      ...event,
+      isEstablished: isEstablishedRating(ratingDeviation),
+    }))
+    .pipe(ratingHistoryEventSchema),
+);
+export const playerResultsInputSchema = paginatedInputSchema.extend(
+  playerIdInputSchema.shape,
+);
+const playerResultSchema = z.object({
+  tournament: tournamentSchema,
+  unit: unitSelectSchema.pick({
+    place: true,
+    wins: true,
+    draws: true,
+    losses: true,
+  }),
+  unitsCount: z.number(),
+});
+export const playerResultsOutputSchema = z.object({
+  results: z.array(playerResultSchema),
+  nextCursor: z.number().nullable(),
 });
 export const playersWithUsernameSchema = playerPublicSchema.extend({
   username: z.string().nullable(),
@@ -256,6 +296,8 @@ export const userPlayerClubSchema = z.object({
     ),
 });
 
+export type RatingHistoryEventModel = z.infer<typeof ratingHistoryEventSchema>;
+export type PlayerResultModel = z.infer<typeof playerResultSchema>;
 export type PlayerStatsModel = z.infer<typeof playerStatsSchema>;
 export type PlayerStatsRowModel = z.infer<typeof playerStatsRowSchema>;
 export type PlayerAuthStatsModel = z.infer<typeof playerAuthStatsSchema>;

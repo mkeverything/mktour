@@ -105,7 +105,7 @@ const MEMBER = userRow('club-member');
 const USERS = ids('user', 4).map(userRow);
 
 const CLUBS = ids('club', 5).map((id) => newClub(id));
-const READY = ids('ready', 20).map((id) => newClub(id, ['1-0', '1-0']));
+const READY = ids('ready', 21).map((id) => newClub(id, ['1-0', '1-0']));
 const ONGOING = ids('ongoing', 4).map((id) => newClub(id, ['1-0', null]));
 
 // founded on one date, so club lists tie. the first of four players is rated

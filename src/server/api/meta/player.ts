@@ -28,6 +28,24 @@ export const playerMeta = {
     },
   },
 
+  playersResults: {
+    openapi: {
+      method: 'GET',
+      path: '/players/{playerId}/results',
+      summary: 'get player tournament results',
+      tags: ['players'],
+    },
+  },
+
+  playersRatingHistory: {
+    openapi: {
+      method: 'GET',
+      path: '/players/{playerId}/rating-history',
+      summary: 'get player rating history',
+      tags: ['players'],
+    },
+  },
+
   playersDelete: {
     openapi: {
       method: 'DELETE',

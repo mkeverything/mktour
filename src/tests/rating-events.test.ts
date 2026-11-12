@@ -4,6 +4,7 @@ import { asc, eq } from 'drizzle-orm';
 import { AppError } from '@/lib/errors';
 import { GLICKO2_CONSTANTS } from '@/lib/glicko2';
 import { newid } from '@/lib/utils';
+import { publicCaller } from '@/server/api';
 import { db } from '@/server/db';
 import { players, rating_events } from '@/server/db/schema/players';
 import { fixtures } from '@/server/db/seed';
@@ -111,6 +112,35 @@ describe('rating events', () => {
 
     expect(await eventsOf(byeOnly)).toHaveLength(1);
     expect(await playerRow(byeOnly)).toEqual(byeBefore);
+  });
+
+  test('the public history lists published ratings oldest first, each with its source tournament', async () => {
+    const {
+      tournamentId,
+      playerIds: [playerId],
+    } = fixtures.ready.next().value!;
+    const publishedAt = new Date();
+    await publish(tournamentId, publishedAt);
+
+    const history = await publicCaller.player.ratingHistory({ playerId });
+    const player = await playerRow(playerId);
+
+    expect(history).toMatchObject([
+      {
+        isStarting: true,
+        rating: 1500,
+        isEstablished: false,
+        tournament: null,
+      },
+      {
+        isStarting: false,
+        publishedAt,
+        rating: player.rating,
+        isEstablished: false,
+        tournament: { id: tournamentId },
+      },
+    ]);
+    expect(history[0]).not.toHaveProperty('ratingDeviation');
   });
 
   test("brings inactive participants' rd forward before rating, for both sides", async () => {

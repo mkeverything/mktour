@@ -26,6 +26,8 @@ import getPlayer from '@/server/queries/get-player';
 import { getUserClubIds } from '@/server/queries/get-user-clubs';
 import {
   getPlayerAuthStats,
+  getPlayerRatingHistory,
+  getPlayerResults,
   getPlayerStats,
   getPlayersTournamentsInfinite,
 } from '@/server/queries/player';
@@ -37,7 +39,10 @@ import {
   playerMergeInputSchema,
   playerOutputSchema,
   playerInfoOutputSchema,
+  playerResultsInputSchema,
+  playerResultsOutputSchema,
   playerStatsSchema,
+  ratingHistoryOutputSchema,
 } from '@/server/zod/players';
 import { tournamentSchema } from '@/server/zod/tournaments';
 import { and, eq, ne } from 'drizzle-orm';
@@ -67,6 +72,22 @@ export const playerRouter = {
     .query(async (opts) => {
       const { input } = opts;
       return await getPlayersTournamentsInfinite(input.playerId);
+    }),
+  results: publicProcedure
+    .meta(meta.playersResults)
+    .input(playerResultsInputSchema)
+    .output(playerResultsOutputSchema)
+    .query(async (opts) => {
+      const { input } = opts;
+      return await getPlayerResults(input.playerId, input.limit, input.cursor);
+    }),
+  ratingHistory: publicProcedure
+    .meta(meta.playersRatingHistory)
+    .input(playerIdInputSchema)
+    .output(ratingHistoryOutputSchema)
+    .query(async (opts) => {
+      const { input } = opts;
+      return await getPlayerRatingHistory(input.playerId);
     }),
   affiliation: {
     request: protectedProcedure

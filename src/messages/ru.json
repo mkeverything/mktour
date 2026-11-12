@@ -219,6 +219,38 @@
       "h2hEmptyForClub": "похоже, у вас ещё не было партий против {player} в клубе {club}",
       "total": "всего",
       "you": "вы"
+    },
+    "Rating": {
+      "history": "история рейтинга",
+      "peak": "пик {rating}"
+    },
+    "Page": {
+      "rank": "#{rank} из {count}",
+      "starting": "стартовый рейтинг",
+      "provisional": "рейтинг ещё не устоялся",
+      "playingNow": "играет сейчас",
+      "columnPlace": "место",
+      "noRatedTournaments": "рейтинговых турниров пока нет. история начнётся с первого",
+      "rangeYear": "год",
+      "rangeAll": "всё",
+      "vsYou": "вы против {player}",
+      "games": "{count, plural, one {# партия} few {# партии} many {# партий} other {# партии}}",
+      "won": "победы",
+      "drawn": "ничьи",
+      "lost": "поражения",
+      "record": "партии",
+      "score": "результат {percent}%",
+      "tournaments": "турниры",
+      "noTournaments": "турниров пока нет",
+      "place": "{place} место из {count}",
+      "upcoming": "скоро",
+      "facts": "коротко",
+      "peak": "макс. рейтинг",
+      "lastPlayed": "последняя игра",
+      "joined": "в клубе с",
+      "tournamentsWon": "турнирные победы",
+      "rivals": "частые соперники",
+      "mock": "тестовые данные"
     }
   },
   "ErrorBoundary": {

@@ -219,6 +219,38 @@
       "h2hEmptyForClub": "seems like you never played against {player} in {club} yet",
       "total": "total",
       "you": "you"
+    },
+    "Rating": {
+      "history": "rating history",
+      "peak": "peak {rating}"
+    },
+    "Page": {
+      "rank": "#{rank} of {count}",
+      "starting": "starting rating",
+      "provisional": "this rating is still settling",
+      "playingNow": "playing now",
+      "columnPlace": "place",
+      "noRatedTournaments": "no rated tournaments yet. the history starts with the first one",
+      "rangeYear": "year",
+      "rangeAll": "all",
+      "vsYou": "you vs {player}",
+      "games": "{count, plural, one {# game} other {# games}}",
+      "won": "won",
+      "drawn": "drawn",
+      "lost": "lost",
+      "record": "games",
+      "score": "score {percent}%",
+      "tournaments": "tournaments",
+      "noTournaments": "no tournaments yet",
+      "place": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {count}",
+      "upcoming": "upcoming",
+      "facts": "at a glance",
+      "peak": "peak rating",
+      "lastPlayed": "last played",
+      "joined": "member since",
+      "tournamentsWon": "tournaments won",
+      "rivals": "most played",
+      "mock": "mock data"
     }
   },
   "ErrorBoundary": {
