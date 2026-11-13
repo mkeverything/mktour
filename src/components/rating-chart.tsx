@@ -12,7 +12,13 @@ import {
   type RatingPoint,
 } from '@/lib/rating-chart';
 import { cn } from '@/lib/utils';
-import { animate, useReducedMotion } from 'framer-motion';
+import {
+  animate,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from 'framer-motion';
+import * as m from 'framer-motion/m';
 import { useFormatter, useTranslations } from 'next-intl';
 import {
   FC,
@@ -31,6 +37,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // a touch scrubs once it moves sideways or rests this long, so a vertical swipe still scrolls the page
 const TOUCH_HOLD_MS = 120;
 const TOUCH_SLOP_PX = 6;
+const CURSOR_SPRING = { bounce: 0, visualDuration: 0.3 };
 
 type Size = { width: number; height: number };
 
@@ -215,7 +222,13 @@ const Plot: FC<{
   const lastCoord = coords[coords.length - 1];
   const active = activeIndex === null ? null : coords[activeIndex];
   // a pointer is followed exactly; a point picked any other way is marked where it was published
-  const cursorX = active && Math.max(0, pointerX ?? active.x);
+  const targetX = active && Math.max(0, pointerX ?? active.x);
+  const cursorX = useCursorX(targetX, pointerX !== null);
+  // the marker rides the staircase, so on its way between two points it stays on the line
+  const cursorY = useTransform(
+    cursorX,
+    (value) => (coords.findLast((coord) => coord.x <= value) ?? coords[0]).y,
+  );
 
   return (
     <svg
@@ -229,11 +242,15 @@ const Plot: FC<{
           <rect y={-GUTTER.top} width={width} height={height + GUTTER.top} />
         </clipPath>
         <clipPath id={`${clipId}-past`}>
-          <rect
-            y={-GUTTER.top}
-            width={cursorX ?? width}
-            height={height + GUTTER.top}
-          />
+          {targetX === null ? (
+            <rect y={-GUTTER.top} width={width} height={height + GUTTER.top} />
+          ) : (
+            <m.rect
+              y={-GUTTER.top}
+              width={cursorX}
+              height={height + GUTTER.top}
+            />
+          )}
         </clipPath>
         <linearGradient id={`${clipId}-fade`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="currentColor" stopOpacity="0.07" />
@@ -271,7 +288,7 @@ const Plot: FC<{
         )}
         <g clipPath={`url(#${clipId})`}>
           {/* what came after the cursor steps back, so the eye stays on the picked moment */}
-          <g className={cn(cursorX !== null && 'opacity-30')}>
+          <g className={cn(targetX !== null && 'opacity-30')}>
             <ChartLine line={line} established={established} />
           </g>
           <g clipPath={`url(#${clipId}-past)`}>
@@ -296,19 +313,19 @@ const Plot: FC<{
             </g>
           )}
         </g>
-        {active && cursorX !== null ? (
-          <g transform={`translate(${cursorX},0)`}>
+        {targetX !== null ? (
+          <m.g style={{ x: cursorX }}>
             <line
               y1={-GUTTER.top}
               y2={height}
               className="stroke-foreground/40"
             />
-            <circle
-              cy={active.y}
+            <m.circle
+              cy={cursorY}
               r={4}
               className="fill-foreground stroke-background stroke-2"
             />
-          </g>
+          </m.g>
         ) : (
           <circle
             cx={width}
@@ -339,6 +356,29 @@ const ChartLine: FC<{ line: string; established: string[] }> = ({
     ))}
   </g>
 );
+
+/** where the cursor is drawn: glued to a pointer, gliding between points picked any other way */
+function useCursorX(target: number | null, isPointerDriven: boolean) {
+  const shouldReduceMotion = useReducedMotion();
+  const x = useSpring(target ?? 0, CURSOR_SPRING);
+  const isShownRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (target === null) {
+      isShownRef.current = false;
+      return;
+    }
+    // it has nowhere to glide from when it has only just appeared
+    if (isPointerDriven || shouldReduceMotion || !isShownRef.current) {
+      x.jump(target);
+    } else {
+      x.set(target);
+    }
+    isShownRef.current = true;
+  }, [target, isPointerDriven, shouldReduceMotion, x]);
+
+  return x;
+}
 
 /** eases the drawn domain towards a new one, from wherever it is at that moment */
 function useEased(start: number, min: number, max: number) {
