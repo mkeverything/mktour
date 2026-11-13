@@ -18,12 +18,9 @@ import {
 } from '@/lib/club-links';
 import { cn } from '@/lib/utils';
 import { ClubFormModel, ClubInfoModel } from '@/server/zod/clubs';
-import { isSortable } from '@dnd-kit/dom/sortable';
-import { DragDropProvider } from '@dnd-kit/react';
-import { useSortable } from '@dnd-kit/react/sortable';
-import { GripVertical, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { ComponentProps, FC } from 'react';
+import { FC } from 'react';
 import { useFieldArray, UseFormReturn, useWatch } from 'react-hook-form';
 
 export const LinksField: FC<{
@@ -32,21 +29,12 @@ export const LinksField: FC<{
   disabled: boolean;
 }> = ({ form, savedLinks, disabled }) => {
   const t = useTranslations('Club.Dashboard.Settings');
-  const { fields, append, move, replace } = useFieldArray({
+  const { fields, append, replace } = useFieldArray({
     control: form.control,
     name: 'links',
   });
   const links = useWatch({ control: form.control, name: 'links' }) ?? [];
   const savedPaths = new Map(savedLinks.map(({ url, path }) => [url, path]));
-
-  const handleDragEnd: ComponentProps<typeof DragDropProvider>['onDragEnd'] = (
-    event,
-  ) => {
-    const { source } = event.operation;
-    if (event.canceled || !source || !isSortable(source)) return;
-    const { initialIndex, index } = source.sortable;
-    if (initialIndex !== index) move(initialIndex, index);
-  };
 
   const handleType = (index: number, value: string) => {
     if (index === fields.length - 1 && value && fields.length < MAX_CLUB_LINKS)
@@ -61,32 +49,28 @@ export const LinksField: FC<{
       <Label asChild>
         <legend className="pl-4">{t('links')}</legend>
       </Label>
-      <DragDropProvider onDragEnd={handleDragEnd}>
-        <ul className="flex flex-col gap-2">
-          {fields.map((field, index) => {
-            const url = links[index]?.url ?? '';
-            return (
-              <LinkRow
-                key={field.id}
-                id={field.id}
-                index={index}
-                form={form}
-                path={savedPaths.get(url) ?? GLOBE_ICON_PATH}
-                isEmptyLast={index === fields.length - 1 && !url}
-                disabled={disabled}
-                onType={(value) => handleType(index, value)}
-                onRemove={() => handleRemove(index)}
-              />
-            );
-          })}
-        </ul>
-      </DragDropProvider>
+      <ul className="flex flex-col gap-2">
+        {fields.map((field, index) => {
+          const url = links[index]?.url ?? '';
+          return (
+            <LinkRow
+              key={field.id}
+              index={index}
+              form={form}
+              path={savedPaths.get(url) ?? GLOBE_ICON_PATH}
+              isEmptyLast={index === fields.length - 1 && !url}
+              disabled={disabled}
+              onType={(value) => handleType(index, value)}
+              onRemove={() => handleRemove(index)}
+            />
+          );
+        })}
+      </ul>
     </fieldset>
   );
 };
 
 const LinkRow: FC<{
-  id: string;
   index: number;
   form: UseFormReturn<ClubFormModel>;
   path: string;
@@ -94,30 +78,11 @@ const LinkRow: FC<{
   disabled: boolean;
   onType: (value: string) => void;
   onRemove: () => void;
-}> = ({ id, index, form, path, isEmptyLast, disabled, onType, onRemove }) => {
+}> = ({ index, form, path, isEmptyLast, disabled, onType, onRemove }) => {
   const t = useTranslations('Club.Dashboard.Settings');
-  const { ref, handleRef, isDragSource } = useSortable({
-    id,
-    index,
-    disabled: isEmptyLast || disabled,
-  });
 
   return (
-    <li
-      ref={ref}
-      className={cn('flex items-start gap-2', isDragSource && 'opacity-50')}
-    >
-      <button
-        type="button"
-        ref={handleRef}
-        aria-label={t('move link')}
-        className={cn(
-          'text-muted-foreground flex h-9 cursor-grab touch-none items-center',
-          isEmptyLast && 'invisible',
-        )}
-      >
-        <GripVertical className="size-4" />
-      </button>
+    <li className="flex items-start gap-2">
       <PathIcon path={path} className="text-muted-foreground mt-2.25" />
       <FormField
         control={form.control}
