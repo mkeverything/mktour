@@ -17,7 +17,7 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { Check, Pointer } from 'lucide-react';
+import { Check, UserRoundCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { FC, useState } from 'react';
@@ -57,7 +57,7 @@ const ClaimPlayer: FC<{
         <Trigger asChild>
           <ClaimActionButton
             disabled={isPending}
-            icon={isPending ? LoadingSpinner : Pointer}
+            icon={isPending ? LoadingSpinner : UserRoundCheck}
             messageId="Player.claim"
           />
         </Trigger>
@@ -95,16 +95,9 @@ export const ClaimActionButton: FC<ClaimActionButtonProps> = ({
   disabled,
   ...props
 }) => (
-  <Button
-    variant="outline"
-    className="flex gap-2 text-nowrap"
-    disabled={disabled}
-    {...props}
-  >
+  <Button variant="outline" className="w-full" disabled={disabled} {...props}>
     <Icon />
-    <span className="text-xs">
-      <FormattedMessage id={messageId} />
-    </span>
+    <FormattedMessage id={messageId} />
   </Button>
 );
 

@@ -13,7 +13,7 @@ import {
   Trigger,
 } from '@/components/ui-custom/combo-modal';
 import { Button } from '@/components/ui/button';
-import { PointerOff } from 'lucide-react';
+import { UserRoundX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FC, useState } from 'react';
 
@@ -35,7 +35,7 @@ const CancelClaimPlayer: FC<{
       <Trigger asChild>
         <ClaimActionButton
           disabled={isPending}
-          icon={isPending ? LoadingSpinner : PointerOff}
+          icon={isPending ? LoadingSpinner : UserRoundX}
           messageId="Player.cancel claim"
         />
       </Trigger>
@@ -52,7 +52,7 @@ const CancelClaimPlayer: FC<{
           disabled={isPending}
           type="submit"
         >
-          {isPending ? <LoadingSpinner /> : <PointerOff />}
+          {isPending ? <LoadingSpinner /> : <UserRoundX />}
           {t('Player.cancel claim')}
         </Button>
         <Close asChild>

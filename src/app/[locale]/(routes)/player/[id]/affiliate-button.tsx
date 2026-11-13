@@ -4,7 +4,7 @@ import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import useAffiliationAuthMutation from '@/components/hooks/mutation-hooks/use-affiliation-auth';
 import { Button } from '@/components/ui/button';
 import { PlayerModel } from '@/server/zod/players';
-import { UserCheck2 } from 'lucide-react';
+import { UserRoundCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { FC } from 'react';
@@ -16,6 +16,7 @@ export const AffiliateButton: FC<{ player: PlayerModel }> = ({ player }) => {
   return (
     <Button
       variant="outline"
+      className="w-full"
       onClick={() =>
         mutate(
           { clubId: player.clubId, playerId: player.id },
@@ -28,7 +29,7 @@ export const AffiliateButton: FC<{ player: PlayerModel }> = ({ player }) => {
       }
       disabled={isPending}
     >
-      {isPending ? <LoadingSpinner /> : <UserCheck2 />}
+      {isPending ? <LoadingSpinner /> : <UserRoundCheck />}
       {t('claim')}
     </Button>
   );
