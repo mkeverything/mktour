@@ -3,7 +3,7 @@ import { CACHE_TAGS } from '@/lib/cache-tags';
 import { AppError } from '@/lib/errors';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid } from '@/lib/utils';
-import { resolveLinkIcon } from '@/server/club-links';
+import { withLinkIcons } from '@/server/club-links';
 import { db, type Transaction } from '@/server/db';
 import { lockClubs } from '@/server/db/locks';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
@@ -57,10 +57,7 @@ export const createClub = async (user: User, values: ClubFormModel) => {
   const createdAt = new Date();
   const newClub = {
     ...values,
-    links: values.links?.map(({ url }) => ({
-      url,
-      icon: resolveLinkIcon(url),
-    })),
+    links: values.links && withLinkIcons(values.links),
     id,
     createdAt,
   };
@@ -99,10 +96,7 @@ export const editClub = async ({
     .update(clubs)
     .set({
       ...values,
-      links: values.links?.map(({ url }) => ({
-        url,
-        icon: resolveLinkIcon(url),
-      })),
+      links: values.links && withLinkIcons(values.links),
     })
     .where(eq(clubs.id, clubId))
     .returning();

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { FC } from 'react';
 
-const LinkIcon: FC<{ path: string; className?: string }> = ({
+const PathIcon: FC<{ path: string; className?: string }> = ({
   path,
   className,
 }) => (
@@ -15,4 +15,4 @@ const LinkIcon: FC<{ path: string; className?: string }> = ({
   </svg>
 );
 
-export default LinkIcon;
+export default PathIcon;

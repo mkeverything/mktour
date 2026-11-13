@@ -36,3 +36,6 @@ export const resolveLinkIcon = (url: string) => {
 
 export const getLinkIconPath = (icon: string | null) =>
   (icon && ICON_PATHS.get(icon)) || GLOBE_ICON_PATH;
+
+export const withLinkIcons = (links: { url: string }[]) =>
+  links.map(({ url }) => ({ url, icon: resolveLinkIcon(url) }));

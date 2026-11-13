@@ -1,6 +1,6 @@
 'use client';
 
-import LinkIcon from '@/components/ui-custom/link-icon';
+import PathIcon from '@/components/ui-custom/path-icon';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -10,6 +10,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   GLOBE_ICON_PATH,
   MAX_CLUB_LINKS,
@@ -56,35 +57,31 @@ export const LinksField: FC<{
     replace(withEmptyLink(links.filter((_, i) => i !== index)));
 
   return (
-    <FormField
-      control={form.control}
-      name="links"
-      render={() => (
-        <FormItem>
-          <FormLabel className="pl-4">{t('links')}</FormLabel>
-          <DragDropProvider onDragEnd={handleDragEnd}>
-            <ul className="flex flex-col gap-2">
-              {fields.map((field, index) => {
-                const url = links[index]?.url ?? '';
-                return (
-                  <LinkRow
-                    key={field.id}
-                    id={field.id}
-                    index={index}
-                    form={form}
-                    path={savedPaths.get(url) ?? GLOBE_ICON_PATH}
-                    isEmptyLast={index === fields.length - 1 && !url}
-                    disabled={disabled}
-                    onType={(value) => handleType(index, value)}
-                    onRemove={() => handleRemove(index)}
-                  />
-                );
-              })}
-            </ul>
-          </DragDropProvider>
-        </FormItem>
-      )}
-    />
+    <fieldset className="space-y-2">
+      <Label asChild>
+        <legend className="pl-4">{t('links')}</legend>
+      </Label>
+      <DragDropProvider onDragEnd={handleDragEnd}>
+        <ul className="flex flex-col gap-2">
+          {fields.map((field, index) => {
+            const url = links[index]?.url ?? '';
+            return (
+              <LinkRow
+                key={field.id}
+                id={field.id}
+                index={index}
+                form={form}
+                path={savedPaths.get(url) ?? GLOBE_ICON_PATH}
+                isEmptyLast={index === fields.length - 1 && !url}
+                disabled={disabled}
+                onType={(value) => handleType(index, value)}
+                onRemove={() => handleRemove(index)}
+              />
+            );
+          })}
+        </ul>
+      </DragDropProvider>
+    </fieldset>
   );
 };
 
@@ -121,7 +118,7 @@ const LinkRow: FC<{
       >
         <GripVertical className="size-4" />
       </button>
-      <LinkIcon path={path} className="text-muted-foreground mt-2.25" />
+      <PathIcon path={path} className="text-muted-foreground mt-2.25" />
       <FormField
         control={form.control}
         name={`links.${index}.url`}

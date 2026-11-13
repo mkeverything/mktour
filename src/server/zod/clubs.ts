@@ -18,21 +18,24 @@ const toLinkHref = (value: string) => {
 };
 
 export const clubLinkSchema = z.object({
-  url: z
-    .string()
-    .trim()
-    .max(2048, { error: 'LONG_LINK' })
-    .transform((value, ctx) => {
-      const href = toLinkHref(value);
-      if (href) return href;
-      ctx.addIssue({ code: 'custom', message: 'INVALID_LINK' });
-      return z.NEVER;
-    }),
+  url: z.string(),
   icon: z.string().nullable(),
 });
 
 const clubLinksInputSchema = z
-  .array(clubLinkSchema.pick({ url: true }))
+  .array(
+    z.object({
+      url: clubLinkSchema.shape.url
+        .trim()
+        .max(2048, { error: 'LONG_LINK' })
+        .transform((value, ctx) => {
+          const href = toLinkHref(value);
+          if (href) return href;
+          ctx.addIssue({ code: 'custom', message: 'INVALID_LINK' });
+          return z.NEVER;
+        }),
+    }),
+  )
   .max(MAX_CLUB_LINKS, { error: 'TOO_MANY_LINKS' })
   .superRefine((links, ctx) => {
     links.forEach(({ url }, index) => {
@@ -49,7 +52,7 @@ export const clubsSelectSchema = createSelectSchema(clubs).omit({
   links: true,
 });
 
-export const clubInfoLinkSchema = clubLinkSchema
+const clubInfoLinkSchema = clubLinkSchema
   .pick({ url: true })
   .extend({ path: z.string() });
 

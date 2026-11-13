@@ -4,7 +4,7 @@ import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useFormatDate } from '@/components/hooks/use-format-date';
 import { useTRPC } from '@/components/trpc/client';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
-import LinkIcon from '@/components/ui-custom/link-icon';
+import PathIcon from '@/components/ui-custom/path-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ClubInfoModel } from '@/server/zod/clubs';
@@ -89,7 +89,7 @@ const ClubLinks: FC<{ links: ClubInfoModel['links'] }> = ({ links }) => (
             title={hostname}
             className="text-muted-foreground hover:text-foreground flex transition-colors"
           >
-            <LinkIcon path={path} />
+            <PathIcon path={path} />
           </a>
         </li>
       );
