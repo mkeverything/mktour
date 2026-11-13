@@ -6,7 +6,7 @@ import { getPageMetadata } from '@/lib/page-metadata';
 import { publicCaller } from '@/server/api';
 import { getQueryClient, trpc } from '@/server/api/query-client';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import type { ResolvingMetadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { notFound, permanentRedirect } from 'next/navigation';
 import 'server-only';
@@ -50,15 +50,12 @@ export default async function PlayerPage(props: PlayerPageProps) {
   const canClaim = !status && user && !player.userId;
   const canAffiliate =
     status !== null && !player.userId && !affiliation && !requestedByOther;
+  const edit = user && canEdit && (
+    <EditButton player={{ playerId: player.id, ...player }} status={status} />
+  );
   const actions = (
     <>
       {canAffiliate && <AffiliateButton player={player} />}
-      {user && canEdit && (
-        <EditButton
-          player={{ playerId: player.id, ...player }}
-          status={status}
-        />
-      )}
       {canClaim && (
         <ClaimPlayer clubId={club.id} requestedByOther={requestedByOther} />
       )}
@@ -67,7 +64,7 @@ export default async function PlayerPage(props: PlayerPageProps) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Ledger player={player} club={club} actions={actions} />
+      <Ledger player={player} club={club} edit={edit} actions={actions} />
     </HydrationBoundary>
   );
 }
@@ -77,7 +74,7 @@ export async function generateMetadata(
     params: Promise<{ id: string }>;
   },
   parent: ResolvingMetadata,
-) {
+): Promise<Metadata> {
   const params = await props.params;
   const t = await getTranslations('Seo');
 

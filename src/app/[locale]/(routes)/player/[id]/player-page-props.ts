@@ -5,6 +5,8 @@ import type { ReactNode } from 'react';
 export type PlayerPageDesignProps = {
   player: PlayerModel;
   club: Pick<ClubModel, 'id' | 'name'>;
-  /** claim, edit and link buttons the viewer is allowed to use */
+  /** the pencil by the name, for those who manage the club */
+  edit: ReactNode;
+  /** claim and link buttons the viewer is allowed to use */
   actions: ReactNode;
 };

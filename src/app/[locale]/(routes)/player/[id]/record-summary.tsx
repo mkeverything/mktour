@@ -2,47 +2,37 @@ import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 
-/** a win-draw-loss record: the three counts under their shares of one bar */
-const RecordSummary: FC<{ wins: number; draws: number; losses: number }> = ({
-  wins,
-  draws,
-  losses,
-}) => {
+/** a win-draw-loss record as one bar, each share over its count, written the way crosstables write them */
+const RecordSummary: FC<{ wins: number; draws: number; losses: number }> = (
+  record,
+) => {
   const t = useTranslations('Player.Page');
   const parts = [
-    [wins, t('won'), 'bg-foreground'],
-    [draws, t('drawn'), 'bg-muted-foreground/60'],
-    [losses, t('lost'), 'bg-muted-foreground/20'],
+    ['+', record.wins, t('won'), 'bg-foreground'],
+    ['=', record.draws, t('drawn'), 'bg-muted-foreground'],
+    ['−', record.losses, t('lost'), 'bg-muted'],
   ] as const;
 
   return (
-    <>
-      <div
-        aria-hidden
-        className="bg-muted flex h-1.5 gap-0.5 overflow-hidden rounded-full"
-      >
-        {parts.map(
-          ([count, label, colour]) =>
-            count !== 0 && (
-              <span
-                key={label}
-                className={cn('rounded-full', colour)}
-                style={{ flexGrow: count }}
-              />
-            ),
-        )}
-      </div>
-      <dl className="grid grid-cols-3 gap-4">
-        {parts.map(([count, label]) => (
-          <div key={label} className="flex flex-col-reverse">
-            <dt className="text-muted-foreground text-xs">{label}</dt>
-            <dd className="text-2xl font-semibold tracking-tight tabular-nums">
-              {count}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </>
+    <div className="flex gap-0.5 tabular-nums">
+      {parts.map(([sign, count, name, colour]) => (
+        // a share never gets narrower than its count, so a rare outcome stays readable
+        <div
+          key={sign}
+          className="flex min-w-fit basis-0 flex-col gap-2"
+          style={{ flexGrow: count }}
+        >
+          <span
+            aria-hidden
+            className={cn('h-1.5 rounded-full', count ? colour : 'bg-muted')}
+          />
+          <abbr title={name} className="pr-2 text-sm font-medium no-underline">
+            {sign}
+            {count}
+          </abbr>
+        </div>
+      ))}
+    </div>
   );
 };
 

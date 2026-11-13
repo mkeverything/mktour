@@ -15,7 +15,7 @@ const Medal: FC<ComponentProps<'div'> & { place: number }> = ({
   return (
     <div
       className={cn(
-        'aspect-square rounded-full',
+        'relative aspect-square rounded-full',
         MEDAL_COLOURS[place - 1],
         className,
       )}
