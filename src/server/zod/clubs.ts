@@ -17,15 +17,11 @@ const toLinkHref = (value: string) => {
   }
 };
 
-export const clubLinkSchema = z.object({
-  url: z.string(),
-  icon: z.string().nullable(),
-});
-
 const clubLinksInputSchema = z
   .array(
     z.object({
-      url: clubLinkSchema.shape.url
+      url: z
+        .string()
         .trim()
         .max(2048, { error: 'LONG_LINK' })
         .transform((value, ctx) => {
@@ -52,9 +48,7 @@ export const clubsSelectSchema = createSelectSchema(clubs).omit({
   links: true,
 });
 
-const clubInfoLinkSchema = clubLinkSchema
-  .pick({ url: true })
-  .extend({ path: z.string() });
+const clubInfoLinkSchema = z.object({ url: z.string(), path: z.string() });
 
 export const clubInfoSchema = clubsSelectSchema.extend({
   links: z.array(clubInfoLinkSchema),
@@ -105,7 +99,6 @@ export type ClubStatsModel = z.infer<typeof clubStatsSchema>;
 
 export type ClubModel = z.infer<typeof clubsSelectSchema>;
 export type ClubInfoModel = z.infer<typeof clubInfoSchema>;
-export type ClubLinkModel = z.infer<typeof clubLinkSchema>;
 export type ClubUpdateModel = z.infer<typeof clubsEditSchema>;
 export type ClubInsertModel = z.infer<typeof clubsInsertSchema>;
 

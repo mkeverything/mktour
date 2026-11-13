@@ -26,16 +26,10 @@ const DOMAIN_ICONS = new Map([
 
 const TLDTS_OPTIONS = { allowPrivateDomains: true };
 
-export const resolveLinkIcon = (url: string) => {
+export const getLinkIconPath = (url: string) => {
   const domain = getDomain(url, TLDTS_OPTIONS);
-  const exception = domain && DOMAIN_ICONS.get(domain);
-  if (exception) return exception;
-  const name = getDomainWithoutSuffix(url, TLDTS_OPTIONS);
-  return name && ICON_PATHS.has(name) ? name : null;
+  const slug =
+    (domain && DOMAIN_ICONS.get(domain)) ||
+    getDomainWithoutSuffix(url, TLDTS_OPTIONS);
+  return (slug && ICON_PATHS.get(slug)) || GLOBE_ICON_PATH;
 };
-
-export const getLinkIconPath = (icon: string | null) =>
-  (icon && ICON_PATHS.get(icon)) || GLOBE_ICON_PATH;
-
-export const withLinkIcons = (links: { url: string }[]) =>
-  links.map(({ url }) => ({ url, icon: resolveLinkIcon(url) }));

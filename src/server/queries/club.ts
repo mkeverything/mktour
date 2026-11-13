@@ -43,9 +43,9 @@ export const getClubInfo = async (id: ClubModel['id']) => {
   return (
     club && {
       ...club,
-      links: club.links.map(({ url, icon }) => ({
+      links: club.links.map((url) => ({
         url,
-        path: getLinkIconPath(icon),
+        path: getLinkIconPath(url),
       })),
     }
   );

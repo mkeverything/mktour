@@ -3,7 +3,6 @@ import { CACHE_TAGS } from '@/lib/cache-tags';
 import { AppError } from '@/lib/errors';
 import { normalizePlayerNickname } from '@/lib/player-nickname';
 import { newid } from '@/lib/utils';
-import { withLinkIcons } from '@/server/club-links';
 import { db, type Transaction } from '@/server/db';
 import { lockClubs } from '@/server/db/locks';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
@@ -57,7 +56,7 @@ export const createClub = async (user: User, values: ClubFormModel) => {
   const createdAt = new Date();
   const newClub = {
     ...values,
-    links: values.links && withLinkIcons(values.links),
+    links: values.links?.map(({ url }) => url),
     id,
     createdAt,
   };
@@ -94,10 +93,7 @@ export const editClub = async ({
 
   const newClub = await db
     .update(clubs)
-    .set({
-      ...values,
-      links: values.links && withLinkIcons(values.links),
-    })
+    .set({ ...values, links: values.links?.map(({ url }) => url) })
     .where(eq(clubs.id, clubId))
     .returning();
   revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
