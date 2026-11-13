@@ -70,7 +70,7 @@ describe('rating chart', () => {
     expect(getRatingTicks([1217, 1519], 2)).toEqual([1400]);
   });
 
-  test('month ticks thin out until they fit', () => {
+  test('month ticks thin out until they fit, down to years alone once two show', () => {
     const ticks = getMonthTicks(
       [new Date(2025, 2, 8).getTime(), new Date(2026, 10, 12).getTime()],
       4,
@@ -82,6 +82,12 @@ describe('rating chart', () => {
       [2026, 1],
       [2026, 7],
     ]);
+    expect(
+      getMonthTicks(
+        [new Date(2023, 5, 1).getTime(), new Date(2026, 10, 12).getTime()],
+        8,
+      ).map((month) => month.getFullYear()),
+    ).toEqual([2024, 2025, 2026]);
   });
 
   test('the staircase holds each rating until the next one, and the last until the end', () => {

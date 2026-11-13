@@ -74,6 +74,9 @@ export const getMonthTicks = ([start, end]: Domain, maxCount: number) => {
   }
   const step =
     MONTH_TICK_STEPS.find((step) => months.length / step <= maxCount) ?? 24;
+  const years = months.filter((month) => month.getMonth() === 0);
+  // between years a half-year tick only repeats one month's name, so once two years show they mark the axis alone
+  if (step === 6 && years.length >= 2) return years;
   return months.filter((month) => month.getMonth() % step === 0);
 };
 
