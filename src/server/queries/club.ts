@@ -1,5 +1,6 @@
 import { lower } from '@/lib/sql-lower';
 import { reverse, sortExpressions, type Ordering } from '@/lib/sql-order';
+import { getLinkIconPath } from '@/server/club-links';
 import { db } from '@/server/db';
 import { clubs } from '@/server/db/schema/clubs';
 import { player_stats, players } from '@/server/db/schema/players';
@@ -34,11 +35,20 @@ const selectClubPlayers = () =>
     .innerJoin(player_stats, eq(player_stats.playerId, players.id));
 
 export const getClubInfo = async (id: ClubModel['id']) => {
-  return await db
+  const club = await db
     .select()
     .from(clubs)
     .where(eq(clubs.id, id))
     .then((rows) => rows.at(0) ?? null);
+  return (
+    club && {
+      ...club,
+      links: club.links.map(({ url, icon }) => ({
+        url,
+        path: getLinkIconPath(icon),
+      })),
+    }
+  );
 };
 
 export const getClubPlayers = async (input: ClubPlayersInputModel) => {

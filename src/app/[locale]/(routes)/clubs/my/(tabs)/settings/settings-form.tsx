@@ -1,6 +1,7 @@
 'use client';
 
 import { TeamSelector } from '@/app/[locale]/(routes)/clubs/create/team-selector';
+import { LinksField } from '@/app/[locale]/(routes)/clubs/my/(tabs)/settings/links-field';
 import { ClubTabProps } from '@/app/[locale]/(routes)/clubs/my/tabMap';
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import useEditClubMutation from '@/components/hooks/mutation-hooks/use-club-edit';
@@ -22,15 +23,27 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { withEmptyLink } from '@/lib/club-links';
 import { getLichessTeamLinkErrorMessage } from '@/lib/lichess-team-link-error';
-import { shallowEqual } from '@/lib/utils';
 import { ClubFormModel, clubsInsertSchema } from '@/server/zod/clubs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { FC, PropsWithChildren } from 'react';
-import { useForm } from 'react-hook-form';
+import { FC, FormEvent, PropsWithChildren } from 'react';
+import { Resolver, useForm } from 'react-hook-form';
+
+const resolver: Resolver<ClubFormModel> = (values, context, options) =>
+  zodResolver(clubsInsertSchema)(
+    {
+      ...values,
+      links: values.links?.filter(
+        ({ url }, i, links) => url || i < links.length - 1,
+      ),
+    },
+    context,
+    options,
+  );
 
 const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
   selectedClub,
@@ -49,6 +62,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
     description: null,
     lichessTeam: null,
     isPlayerSelfReportingEnabled: true,
+    links: withEmptyLink([]),
   };
   const initialValues = data
     ? {
@@ -56,15 +70,16 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
         description: data.description,
         lichessTeam: data.lichessTeam,
         isPlayerSelfReportingEnabled: data.isPlayerSelfReportingEnabled,
+        links: withEmptyLink(data.links.map(({ url }) => ({ url }))),
       }
     : defaultValues;
 
   const form = useForm<ClubFormModel>({
-    resolver: zodResolver(clubsInsertSchema),
+    resolver,
     values: initialValues,
   });
 
-  const handleSubmit = form.handleSubmit(async (data) => {
+  const submit = form.handleSubmit(async (data) => {
     form.clearErrors('lichessTeam');
     mutate(
       {
@@ -83,6 +98,15 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
       },
     );
   });
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const links = form.getValues('links') ?? [];
+    form.setValue(
+      'links',
+      withEmptyLink(links.filter(({ url }) => url.trim())),
+    );
+    return submit(event);
+  };
 
   const t = useTranslations('Club.Dashboard.Settings');
 
@@ -140,6 +164,11 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
               ) : (
                 <TeamSelector teams={teams} form={form} />
               )}
+              <LinksField
+                form={form}
+                savedLinks={data?.links ?? []}
+                disabled={isFetching}
+              />
               <FormField
                 control={form.control}
                 name="isPlayerSelfReportingEnabled"
@@ -167,7 +196,7 @@ const ClubSettingsForm: FC<ClubTabProps & PropsWithChildren> = ({
               <Button
                 type="submit"
                 disabled={
-                  shallowEqual(form.getValues(), initialValues) ||
+                  !form.formState.isDirty ||
                   isPending ||
                   isFetching ||
                   isFetchingLichessTeams

@@ -1,8 +1,10 @@
 import { statusInClub } from '@/server/db/schema/enums';
 import { users } from '@/server/db/schema/users';
+import type { ClubLinkModel } from '@/server/zod/clubs';
 import {
   boolean,
   index,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -23,6 +25,7 @@ export const clubs = pgTable(
     isPlayerSelfReportingEnabled: boolean('is_player_self_reporting_enabled')
       .notNull()
       .default(true),
+    links: jsonb('links').$type<ClubLinkModel[]>().notNull().default([]),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );

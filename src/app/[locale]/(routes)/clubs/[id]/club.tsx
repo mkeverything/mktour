@@ -6,7 +6,7 @@ import { PlayersPanel } from '@/app/[locale]/(routes)/clubs/[id]/club-players';
 import { TournamentsPanel } from '@/app/[locale]/(routes)/clubs/[id]/club-tournaments';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClubModel } from '@/server/zod/clubs';
+import { ClubInfoModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
 import { useTranslations } from 'next-intl';
 import { FC, useRef } from 'react';
@@ -15,7 +15,7 @@ const PANEL_CLASS_NAME =
   'gap-2 mt-0 flex min-w-0 flex-col max-lg:data-[state=inactive]:hidden lg:min-h-0';
 
 const ClubPage: FC<{
-  club: ClubModel;
+  club: ClubInfoModel;
   statusInClub: StatusInClub | null;
   userId?: string;
 }> = ({ club, statusInClub, userId }) => {

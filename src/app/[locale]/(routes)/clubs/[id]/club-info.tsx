@@ -4,9 +4,10 @@ import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useFormatDate } from '@/components/hooks/use-format-date';
 import { useTRPC } from '@/components/trpc/client';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
+import LinkIcon from '@/components/ui-custom/link-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ClubModel } from '@/server/zod/clubs';
+import { ClubInfoModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
@@ -15,7 +16,7 @@ import Link from 'next/link';
 import { FC, useLayoutEffect, useRef, useState } from 'react';
 
 export const ClubInfo: FC<{
-  club: ClubModel;
+  club: ClubInfoModel;
   statusInClub: StatusInClub | null;
 }> = ({ club, statusInClub }) => {
   const t = useTranslations('Club');
@@ -38,6 +39,7 @@ export const ClubInfo: FC<{
       </h1>
       <DashboardButton clubId={club.id} statusInClub={statusInClub} />
       {club.description && <ClubDescription description={club.description} />}
+      {club.links.length > 0 && <ClubLinks links={club.links} />}
       <div className="text-muted-foreground col-span-full flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs lg:flex-col lg:items-start lg:gap-6">
         {club.createdAt && (
           <span>
@@ -72,6 +74,28 @@ export const ClubInfo: FC<{
     </header>
   );
 };
+
+const ClubLinks: FC<{ links: ClubInfoModel['links'] }> = ({ links }) => (
+  <ul className="col-span-full flex flex-wrap items-center gap-3">
+    {links.map(({ url, path }) => {
+      const hostname = new URL(url).hostname.replace(/^www\./, '');
+      return (
+        <li key={url}>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer nofollow ugc"
+            aria-label={hostname}
+            title={hostname}
+            className="text-muted-foreground hover:text-foreground flex transition-colors"
+          >
+            <LinkIcon path={path} />
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+);
 
 const ClubDescription: FC<{ description: string }> = ({ description }) => {
   const t = useTranslations('Common');
