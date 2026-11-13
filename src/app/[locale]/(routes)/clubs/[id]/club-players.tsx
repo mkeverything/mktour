@@ -7,13 +7,13 @@ import FormattedMessage from '@/components/formatted-message';
 import { useClubPlayers } from '@/components/hooks/query-hooks/use-club-players';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
 import { useDebounce } from '@/components/hooks/use-debounce';
+import { PlayerCell, PlayerTable } from '@/components/player-table';
 import SkeletonList from '@/components/skeleton-list';
 import { useTRPC } from '@/components/trpc/client';
 import { LoadingSpinner } from '@/components/ui-custom/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -29,7 +29,6 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ArrowUpDown, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { FC, PropsWithChildren, ReactNode, useState } from 'react';
 
 type Sort = Pick<ClubPlayersFilterModel, 'sortBy' | 'order'>;
@@ -161,21 +160,19 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
           '*:bg-muted font-medium',
           // the cells stick, not the row: firefox stops painting a sticky <tr>
           isRankedOrder &&
-            '*:sticky *:top-[calc(var(--club-sticky-top)+2rem)] *:-bottom-px *:z-10',
+            '*:sticky *:top-[calc(var(--list-sticky-top)+2rem)] *:-bottom-px *:z-10',
         ],
       )}
     >
       {COLUMNS.map(({ firstSort, className, cell }, columnIndex) => (
-        <TableCell key={columnIndex} className={cn('p-0', className)}>
-          {/* every cell links on its own: safari can't stretch one link over a <tr> */}
-          <Link
-            href={`/player/${player.id}`}
-            tabIndex={firstSort?.sortBy === 'nickname' ? undefined : -1}
-            className="block p-2"
-          >
-            {cell(player, index, shownSort.sortBy)}
-          </Link>
-        </TableCell>
+        <PlayerCell
+          key={columnIndex}
+          playerId={player.id}
+          isName={firstSort?.sortBy === 'nickname'}
+          className={className}
+        >
+          {cell(player, index, shownSort.sortBy)}
+        </PlayerCell>
       ))}
     </TableRow>
   );
@@ -194,8 +191,8 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
         fetchNextPage={playersInfinite.fetchNextPage}
         skeleton={null}
       >
-        <Table className="border-separate border-spacing-0 [&_td]:border-b [&_th]:border-b">
-          <TableHeader className="bg-background sticky top-(--club-sticky-top) z-20">
+        <PlayerTable>
+          <TableHeader className="bg-background sticky top-(--list-sticky-top) z-20">
             <TableRow className="hover:bg-transparent">
               {COLUMNS.map(({ head, firstSort, className }, columnIndex) => {
                 const order =
@@ -206,7 +203,7 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
                     aria-sort={
                       order && (order === 'asc' ? 'ascending' : 'descending')
                     }
-                    className={cn('h-8 text-xs', className)}
+                    className={className}
                   >
                     {firstSort ? (
                       <SortButton
@@ -230,7 +227,7 @@ export const PlayersPanel: FC<{ clubId: string; userId?: string }> = ({
             {playersInfinite.isFetchingNextPage && <SkeletonRows />}
             {pinnedPlayer && renderRow(pinnedPlayer, players.length)}
           </TableBody>
-        </Table>
+        </PlayerTable>
         {playersInfinite.isPending ? (
           <SkeletonList length={8} className="h-8" />
         ) : (

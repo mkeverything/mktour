@@ -26,7 +26,7 @@ export const ClubInfo: FC<{
     trpc.club.managers.all.queryOptions({ clubId: club.id }),
   );
   return (
-    <header className="lg:small-scrollbar grid shrink-0 grid-cols-[minmax(0,1fr)_auto] content-start items-start gap-x-4 gap-y-1.5 lg:grid-cols-1 lg:gap-y-6 lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:pr-6">
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] content-start items-start gap-x-4 gap-y-1.5 lg:grid-cols-1 lg:gap-y-6">
       <h1
         className={cn(
           turboPascal.className,
@@ -69,7 +69,7 @@ export const ClubInfo: FC<{
           ))}
         </div>
       </div>
-    </header>
+    </div>
   );
 };
 
@@ -94,7 +94,7 @@ const ClubDescription: FC<{ description: string }> = ({ description }) => {
       <p
         ref={textRef}
         className={cn(
-          'text-muted-foreground max-w-prose text-sm whitespace-pre-line',
+          'text-muted-foreground max-w-prose text-sm wrap-anywhere whitespace-pre-line',
           !isExpanded && 'line-clamp-2 lg:line-clamp-8',
         )}
       >

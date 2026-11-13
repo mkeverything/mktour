@@ -5,6 +5,7 @@ import { Count } from '@/app/[locale]/(routes)/clubs/[id]/club-panel';
 import { PlayersPanel } from '@/app/[locale]/(routes)/clubs/[id]/club-players';
 import { TournamentsPanel } from '@/app/[locale]/(routes)/clubs/[id]/club-tournaments';
 import { useClubStats } from '@/components/hooks/query-hooks/use-club-stats';
+import SidebarLayout from '@/components/sidebar-layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClubModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
@@ -31,11 +32,9 @@ const ClubPage: FC<{
   };
 
   return (
-    <div
-      data-fixed-viewport
-      className="lg:h-mk-content-height p-mk-2 flex w-full flex-col gap-4 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[17rem_minmax(0,1fr)]"
+    <SidebarLayout
+      sidebar={<ClubInfo club={club} statusInClub={statusInClub} />}
     >
-      <ClubInfo club={club} statusInClub={statusInClub} />
       <Tabs
         ref={tabsRef}
         defaultValue="tournaments"
@@ -68,7 +67,7 @@ const ClubPage: FC<{
           <PlayersPanel clubId={club.id} userId={userId} />
         </TabsContent>
       </Tabs>
-    </div>
+    </SidebarLayout>
   );
 };
 
