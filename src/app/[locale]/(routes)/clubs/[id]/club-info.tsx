@@ -130,7 +130,7 @@ const ClubDescription: FC<{ description: string }> = ({ description }) => {
           aria-expanded={isExpanded}
           aria-label={isExpanded ? t('collapse') : t('expand')}
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-muted-foreground hover:text-foreground active:bg-muted mx-auto rounded-full p-1.5 transition-colors active:transition-none lg:mx-0 lg:-ml-1.5"
+          className="text-muted-foreground hover:text-foreground active:bg-muted mx-auto rounded-full p-1.5 transition-colors active:transition-none"
         >
           <ChevronDown
             className={cn(
