@@ -35,20 +35,17 @@ const selectClubPlayers = () =>
     .innerJoin(player_stats, eq(player_stats.playerId, players.id));
 
 export const getClubInfo = async (id: ClubModel['id']) => {
-  const club = await db
-    .select()
-    .from(clubs)
-    .where(eq(clubs.id, id))
-    .then((rows) => rows.at(0) ?? null);
-  return (
-    club && {
-      ...club,
-      links: club.links.map((url) => ({
-        url,
-        path: getLinkIconPath(url),
-      })),
-    }
-  );
+  const [club] = await db.select().from(clubs).where(eq(clubs.id, id));
+
+  if (!club) return null;
+
+  return {
+    ...club,
+    links: club.links.map((url) => ({
+      url,
+      path: getLinkIconPath(url),
+    })),
+  };
 };
 
 export const getClubPlayers = async (input: ClubPlayersInputModel) => {
