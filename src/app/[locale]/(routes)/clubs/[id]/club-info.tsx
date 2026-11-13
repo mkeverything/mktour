@@ -4,9 +4,10 @@ import { useAuth } from '@/components/hooks/query-hooks/use-user';
 import { useFormatDate } from '@/components/hooks/use-format-date';
 import { useTRPC } from '@/components/trpc/client';
 import LichessLogo from '@/components/ui-custom/lichess-logo';
+import PathIcon from '@/components/ui-custom/path-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ClubModel } from '@/server/zod/clubs';
+import { ClubInfoModel } from '@/server/zod/clubs';
 import { StatusInClub } from '@/server/zod/enums';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
@@ -15,7 +16,7 @@ import Link from 'next/link';
 import { FC, useLayoutEffect, useRef, useState } from 'react';
 
 export const ClubInfo: FC<{
-  club: ClubModel;
+  club: ClubInfoModel;
   statusInClub: StatusInClub | null;
 }> = ({ club, statusInClub }) => {
   const t = useTranslations('Club');
@@ -26,7 +27,7 @@ export const ClubInfo: FC<{
     trpc.club.managers.all.queryOptions({ clubId: club.id }),
   );
   return (
-    <header className="lg:small-scrollbar grid shrink-0 grid-cols-[minmax(0,1fr)_auto] content-start items-start gap-x-4 gap-y-1.5 lg:grid-cols-1 lg:gap-y-6 lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:pr-6">
+    <header className="lg:small-scrollbar grid shrink-0 grid-cols-[minmax(0,1fr)_auto] content-start items-start gap-x-4 gap-y-1.5 lg:flex lg:flex-col lg:items-stretch lg:gap-y-4 lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:pr-6">
       <h1
         className={cn(
           turboPascal.className,
@@ -36,11 +37,11 @@ export const ClubInfo: FC<{
         {club.name}
         {club.lichessTeam && <LichessTeamLink team={club.lichessTeam} />}
       </h1>
-      <DashboardButton clubId={club.id} statusInClub={statusInClub} />
       {club.description && <ClubDescription description={club.description} />}
-      <div className="text-muted-foreground col-span-full flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs lg:flex-col lg:items-start lg:gap-6">
+      {club.links.length > 0 && <ClubLinks links={club.links} />}
+      <div className="text-muted-foreground col-span-full flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs lg:mt-auto lg:flex-col lg:items-start lg:gap-4">
         {club.createdAt && (
-          <span>
+          <span className="lg:order-last">
             {t('Page.createdAt', {
               date: formatDate(club.createdAt, 'long'),
             })}
@@ -69,9 +70,32 @@ export const ClubInfo: FC<{
           ))}
         </div>
       </div>
+      <DashboardButton clubId={club.id} statusInClub={statusInClub} />
     </header>
   );
 };
+
+const ClubLinks: FC<{ links: ClubInfoModel['links'] }> = ({ links }) => (
+  <ul className="col-span-full flex flex-wrap items-center gap-3">
+    {links.map(({ url, path }) => {
+      const hostname = new URL(url).hostname.replace(/^www\./, '');
+      return (
+        <li key={url}>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer nofollow ugc"
+            aria-label={hostname}
+            title={hostname}
+            className="text-muted-foreground hover:text-foreground flex transition-colors"
+          >
+            <PathIcon path={path} />
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+);
 
 const ClubDescription: FC<{ description: string }> = ({ description }) => {
   const t = useTranslations('Common');
@@ -94,7 +118,7 @@ const ClubDescription: FC<{ description: string }> = ({ description }) => {
       <p
         ref={textRef}
         className={cn(
-          'text-muted-foreground max-w-prose text-sm whitespace-pre-line',
+          'text-muted-foreground max-w-prose text-sm break-words whitespace-pre-line',
           !isExpanded && 'line-clamp-2 lg:line-clamp-8',
         )}
       >
@@ -134,7 +158,7 @@ const DashboardButton: FC<{
     <Button
       variant="secondary"
       size="sm"
-      className="shrink-0 gap-2 lg:justify-self-start"
+      className="shrink-0 gap-2 max-lg:col-start-2 max-lg:row-start-1 lg:w-full"
       asChild
     >
       <Link

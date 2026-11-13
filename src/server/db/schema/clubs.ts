@@ -3,6 +3,7 @@ import { users } from '@/server/db/schema/users';
 import {
   boolean,
   index,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -23,6 +24,7 @@ export const clubs = pgTable(
     isPlayerSelfReportingEnabled: boolean('is_player_self_reporting_enabled')
       .notNull()
       .default(true),
+    links: jsonb('links').$type<string[]>().notNull().default([]),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 );

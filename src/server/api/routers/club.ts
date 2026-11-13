@@ -33,6 +33,7 @@ import { getClubTournamentsInfinite } from '@/server/queries/get-club-tournament
 import getStatusInClub from '@/server/queries/get-status-in-club';
 import { getUserClubAffiliation } from '@/server/queries/get-user-club-affiliation';
 import {
+  clubInfoSchema,
   clubManagerSchema,
   clubsSelectSchema,
   clubStatsSchema,
@@ -105,7 +106,7 @@ export const clubRouter = createTRPCRouter({
   info: publicProcedure
     .meta(meta.clubInfo)
     .input(clubIdInputSchema)
-    .output(clubsSelectSchema.nullable())
+    .output(clubInfoSchema.nullable())
     .query(async (opts) => {
       return await getClubInfo(opts.input.clubId);
     }),
