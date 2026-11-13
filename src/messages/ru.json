@@ -305,7 +305,7 @@
     "SHORT_CLUB_NAME": "слишком коротко",
     "TEAM_PLAYERS_SHOULD_BE_DIFFERENT": "команда должна состоять из разных игроков",
     "TIME_TRAVEL": "путешествуем во времени?",
-    "TOO_MANY_LINKS": "у клуба может быть до 10 ссылок",
+    "TOO_MANY_LINKS": "максимум 10 ссылок",
     "TOURNAMENT_ALREADY_FINISHED": "ошибка! турнир уже закончен",
     "TOURNAMENT_ALREADY_RESET": "ошибка! турнир уже сброшен",
     "TOURNAMENT_ALREADY_STARTED": "ошибка! турнир уже начат",
