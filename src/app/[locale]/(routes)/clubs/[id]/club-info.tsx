@@ -27,7 +27,7 @@ export const ClubInfo: FC<{
     trpc.club.managers.all.queryOptions({ clubId: club.id }),
   );
   return (
-    <header className="lg:small-scrollbar grid shrink-0 grid-cols-[minmax(0,1fr)_auto] content-start items-start gap-x-4 gap-y-1.5 lg:grid-cols-1 lg:gap-y-6 lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:pr-6">
+    <header className="lg:small-scrollbar grid shrink-0 grid-cols-[minmax(0,1fr)_auto] content-start items-start gap-x-4 gap-y-1.5 lg:flex lg:flex-col lg:items-stretch lg:gap-y-4 lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:pr-6">
       <h1
         className={cn(
           turboPascal.className,
@@ -37,12 +37,11 @@ export const ClubInfo: FC<{
         {club.name}
         {club.lichessTeam && <LichessTeamLink team={club.lichessTeam} />}
       </h1>
-      <DashboardButton clubId={club.id} statusInClub={statusInClub} />
       {club.description && <ClubDescription description={club.description} />}
       {club.links.length > 0 && <ClubLinks links={club.links} />}
-      <div className="text-muted-foreground col-span-full flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs lg:flex-col lg:items-start lg:gap-6">
+      <div className="text-muted-foreground col-span-full flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs lg:mt-auto lg:flex-col lg:items-start lg:gap-4">
         {club.createdAt && (
-          <span>
+          <span className="lg:order-last">
             {t('Page.createdAt', {
               date: formatDate(club.createdAt, 'long'),
             })}
@@ -71,6 +70,7 @@ export const ClubInfo: FC<{
           ))}
         </div>
       </div>
+      <DashboardButton clubId={club.id} statusInClub={statusInClub} />
     </header>
   );
 };
@@ -118,7 +118,7 @@ const ClubDescription: FC<{ description: string }> = ({ description }) => {
       <p
         ref={textRef}
         className={cn(
-          'text-muted-foreground max-w-prose text-sm whitespace-pre-line',
+          'text-muted-foreground max-w-prose text-sm break-words whitespace-pre-line',
           !isExpanded && 'line-clamp-2 lg:line-clamp-8',
         )}
       >
@@ -130,7 +130,7 @@ const ClubDescription: FC<{ description: string }> = ({ description }) => {
           aria-expanded={isExpanded}
           aria-label={isExpanded ? t('collapse') : t('expand')}
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-muted-foreground hover:text-foreground active:bg-muted mx-auto rounded-full p-1.5 transition-colors active:transition-none"
+          className="text-muted-foreground hover:text-foreground active:bg-muted mx-auto rounded-full p-1.5 transition-colors active:transition-none lg:mx-0 lg:-ml-1.5"
         >
           <ChevronDown
             className={cn(
@@ -158,7 +158,7 @@ const DashboardButton: FC<{
     <Button
       variant="secondary"
       size="sm"
-      className="shrink-0 gap-2 lg:justify-self-start"
+      className="shrink-0 gap-2 max-lg:col-start-2 max-lg:row-start-1 lg:w-full"
       asChild
     >
       <Link
