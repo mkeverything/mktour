@@ -1,7 +1,6 @@
 'use client';
 
 import PathIcon from '@/components/ui-custom/path-icon';
-import { Button } from '@/components/ui/button';
 import {
   FormControl,
   FormField,
@@ -16,7 +15,6 @@ import {
   MAX_CLUB_LINKS,
   withEmptyLink,
 } from '@/lib/club-links';
-import { cn } from '@/lib/utils';
 import { ClubFormModel, ClubInfoModel } from '@/server/zod/clubs';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -82,45 +80,50 @@ const LinkRow: FC<{
   const t = useTranslations('Club.Dashboard.Settings');
 
   return (
-    <li className="flex items-start gap-2">
-      <PathIcon path={path} className="text-muted-foreground mt-2.25" />
+    <li>
       <FormField
         control={form.control}
         name={`links.${index}.url`}
         render={({ field }) => (
-          <FormItem className="min-w-0 flex-1">
+          <FormItem>
             <FormLabel className="sr-only">
               {t('link', { number: index + 1 })}
             </FormLabel>
-            <FormControl>
-              <Input
-                {...field}
-                onChange={(event) => {
-                  field.onChange(event);
-                  onType(event.target.value);
-                }}
-                disabled={disabled}
-                placeholder={isEmptyLast ? t('paste a link') : undefined}
-                inputMode="url"
-                autoComplete="off"
-                className="px-4"
+            <div className="relative">
+              <PathIcon
+                path={path}
+                className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
               />
-            </FormControl>
+              <FormControl>
+                <Input
+                  {...field}
+                  onChange={(event) => {
+                    field.onChange(event);
+                    onType(event.target.value);
+                  }}
+                  disabled={disabled}
+                  placeholder={isEmptyLast ? t('paste a link') : undefined}
+                  inputMode="url"
+                  autoComplete="off"
+                  className="pr-9 pl-9.5"
+                />
+              </FormControl>
+              {!isEmptyLast && (
+                <button
+                  type="button"
+                  aria-label={t('remove link')}
+                  onClick={onRemove}
+                  disabled={disabled}
+                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm transition-colors outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
             <FormMessage />
           </FormItem>
         )}
       />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label={t('remove link')}
-        onClick={onRemove}
-        disabled={disabled}
-        className={cn('text-muted-foreground', isEmptyLast && 'invisible')}
-      >
-        <X />
-      </Button>
     </li>
   );
 };
