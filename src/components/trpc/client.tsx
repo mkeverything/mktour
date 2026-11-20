@@ -1,5 +1,6 @@
 'use client';
 // ^-- to make sure we can mount the Provider from a server component
+import { AppError } from '@/lib/errors';
 import type { AppRouter } from '@/server/api';
 import type { QueryClient } from '@tanstack/react-query';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -15,6 +16,9 @@ import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { useState } from 'react';
 import SuperJSON from 'superjson';
 import { makeQueryClient } from './query-client';
+
+const REQUEST_TIMEOUT_MS = 20_000;
+
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
 let browserQueryClient: QueryClient;
 function getQueryClient() {
@@ -50,7 +54,7 @@ export function TRPCReactProvider(
             // errors from the server carry data and are final; a lost connection is retried
             retryLink({
               retry: ({ error }) => !error.data,
-              retryDelayMs: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
+              retryDelayMs: () => 2_000,
             }),
             httpSubscriptionLink({
               transformer: SuperJSON,
@@ -60,6 +64,15 @@ export function TRPCReactProvider(
           false: httpBatchLink({
             transformer: SuperJSON,
             url: getUrl(),
+            // a request on a connection that died while the page was hidden can hang for minutes
+            fetch: (url, init) => {
+              const controller = new AbortController();
+              setTimeout(
+                () => controller.abort(new AppError('REQUEST_TIMEOUT')),
+                REQUEST_TIMEOUT_MS,
+              );
+              return fetch(url, { ...init, signal: controller.signal });
+            },
           }),
         }),
       ],
