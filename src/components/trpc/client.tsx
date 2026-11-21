@@ -1,6 +1,5 @@
 'use client';
 // ^-- to make sure we can mount the Provider from a server component
-import { AppError } from '@/lib/errors';
 import type { AppRouter } from '@/server/api';
 import type { QueryClient } from '@tanstack/react-query';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -66,12 +65,12 @@ export function TRPCReactProvider(
             url: getUrl(),
             // a request on a connection that died while the page was hidden can hang for minutes
             fetch: (url, init) => {
-              const controller = new AbortController();
-              setTimeout(
-                () => controller.abort(new AppError('REQUEST_TIMEOUT')),
-                REQUEST_TIMEOUT_MS,
-              );
-              return fetch(url, { ...init, signal: controller.signal });
+              const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+              const signal =
+                init?.signal && 'any' in AbortSignal
+                  ? AbortSignal.any([init.signal, timeout])
+                  : timeout;
+              return fetch(url, { ...init, signal });
             },
           }),
         }),
