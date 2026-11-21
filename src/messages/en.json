@@ -299,6 +299,7 @@
     "RATING_CALCULATION_ERROR": "sorry! rating calculation failed",
     "REALTIME_FAILED": "live-server error. sorry! no realtime updates this time",
     "RELATION_EXISTS": "this user is already a club manager",
+    "REQUEST_TIMEOUT": "the server did not answer in time. check your connection and try again",
     "ROUND_ALREADY_HAS_RESULTS": "this round already has results",
     "ROUND_PROJECTION_MISMATCH": "the generated round is out of date. try reloading the page",
     "SESSION_VALIDATION_TIMEOUT": "session validation timed out",

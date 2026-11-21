@@ -118,6 +118,7 @@ export const ERROR_TRPC_CODES = {
   LICHESS_API_ERROR: 'BAD_GATEWAY',
 
   PASTE_DISABLED: 'METHOD_NOT_SUPPORTED',
+  REQUEST_TIMEOUT: 'TIMEOUT',
   SESSION_VALIDATION_TIMEOUT: 'TIMEOUT',
 } as const satisfies Record<string, TRPC_ERROR_CODE_KEY>;
 
@@ -155,10 +156,22 @@ export const toAppError = (error: unknown): AppError => {
   return new AppError('UNKNOWN_ERROR', { cause: error });
 };
 
+const isTimeoutError = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'name' in error &&
+  error.name === 'TimeoutError';
+
 export const getAppErrorMessage = (error: unknown): AppErrorMessage => {
   if (error instanceof AppError) return error.message as AppErrorMessage;
   if (error instanceof Error && isAppErrorMessage(error.message)) {
     return error.message;
+  }
+  if (
+    isTimeoutError(error) ||
+    (error instanceof Error && isTimeoutError(error.cause))
+  ) {
+    return 'REQUEST_TIMEOUT';
   }
   if (isAppErrorMessage(error)) return error;
   return 'UNKNOWN_ERROR';

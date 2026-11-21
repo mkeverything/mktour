@@ -15,6 +15,9 @@ import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { useState } from 'react';
 import SuperJSON from 'superjson';
 import { makeQueryClient } from './query-client';
+
+const REQUEST_TIMEOUT_MS = 20_000;
+
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
 let browserQueryClient: QueryClient;
 function getQueryClient() {
@@ -50,7 +53,7 @@ export function TRPCReactProvider(
             // errors from the server carry data and are final; a lost connection is retried
             retryLink({
               retry: ({ error }) => !error.data,
-              retryDelayMs: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
+              retryDelayMs: () => 2_000,
             }),
             httpSubscriptionLink({
               transformer: SuperJSON,
@@ -60,6 +63,15 @@ export function TRPCReactProvider(
           false: httpBatchLink({
             transformer: SuperJSON,
             url: getUrl(),
+            // a request on a connection that died while the page was hidden can hang for minutes
+            fetch: (url, init) => {
+              const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+              const signal =
+                init?.signal && 'any' in AbortSignal
+                  ? AbortSignal.any([init.signal, timeout])
+                  : timeout;
+              return fetch(url, { ...init, signal });
+            },
           }),
         }),
       ],
