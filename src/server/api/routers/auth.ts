@@ -1,6 +1,6 @@
 import { getUserLichessTeams } from '@/lib/api/lichess';
 import { validateRequest } from '@/lib/auth/lucia';
-import { CACHE_TAGS } from '@/lib/cache-tags';
+import { userClubsTag } from '@/lib/cache-tags';
 import { AppError } from '@/lib/errors';
 import { newid, timeout } from '@/lib/utils';
 import meta from '@/server/api/meta';
@@ -150,7 +150,7 @@ export const authRouter = {
   delete: protectedProcedure.input(userIdInputSchema).mutation(async (opts) => {
     const { input } = opts;
     await deleteUser(input);
-    revalidateTag(CACHE_TAGS.USER_CLUBS, 'max');
+    revalidateTag(userClubsTag(input.userId), { expire: 0 });
   }),
   edit: protectedProcedure
     .meta(meta.authEdit)

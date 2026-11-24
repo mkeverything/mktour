@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { CACHE_TAGS } from '@/lib/cache-tags';
+import { userClubsTag } from '@/lib/cache-tags';
 import { db } from '@/server/db';
 import { clubs, clubs_to_users } from '@/server/db/schema/clubs';
 import { tournaments } from '@/server/db/schema/tournaments';
@@ -47,10 +47,10 @@ export async function getUserClubs({ userId }: { userId: string }) {
 export const getUserClubIds = cache(async ({ userId }: { userId: string }) => {
   'use cache';
   cacheLife({
-    stale: 1000 * 60 * 60,
-    revalidate: 1000 * 60 * 60,
+    stale: 60 * 60,
+    revalidate: 60 * 60,
   });
-  cacheTag(`${CACHE_TAGS.USER_CLUBS}:${userId}`);
+  cacheTag(userClubsTag(userId));
   return (
     await db
       .select({

@@ -1,4 +1,4 @@
-import { CACHE_TAGS } from '@/lib/cache-tags';
+import { CACHE_TAGS, userClubsTag } from '@/lib/cache-tags';
 import { AppError } from '@/lib/errors';
 import meta from '@/server/api/meta';
 import {
@@ -100,7 +100,7 @@ export const clubRouter = createTRPCRouter({
       const { input } = opts;
       const newClub = await createClub(opts.ctx.user, input);
       revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
-      revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${opts.ctx.user.id}`, 'max');
+      revalidateTag(userClubsTag(opts.ctx.user.id), { expire: 0 });
       return newClub;
     }),
   info: publicProcedure
@@ -192,7 +192,7 @@ export const clubRouter = createTRPCRouter({
       .mutation(async (opts) => {
         const { input } = opts;
         await addClubManager({ ...input, user: opts.ctx.user });
-        revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${input.userId}`, 'max');
+        revalidateTag(userClubsTag(input.userId), { expire: 0 });
       }),
     delete: clubAdminProcedure
       .meta(meta.clubDeleteManager)
@@ -205,7 +205,7 @@ export const clubRouter = createTRPCRouter({
       .mutation(async (opts) => {
         const { input, ctx } = opts;
         await deleteClubManager({ ...input, user: ctx.user });
-        revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${input.userId}`, 'max');
+        revalidateTag(userClubsTag(input.userId), { expire: 0 });
       }),
   }),
   inbox: {
@@ -250,7 +250,7 @@ export const clubRouter = createTRPCRouter({
       const { input, ctx } = opts;
       await deleteClub({ ...input, userId: ctx.user.id });
       revalidateTag(CACHE_TAGS.ALL_CLUBS, 'max');
-      revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${opts.ctx.user.id}`, 'max');
+      revalidateTag(userClubsTag(opts.ctx.user.id), { expire: 0 });
     }),
   edit: clubAdminProcedure
     .meta(meta.clubEdit)
@@ -274,7 +274,7 @@ export const clubRouter = createTRPCRouter({
         throw new AppError('CANNOT_LEAVE_ONLY_CLUB');
       await leaveClub({ clubId: input.clubId, userId: ctx.user.id });
 
-      revalidateTag(`${CACHE_TAGS.USER_CLUBS}:${ctx.user.id}`, 'max');
+      revalidateTag(userClubsTag(ctx.user.id), { expire: 0 });
       const updatedClubs = Object.keys(ctx.clubs).filter(
         (id) => id !== input.clubId,
       );
